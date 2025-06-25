@@ -10,7 +10,7 @@ import { useCreatePlayer } from "@/hooks/usePlayers";
 const PlayerForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [level, setLevel] = useState<number | null>(null);
+  const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
   
   const createPlayerMutation = useCreatePlayer();
 
@@ -66,7 +66,7 @@ const PlayerForm = () => {
           
           <div className="space-y-2">
             <Label htmlFor="level">Nivel (1-5)</Label>
-            <Select value={level?.toString() || ""} onValueChange={(value) => setLevel(parseInt(value))}>
+            <Select value={level?.toString() || ""} onValueChange={(value) => setLevel(parseInt(value) as 1 | 2 | 3 | 4 | 5)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona el nivel" />
               </SelectTrigger>
