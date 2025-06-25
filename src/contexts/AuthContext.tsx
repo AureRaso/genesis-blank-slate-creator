@@ -29,7 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .eq('id', session.user.id)
               .single();
             
-            setProfile(profileData);
+            if (profileData) {
+              // Type assertion to ensure role is the correct type
+              const typedProfile: Profile = {
+                ...profileData,
+                role: profileData.role as 'admin' | 'player' | 'captain'
+              };
+              setProfile(typedProfile);
+            }
             setLoading(false);
           }, 0);
         } else {
