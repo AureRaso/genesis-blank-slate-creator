@@ -1,6 +1,7 @@
 
 import { Users, Trophy, Calendar, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import UserMenu from "./UserMenu";
 
 interface SidebarProps {
   currentView: "dashboard" | "players" | "leagues" | "matches" | "standings";
@@ -42,7 +43,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 shadow-lg">
+    <div className="w-64 bg-white border-r border-gray-200 shadow-lg flex flex-col">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -57,7 +58,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
         </div>
       </div>
       
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 flex-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -83,11 +84,8 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
         })}
       </nav>
 
-      <div className="absolute bottom-4 left-4 right-4">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-all duration-200">
-          <Settings className="h-5 w-5 text-gray-500" />
-          <span className="font-medium">Configuración</span>
-        </button>
+      <div className="p-4 border-t border-gray-200">
+        <UserMenu />
       </div>
     </div>
   );

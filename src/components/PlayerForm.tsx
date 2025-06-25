@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreatePlayer } from "@/hooks/usePlayers";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PlayerForm = () => {
+  const { isAdmin } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
@@ -31,6 +33,18 @@ const PlayerForm = () => {
     setEmail("");
     setLevel(null);
   };
+
+  if (!isAdmin) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6">
+          <p className="text-center text-muted-foreground">
+            Solo los administradores pueden registrar jugadores.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md">

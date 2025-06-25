@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Users } from "lucide-react";
 import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PlayersList = () => {
+  const { isAdmin } = useAuth();
   const { data: players, isLoading, error } = usePlayers();
   const deletePlayerMutation = useDeletePlayer();
 
@@ -82,15 +84,17 @@ const PlayersList = () => {
                   <Badge className={getLevelColor(player.level)}>
                     Nivel {player.level} - {getLevelText(player.level)}
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deletePlayerMutation.mutate(player.id)}
-                    disabled={deletePlayerMutation.isPending}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deletePlayerMutation.mutate(player.id)}
+                      disabled={deletePlayerMutation.isPending}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

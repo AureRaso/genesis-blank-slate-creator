@@ -13,7 +13,10 @@ export const usePlayers = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching players:', error);
+        throw error;
+      }
       return data as Player[];
     },
   });
@@ -30,7 +33,10 @@ export const useCreatePlayer = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating player:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -40,13 +46,21 @@ export const useCreatePlayer = () => {
         description: "El jugador ha sido registrado exitosamente",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error creating player:', error);
+      
+      let message = "No se pudo crear el jugador";
+      if (error.message?.includes('row-level security')) {
+        message = "No tienes permisos para crear jugadores";
+      } else if (error.message?.includes('duplicate key')) {
+        message = "Ya existe un jugador con ese email";
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo crear el jugador",
+        description: message,
         variant: "destructive",
       });
-      console.error('Error creating player:', error);
     },
   });
 };
@@ -73,10 +87,15 @@ export const useUpdatePlayer = () => {
         description: "Los datos del jugador han sido actualizados",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let message = "No se pudo actualizar el jugador";
+      if (error.message?.includes('row-level security')) {
+        message = "No tienes permisos para actualizar jugadores";
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo actualizar el jugador",
+        description: message,
         variant: "destructive",
       });
     },
@@ -102,10 +121,15 @@ export const useDeletePlayer = () => {
         description: "El jugador ha sido eliminado del sistema",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let message = "No se pudo eliminar el jugador";
+      if (error.message?.includes('row-level security')) {
+        message = "No tienes permisos para eliminar jugadores";
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo eliminar el jugador",
+        description: message,
         variant: "destructive",
       });
     },
