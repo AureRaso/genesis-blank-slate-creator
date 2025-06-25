@@ -1,10 +1,10 @@
 
-import { Package, LayoutDashboard, Plus, Settings } from "lucide-react";
+import { Users, Trophy, Calendar, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
-  currentView: "dashboard" | "products" | "create";
-  onViewChange: (view: "dashboard" | "products" | "create") => void;
+  currentView: "dashboard" | "players" | "leagues" | "matches" | "standings";
+  onViewChange: (view: "dashboard" | "players" | "leagues" | "matches" | "standings") => void;
 }
 
 const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
@@ -12,20 +12,32 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
     {
       id: "dashboard" as const,
       label: "Dashboard",
-      icon: LayoutDashboard,
+      icon: BarChart3,
       color: "text-blue-600"
     },
     {
-      id: "products" as const,
-      label: "Productos",
-      icon: Package,
+      id: "players" as const,
+      label: "Jugadores",
+      icon: Users,
       color: "text-green-600"
     },
     {
-      id: "create" as const,
-      label: "Crear Producto",
-      icon: Plus,
+      id: "leagues" as const,
+      label: "Ligas",
+      icon: Trophy,
       color: "text-purple-600"
+    },
+    {
+      id: "matches" as const,
+      label: "Partidos",
+      icon: Calendar,
+      color: "text-orange-600"
+    },
+    {
+      id: "standings" as const,
+      label: "Clasificación",
+      icon: BarChart3,
+      color: "text-red-600"
     }
   ];
 
@@ -33,14 +45,14 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
     <div className="w-64 bg-white border-r border-gray-200 shadow-lg">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <Package className="h-5 w-5 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <Trophy className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              ProductoApp
+            <h2 className="text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              PadelApp
             </h2>
-            <p className="text-xs text-muted-foreground">Gestión de inventario</p>
+            <p className="text-xs text-muted-foreground">Liga de Pádel</p>
           </div>
         </div>
       </div>
@@ -57,7 +69,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
               className={cn(
                 "w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-left",
                 isActive
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                  ? "bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               )}
             >
