@@ -4,9 +4,16 @@ import { Plus, Users, Trophy, Calendar, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Sidebar from "@/components/Sidebar";
+import PlayersPage from "@/pages/PlayersPage";
+import { usePlayers } from "@/hooks/usePlayers";
+import { useTeams } from "@/hooks/useTeams";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"dashboard" | "players" | "leagues" | "matches" | "standings">("dashboard");
+  
+  // Get real data for dashboard stats
+  const { data: players } = usePlayers();
+  const { data: teams } = useTeams();
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -33,22 +40,22 @@ const Index = () => {
             <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">0</div>
+            <div className="text-2xl font-bold text-green-700">{players?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              +0 desde el mes pasado
+              {players?.length === 1 ? "jugador registrado" : "jugadores registrados"}
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ligas Activas</CardTitle>
+            <CardTitle className="text-sm font-medium">Parejas Formadas</CardTitle>
             <Trophy className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">0</div>
+            <div className="text-2xl font-bold text-blue-700">{teams?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Ninguna liga en curso
+              {teams?.length === 1 ? "pareja formada" : "parejas formadas"}
             </p>
           </CardContent>
         </Card>
@@ -142,7 +149,7 @@ const Index = () => {
         <Sidebar currentView={currentView} onViewChange={setCurrentView} />
         <main className="flex-1 p-6 overflow-hidden">
           {currentView === "dashboard" && renderDashboard()}
-          {currentView === "players" && renderPlaceholder("Gestión de Jugadores", "Administra jugadores y forma parejas")}
+          {currentView === "players" && <PlayersPage />}
           {currentView === "leagues" && renderPlaceholder("Gestión de Ligas", "Crea y administra ligas de pádel")}
           {currentView === "matches" && renderPlaceholder("Gestión de Partidos", "Programa partidos y registra resultados")}
           {currentView === "standings" && renderPlaceholder("Clasificaciones", "Consulta las tablas de posiciones")}

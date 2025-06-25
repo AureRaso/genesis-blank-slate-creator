@@ -9,7 +9,259 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      league_teams: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_teams_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leagues: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          name: string
+          points_defeat: number
+          points_per_set: boolean
+          points_victory: number
+          start_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          name: string
+          points_defeat?: number
+          points_per_set?: boolean
+          points_victory?: number
+          start_date: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          name?: string
+          points_defeat?: number
+          points_per_set?: boolean
+          points_victory?: number
+          start_date?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      match_results: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          points_team1: number
+          points_team2: number
+          team1_set1: number
+          team1_set2: number
+          team1_set3: number | null
+          team2_set1: number
+          team2_set2: number
+          team2_set3: number | null
+          winner_team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          points_team1?: number
+          points_team2?: number
+          team1_set1: number
+          team1_set2: number
+          team1_set3?: number | null
+          team2_set1: number
+          team2_set2: number
+          team2_set3?: number | null
+          winner_team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          points_team1?: number
+          points_team2?: number
+          team1_set1?: number
+          team1_set2?: number
+          team1_set3?: number | null
+          team2_set1?: number
+          team2_set2?: number
+          team2_set3?: number | null
+          winner_team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_results_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_results_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          round: number
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: string
+          team1_id: string
+          team2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          round: number
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          team1_id: string
+          team2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          round?: number
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          team1_id?: string
+          team2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_team1_id_fkey"
+            columns: ["team1_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_team2_id_fkey"
+            columns: ["team2_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          level: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          level: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          level?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          player1_id: string
+          player2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          player1_id: string
+          player2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          player1_id?: string
+          player2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
