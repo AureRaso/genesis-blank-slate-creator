@@ -6,9 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Sidebar from "@/components/Sidebar";
 import PlayersPage from "@/pages/PlayersPage";
 import LeaguesPage from "@/pages/LeaguesPage";
+import MatchesPage from "@/pages/MatchesPage";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useTeams } from "@/hooks/useTeams";
 import { useLeagues } from "@/hooks/useLeagues";
+import { useMatches } from "@/hooks/useMatches";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"dashboard" | "players" | "leagues" | "matches" | "standings">("dashboard");
@@ -17,6 +19,7 @@ const Index = () => {
   const { data: players } = usePlayers();
   const { data: teams } = useTeams();
   const { data: leagues } = useLeagues();
+  const { data: allMatches } = useMatches(); // Get all matches for stats
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -80,13 +83,15 @@ const Index = () => {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Ligas</CardTitle>
+            <CardTitle className="text-sm font-medium">Partidos Jugados</CardTitle>
             <BarChart3 className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">{leagues?.length || 0}</div>
+            <div className="text-2xl font-bold text-orange-700">
+              {allMatches?.filter(match => match.status === 'completed').length || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Ligas creadas
+              Partidos completados
             </p>
           </CardContent>
         </Card>
@@ -100,9 +105,9 @@ const Index = () => {
         <CardContent>
           <div className="text-center py-8 space-y-4">
             <Trophy className="h-16 w-16 text-green-600 mx-auto" />
-            <h3 className="text-xl font-semibold">¡Comienza tu primera liga!</h3>
+            <h3 className="text-xl font-semibold">¡Organiza tu liga de pádel!</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Crea jugadores, forma parejas y organiza ligas completas con sistema Round Robin automático.
+              Crea jugadores, forma parejas, organiza ligas completas con sistema Round Robin automático y gestiona partidos.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
               <Button 
@@ -115,10 +120,18 @@ const Index = () => {
               </Button>
               <Button 
                 onClick={() => setCurrentView("leagues")}
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
               >
                 <Trophy className="mr-2 h-4 w-4" />
                 Crear Liga
+              </Button>
+              <Button 
+                onClick={() => setCurrentView("matches")}
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Ver Partidos
               </Button>
             </div>
           </div>
@@ -156,7 +169,7 @@ const Index = () => {
           {currentView === "dashboard" && renderDashboard()}
           {currentView === "players" && <PlayersPage />}
           {currentView === "leagues" && <LeaguesPage />}
-          {currentView === "matches" && renderPlaceholder("Gestión de Partidos", "Programa partidos y registra resultados")}
+          {currentView === "matches" && <MatchesPage />}
           {currentView === "standings" && renderPlaceholder("Clasificaciones", "Consulta las tablas de posiciones")}
         </main>
       </div>
