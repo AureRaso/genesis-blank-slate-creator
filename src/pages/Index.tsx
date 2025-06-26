@@ -60,7 +60,6 @@ const Index = () => {
   ];
 
   const handleEditLeague = () => {
-    // Navigate to leagues tab for editing
     setActiveTab("leagues");
   };
 
