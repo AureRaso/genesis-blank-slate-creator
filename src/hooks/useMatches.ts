@@ -14,19 +14,19 @@ export const useMatches = (leagueId?: string) => {
         .from('matches')
         .select(`
           *,
-          team1:team1_id (
+          team1:teams!matches_team1_id_fkey (
             id,
             name,
-            player1:player1_id (id, name, email),
-            player2:player2_id (id, name, email)
+            player1:players!teams_player1_id_fkey (id, name, email),
+            player2:players!teams_player2_id_fkey (id, name, email)
           ),
-          team2:team2_id (
+          team2:teams!matches_team2_id_fkey (
             id,
             name,
-            player1:player1_id (id, name, email),
-            player2:player2_id (id, name, email)
+            player1:players!teams_player1_id_fkey (id, name, email),
+            player2:players!teams_player2_id_fkey (id, name, email)
           ),
-          league:league_id (id, name),
+          league:leagues!matches_league_id_fkey (id, name),
           match_results (*)
         `)
         .order('round', { ascending: true })

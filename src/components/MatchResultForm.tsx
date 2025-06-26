@@ -44,6 +44,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
       team2_set2: parseInt(formData.team2_set2),
       team2_set3: formData.has_third_set ? parseInt(formData.team2_set3) : null,
       winner_team_id: formData.winner_team_id,
+      points_team1: 0, // These will be calculated by the backend
+      points_team2: 0, // These will be calculated by the backend
     };
 
     createResult.mutate(resultData, {
