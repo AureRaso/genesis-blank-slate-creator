@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      league_players: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          player_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          player_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          player_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_players_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_teams: {
         Row: {
           created_at: string

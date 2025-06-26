@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Users, Trophy, Calendar, TrendingUp, Award, Target } from "lucide-react";
+import { Users, Trophy, Calendar, TrendingUp, Award, Target, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +14,12 @@ import TeamsList from "@/components/TeamsList";
 import LeaguesList from "@/components/LeaguesList";
 import MatchesPage from "@/pages/MatchesPage";
 import StandingsPage from "@/pages/StandingsPage";
+import LeagueRegistration from "@/components/LeagueRegistration";
+import LeaguePlayersPage from "@/pages/LeaguePlayersPage";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [showLeaguePlayers, setShowLeaguePlayers] = useState(false);
   const { user, isAdmin } = useAuth();
 
   const { data: players } = usePlayers();
@@ -63,6 +66,10 @@ const Index = () => {
     setActiveTab("leagues");
   };
 
+  if (showLeaguePlayers) {
+    return <LeaguePlayersPage onBack={() => setShowLeaguePlayers(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -77,11 +84,12 @@ const Index = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="players">Jugadores</TabsTrigger>
           <TabsTrigger value="teams">Equipos</TabsTrigger>
           <TabsTrigger value="leagues">Ligas</TabsTrigger>
+          <TabsTrigger value="registration">Inscripciones</TabsTrigger>
           <TabsTrigger value="matches">Partidos</TabsTrigger>
           <TabsTrigger value="standings">Clasificaciones</TabsTrigger>
         </TabsList>
@@ -110,7 +118,7 @@ const Index = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -149,6 +157,37 @@ const Index = () => {
                 >
                   Ver Clasificaciones
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Inscripciones
+                </CardTitle>
+                <CardDescription>
+                  {isAdmin ? "Gestionar inscripciones" : "Inscribirse en ligas"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isAdmin ? (
+                  <Button 
+                    onClick={() => setShowLeaguePlayers(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Gestionar Inscripciones
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => setActiveTab("registration")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Ver Ligas Disponibles
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -193,6 +232,10 @@ const Index = () => {
 
         <TabsContent value="leagues">
           <LeaguesList onEditLeague={handleEditLeague} />
+        </TabsContent>
+
+        <TabsContent value="registration">
+          <LeagueRegistration />
         </TabsContent>
 
         <TabsContent value="matches">
