@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { Calendar, Clock, Trophy, Users } from "lucide-react";
+import { Calendar, Clock, Trophy, Users, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApproveMatchResult } from "@/hooks/useMatchResults";
 import MatchResultForm from "./MatchResultForm";
 
 interface MatchCardProps {
@@ -15,7 +16,8 @@ interface MatchCardProps {
 
 const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const [showResultForm, setShowResultForm] = useState(false);
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const approveResult = useApproveMatchResult();
 
   const getPlayerInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -29,11 +31,31 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
     }
   };
 
+  const getResultStatusColor = (resultStatus: string) => {
+    switch (resultStatus) {
+      case 'pending': return 'bg-gray-100 text-gray-800';
+      case 'submitted': return 'bg-blue-100 text-blue-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'disputed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'Pendiente';
       case 'completed': return 'Completado';
       default: return status;
+    }
+  };
+
+  const getResultStatusText = (resultStatus: string) => {
+    switch (resultStatus) {
+      case 'pending': return 'Sin resultado';
+      case 'submitted': return 'Esperando aprobación';
+      case 'approved': return 'Resultado confirmado';
+      case 'disputed': return 'Resultado disputado';
+      default: return resultStatus;
     }
   };
 
@@ -54,6 +76,37 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
     return result?.winner_team_id === teamId;
   };
 
+  // Verificar si el usuario actual puede subir resultados
+  const canSubmitResult = () => {
+    if (!user?.email || match.result_status !== 'pending') return false;
+    
+    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email];
+    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email];
+    
+    return team1Emails.includes(user.email) || team2Emails.includes(user.email);
+  };
+
+  // Verificar si el usuario puede aprobar el resultado
+  const canApproveResult = () => {
+    if (!user?.email || match.result_status !== 'submitted') return false;
+    
+    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email];
+    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email];
+    
+    // Puede aprobar si pertenece al equipo que NO envió el resultado
+    if (match.result_submitted_by_team_id === match.team1_id) {
+      return team2Emails.includes(user.email);
+    } else if (match.result_submitted_by_team_id === match.team2_id) {
+      return team1Emails.includes(user.email);
+    }
+    
+    return false;
+  };
+
+  const handleApprove = (approve: boolean) => {
+    approveResult.mutate({ matchId: match.id, approve });
+  };
+
   if (showResultForm) {
     return (
       <MatchResultForm 
@@ -67,12 +120,17 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
     <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-green-50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <Badge className={`${getStatusColor(match.status)} font-medium`}>
-            {getStatusText(match.status)}
-          </Badge>
+          <div className="flex space-x-2">
+            <Badge className={`${getStatusColor(match.status)} font-medium`}>
+              {getStatusText(match.status)}
+            </Badge>
+            <Badge className={`${getResultStatusColor(match.result_status)} font-medium`}>
+              {getResultStatusText(match.result_status)}
+            </Badge>
+          </div>
           <div className="flex items-center text-sm text-muted-foreground">
             <Trophy className="h-4 w-4 mr-1" />
-            Ronda {match.round}
+            {match.created_by_player_id ? 'Creado por jugador' : `Ronda ${match.round}`}
           </div>
         </div>
       </CardHeader>
@@ -162,27 +220,64 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
         )}
 
         {/* Actions */}
-        <div className="flex space-x-2">
-          {match.status === 'pending' && onSignUp && (
+        <div className="space-y-2">
+          {/* Botón para subir resultado */}
+          {canSubmitResult() && (
+            <Button 
+              size="sm" 
+              onClick={() => setShowResultForm(true)}
+              className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+            >
+              <Trophy className="h-4 w-4 mr-2" />
+              Subir Resultado
+            </Button>
+          )}
+
+          {/* Botones para aprobar/disputar resultado */}
+          {canApproveResult() && (
+            <div className="flex space-x-2">
+              <Button 
+                size="sm" 
+                onClick={() => handleApprove(true)}
+                disabled={approveResult.isPending}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Aprobar
+              </Button>
+              <Button 
+                size="sm" 
+                variant="destructive"
+                onClick={() => handleApprove(false)}
+                disabled={approveResult.isPending}
+                className="flex-1"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Disputar
+              </Button>
+            </div>
+          )}
+
+          {/* Acciones para admins en partidos disputados */}
+          {isAdmin && match.result_status === 'disputed' && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center text-amber-800 text-sm">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Resultado disputado - Se requiere intervención de administrador
+              </div>
+            </div>
+          )}
+
+          {/* Botón legacy para apuntarse (solo si existe la función) */}
+          {match.status === 'pending' && onSignUp && !match.created_by_player_id && (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => onSignUp(match.id)}
-              className="flex-1 border-green-200 text-green-700 hover:bg-green-50"
+              className="w-full border-green-200 text-green-700 hover:bg-green-50"
             >
               <Users className="h-4 w-4 mr-2" />
               Apuntarse
-            </Button>
-          )}
-          
-          {isAdmin && match.status === 'pending' && (
-            <Button 
-              size="sm" 
-              onClick={() => setShowResultForm(true)}
-              className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-            >
-              <Trophy className="h-4 w-4 mr-2" />
-              Registrar Resultado
             </Button>
           )}
         </div>

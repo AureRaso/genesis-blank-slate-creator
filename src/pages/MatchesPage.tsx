@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Trophy, Users, Calendar } from "lucide-react";
+import { ArrowLeft, Trophy, Users, Calendar, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,9 +9,11 @@ import { useLeagues } from "@/hooks/useLeagues";
 import { useMatches, useCreateMatches } from "@/hooks/useMatches";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
 import MatchesList from "@/components/MatchesList";
+import CreateMatchForm from "@/components/CreateMatchForm";
 
 const MatchesPage = () => {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const { isAdmin } = useAuth();
 
   const { data: leagues } = useLeagues();
@@ -46,6 +48,26 @@ const MatchesPage = () => {
     (!matches || matches.length === 0) &&
     isAdmin;
 
+  if (showCreateForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowCreateForm(false)}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
+          </Button>
+          <h1 className="text-2xl font-bold">Crear Nuevo Partido</h1>
+        </div>
+        
+        <CreateMatchForm onClose={() => setShowCreateForm(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -54,9 +76,22 @@ const MatchesPage = () => {
             Gestión de Partidos
           </h1>
           <p className="text-muted-foreground">
-            Consulta partidos, apúntate para jugar y registra resultados
+            {isAdmin 
+              ? "Consulta partidos, genera enfrentamientos y gestiona resultados"
+              : "Crea partidos, sube resultados y consulta el estado de tus encuentros"
+            }
           </p>
         </div>
+        
+        {!isAdmin && (
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Partido
+          </Button>
+        )}
       </div>
 
       {/* League Selection */}
@@ -133,24 +168,43 @@ const MatchesPage = () => {
               <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Selecciona una liga</h3>
               <p className="text-muted-foreground">
-                Elige una liga activa para ver sus partidos y poder apuntarte
+                Elige una liga activa para ver sus partidos y gestionar encuentros
               </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {!isAdmin && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-800">Información para Jugadores</CardTitle>
-            <CardDescription className="text-blue-700">
-              Los administradores se encargan de generar los partidos y registrar resultados. 
-              Tú puedes apuntarte a los partidos disponibles.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
+      {/* Information Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {!isAdmin && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-800 flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Sistema de Partidos
+              </CardTitle>
+              <CardDescription className="text-blue-700">
+                Puedes crear un partido por semana. Los resultados deben ser confirmados por ambos equipos.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+        
+        {isAdmin && (
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center">
+                <Trophy className="h-5 w-5 mr-2" />
+                Herramientas de Administrador
+              </CardTitle>
+              <CardDescription className="text-green-700">
+                Puedes generar partidos automáticamente y resolver disputas de resultados.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

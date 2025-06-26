@@ -186,8 +186,12 @@ export type Database = {
       matches: {
         Row: {
           created_at: string
+          created_by_player_id: string | null
           id: string
           league_id: string
+          result_approved_by_team_id: string | null
+          result_status: string | null
+          result_submitted_by_team_id: string | null
           round: number
           scheduled_date: string | null
           scheduled_time: string | null
@@ -197,8 +201,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by_player_id?: string | null
           id?: string
           league_id: string
+          result_approved_by_team_id?: string | null
+          result_status?: string | null
+          result_submitted_by_team_id?: string | null
           round: number
           scheduled_date?: string | null
           scheduled_time?: string | null
@@ -208,8 +216,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by_player_id?: string | null
           id?: string
           league_id?: string
+          result_approved_by_team_id?: string | null
+          result_status?: string | null
+          result_submitted_by_team_id?: string | null
           round?: number
           scheduled_date?: string | null
           scheduled_time?: string | null
@@ -218,6 +230,13 @@ export type Database = {
           team2_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_created_by_player_id_fkey"
+            columns: ["created_by_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "matches_league_id_fkey"
             columns: ["league_id"]
@@ -237,6 +256,38 @@ export type Database = {
             columns: ["team2_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_match_creation: {
+        Row: {
+          created_at: string
+          id: string
+          matches_created: number | null
+          player_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          matches_created?: number | null
+          player_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          matches_created?: number | null
+          player_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_match_creation_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
         ]
@@ -336,6 +387,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_match_this_week: {
+        Args: { player_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: { _user_id: string; _role: string }
         Returns: boolean
@@ -343,6 +398,10 @@ export type Database = {
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      record_match_creation: {
+        Args: { player_id: string }
+        Returns: undefined
       }
     }
     Enums: {
