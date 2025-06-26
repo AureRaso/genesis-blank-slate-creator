@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useCreateMatchResult } from "@/hooks/useMatchResults";
+import { useSubmitMatchResult } from "@/hooks/useSubmitMatchResult";
 
 interface MatchResultFormProps {
   match: any;
@@ -25,7 +25,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     has_third_set: false,
   });
 
-  const createResult = useCreateMatchResult();
+  const submitResult = useSubmitMatchResult();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
       points_team2: 0, // These will be calculated by the backend
     };
 
-    createResult.mutate(resultData, {
+    submitResult.mutate(resultData, {
       onSuccess: () => {
         onClose();
       },
@@ -226,10 +226,10 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
             </Button>
             <Button 
               type="submit" 
-              disabled={createResult.isPending}
+              disabled={submitResult.isPending}
               className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
             >
-              {createResult.isPending ? 'Guardando...' : 'Guardar Resultado'}
+              {submitResult.isPending ? 'Guardando...' : 'Guardar Resultado'}
             </Button>
           </div>
         </form>
