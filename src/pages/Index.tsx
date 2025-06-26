@@ -14,7 +14,7 @@ import TeamsList from "@/components/TeamsList";
 import LeaguesList from "@/components/LeaguesList";
 import MatchesPage from "@/pages/MatchesPage";
 import StandingsPage from "@/pages/StandingsPage";
-import LeagueRegistration from "@/components/LeagueRegistration";
+import LeagueRegistrationWithPayment from "@/components/LeagueRegistrationWithPayment";
 import LeaguePlayersPage from "@/pages/LeaguePlayersPage";
 
 const Index = () => {
@@ -235,7 +235,7 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="registration">
-          <LeagueRegistration />
+          <LeagueRegistrationWithPayment />
         </TabsContent>
 
         <TabsContent value="matches">

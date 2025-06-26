@@ -93,6 +93,7 @@ export type Database = {
           points_defeat: number
           points_per_set: boolean
           points_victory: number
+          registration_price: number
           start_date: string
           status: string
         }
@@ -104,6 +105,7 @@ export type Database = {
           points_defeat?: number
           points_per_set?: boolean
           points_victory?: number
+          registration_price?: number
           start_date: string
           status?: string
         }
@@ -115,6 +117,7 @@ export type Database = {
           points_defeat?: number
           points_per_set?: boolean
           points_victory?: number
+          registration_price?: number
           start_date?: string
           status?: string
         }

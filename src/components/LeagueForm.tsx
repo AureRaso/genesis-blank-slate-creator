@@ -23,6 +23,7 @@ interface LeagueFormData {
   points_victory: number;
   points_defeat: number;
   points_per_set: boolean;
+  registration_price: number;
   status: "upcoming" | "active" | "completed";
 }
 
@@ -46,6 +47,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_victory: league.points_victory,
           points_defeat: league.points_defeat,
           points_per_set: league.points_per_set,
+          registration_price: league.registration_price,
           status: league.status,
         }
       : {
@@ -55,6 +57,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_victory: 3,
           points_defeat: 0,
           points_per_set: false,
+          registration_price: 0,
           status: "upcoming",
         },
   });
@@ -130,6 +133,27 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
                 <p className="text-sm text-destructive">{errors.end_date.message}</p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="registration_price">Precio de Inscripción (€)</Label>
+            <Input
+              id="registration_price"
+              type="number"
+              min="0"
+              step="0.01"
+              {...register("registration_price", { 
+                required: "El precio de inscripción es obligatorio",
+                min: { value: 0, message: "El precio no puede ser negativo" }
+              })}
+              placeholder="0.00"
+            />
+            {errors.registration_price && (
+              <p className="text-sm text-destructive">{errors.registration_price.message}</p>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Establece el precio que cada jugador debe pagar para inscribirse en la liga
+            </p>
           </div>
 
           <div className="space-y-4">

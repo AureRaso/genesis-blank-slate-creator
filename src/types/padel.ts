@@ -23,6 +23,7 @@ export interface League {
   points_victory: number;
   points_defeat: number;
   points_per_set: boolean; // punto extra por set ganado
+  registration_price: number; // precio de inscripción
   status: "upcoming" | "active" | "completed";
   created_at: string;
 }
