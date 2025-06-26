@@ -68,7 +68,7 @@ export const useRegisterForLeague = () => {
       console.log('Registering player for league:', { leagueId, playerId });
       const { data, error } = await supabase
         .from('league_players')
-        .insert([{ league_id: leagueId, player_id: playerId, status: 'pending' }])
+        .insert([{ league_id: leagueId, player_id: playerId, status: 'approved' }])
         .select()
         .single();
 

@@ -1,4 +1,3 @@
-
 import { UserPlus, Calendar, Trophy, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,15 +160,6 @@ const LeagueCard = ({ league, playerId, onRegister, onWithdraw, isLoading }: Lea
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Inscribirse
-            </Button>
-          ) : registration.status === 'pending' ? (
-            <Button
-              onClick={() => onWithdraw(league.id)}
-              disabled={isLoading}
-              variant="outline"
-              className="w-full"
-            >
-              Cancelar Inscripción
             </Button>
           ) : registration.status === 'approved' ? (
             <Button disabled className="w-full bg-green-100 text-green-800">

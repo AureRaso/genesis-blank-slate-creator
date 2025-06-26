@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { usePlayers } from "@/hooks/usePlayers";
@@ -195,7 +194,7 @@ const LeagueRegistrationCard = ({
             </div>
           )}
 
-          {!isFree && registration?.status === 'pending' && !isAdmin && (
+          {!isFree && !registration && !isAdmin && (
             <PaymentIntegration
               leagueId={league.id}
               leagueName={league.name}
@@ -223,15 +222,6 @@ const LeagueRegistrationCard = ({
             >
               <UserPlus className="h-4 w-4 mr-2" />
               {isFree ? "Inscribirse Gratis" : `Inscribirse (${league.registration_price}€)`}
-            </Button>
-          ) : registration.status === 'pending' ? (
-            <Button
-              onClick={() => onWithdraw(league.id)}
-              disabled={isLoading}
-              variant="outline"
-              className="w-full"
-            >
-              Cancelar Inscripción
             </Button>
           ) : registration.status === 'approved' ? (
             <Button disabled className="w-full bg-green-100 text-green-800">

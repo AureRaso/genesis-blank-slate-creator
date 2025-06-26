@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,8 +117,6 @@ const LeagueRegistrationCard = ({ league, currentPlayer, onRegister }: LeagueReg
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pendiente</Badge>;
       case 'approved':
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aprobado</Badge>;
       case 'rejected':
