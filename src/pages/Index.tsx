@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Sidebar from "@/components/Sidebar";
 import PlayersPage from "@/pages/PlayersPage";
+import LeaguesPage from "@/pages/LeaguesPage";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useTeams } from "@/hooks/useTeams";
+import { useLeagues } from "@/hooks/useLeagues";
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<"dashboard" | "players" | "leagues" | "matches" | "standings">("dashboard");
@@ -14,6 +16,7 @@ const Index = () => {
   // Get real data for dashboard stats
   const { data: players } = usePlayers();
   const { data: teams } = useTeams();
+  const { data: leagues } = useLeagues();
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -62,26 +65,28 @@ const Index = () => {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partidos Programados</CardTitle>
+            <CardTitle className="text-sm font-medium">Ligas Activas</CardTitle>
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-700">0</div>
+            <div className="text-2xl font-bold text-purple-700">
+              {leagues?.filter(league => league.status === 'active').length || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Esta semana
+              En progreso
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partidos Completados</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Ligas</CardTitle>
             <BarChart3 className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-700">0</div>
+            <div className="text-2xl font-bold text-orange-700">{leagues?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Total temporada
+              Ligas creadas
             </p>
           </CardContent>
         </Card>
@@ -150,7 +155,7 @@ const Index = () => {
         <main className="flex-1 p-6 overflow-hidden">
           {currentView === "dashboard" && renderDashboard()}
           {currentView === "players" && <PlayersPage />}
-          {currentView === "leagues" && renderPlaceholder("Gestión de Ligas", "Crea y administra ligas de pádel")}
+          {currentView === "leagues" && <LeaguesPage />}
           {currentView === "matches" && renderPlaceholder("Gestión de Partidos", "Programa partidos y registra resultados")}
           {currentView === "standings" && renderPlaceholder("Clasificaciones", "Consulta las tablas de posiciones")}
         </main>
