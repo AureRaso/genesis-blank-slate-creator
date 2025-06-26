@@ -1,178 +1,204 @@
 
 import { useState } from "react";
-import { Plus, Users, Trophy, Calendar, BarChart3 } from "lucide-react";
+import { Users, Trophy, Calendar, TrendingUp, Award, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Sidebar from "@/components/Sidebar";
-import PlayersPage from "@/pages/PlayersPage";
-import LeaguesPage from "@/pages/LeaguesPage";
-import MatchesPage from "@/pages/MatchesPage";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import { usePlayers } from "@/hooks/usePlayers";
 import { useTeams } from "@/hooks/useTeams";
 import { useLeagues } from "@/hooks/useLeagues";
 import { useMatches } from "@/hooks/useMatches";
+import PlayersList from "@/components/PlayersList";
+import TeamsList from "@/components/TeamsList";
+import LeaguesList from "@/components/LeaguesList";
+import MatchesPage from "@/pages/MatchesPage";
+import StandingsPage from "@/pages/StandingsPage";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<"dashboard" | "players" | "leagues" | "matches" | "standings">("dashboard");
-  
-  // Get real data for dashboard stats
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const { user, isAdmin } = useAuth();
+
   const { data: players } = usePlayers();
   const { data: teams } = useTeams();
   const { data: leagues } = useLeagues();
-  const { data: allMatches } = useMatches(); // Get all matches for stats
+  const { data: allMatches } = useMatches();
 
-  const renderDashboard = () => (
+  const activeLeagues = leagues?.filter(league => league.status === 'active') || [];
+  const completedMatches = allMatches?.filter(match => match.status === 'completed') || [];
+  const pendingMatches = allMatches?.filter(match => match.status === 'pending') || [];
+
+  const stats = [
+    {
+      title: "Jugadores Registrados",
+      value: players?.length || 0,
+      icon: Users,
+      description: "Total de jugadores en el sistema",
+      color: "from-blue-500 to-cyan-600"
+    },
+    {
+      title: "Equipos Formados",
+      value: teams?.length || 0,
+      icon: Trophy,
+      description: "Parejas registradas",
+      color: "from-green-500 to-emerald-600"
+    },
+    {
+      title: "Ligas Activas",
+      value: activeLeagues.length,
+      icon: Award,
+      description: "Competiciones en curso",
+      color: "from-purple-500 to-violet-600"
+    },
+    {
+      title: "Partidos Completados",
+      value: completedMatches.length,
+      icon: Target,
+      description: "Encuentros finalizados",
+      color: "from-orange-500 to-red-600"
+    }
+  ];
+
+  return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Dashboard de Pádel
+            ¡Bienvenido, {user?.email}!
           </h1>
-          <p className="text-muted-foreground">Gestiona tu liga de pádel de manera eficiente</p>
+          <p className="text-muted-foreground">
+            {isAdmin ? "Panel de administración" : "Dashboard del jugador"}
+          </p>
         </div>
-        <Button 
-          onClick={() => setCurrentView("leagues")}
-          className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nueva Liga
-        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jugadores Activos</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{players?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {players?.length === 1 ? "jugador registrado" : "jugadores registrados"}
-            </p>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="players">Jugadores</TabsTrigger>
+          <TabsTrigger value="teams">Equipos</TabsTrigger>
+          <TabsTrigger value="leagues">Ligas</TabsTrigger>
+          <TabsTrigger value="matches">Partidos</TabsTrigger>
+          <TabsTrigger value="standings">Clasificaciones</TabsTrigger>
+        </TabsList>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Parejas Formadas</CardTitle>
-            <Trophy className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{teams?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {teams?.length === 1 ? "pareja formada" : "parejas formadas"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ligas Activas</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-700">
-              {leagues?.filter(league => league.status === 'active').length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              En progreso
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partidos Jugados</CardTitle>
-            <BarChart3 className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-700">
-              {allMatches?.filter(match => match.status === 'completed').length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Partidos completados
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle>Bienvenido a PadelApp</CardTitle>
-          <CardDescription>Sistema de gestión de ligas de pádel</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 space-y-4">
-            <Trophy className="h-16 w-16 text-green-600 mx-auto" />
-            <h3 className="text-xl font-semibold">¡Organiza tu liga de pádel!</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Crea jugadores, forma parejas, organiza ligas completas con sistema Round Robin automático y gestiona partidos.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
-              <Button 
-                onClick={() => setCurrentView("players")}
-                variant="outline"
-                className="border-green-200 text-green-700 hover:bg-green-50"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Gestionar Jugadores
-              </Button>
-              <Button 
-                onClick={() => setCurrentView("leagues")}
-                variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                <Trophy className="mr-2 h-4 w-4" />
-                Crear Liga
-              </Button>
-              <Button 
-                onClick={() => setCurrentView("matches")}
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Ver Partidos
-              </Button>
-            </div>
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <Card key={index} className="relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {stat.title}
+                  </CardTitle>
+                  <div className={`h-8 w-8 rounded-full bg-gradient-to-r ${stat.color} flex items-center justify-center`}>
+                    <stat.icon className="h-4 w-4 text-white" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stat.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 
-  const renderPlaceholder = (title: string, description: string) => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
-      
-      <Card className="border-0 shadow-lg">
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Próximamente disponible</h3>
-            <p className="text-muted-foreground">
-              Esta funcionalidad se implementará en las siguientes fases del desarrollo.
-            </p>
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Partidos Próximos
+                </CardTitle>
+                <CardDescription>
+                  {pendingMatches.length} partidos pendientes de jugar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={() => setActiveTab("matches")}
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+                >
+                  Ver Partidos
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Clasificaciones
+                </CardTitle>
+                <CardDescription>
+                  Consulta las tablas de posiciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={() => setActiveTab("standings")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Ver Clasificaciones
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50">
-      <div className="flex w-full">
-        <Sidebar currentView={currentView} onViewChange={setCurrentView} />
-        <main className="flex-1 p-6 overflow-hidden">
-          {currentView === "dashboard" && renderDashboard()}
-          {currentView === "players" && <PlayersPage />}
-          {currentView === "leagues" && <LeaguesPage />}
-          {currentView === "matches" && <MatchesPage />}
-          {currentView === "standings" && renderPlaceholder("Clasificaciones", "Consulta las tablas de posiciones")}
-        </main>
-      </div>
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Actividad Reciente</CardTitle>
+              <CardDescription>
+                Últimos movimientos en el sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {activeLeagues.length > 0 ? (
+                  activeLeagues.slice(0, 3).map((league) => (
+                    <div key={league.id} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                      <Award className="h-5 w-5 text-green-600" />
+                      <div className="flex-1">
+                        <p className="font-medium">{league.name}</p>
+                        <p className="text-sm text-muted-foreground">Liga activa</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No hay actividad reciente
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="players">
+          <PlayersList />
+        </TabsContent>
+
+        <TabsContent value="teams">
+          <TeamsList />
+        </TabsContent>
+
+        <TabsContent value="leagues">
+          <LeaguesList />
+        </TabsContent>
+
+        <TabsContent value="matches">
+          <MatchesPage />
+        </TabsContent>
+
+        <TabsContent value="standings">
+          <StandingsPage />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
