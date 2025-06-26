@@ -2,11 +2,14 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { usePlayers } from "@/hooks/usePlayers";
-import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration } from "@/hooks/useLeaguePlayers";
+import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration, useLeaguePlayers } from "@/hooks/useLeaguePlayers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Calendar, Trophy, Users, Euro } from "lucide-react";
+import { UserPlus, Calendar, Trophy, Users, Euro, Settings } from "lucide-react";
+import PaymentIntegration from "@/components/PaymentIntegration";
+import MatchGenerator from "@/components/MatchGenerator";
+import LeaguePlayersTable from "@/components/LeaguePlayersTable";
 
 const LeaguePlayersPage = () => {
   const { user, isAdmin } = useAuth();
@@ -80,7 +83,7 @@ const LeaguePlayersPage = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {availableLeagues.map((league) => (
             <LeagueRegistrationCard
               key={league.id}
@@ -91,6 +94,15 @@ const LeaguePlayersPage = () => {
               isLoading={registerForLeague.isPending || withdrawFromLeague.isPending}
               isAdmin={isAdmin}
             />
+          ))}
+        </div>
+      )}
+
+      {isAdmin && availableLeagues.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">Administración de Ligas</h2>
+          {availableLeagues.map((league) => (
+            <LeagueAdminSection key={league.id} league={league} />
           ))}
         </div>
       )}
@@ -166,7 +178,7 @@ const LeagueRegistrationCard = ({
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col justify-between">
+      <CardContent className="flex-1 flex flex-col justify-between space-y-4">
         <div className="space-y-3">
           <div className="text-sm">
             <p><strong>Puntos victoria:</strong> {league.points_victory}</p>
@@ -182,17 +194,26 @@ const LeagueRegistrationCard = ({
               {getRegistrationStatus()}
             </div>
           )}
+
+          {!isFree && registration?.status === 'pending' && !isAdmin && (
+            <PaymentIntegration
+              leagueId={league.id}
+              leagueName={league.name}
+              price={league.registration_price}
+              onPaymentSuccess={() => onRegister(league.id)}
+            />
+          )}
         </div>
 
-        <div className="mt-4">
+        <div className="space-y-2">
           {isAdmin ? (
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => {/* Navigate to league players management */}}
+              onClick={() => {/* Navigate to specific league management */}}
             >
-              <Users className="h-4 w-4 mr-2" />
-              Gestionar Inscripciones
+              <Settings className="h-4 w-4 mr-2" />
+              Administrar Liga
             </Button>
           ) : !registration ? (
             <Button
@@ -230,6 +251,55 @@ const LeagueRegistrationCard = ({
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+interface LeagueAdminSectionProps {
+  league: any;
+}
+
+const LeagueAdminSection = ({ league }: LeagueAdminSectionProps) => {
+  const { data: leaguePlayers } = useLeaguePlayers(league.id);
+  const approvedPlayers = leaguePlayers?.filter(lp => lp.status === 'approved').length || 0;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">{league.name}</h3>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MatchGenerator
+          leagueId={league.id}
+          leagueName={league.name}
+          approvedPlayers={approvedPlayers}
+        />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumen de Inscripciones</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Total inscripciones:</span>
+                <Badge>{leaguePlayers?.length || 0}</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Aprobadas:</span>
+                <Badge className="bg-green-100 text-green-800">{approvedPlayers}</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>Pendientes:</span>
+                <Badge variant="secondary">
+                  {leaguePlayers?.filter(lp => lp.status === 'pending').length || 0}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <LeaguePlayersTable leagueId={league.id} leagueName={league.name} />
+    </div>
   );
 };
 
