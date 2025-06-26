@@ -59,6 +59,11 @@ const Index = () => {
     }
   ];
 
+  const handleEditLeague = () => {
+    // Navigate to leagues tab for editing
+    setActiveTab("leagues");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -188,7 +193,7 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="leagues">
-          <LeaguesList />
+          <LeaguesList onEditLeague={handleEditLeague} />
         </TabsContent>
 
         <TabsContent value="matches">
