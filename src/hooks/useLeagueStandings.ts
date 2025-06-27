@@ -3,23 +3,24 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { LeagueStanding } from '@/types/padel';
 
-export const useLeagueStandings = (leagueId?: string) => {
+export const useLeagueStandings = (leagueId: string) => {
   return useQuery({
     queryKey: ['league-standings', leagueId],
     queryFn: async () => {
       if (!leagueId) return [];
-      
+
       console.log('Fetching standings for league:', leagueId);
-      
+
       // Get all teams in the league with their match results
       const { data: leagueTeams, error: teamsError } = await supabase
         .from('league_teams')
         .select(`
-          team:teams (
+          team_id,
+          teams:teams!league_teams_team_id_fkey (
             id,
             name,
-            player1:players!teams_player1_id_fkey (id, name),
-            player2:players!teams_player2_id_fkey (id, name)
+            player1:profiles!teams_player1_id_fkey (id, full_name),
+            player2:profiles!teams_player2_id_fkey (id, full_name)
           )
         `)
         .eq('league_id', leagueId);
@@ -33,7 +34,7 @@ export const useLeagueStandings = (leagueId?: string) => {
         return [];
       }
 
-      // Get all matches and results for this league
+      // Get all completed matches for this league
       const { data: matches, error: matchesError } = await supabase
         .from('matches')
         .select(`
@@ -49,88 +50,96 @@ export const useLeagueStandings = (leagueId?: string) => {
       }
 
       // Calculate standings for each team
-      const standings: LeagueStanding[] = leagueTeams.map((lt) => {
-        const team = lt.team;
+      const standings: LeagueStanding[] = leagueTeams.map(lt => {
+        const team = lt.teams;
         if (!team) return null;
 
-        let matches_played = 0;
-        let matches_won = 0;
-        let matches_lost = 0;
-        let sets_for = 0;
-        let sets_against = 0;
-        let total_points = 0;
-
-        // Find all matches for this team
-        const teamMatches = matches?.filter(match => 
-          match.team1_id === team.id || match.team2_id === team.id
+        const teamMatches = matches?.filter(m => 
+          m.team1_id === team.id || m.team2_id === team.id
         ) || [];
+
+        let matchesPlayed = 0;
+        let matchesWon = 0;
+        let matchesLost = 0;
+        let setsFor = 0;
+        let setsAgainst = 0;
+        let totalPoints = 0;
 
         teamMatches.forEach(match => {
           const result = match.match_results?.[0];
           if (!result) return;
 
-          matches_played++;
+          matchesPlayed++;
+
           const isTeam1 = match.team1_id === team.id;
+          const wonMatch = result.winner_team_id === team.id;
 
-          // Count sets
-          const team_set1 = isTeam1 ? result.team1_set1 : result.team2_set1;
-          const team_set2 = isTeam1 ? result.team1_set2 : result.team2_set2;
-          const team_set3 = isTeam1 ? result.team1_set3 : result.team2_set3;
-          
-          const opponent_set1 = isTeam1 ? result.team2_set1 : result.team1_set1;
-          const opponent_set2 = isTeam1 ? result.team2_set2 : result.team1_set2;
-          const opponent_set3 = isTeam1 ? result.team2_set3 : result.team1_set3;
-
-          // Calculate sets won/lost
-          let team_sets_won = 0;
-          let opponent_sets_won = 0;
-
-          if (team_set1 > opponent_set1) team_sets_won++; else opponent_sets_won++;
-          if (team_set2 > opponent_set2) team_sets_won++; else opponent_sets_won++;
-          if (team_set3 !== null && opponent_set3 !== null) {
-            if (team_set3 > opponent_set3) team_sets_won++; else opponent_sets_won++;
-          }
-
-          sets_for += team_sets_won;
-          sets_against += opponent_sets_won;
-
-          // Determine if won or lost
-          if (result.winner_team_id === team.id) {
-            matches_won++;
+          if (wonMatch) {
+            matchesWon++;
           } else {
-            matches_lost++;
+            matchesLost++;
           }
 
-          // Add points
-          const team_points = isTeam1 ? result.points_team1 : result.points_team2;
-          total_points += team_points;
+          // Calculate sets
+          let teamSets = 0;
+          let opponentSets = 0;
+
+          if (isTeam1) {
+            teamSets += result.team1_set1 > result.team2_set1 ? 1 : 0;
+            teamSets += result.team1_set2 > result.team2_set2 ? 1 : 0;
+            if (result.team1_set3 !== null && result.team2_set3 !== null) {
+              teamSets += result.team1_set3 > result.team2_set3 ? 1 : 0;
+            }
+
+            opponentSets += result.team2_set1 > result.team1_set1 ? 1 : 0;
+            opponentSets += result.team2_set2 > result.team1_set2 ? 1 : 0;
+            if (result.team1_set3 !== null && result.team2_set3 !== null) {
+              opponentSets += result.team2_set3 > result.team1_set3 ? 1 : 0;
+            }
+
+            totalPoints += result.points_team1;
+          } else {
+            teamSets += result.team2_set1 > result.team1_set1 ? 1 : 0;
+            teamSets += result.team2_set2 > result.team1_set2 ? 1 : 0;
+            if (result.team1_set3 !== null && result.team2_set3 !== null) {
+              teamSets += result.team2_set3 > result.team1_set3 ? 1 : 0;
+            }
+
+            opponentSets += result.team1_set1 > result.team2_set1 ? 1 : 0;
+            opponentSets += result.team1_set2 > result.team2_set2 ? 1 : 0;
+            if (result.team1_set3 !== null && result.team2_set3 !== null) {
+              opponentSets += result.team1_set3 > result.team2_set3 ? 1 : 0;
+            }
+
+            totalPoints += result.points_team2;
+          }
+
+          setsFor += teamSets;
+          setsAgainst += opponentSets;
         });
 
         return {
           team_id: team.id,
           team_name: team.name,
-          player1_name: team.player1?.name || '',
-          player2_name: team.player2?.name || '',
-          matches_played,
-          matches_won,
-          matches_lost,
-          sets_for,
-          sets_against,
-          set_difference: sets_for - sets_against,
-          total_points,
+          player1_name: team.player1?.full_name || '',
+          player2_name: team.player2?.full_name || '',
+          matches_played: matchesPlayed,
+          matches_won: matchesWon,
+          matches_lost: matchesLost,
+          sets_for: setsFor,
+          sets_against: setsAgainst,
+          set_difference: setsFor - setsAgainst,
+          total_points: totalPoints,
           position: 0, // Will be calculated after sorting
         };
       }).filter(Boolean) as LeagueStanding[];
 
-      // Sort by points (desc), then by set difference (desc), then by sets for (desc)
+      // Sort by total points (descending), then by set difference (descending)
       standings.sort((a, b) => {
         if (b.total_points !== a.total_points) {
           return b.total_points - a.total_points;
         }
-        if (b.set_difference !== a.set_difference) {
-          return b.set_difference - a.set_difference;
-        }
-        return b.sets_for - a.sets_for;
+        return b.set_difference - a.set_difference;
       });
 
       // Assign positions
@@ -138,7 +147,7 @@ export const useLeagueStandings = (leagueId?: string) => {
         standing.position = index + 1;
       });
 
-      console.log('Standings calculated:', standings);
+      console.log('Calculated standings:', standings);
       return standings;
     },
     enabled: !!leagueId,

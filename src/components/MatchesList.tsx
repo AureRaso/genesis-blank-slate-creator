@@ -69,10 +69,10 @@ const MatchesList = ({ leagueId, onSignUp }: MatchesListProps) => {
     const matchesSearch = !searchTerm || 
       match.team1?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       match.team2?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.team1?.player1?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.team1?.player2?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.team2?.player1?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.team2?.player2?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      match.team1?.player1?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.team1?.player2?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.team2?.player1?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.team2?.player2?.full_name.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || match.status === statusFilter;
     const matchesRound = roundFilter === "all" || match.round.toString() === roundFilter;

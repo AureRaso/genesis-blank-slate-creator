@@ -18,8 +18,8 @@ const LeaguePlayersTable = ({ leagueId, leagueName }: LeaguePlayersTableProps) =
   const { data: leaguePlayers, isLoading } = useLeaguePlayers(leagueId);
   const updatePlayerStatus = useUpdatePlayerStatus();
 
-  const handleStatusUpdate = (playerId: string, status: 'approved' | 'rejected') => {
-    updatePlayerStatus.mutate({ leagueId, playerId, status });
+  const handleStatusUpdate = (profileId: string, status: 'approved' | 'rejected') => {
+    updatePlayerStatus.mutate({ leagueId, profileId, status });
   };
 
   const getStatusIcon = (status: string) => {
@@ -91,12 +91,12 @@ const LeaguePlayersTable = ({ leagueId, leagueName }: LeaguePlayersTableProps) =
               {leaguePlayers.map((registration) => (
                 <TableRow key={registration.id}>
                   <TableCell className="font-medium">
-                    {registration.player?.name}
+                    {registration.profile?.full_name}
                   </TableCell>
-                  <TableCell>{registration.player?.email}</TableCell>
+                  <TableCell>{registration.profile?.email}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      Nivel {registration.player?.level}
+                      Nivel {registration.profile?.level}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -115,7 +115,7 @@ const LeaguePlayersTable = ({ leagueId, leagueName }: LeaguePlayersTableProps) =
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusUpdate(registration.player_id, 'approved')}
+                            onClick={() => handleStatusUpdate(registration.profile_id, 'approved')}
                             disabled={updatePlayerStatus.isPending}
                             className="text-green-600 hover:text-green-700"
                           >
@@ -125,7 +125,7 @@ const LeaguePlayersTable = ({ leagueId, leagueName }: LeaguePlayersTableProps) =
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusUpdate(registration.player_id, 'rejected')}
+                            onClick={() => handleStatusUpdate(registration.profile_id, 'rejected')}
                             disabled={updatePlayerStatus.isPending}
                             className="text-red-600 hover:text-red-700"
                           >

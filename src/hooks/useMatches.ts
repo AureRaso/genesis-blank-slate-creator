@@ -17,14 +17,14 @@ export const useMatches = (leagueId?: string) => {
           team1:teams!matches_team1_id_fkey (
             id,
             name,
-            player1:players!teams_player1_id_fkey (id, name, email),
-            player2:players!teams_player2_id_fkey (id, name, email)
+            player1:profiles!teams_player1_id_fkey (id, full_name, email),
+            player2:profiles!teams_player2_id_fkey (id, full_name, email)
           ),
           team2:teams!matches_team2_id_fkey (
             id,
             name,
-            player1:players!teams_player1_id_fkey (id, name, email),
-            player2:players!teams_player2_id_fkey (id, name, email)
+            player1:profiles!teams_player1_id_fkey (id, full_name, email),
+            player2:profiles!teams_player2_id_fkey (id, full_name, email)
           ),
           league:leagues!matches_league_id_fkey (id, name),
           match_results (*)

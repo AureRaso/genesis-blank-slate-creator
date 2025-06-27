@@ -131,7 +131,7 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
                   <SelectContent>
                     {userTeams.map((lt) => (
                       <SelectItem key={lt.team_id} value={lt.team_id}>
-                        {lt.teams?.name} ({lt.teams?.player1?.name} & {lt.teams?.player2?.name})
+                        {lt.teams?.name} ({lt.teams?.player1?.full_name} & {lt.teams?.player2?.full_name})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -147,7 +147,7 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
                   <SelectContent>
                     {opponentTeams.map((lt) => (
                       <SelectItem key={lt.team_id} value={lt.team_id}>
-                        {lt.teams?.name} ({lt.teams?.player1?.name} & {lt.teams?.player2?.name})
+                        {lt.teams?.name} ({lt.teams?.player1?.full_name} & {lt.teams?.player2?.full_name})
                       </SelectItem>
                     ))}
                   </SelectContent>

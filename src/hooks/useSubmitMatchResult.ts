@@ -24,13 +24,13 @@ export const useSubmitMatchResult = () => {
           league:leagues!matches_league_id_fkey (*),
           team1:teams!matches_team1_id_fkey (
             id,
-            player1:players!teams_player1_id_fkey (email),
-            player2:players!teams_player2_id_fkey (email)
+            player1:profiles!teams_player1_id_fkey (email),
+            player2:profiles!teams_player2_id_fkey (email)
           ),
           team2:teams!matches_team2_id_fkey (
             id,
-            player1:players!teams_player1_id_fkey (email),
-            player2:players!teams_player2_id_fkey (email)
+            player1:profiles!teams_player1_id_fkey (email),
+            player2:profiles!teams_player2_id_fkey (email)
           )
         `)
         .eq('id', result.match_id)

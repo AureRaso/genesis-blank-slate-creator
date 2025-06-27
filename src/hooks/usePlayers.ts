@@ -27,22 +27,58 @@ export const useCreatePlayer = () => {
   
   return useMutation({
     mutationFn: async (player: { name: string; email: string; level: number }) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          full_name: player.name,
-          email: player.email,
-          level: player.level,
-          role: 'player'
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error creating player:', error);
-        throw error;
+      // Generate a UUID for the new profile
+      const { data: { user }, error: authError } = await supabase.auth.signUp({
+        email: player.email,
+        password: Math.random().toString(36).slice(-8), // Temporary password
+        options: {
+          data: {
+            full_name: player.name,
+          }
+        }
+      });
+
+      if (authError && authError.message !== 'User already registered') {
+        throw authError;
       }
-      return data;
+
+      // If user already exists, insert directly into profiles
+      if (authError?.message === 'User already registered') {
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert({
+            email: player.email,
+            full_name: player.name,
+            level: player.level,
+            role: 'player'
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error creating player profile:', error);
+          throw error;
+        }
+        return data;
+      }
+
+      // Update the profile with level if user was created
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({
+            level: player.level,
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error updating player profile:', error);
+          throw error;
+        }
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['players'] });

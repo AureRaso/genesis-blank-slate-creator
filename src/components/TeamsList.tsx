@@ -56,10 +56,10 @@ const TeamsList = () => {
                   <h3 className="font-medium">{team.name}</h3>
                   <div className="flex gap-2 mt-2">
                     <Badge variant="outline">
-                      {team.player1.name}
+                      {team.player1.full_name}
                     </Badge>
                     <Badge variant="outline">
-                      {team.player2.name}
+                      {team.player2.full_name}
                     </Badge>
                   </div>
                 </div>
