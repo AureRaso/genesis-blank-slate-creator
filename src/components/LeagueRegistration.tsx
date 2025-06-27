@@ -1,3 +1,4 @@
+
 import { UserPlus, Calendar, Trophy, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,12 +24,12 @@ const LeagueRegistration = () => {
 
   const handleRegister = (leagueId: string) => {
     if (!currentPlayer) return;
-    registerForLeague.mutate({ leagueId, playerId: currentPlayer.id });
+    registerForLeague.mutate({ leagueId, profileId: currentPlayer.id });
   };
 
   const handleWithdraw = (leagueId: string) => {
     if (!currentPlayer) return;
-    withdrawFromLeague.mutate({ leagueId, playerId: currentPlayer.id });
+    withdrawFromLeague.mutate({ leagueId, profileId: currentPlayer.id });
   };
 
   if (!currentPlayer) {
@@ -72,7 +73,7 @@ const LeagueRegistration = () => {
             <LeagueCard
               key={league.id}
               league={league}
-              playerId={currentPlayer.id}
+              profileId={currentPlayer.id}
               onRegister={handleRegister}
               onWithdraw={handleWithdraw}
               isLoading={registerForLeague.isPending || withdrawFromLeague.isPending}
@@ -86,14 +87,14 @@ const LeagueRegistration = () => {
 
 interface LeagueCardProps {
   league: any;
-  playerId: string;
+  profileId: string;
   onRegister: (leagueId: string) => void;
   onWithdraw: (leagueId: string) => void;
   isLoading: boolean;
 }
 
-const LeagueCard = ({ league, playerId, onRegister, onWithdraw, isLoading }: LeagueCardProps) => {
-  const { data: registration } = usePlayerRegistration(playerId, league.id);
+const LeagueCard = ({ league, profileId, onRegister, onWithdraw, isLoading }: LeagueCardProps) => {
+  const { data: registration } = usePlayerRegistration(profileId, league.id);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

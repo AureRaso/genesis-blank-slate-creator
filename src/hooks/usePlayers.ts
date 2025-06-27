@@ -44,6 +44,7 @@ export const useCreatePlayer = () => {
 
       // If user already exists, insert directly into profiles
       if (authError?.message === 'User already registered') {
+        // Use upsert instead of insert to avoid conflicts
         const { data, error } = await supabase
           .from('profiles')
           .upsert({
@@ -51,6 +52,8 @@ export const useCreatePlayer = () => {
             full_name: player.name,
             level: player.level,
             role: 'player'
+          }, {
+            onConflict: 'email'
           })
           .select()
           .single();

@@ -16,14 +16,14 @@ export const useLeagueTeams = (leagueId?: string) => {
           teams!league_teams_team_id_fkey (
             id,
             name,
-            player1:players!teams_player1_id_fkey (
+            player1:profiles!teams_player1_id_fkey (
               id,
-              name,
+              full_name,
               email
             ),
-            player2:players!teams_player2_id_fkey (
+            player2:profiles!teams_player2_id_fkey (
               id,
-              name,
+              full_name,
               email
             )
           )

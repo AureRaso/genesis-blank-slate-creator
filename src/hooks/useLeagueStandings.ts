@@ -130,7 +130,7 @@ export const useLeagueStandings = (leagueId: string) => {
           sets_against: setsAgainst,
           set_difference: setsFor - setsAgainst,
           total_points: totalPoints,
-          position: 0, // Will be calculated after sorting
+          position: 0,
         };
       }).filter(Boolean) as LeagueStanding[];
 
