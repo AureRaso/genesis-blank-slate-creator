@@ -14,9 +14,9 @@ export const useLeaguePlayers = (leagueId?: string) => {
         .from('league_players')
         .select(`
           *,
-          player:players (
+          profile:profiles (
             id,
-            name,
+            full_name,
             email,
             level
           )
@@ -35,16 +35,16 @@ export const useLeaguePlayers = (leagueId?: string) => {
   });
 };
 
-export const usePlayerRegistration = (playerId?: string, leagueId?: string) => {
+export const usePlayerRegistration = (profileId?: string, leagueId?: string) => {
   return useQuery({
-    queryKey: ['player-registration', playerId, leagueId],
+    queryKey: ['player-registration', profileId, leagueId],
     queryFn: async () => {
-      if (!playerId || !leagueId) return null;
+      if (!profileId || !leagueId) return null;
       
       const { data, error } = await supabase
         .from('league_players')
         .select('*')
-        .eq('player_id', playerId)
+        .eq('profile_id', profileId)
         .eq('league_id', leagueId)
         .maybeSingle();
 
@@ -55,7 +55,7 @@ export const usePlayerRegistration = (playerId?: string, leagueId?: string) => {
 
       return data;
     },
-    enabled: !!playerId && !!leagueId,
+    enabled: !!profileId && !!leagueId,
   });
 };
 
@@ -64,11 +64,11 @@ export const useRegisterForLeague = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ leagueId, playerId }: { leagueId: string; playerId: string }) => {
-      console.log('Registering player for league:', { leagueId, playerId });
+    mutationFn: async ({ leagueId, profileId }: { leagueId: string; profileId: string }) => {
+      console.log('Registering profile for league:', { leagueId, profileId });
       const { data, error } = await supabase
         .from('league_players')
-        .insert([{ league_id: leagueId, player_id: playerId, status: 'approved' }])
+        .insert([{ league_id: leagueId, profile_id: profileId, status: 'approved' }])
         .select()
         .single();
 
@@ -77,7 +77,7 @@ export const useRegisterForLeague = () => {
         throw error;
       }
 
-      console.log('Player registered for league:', data);
+      console.log('Profile registered for league:', data);
       return data;
     },
     onSuccess: (_, variables) => {
@@ -104,20 +104,20 @@ export const useWithdrawFromLeague = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ leagueId, playerId }: { leagueId: string; playerId: string }) => {
-      console.log('Withdrawing player from league:', { leagueId, playerId });
+    mutationFn: async ({ leagueId, profileId }: { leagueId: string; profileId: string }) => {
+      console.log('Withdrawing profile from league:', { leagueId, profileId });
       const { error } = await supabase
         .from('league_players')
         .delete()
         .eq('league_id', leagueId)
-        .eq('player_id', playerId);
+        .eq('profile_id', profileId);
 
       if (error) {
         console.error('Error withdrawing from league:', error);
         throw error;
       }
 
-      console.log('Player withdrawn from league');
+      console.log('Profile withdrawn from league');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['league-players', variables.leagueId] });
@@ -145,19 +145,19 @@ export const useUpdatePlayerStatus = () => {
   return useMutation({
     mutationFn: async ({ 
       leagueId, 
-      playerId, 
+      profileId, 
       status 
     }: { 
       leagueId: string; 
-      playerId: string; 
+      profileId: string; 
       status: 'approved' | 'rejected' 
     }) => {
-      console.log('Updating player status:', { leagueId, playerId, status });
+      console.log('Updating player status:', { leagueId, profileId, status });
       const { data, error } = await supabase
         .from('league_players')
         .update({ status })
         .eq('league_id', leagueId)
-        .eq('player_id', playerId)
+        .eq('profile_id', profileId)
         .select()
         .single();
 

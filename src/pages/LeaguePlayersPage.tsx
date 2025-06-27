@@ -1,6 +1,6 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
-import { usePlayers } from "@/hooks/usePlayers";
 import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration, useLeaguePlayers } from "@/hooks/useLeaguePlayers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,30 +11,26 @@ import MatchGenerator from "@/components/MatchGenerator";
 import LeaguePlayersTable from "@/components/LeaguePlayersTable";
 
 const LeaguePlayersPage = () => {
-  const { user, isAdmin } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const { data: leagues } = useLeagues();
-  const { data: players } = usePlayers();
   const registerForLeague = useRegisterForLeague();
   const withdrawFromLeague = useWithdrawFromLeague();
-
-  // Find the current user's player record
-  const currentPlayer = players?.find(player => player.email === user?.email);
 
   const availableLeagues = leagues?.filter(league => 
     league.status === 'active' || league.status === 'upcoming'
   ) || [];
 
   const handleRegister = (leagueId: string) => {
-    if (!currentPlayer) return;
-    registerForLeague.mutate({ leagueId, playerId: currentPlayer.id });
+    if (!profile?.id) return;
+    registerForLeague.mutate({ leagueId, profileId: profile.id });
   };
 
   const handleWithdraw = (leagueId: string) => {
-    if (!currentPlayer) return;
-    withdrawFromLeague.mutate({ leagueId, playerId: currentPlayer.id });
+    if (!profile?.id) return;
+    withdrawFromLeague.mutate({ leagueId, profileId: profile.id });
   };
 
-  if (!currentPlayer && !isAdmin) {
+  if (!profile && !isAdmin) {
     return (
       <div className="space-y-6">
         <div>
@@ -44,10 +40,10 @@ const LeaguePlayersPage = () => {
         
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle className="text-orange-800">Perfil de Jugador Requerido</CardTitle>
+            <CardTitle className="text-orange-800">Perfil Requerido</CardTitle>
             <CardDescription className="text-orange-700">
-              Necesitas tener un perfil de jugador registrado para inscribirte en ligas. 
-              Contacta a un administrador para que te registre como jugador.
+              Necesitas tener un perfil registrado para inscribirte en ligas. 
+              Contacta a un administrador para obtener acceso.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -59,7 +55,7 @@ const LeaguePlayersPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">
-          {isAdmin ? "Gestión de Inscripciones" : "Inscripciones a Ligas"}
+          {isAdmin ? "Gestión de Inscripciones" : "Ligas Disponibles"}
         </h1>
         <p className="text-muted-foreground">
           {isAdmin 
@@ -87,7 +83,7 @@ const LeaguePlayersPage = () => {
             <LeagueRegistrationCard
               key={league.id}
               league={league}
-              playerId={currentPlayer?.id}
+              profileId={profile?.id}
               onRegister={handleRegister}
               onWithdraw={handleWithdraw}
               isLoading={registerForLeague.isPending || withdrawFromLeague.isPending}
@@ -111,7 +107,7 @@ const LeaguePlayersPage = () => {
 
 interface LeagueRegistrationCardProps {
   league: any;
-  playerId?: string;
+  profileId?: string;
   onRegister: (leagueId: string) => void;
   onWithdraw: (leagueId: string) => void;
   isLoading: boolean;
@@ -120,13 +116,13 @@ interface LeagueRegistrationCardProps {
 
 const LeagueRegistrationCard = ({ 
   league, 
-  playerId, 
+  profileId, 
   onRegister, 
   onWithdraw, 
   isLoading,
   isAdmin 
 }: LeagueRegistrationCardProps) => {
-  const { data: registration } = usePlayerRegistration(playerId, league.id);
+  const { data: registration } = usePlayerRegistration(profileId, league.id);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

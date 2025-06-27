@@ -12,15 +12,15 @@ export const useTeams = () => {
         .from('teams')
         .select(`
           *,
-          player1:players!teams_player1_id_fkey(id, name),
-          player2:players!teams_player2_id_fkey(id, name)
+          player1:profiles!teams_player1_id_fkey(id, full_name),
+          player2:profiles!teams_player2_id_fkey(id, full_name)
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data as (Team & {
-        player1: { id: string; name: string };
-        player2: { id: string; name: string };
+        player1: { id: string; full_name: string };
+        player2: { id: string; full_name: string };
       })[];
     },
   });

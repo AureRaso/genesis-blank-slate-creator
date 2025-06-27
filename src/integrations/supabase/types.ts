@@ -14,21 +14,21 @@ export type Database = {
           created_at: string
           id: string
           league_id: string
-          player_id: string
+          profile_id: string
           status: string
         }
         Insert: {
           created_at?: string
           id?: string
           league_id: string
-          player_id: string
+          profile_id: string
           status?: string
         }
         Update: {
           created_at?: string
           id?: string
           league_id?: string
-          player_id?: string
+          profile_id?: string
           status?: string
         }
         Relationships: [
@@ -40,10 +40,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "league_players_player_id_fkey"
-            columns: ["player_id"]
+            foreignKeyName: "league_players_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_players_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]
@@ -186,7 +193,7 @@ export type Database = {
       matches: {
         Row: {
           created_at: string
-          created_by_player_id: string | null
+          created_by_profile_id: string | null
           id: string
           league_id: string
           result_approved_by_team_id: string | null
@@ -201,7 +208,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by_player_id?: string | null
+          created_by_profile_id?: string | null
           id?: string
           league_id: string
           result_approved_by_team_id?: string | null
@@ -216,7 +223,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by_player_id?: string | null
+          created_by_profile_id?: string | null
           id?: string
           league_id?: string
           result_approved_by_team_id?: string | null
@@ -231,10 +238,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "matches_created_by_player_id_fkey"
-            columns: ["created_by_player_id"]
+            foreignKeyName: "matches_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
           {
@@ -265,56 +279,39 @@ export type Database = {
           created_at: string
           id: string
           matches_created: number | null
-          player_id: string
+          profile_id: string
           week_start: string
         }
         Insert: {
           created_at?: string
           id?: string
           matches_created?: number | null
-          player_id: string
+          profile_id: string
           week_start: string
         }
         Update: {
           created_at?: string
           id?: string
           matches_created?: number | null
-          player_id?: string
+          profile_id?: string
           week_start?: string
         }
         Relationships: [
           {
-            foreignKeyName: "player_match_creation_player_id_fkey"
-            columns: ["player_id"]
+            foreignKeyName: "player_match_creation_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "players"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_match_creation_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]
-      }
-      players: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          level: number
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          level: number
-          name: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          level?: number
-          name?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -322,6 +319,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          level: number | null
           role: string
           updated_at: string
         }
@@ -330,6 +328,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          level?: number | null
           role?: string
           updated_at?: string
         }
@@ -338,6 +337,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          level?: number | null
           role?: string
           updated_at?: string
         }
@@ -365,30 +365,35 @@ export type Database = {
           player1_id?: string
           player2_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "teams_player1_id_fkey"
-            columns: ["player1_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "teams_player2_id_fkey"
-            columns: ["player2_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      public_players: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_create_match_this_week: {
-        Args: { player_id: string }
+        Args: { profile_id: string }
         Returns: boolean
       }
       has_role: {
@@ -400,7 +405,7 @@ export type Database = {
         Returns: boolean
       }
       record_match_creation: {
-        Args: { player_id: string }
+        Args: { profile_id: string }
         Returns: undefined
       }
     }

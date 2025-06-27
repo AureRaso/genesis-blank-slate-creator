@@ -9,7 +9,7 @@ export const usePlayers = () => {
     queryKey: ['players'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('players')
+        .from('public_players')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -26,10 +26,15 @@ export const useCreatePlayer = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (player: Omit<Player, 'id' | 'created_at'>) => {
+    mutationFn: async (player: { name: string; email: string; level: number }) => {
       const { data, error } = await supabase
-        .from('players')
-        .insert(player)
+        .from('profiles')
+        .insert({
+          full_name: player.name,
+          email: player.email,
+          level: player.level,
+          role: 'player'
+        })
         .select()
         .single();
       
@@ -69,10 +74,15 @@ export const useUpdatePlayer = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Player> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; email?: string; level?: number }) => {
+      const profileUpdates: any = {};
+      if (updates.name) profileUpdates.full_name = updates.name;
+      if (updates.email) profileUpdates.email = updates.email;
+      if (updates.level) profileUpdates.level = updates.level;
+
       const { data, error } = await supabase
-        .from('players')
-        .update(updates)
+        .from('profiles')
+        .update(profileUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -108,7 +118,7 @@ export const useDeletePlayer = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('players')
+        .from('profiles')
         .delete()
         .eq('id', id);
       

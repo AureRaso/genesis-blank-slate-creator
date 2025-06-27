@@ -38,7 +38,7 @@ export interface Match {
   scheduled_time?: string;
   status: "pending" | "completed";
   created_at: string;
-  created_by_player_id?: string;
+  created_by_profile_id?: string;
   result_submitted_by_team_id?: string;
   result_approved_by_team_id?: string;
   result_status?: "pending" | "submitted" | "approved" | "disputed";
@@ -76,7 +76,7 @@ export interface LeagueStanding {
 
 export interface PlayerMatchCreation {
   id: string;
-  player_id: string;
+  profile_id: string;
   week_start: string;
   matches_created: number;
   created_at: string;

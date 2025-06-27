@@ -5,25 +5,16 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useCanCreateMatch = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   
   return useQuery({
-    queryKey: ['can-create-match', user?.email],
+    queryKey: ['can-create-match', profile?.id],
     queryFn: async () => {
-      if (!user?.email) return false;
+      if (!profile?.id) return false;
       
-      // Obtener el player_id del usuario actual
-      const { data: player } = await supabase
-        .from('players')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-
-      if (!player) return false;
-
       // Llamar a la función que verifica si puede crear un partido
       const { data, error } = await supabase
-        .rpc('can_create_match_this_week', { player_id: player.id });
+        .rpc('can_create_match_this_week', { profile_id: profile.id });
 
       if (error) {
         console.error('Error checking match creation:', error);
@@ -32,14 +23,14 @@ export const useCanCreateMatch = () => {
 
       return data;
     },
-    enabled: !!user?.email,
+    enabled: !!profile?.id,
   });
 };
 
 export const useCreatePlayerMatch = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async ({ 
@@ -55,20 +46,11 @@ export const useCreatePlayerMatch = () => {
       scheduledDate?: string;
       scheduledTime?: string;
     }) => {
-      if (!user?.email) throw new Error('Usuario no autenticado');
-
-      // Obtener el player_id del usuario actual
-      const { data: player } = await supabase
-        .from('players')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-
-      if (!player) throw new Error('Jugador no encontrado');
+      if (!profile?.id) throw new Error('Usuario no autenticado');
 
       // Verificar que puede crear un partido
       const { data: canCreate } = await supabase
-        .rpc('can_create_match_this_week', { player_id: player.id });
+        .rpc('can_create_match_this_week', { profile_id: profile.id });
 
       if (!canCreate) {
         throw new Error('Ya has creado un partido esta semana');
@@ -84,7 +66,7 @@ export const useCreatePlayerMatch = () => {
           round: 1, // Los partidos creados por jugadores empiezan en ronda 1
           scheduled_date: scheduledDate,
           scheduled_time: scheduledTime,
-          created_by_player_id: player.id,
+          created_by_profile_id: profile.id,
           status: 'pending',
           result_status: 'pending'
         })
@@ -94,7 +76,7 @@ export const useCreatePlayerMatch = () => {
       if (matchError) throw matchError;
 
       // Registrar la creación del partido
-      await supabase.rpc('record_match_creation', { player_id: player.id });
+      await supabase.rpc('record_match_creation', { profile_id: profile.id });
 
       return match;
     },
