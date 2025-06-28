@@ -4,32 +4,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLeagues } from "@/hooks/useLeagues";
-import { usePlayers } from "@/hooks/usePlayers";
-import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration } from "@/hooks/useLeaguePlayers";
+import { usePlayerRegistration } from "@/hooks/useLeaguePlayers";
 import { useAuth } from "@/contexts/AuthContext";
 
-const LeagueRegistration = () => {
-  const { user } = useAuth();
-  const { data: leagues } = useLeagues();
-  const { data: players } = usePlayers();
-  const registerForLeague = useRegisterForLeague();
-  const withdrawFromLeague = useWithdrawFromLeague();
+interface LeagueRegistrationProps {
+  onRegister?: (leagueId: string, registrationPrice: number) => void;
+  onWithdraw?: (leagueId: string) => void;
+}
 
-  // Find the current user's player record
-  const currentPlayer = players?.find(player => player.email === user?.email);
+const LeagueRegistration = ({ onRegister, onWithdraw }: LeagueRegistrationProps) => {
+  const { profile: currentPlayer } = useAuth();
+  const { data: leagues } = useLeagues();
 
   const availableLeagues = leagues?.filter(league => 
     league.status === 'active' || league.status === 'upcoming'
   ) || [];
 
-  const handleRegister = (leagueId: string) => {
+  const handleRegister = (leagueId: string, registrationPrice: number) => {
     if (!currentPlayer) return;
-    registerForLeague.mutate({ leagueId, profileId: currentPlayer.id });
+    onRegister?.(leagueId, registrationPrice);
   };
 
   const handleWithdraw = (leagueId: string) => {
     if (!currentPlayer) return;
-    withdrawFromLeague.mutate({ leagueId, profileId: currentPlayer.id });
+    onWithdraw?.(leagueId);
   };
 
   if (!currentPlayer) {
@@ -76,7 +74,6 @@ const LeagueRegistration = () => {
               profileId={currentPlayer.id}
               onRegister={handleRegister}
               onWithdraw={handleWithdraw}
-              isLoading={registerForLeague.isPending || withdrawFromLeague.isPending}
             />
           ))}
         </div>
@@ -88,12 +85,11 @@ const LeagueRegistration = () => {
 interface LeagueCardProps {
   league: any;
   profileId: string;
-  onRegister: (leagueId: string) => void;
+  onRegister: (leagueId: string, registrationPrice: number) => void;
   onWithdraw: (leagueId: string) => void;
-  isLoading: boolean;
 }
 
-const LeagueCard = ({ league, profileId, onRegister, onWithdraw, isLoading }: LeagueCardProps) => {
+const LeagueCard = ({ league, profileId, onRegister, onWithdraw }: LeagueCardProps) => {
   const { data: registration } = usePlayerRegistration(profileId, league.id);
 
   const getStatusBadge = (status: string) => {
@@ -137,6 +133,7 @@ const LeagueCard = ({ league, profileId, onRegister, onWithdraw, isLoading }: Le
       <CardContent className="flex-1 flex flex-col justify-between">
         <div className="space-y-3">
           <div className="text-sm">
+            <p><strong>Precio:</strong> {league.registration_price > 0 ? `€${league.registration_price}` : 'Gratis'}</p>
             <p><strong>Puntos victoria:</strong> {league.points_victory}</p>
             <p><strong>Puntos derrota:</strong> {league.points_defeat}</p>
             {league.points_per_set && (
@@ -155,22 +152,24 @@ const LeagueCard = ({ league, profileId, onRegister, onWithdraw, isLoading }: Le
         <div className="mt-4">
           {!registration ? (
             <Button
-              onClick={() => onRegister(league.id)}
-              disabled={isLoading}
+              onClick={() => onRegister(league.id, league.registration_price)}
               className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Inscribirse
             </Button>
           ) : registration.status === 'approved' ? (
-            <Button disabled className="w-full bg-green-100 text-green-800">
+            <Button
+              onClick={() => onWithdraw(league.id)}
+              variant="outline"
+              className="w-full"
+            >
               <Users className="h-4 w-4 mr-2" />
-              Ya inscrito
+              Darse de baja
             </Button>
           ) : (
             <Button
-              onClick={() => onRegister(league.id)}
-              disabled={isLoading}
+              onClick={() => onRegister(league.id, league.registration_price)}
               className="w-full"
             >
               <UserPlus className="h-4 w-4 mr-2" />
