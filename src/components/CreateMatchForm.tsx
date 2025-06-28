@@ -183,8 +183,12 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                         const team = teamData.teams;
                         if (!team) return null;
                         
-                        const player1Name = team.player1?.full_name || 'Jugador 1';
-                        const player2Name = team.player2?.full_name || 'Jugador 2';
+                        // Acceder correctamente a los datos de los jugadores
+                        const player1 = Array.isArray(team.player1) ? team.player1[0] : team.player1;
+                        const player2 = Array.isArray(team.player2) ? team.player2[0] : team.player2;
+                        
+                        const player1Name = player1?.full_name || 'Jugador 1';
+                        const player2Name = player2?.full_name || 'Jugador 2';
                         
                         return (
                           <SelectItem key={team.id} value={team.id}>
