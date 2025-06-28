@@ -97,13 +97,23 @@ export const usePlayerMatchCreation = () => {
 
       console.log('Match created successfully:', match);
 
-      // Registrar la creación del partido
+      // Registrar la creación del partido usando la función de base de datos
+      const currentWeekStart = new Date();
+      currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1); // Get Monday
+      const weekStartString = currentWeekStart.toISOString().split('T')[0];
+      
       const { error: recordError } = await supabase
-        .rpc('record_match_creation', { _profile_id: profile.id, _week_start: new Date().toISOString().split('T')[0] });
+        .rpc('record_match_creation', { 
+          _profile_id: profile.id, 
+          _week_start: weekStartString 
+        });
 
       if (recordError) {
         console.error('Error recording match creation:', recordError);
-        // No lanzar error aquí porque el partido ya se creó
+        // No lanzar error aquí porque el partido ya se creó exitosamente
+        // Solo logear el error para debug
+      } else {
+        console.log('Match creation recorded successfully for profile:', profile.id);
       }
 
       return match;
