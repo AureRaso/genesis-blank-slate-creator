@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useLeagueStandings } from "@/hooks/useLeagueStandings";
-import { LeagueStanding } from "@/types/padel";
 
 interface LeagueStandingsTableProps {
   leagueId: string;
@@ -131,16 +130,16 @@ const LeagueStandingsTable = ({ leagueId, leagueName }: LeagueStandingsTableProp
                 <TableCell className="text-center text-red-600 font-medium">
                   {standing.matches_lost}
                 </TableCell>
-                <TableCell className="text-center">{standing.sets_for}</TableCell>
-                <TableCell className="text-center">{standing.sets_against}</TableCell>
+                <TableCell className="text-center">{standing.sets_won}</TableCell>
+                <TableCell className="text-center">{standing.sets_lost}</TableCell>
                 <TableCell className="text-center">
-                  <span className={standing.set_difference >= 0 ? "text-green-600" : "text-red-600"}>
-                    {standing.set_difference > 0 ? "+" : ""}{standing.set_difference}
+                  <span className={standing.sets_difference >= 0 ? "text-green-600" : "text-red-600"}>
+                    {standing.sets_difference > 0 ? "+" : ""}{standing.sets_difference}
                   </span>
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold">
-                    {standing.total_points}
+                    {standing.points}
                   </Badge>
                 </TableCell>
               </TableRow>

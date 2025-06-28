@@ -10,7 +10,6 @@ import PartnerSelectionModal from "./PartnerSelectionModal";
 import LeagueTeamsView from "./LeagueTeamsView";
 import LeagueHeader from "./league/LeagueHeader";
 import TeamStatusCard from "./league/TeamStatusCard";
-import PlayerLeagueTabs from "./league/PlayerLeagueTabs";
 import PlayerTeamDashboard from "./PlayerTeamDashboard";
 
 interface PlayerLeagueDetailsProps {
