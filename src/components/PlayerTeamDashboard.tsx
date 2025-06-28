@@ -36,7 +36,7 @@ const PlayerTeamDashboard = ({ league, playerTeam, partner, onBack }: PlayerTeam
     <div className="space-y-6">
       <LeagueHeader league={league} onBack={onBack} />
 
-      {/* Team Status Card */}
+      {/* Team Status Card - Pantalla alternativa */}
       <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-blue-50">
         <CardHeader>
           <CardTitle className="text-green-800 flex items-center justify-between">
@@ -61,11 +61,11 @@ const PlayerTeamDashboard = ({ league, playerTeam, partner, onBack }: PlayerTeam
               <div className="flex items-center space-x-3">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-green-500 text-white">
-                    {partner?.full_name?.charAt(0).toUpperCase() || '?'}
+                    {partner?.[0]?.full_name?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-green-800">{partner?.full_name || 'Compañero'}</p>
+                  <p className="font-semibold text-green-800">{partner?.[0]?.full_name || 'Compañero'}</p>
                   <p className="text-sm text-green-600">Tu compañero de equipo</p>
                 </div>
               </div>

@@ -10,7 +10,7 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
       
       console.log('Fetching player teams for league:', leagueId, 'profile:', profileId);
       
-      // Buscar equipos donde el jugador es player1 o player2 en esta liga
+      // Buscar equipos donde el jugador es player1 o player2 en esta liga específica
       const { data: leagueTeams, error } = await supabase
         .from('league_teams')
         .select(`
@@ -47,6 +47,50 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
       return playerTeam?.teams || null;
     },
     enabled: !!profileId && !!leagueId,
+  });
+};
+
+// Nuevo hook para obtener todos los equipos del jugador (sin filtrar por liga)
+export const usePlayerTeamsAll = (profileId?: string) => {
+  return useQuery({
+    queryKey: ['player-teams-all', profileId],
+    queryFn: async () => {
+      if (!profileId) return [];
+      
+      console.log('Fetching all player teams for profile:', profileId);
+      
+      // Buscar todos los equipos donde el jugador participa
+      const { data: teams, error } = await supabase
+        .from('teams')
+        .select(`
+          id,
+          name,
+          league_id,
+          player1:profiles!teams_player1_id_fkey (
+            id,
+            full_name,
+            email
+          ),
+          player2:profiles!teams_player2_id_fkey (
+            id,
+            full_name,
+            email
+          ),
+          league_teams!teams_id_fkey (
+            league_id
+          )
+        `)
+        .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`);
+
+      if (error) {
+        console.error('Error fetching all player teams:', error);
+        throw error;
+      }
+
+      console.log('All player teams found:', teams);
+      return teams || [];
+    },
+    enabled: !!profileId,
   });
 };
 
@@ -164,6 +208,7 @@ export const useCreateTeam = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-teams'] });
+      queryClient.invalidateQueries({ queryKey: ['player-teams-all'] });
       queryClient.invalidateQueries({ queryKey: ['available-players'] });
       queryClient.invalidateQueries({ queryKey: ['league-teams'] });
       toast({
