@@ -107,12 +107,12 @@ const LeagueStandingsTable = ({ leagueId, leagueName }: LeagueStandingsTableProp
             </TableRow>
           </TableHeader>
           <TableBody>
-            {standings.map((standing) => (
+            {standings.map((standing, index) => (
               <TableRow key={standing.team_id} className="hover:bg-muted/50">
                 <TableCell className="font-medium">
                   <div className="flex items-center space-x-2">
-                    {getPositionIcon(standing.position)}
-                    {getPositionBadge(standing.position)}
+                    {getPositionIcon(index + 1)}
+                    {getPositionBadge(index + 1)}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -133,8 +133,8 @@ const LeagueStandingsTable = ({ leagueId, leagueName }: LeagueStandingsTableProp
                 <TableCell className="text-center">{standing.sets_won}</TableCell>
                 <TableCell className="text-center">{standing.sets_lost}</TableCell>
                 <TableCell className="text-center">
-                  <span className={standing.sets_difference >= 0 ? "text-green-600" : "text-red-600"}>
-                    {standing.sets_difference > 0 ? "+" : ""}{standing.sets_difference}
+                  <span className={(standing.sets_won - standing.sets_lost) >= 0 ? "text-green-600" : "text-red-600"}>
+                    {(standing.sets_won - standing.sets_lost) > 0 ? "+" : ""}{standing.sets_won - standing.sets_lost}
                   </span>
                 </TableCell>
                 <TableCell className="text-center">

@@ -91,7 +91,7 @@ export const useLeagueStandings = (leagueId: string) => {
 
       // Process completed matches
       matches?.forEach(match => {
-        if (!match.match_results || match.match_results.length === 0) return;
+        if (!match.match_results || !Array.isArray(match.match_results) || match.match_results.length === 0) return;
         
         const result = match.match_results[0];
         const team1Id = match.team1_id;

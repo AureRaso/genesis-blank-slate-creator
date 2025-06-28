@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar, Clock, Trophy, Users, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { useApproveMatchResult } from "@/hooks/useMatchResults";
 import MatchResultForm from "./MatchResultForm";
 
 interface MatchCardProps {
@@ -17,7 +15,6 @@ interface MatchCardProps {
 const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const [showResultForm, setShowResultForm] = useState(false);
   const { user, isAdmin } = useAuth();
-  const approveResult = useApproveMatchResult();
 
   const getPlayerInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
