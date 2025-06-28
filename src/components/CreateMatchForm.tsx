@@ -86,14 +86,15 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   };
 
   // Filter available opponent teams (exclude current player's team)
+  const selectedMyTeamId = form.watch('myTeamId');
   const availableOpponentTeams = leagueTeams?.filter(teamData => {
     const team = teamData.teams;
-    const selectedMyTeamId = form.watch('myTeamId');
     return team && team.id !== selectedMyTeamId;
   }) || [];
 
+  console.log('All teams in league:', leagueTeams);
+  console.log('My team ID:', selectedMyTeamId);
   console.log('Available opponent teams:', availableOpponentTeams);
-  console.log('Selected my team ID:', form.watch('myTeamId'));
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -184,12 +185,8 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                         const team = teamData.teams;
                         if (!team) return null;
                         
-                        // Acceder correctamente a los datos de los jugadores
-                        const player1 = Array.isArray(team.player1) ? team.player1[0] : team.player1;
-                        const player2 = Array.isArray(team.player2) ? team.player2[0] : team.player2;
-                        
-                        const player1Name = player1?.full_name || 'Jugador 1';
-                        const player2Name = player2?.full_name || 'Jugador 2';
+                        const player1Name = team.player1?.full_name || 'Jugador 1';
+                        const player2Name = team.player2?.full_name || 'Jugador 2';
                         
                         return (
                           <SelectItem key={team.id} value={team.id}>
