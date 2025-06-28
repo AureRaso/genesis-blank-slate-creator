@@ -121,8 +121,8 @@ export const useLeagueStandings = (leagueId: string) => {
         return {
           team_id: team.id,
           team_name: team.name,
-          player1_name: team.player1?.full_name || '',
-          player2_name: team.player2?.full_name || '',
+          player1_name: Array.isArray(team.player1) ? team.player1[0]?.full_name || '' : team.player1?.full_name || '',
+          player2_name: Array.isArray(team.player2) ? team.player2[0]?.full_name || '' : team.player2?.full_name || '',
           matches_played: matchesPlayed,
           matches_won: matchesWon,
           matches_lost: matchesLost,

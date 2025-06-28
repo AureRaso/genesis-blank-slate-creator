@@ -8,19 +8,37 @@ export const useTeams = () => {
   return useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
+      console.log('Fetching teams...');
       const { data, error } = await supabase
         .from('teams')
         .select(`
           *,
-          player1:profiles!teams_player1_id_fkey(id, full_name),
-          player2:profiles!teams_player2_id_fkey(id, full_name)
+          player1:profiles!teams_player1_id_fkey (
+            id,
+            full_name
+          ),
+          player2:profiles!teams_player2_id_fkey (
+            id,
+            full_name
+          )
         `)
         .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching teams:', error);
+        throw error;
+      }
+
+      console.log('Teams fetched:', data);
       
-      if (error) throw error;
-      return data as (Team & {
-        player1: { id: string; full_name: string };
-        player2: { id: string; full_name: string };
+      // Transform the data to match expected type
+      return data.map(team => ({
+        ...team,
+        player1: Array.isArray(team.player1) ? team.player1[0] : team.player1,
+        player2: Array.isArray(team.player2) ? team.player2[0] : team.player2,
+      })) as (Team & { 
+        player1: { id: string; full_name: string }; 
+        player2: { id: string; full_name: string }; 
       })[];
     },
   });

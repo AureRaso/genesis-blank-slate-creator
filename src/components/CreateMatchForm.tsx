@@ -2,14 +2,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { CalendarIcon, Clock, Users, Trophy } from "lucide-react";
+import { Users } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
-import { useAuth } from "@/contexts/AuthContext";
 import { useCanCreateMatch, useCreatePlayerMatch } from "@/hooks/usePlayerMatchCreation";
+import LeagueSelector from "@/components/match/LeagueSelector";
+import TeamSelector from "@/components/match/TeamSelector";
+import ScheduleSelector from "@/components/match/ScheduleSelector";
+import PermissionCard from "@/components/match/PermissionCard";
+import LoadingCard from "@/components/match/LoadingCard";
 
 interface CreateMatchFormProps {
   onClose?: () => void;
@@ -33,13 +35,17 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
   // Filtrar equipos donde el usuario actual es miembro
   const userTeams = leagueTeams?.filter(lt => {
     const team = lt.teams;
-    return team?.player1?.email === user?.email || team?.player2?.email === user?.email;
+    const player1Email = Array.isArray(team?.player1) ? team.player1[0]?.email : team?.player1?.email;
+    const player2Email = Array.isArray(team?.player2) ? team.player2[0]?.email : team?.player2?.email;
+    return player1Email === user?.email || player2Email === user?.email;
   }) || [];
 
   // Filtrar equipos oponentes (que no incluyan al usuario)
   const opponentTeams = leagueTeams?.filter(lt => {
     const team = lt.teams;
-    return team?.player1?.email !== user?.email && team?.player2?.email !== user?.email;
+    const player1Email = Array.isArray(team?.player1) ? team.player1[0]?.email : team?.player1?.email;
+    const player2Email = Array.isArray(team?.player2) ? team.player2[0]?.email : team?.player2?.email;
+    return player1Email !== user?.email && player2Email !== user?.email;
   }) || [];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,32 +69,11 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
   };
 
   if (checkingPermission) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center py-4">
-            <div className="animate-spin h-6 w-6 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">Verificando permisos...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <LoadingCard />;
   }
 
   if (!canCreate) {
-    return (
-      <Card className="border-amber-200 bg-amber-50">
-        <CardHeader>
-          <CardTitle className="text-amber-800 flex items-center">
-            <Trophy className="h-5 w-5 mr-2" />
-            Límite de partidos alcanzado
-          </CardTitle>
-          <CardDescription className="text-amber-700">
-            Solo puedes crear un partido por semana. Ya has utilizado tu partido de esta semana.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return <PermissionCard />;
   }
 
   return (
@@ -104,76 +89,36 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="league">Liga</Label>
-            <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona una liga activa..." />
-              </SelectTrigger>
-              <SelectContent>
-                {activeLeagues.map((league) => (
-                  <SelectItem key={league.id} value={league.id}>
-                    {league.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <LeagueSelector
+            leagues={activeLeagues}
+            selectedLeagueId={selectedLeagueId}
+            onLeagueChange={setSelectedLeagueId}
+          />
 
           {selectedLeagueId && (
             <>
-              <div>
-                <Label htmlFor="team1">Tu Equipo</Label>
-                <Select value={selectedTeam1Id} onValueChange={setSelectedTeam1Id}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu equipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {userTeams.map((lt) => (
-                      <SelectItem key={lt.team_id} value={lt.team_id}>
-                        {lt.teams?.name} ({lt.teams?.player1?.full_name} & {lt.teams?.player2?.full_name})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <TeamSelector
+                label="Tu Equipo"
+                placeholder="Selecciona tu equipo..."
+                teams={userTeams}
+                selectedTeamId={selectedTeam1Id}
+                onTeamChange={setSelectedTeam1Id}
+              />
 
-              <div>
-                <Label htmlFor="team2">Equipo Oponente</Label>
-                <Select value={selectedTeam2Id} onValueChange={setSelectedTeam2Id}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el equipo oponente..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {opponentTeams.map((lt) => (
-                      <SelectItem key={lt.team_id} value={lt.team_id}>
-                        {lt.teams?.name} ({lt.teams?.player1?.full_name} & {lt.teams?.player2?.full_name})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <TeamSelector
+                label="Equipo Oponente"
+                placeholder="Selecciona el equipo oponente..."
+                teams={opponentTeams}
+                selectedTeamId={selectedTeam2Id}
+                onTeamChange={setSelectedTeam2Id}
+              />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="date">Fecha (opcional)</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="time">Hora (opcional)</Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={scheduledTime}
-                    onChange={(e) => setScheduledTime(e.target.value)}
-                  />
-                </div>
-              </div>
+              <ScheduleSelector
+                scheduledDate={scheduledDate}
+                scheduledTime={scheduledTime}
+                onDateChange={setScheduledDate}
+                onTimeChange={setScheduledTime}
+              />
 
               <div className="flex space-x-2 pt-4">
                 <Button 

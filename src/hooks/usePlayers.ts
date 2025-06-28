@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Player } from '@/types/padel';
@@ -44,16 +43,15 @@ export const useCreatePlayer = () => {
 
       // If user already exists, insert directly into profiles
       if (authError?.message === 'User already registered') {
-        // Use upsert instead of insert to avoid conflicts
+        // Use insert instead of upsert to match the database schema
         const { data, error } = await supabase
           .from('profiles')
-          .upsert({
+          .insert({
+            id: crypto.randomUUID(), // Generate a UUID for the profile
             email: player.email,
             full_name: player.name,
             level: player.level,
             role: 'player'
-          }, {
-            onConflict: 'email'
           })
           .select()
           .single();
