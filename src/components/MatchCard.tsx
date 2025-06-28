@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Calendar, Clock, Trophy, Users, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const { user, isAdmin } = useAuth();
 
   const getPlayerInitials = (name: string) => {
+    if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
@@ -77,8 +79,8 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const canSubmitResult = () => {
     if (!user?.email || match.result_status !== 'pending') return false;
     
-    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email];
-    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email];
+    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email].filter(Boolean);
+    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email].filter(Boolean);
     
     return team1Emails.includes(user.email) || team2Emails.includes(user.email);
   };
@@ -87,8 +89,8 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const canApproveResult = () => {
     if (!user?.email || match.result_status !== 'submitted') return false;
     
-    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email];
-    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email];
+    const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email].filter(Boolean);
+    const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email].filter(Boolean);
     
     // Puede aprobar si pertenece al equipo que NO envió el resultado
     if (match.result_submitted_by_team_id === match.team1_id) {
@@ -102,7 +104,6 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
 
   const handleApprove = (approve: boolean) => {
     // TODO: Implement approve result functionality
-    // approveResult.mutate({ matchId: match.id, approve });
     console.log('Approve result:', approve, 'for match:', match.id);
   };
 
@@ -129,7 +130,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
             <Trophy className="h-4 w-4 mr-1" />
-            {match.created_by_player_id ? 'Creado por jugador' : `Ronda ${match.round}`}
+            {match.created_by_profile_id ? 'Creado por jugador' : `Ronda ${match.round}`}
           </div>
         </div>
       </CardHeader>
@@ -142,19 +143,19 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
             <div className="flex -space-x-2">
               <Avatar className="h-8 w-8 border-2 border-white">
                 <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                  {getPlayerInitials(match.team1?.player1?.name || '')}
+                  {getPlayerInitials(match.team1?.player1?.full_name || '')}
                 </AvatarFallback>
               </Avatar>
               <Avatar className="h-8 w-8 border-2 border-white">
                 <AvatarFallback className="text-xs bg-gradient-to-br from-green-500 to-blue-600 text-white">
-                  {getPlayerInitials(match.team1?.player2?.name || '')}
+                  {getPlayerInitials(match.team1?.player2?.full_name || '')}
                 </AvatarFallback>
               </Avatar>
             </div>
             <div>
-              <div className="font-medium text-sm">{match.team1?.name}</div>
+              <div className="font-medium text-sm">{match.team1?.name || 'Equipo 1'}</div>
               <div className="text-xs text-muted-foreground">
-                {match.team1?.player1?.name} & {match.team1?.player2?.name}
+                {match.team1?.player1?.full_name || 'Jugador 1'} & {match.team1?.player2?.full_name || 'Jugador 2'}
               </div>
             </div>
           </div>
@@ -180,20 +181,20 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
           {/* Team 2 */}
           <div className={`flex items-center space-x-3 flex-1 justify-end ${isWinner(match.team2_id, match.match_results?.[0]) ? 'text-green-700 font-semibold' : ''}`}>
             <div className="text-right">
-              <div className="font-medium text-sm">{match.team2?.name}</div>
+              <div className="font-medium text-sm">{match.team2?.name || 'Equipo 2'}</div>
               <div className="text-xs text-muted-foreground">
-                {match.team2?.player1?.name} & {match.team2?.player2?.name}
+                {match.team2?.player1?.full_name || 'Jugador 1'} & {match.team2?.player2?.full_name || 'Jugador 2'}
               </div>
             </div>
             <div className="flex -space-x-2">
               <Avatar className="h-8 w-8 border-2 border-white">
                 <AvatarFallback className="text-xs bg-gradient-to-br from-orange-500 to-red-600 text-white">
-                  {getPlayerInitials(match.team2?.player1?.name || '')}
+                  {getPlayerInitials(match.team2?.player1?.full_name || '')}
                 </AvatarFallback>
               </Avatar>
               <Avatar className="h-8 w-8 border-2 border-white">
                 <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-                  {getPlayerInitials(match.team2?.player2?.name || '')}
+                  {getPlayerInitials(match.team2?.player2?.full_name || '')}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -238,8 +239,6 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
               <Button 
                 size="sm" 
                 onClick={() => handleApprove(true)}
-                // TODO: Re-enable when approve result functionality is implemented
-                // disabled={approveResult.isPending}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -249,8 +248,6 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
                 size="sm" 
                 variant="destructive"
                 onClick={() => handleApprove(false)}
-                // TODO: Re-enable when approve result functionality is implemented
-                // disabled={approveResult.isPending}
                 className="flex-1"
               >
                 <XCircle className="h-4 w-4 mr-2" />
@@ -270,7 +267,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
           )}
 
           {/* Botón legacy para apuntarse (solo si existe la función) */}
-          {match.status === 'pending' && onSignUp && !match.created_by_player_id && (
+          {match.status === 'pending' && onSignUp && !match.created_by_profile_id && (
             <Button 
               variant="outline" 
               size="sm" 
