@@ -105,7 +105,7 @@ export const useAvailablePlayers = (leagueId: string, currentPlayerId?: string) 
         return profile && 
                profile.id !== currentPlayerId && 
                !pairedPlayerIds.has(profile.id);
-      }).map(lp => lp.profiles) || [];
+      }).map(lp => lp.profiles).filter(Boolean) || [];
 
       console.log('Available players:', availablePlayers);
       return availablePlayers;

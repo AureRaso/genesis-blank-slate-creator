@@ -1,118 +1,104 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface SubmitMatchResultParams {
+interface MatchResultData {
   matchId: string;
-  team1Set1: number;
-  team1Set2: number;
-  team1Set3?: number;
-  team2Set1: number;
-  team2Set2: number;
-  team2Set3?: number;
-  winnerTeamId: string;
-  pointsTeam1: number;
-  pointsTeam2: number;
+  team1_set1: number;
+  team1_set2: number;
+  team1_set3?: number;
+  team2_set1: number;
+  team2_set2: number;
+  team2_set3?: number;
 }
-
-export const useCanUserSubmitResult = (matchId: string, userEmail: string) => {
-  return useQuery({
-    queryKey: ['can-submit-result', matchId, userEmail],
-    queryFn: async () => {
-      if (!matchId || !userEmail) return false;
-      
-      const { data: match } = await supabase
-        .from('matches')
-        .select(`
-          result_status,
-          team1:teams!matches_team1_id_fkey (
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
-          ),
-          team2:teams!matches_team2_id_fkey (
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
-          )
-        `)
-        .eq('id', matchId)
-        .single();
-
-      if (!match || match.result_status !== 'pending') return false;
-
-      // Check if user is part of either team
-      const team1Player1Email = match.team1?.player1?.email;
-      const team1Player2Email = match.team1?.player2?.email;
-      const team2Player1Email = match.team2?.player1?.email;
-      const team2Player2Email = match.team2?.player2?.email;
-      
-      return team1Player1Email === userEmail || 
-             team1Player2Email === userEmail || 
-             team2Player1Email === userEmail || 
-             team2Player2Email === userEmail;
-    },
-    enabled: !!matchId && !!userEmail,
-  });
-};
 
 export const useSubmitMatchResult = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (params: SubmitMatchResultParams) => {
-      console.log('Submitting match result:', params);
-
-      // First, create the match result
-      const resultData = {
-        match_id: params.matchId,
-        team1_set1: params.team1Set1,
-        team1_set2: params.team1Set2,
-        team1_set3: params.team1Set3 || null,
-        team2_set1: params.team2Set1,
-        team2_set2: params.team2Set2,
-        team2_set3: params.team2Set3 || null,
-        winner_team_id: params.winnerTeamId,
-        points_team1: params.pointsTeam1,
-        points_team2: params.pointsTeam2,
-      };
-
-      const { data: result, error: resultError } = await supabase
-        .from('match_results')
-        .insert(resultData)
-        .select()
+    mutationFn: async (data: MatchResultData) => {
+      // Primero obtener información del partido
+      const { data: match, error: matchError } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          team1:teams!matches_team1_id_fkey (
+            id,
+            player1:profiles!teams_player1_id_fkey (email),
+            player2:profiles!teams_player2_id_fkey (email)
+          ),
+          team2:teams!matches_team2_id_fkey (
+            id,
+            player1:profiles!teams_player1_id_fkey (email),
+            player2:profiles!teams_player2_id_fkey (email)
+          )
+        `)
+        .eq('id', data.matchId)
         .single();
+
+      if (matchError || !match) {
+        throw new Error('No se pudo obtener la información del partido');
+      }
+
+      // Calcular el ganador
+      const team1Sets = (data.team1_set1 > data.team2_set1 ? 1 : 0) +
+                       (data.team1_set2 > data.team2_set2 ? 1 : 0) +
+                       (data.team1_set3 && data.team2_set3 ? (data.team1_set3 > data.team2_set3 ? 1 : 0) : 0);
+
+      const team2Sets = (data.team2_set1 > data.team1_set1 ? 1 : 0) +
+                       (data.team2_set2 > data.team1_set2 ? 1 : 0) +
+                       (data.team1_set3 && data.team2_set3 ? (data.team2_set3 > data.team1_set3 ? 1 : 0) : 0);
+
+      const winner_team_id = team1Sets > team2Sets ? match.team1_id : match.team2_id;
+      const points_team1 = team1Sets > team2Sets ? 3 : 0;
+      const points_team2 = team2Sets > team1Sets ? 3 : 0;
+
+      // Crear el resultado del partido
+      const { error: resultError } = await supabase
+        .from('match_results')
+        .insert({
+          match_id: data.matchId,
+          team1_set1: data.team1_set1,
+          team1_set2: data.team1_set2,
+          team1_set3: data.team1_set3,
+          team2_set1: data.team2_set1,
+          team2_set2: data.team2_set2,
+          team2_set3: data.team2_set3,
+          winner_team_id,
+          points_team1,
+          points_team2,
+        });
 
       if (resultError) {
         console.error('Error creating match result:', resultError);
         throw resultError;
       }
 
-      // Then, update the match status
-      const { data: match, error: matchError } = await supabase
+      // Actualizar el estado del partido
+      const { error: updateError } = await supabase
         .from('matches')
-        .update({
-          result_status: 'submitted',
-          status: 'completed'
+        .update({ 
+          status: 'completed',
+          result_status: 'approved'
         })
-        .eq('id', params.matchId)
-        .select()
-        .single();
+        .eq('id', data.matchId);
 
-      if (matchError) {
-        console.error('Error updating match:', matchError);
-        throw matchError;
+      if (updateError) {
+        console.error('Error updating match status:', updateError);
+        throw updateError;
       }
 
-      console.log('Match result submitted successfully');
-      return { result, match };
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['match-results'] });
+      queryClient.invalidateQueries({ queryKey: ['league-standings'] });
       toast({
         title: "Resultado enviado",
-        description: "El resultado ha sido enviado y está esperando aprobación del otro equipo.",
+        description: "El resultado del partido ha sido registrado correctamente.",
       });
     },
     onError: (error) => {
