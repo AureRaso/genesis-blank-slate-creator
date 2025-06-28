@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useApproveMatchResult } from "@/hooks/useApproveMatchResult";
 import MatchResultForm from "./MatchResultForm";
 
 interface MatchCardProps {
@@ -16,6 +17,7 @@ interface MatchCardProps {
 const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   const [showResultForm, setShowResultForm] = useState(false);
   const { user, isAdmin } = useAuth();
+  const approveResult = useApproveMatchResult();
 
   const getPlayerInitials = (name: string) => {
     if (!name) return '?';
@@ -102,9 +104,8 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
     return false;
   };
 
-  const handleApprove = (approve: boolean) => {
-    // TODO: Implement approve result functionality
-    console.log('Approve result:', approve, 'for match:', match.id);
+  const handleApprove = async (approve: boolean) => {
+    await approveResult.mutateAsync({ matchId: match.id, approve });
   };
 
   if (showResultForm) {
@@ -239,6 +240,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
               <Button 
                 size="sm" 
                 onClick={() => handleApprove(true)}
+                disabled={approveResult.isPending}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -248,6 +250,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
                 size="sm" 
                 variant="destructive"
                 onClick={() => handleApprove(false)}
+                disabled={approveResult.isPending}
                 className="flex-1"
               >
                 <XCircle className="h-4 w-4 mr-2" />
@@ -266,7 +269,7 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
             </div>
           )}
 
-          {/* Botón legacy para apuntarse (solo si existe la función) */}
+          {/* Botón legacy para apuntarse */}
           {match.status === 'pending' && onSignUp && !match.created_by_profile_id && (
             <Button 
               variant="outline" 
