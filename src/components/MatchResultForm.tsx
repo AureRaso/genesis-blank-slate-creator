@@ -11,7 +11,7 @@ import { Trophy, ArrowLeft } from "lucide-react";
 import { useSubmitMatchResult } from "@/hooks/useSubmitMatchResult";
 
 const formSchema = z.object({
-  team1Set1: z.number().min(0).max(7),
+  team1_set1: z.number().min(0).max(7),
   team1Set2: z.number().min(0).max(7),
   team1Set3: z.number().min(0).max(7).optional(),
   team2Set1: z.number().min(0).max(7),
@@ -20,13 +20,13 @@ const formSchema = z.object({
 }).refine((data) => {
   // Validate that there's a valid winner
   const team1Sets = [
-    data.team1Set1 > data.team2Set1 ? 1 : 0,
+    data.team1_set1 > data.team2Set1 ? 1 : 0,
     data.team1Set2 > data.team2Set2 ? 1 : 0,
     data.team1Set3 !== undefined && data.team2Set3 !== undefined ? (data.team1Set3 > data.team2Set3 ? 1 : 0) : 0
   ].reduce((a, b) => a + b, 0);
   
   const team2Sets = [
-    data.team2Set1 > data.team1Set1 ? 1 : 0,
+    data.team2Set1 > data.team1_set1 ? 1 : 0,
     data.team2Set2 > data.team1Set2 ? 1 : 0,
     data.team2Set3 !== undefined && data.team1Set3 !== undefined ? (data.team2Set3 > data.team1Set3 ? 1 : 0) : 0
   ].reduce((a, b) => a + b, 0);
@@ -47,7 +47,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      team1Set1: 0,
+      team1_set1: 0,
       team1Set2: 0,
       team1Set3: undefined,
       team2Set1: 0,
@@ -59,13 +59,13 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Calculate winner
     const team1Sets = [
-      values.team1Set1 > values.team2Set1 ? 1 : 0,
+      values.team1_set1 > values.team2Set1 ? 1 : 0,
       values.team1Set2 > values.team2Set2 ? 1 : 0,
       values.team1Set3 !== undefined && values.team2Set3 !== undefined ? (values.team1Set3 > values.team2Set3 ? 1 : 0) : 0
     ].reduce((a, b) => a + b, 0);
     
     const team2Sets = [
-      values.team2Set1 > values.team1Set1 ? 1 : 0,
+      values.team2Set1 > values.team1_set1 ? 1 : 0,
       values.team2Set2 > values.team1Set2 ? 1 : 0,
       values.team2Set3 !== undefined && values.team1Set3 !== undefined ? (values.team2Set3 > values.team1Set3 ? 1 : 0) : 0
     ].reduce((a, b) => a + b, 0);
@@ -78,7 +78,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
 
     await submitResult.mutateAsync({
       matchId: match.id,
-      team1Set1: values.team1Set1,
+      team1_set1: values.team1_set1,
       team1Set2: values.team1Set2,
       team1Set3: values.team1Set3,
       team2Set1: values.team2Set1,
@@ -120,7 +120,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               <div className="flex items-center justify-center">Set 1</div>
               <FormField
                 control={form.control}
-                name="team1Set1"
+                name="team1_set1"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
