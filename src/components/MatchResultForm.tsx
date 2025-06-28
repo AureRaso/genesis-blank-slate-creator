@@ -11,24 +11,24 @@ import { Trophy, ArrowLeft } from "lucide-react";
 import { useSubmitMatchResult } from "@/hooks/useSubmitMatchResult";
 
 const formSchema = z.object({
-  team1Set1: z.number().min(0).max(7),
-  team1Set2: z.number().min(0).max(7),
-  team1Set3: z.number().min(0).max(7).optional(),
-  team2Set1: z.number().min(0).max(7),
-  team2Set2: z.number().min(0).max(7),
-  team2Set3: z.number().min(0).max(7).optional(),
+  team1_set1: z.number().min(0).max(7),
+  team1_set2: z.number().min(0).max(7),
+  team1_set3: z.number().min(0).max(7).optional(),
+  team2_set1: z.number().min(0).max(7),
+  team2_set2: z.number().min(0).max(7),
+  team2_set3: z.number().min(0).max(7).optional(),
 }).refine((data) => {
   // Validate that there's a valid winner
   const team1Sets = [
-    data.team1Set1 > data.team2Set1 ? 1 : 0,
-    data.team1Set2 > data.team2Set2 ? 1 : 0,
-    data.team1Set3 !== undefined && data.team2Set3 !== undefined ? (data.team1Set3 > data.team2Set3 ? 1 : 0) : 0
+    data.team1_set1 > data.team2_set1 ? 1 : 0,
+    data.team1_set2 > data.team2_set2 ? 1 : 0,
+    data.team1_set3 !== undefined && data.team2_set3 !== undefined ? (data.team1_set3 > data.team2_set3 ? 1 : 0) : 0
   ].reduce((a, b) => a + b, 0);
   
   const team2Sets = [
-    data.team2Set1 > data.team1Set1 ? 1 : 0,
-    data.team2Set2 > data.team1Set2 ? 1 : 0,
-    data.team2Set3 !== undefined && data.team1Set3 !== undefined ? (data.team2Set3 > data.team1Set3 ? 1 : 0) : 0
+    data.team2_set1 > data.team1_set1 ? 1 : 0,
+    data.team2_set2 > data.team1_set2 ? 1 : 0,
+    data.team2_set3 !== undefined && data.team1_set3 !== undefined ? (data.team2_set3 > data.team1_set3 ? 1 : 0) : 0
   ].reduce((a, b) => a + b, 0);
   
   return team1Sets !== team2Sets; // Must have a clear winner
@@ -47,27 +47,27 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      team1Set1: 0,
-      team1Set2: 0,
-      team1Set3: undefined,
-      team2Set1: 0,
-      team2Set2: 0,
-      team2Set3: undefined,
+      team1_set1: 0,
+      team1_set2: 0,
+      team1_set3: undefined,
+      team2_set1: 0,
+      team2_set2: 0,
+      team2_set3: undefined,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Calculate winner
     const team1Sets = [
-      values.team1Set1 > values.team2Set1 ? 1 : 0,
-      values.team1Set2 > values.team2Set2 ? 1 : 0,
-      values.team1Set3 !== undefined && values.team2Set3 !== undefined ? (values.team1Set3 > values.team2Set3 ? 1 : 0) : 0
+      values.team1_set1 > values.team2_set1 ? 1 : 0,
+      values.team1_set2 > values.team2_set2 ? 1 : 0,
+      values.team1_set3 !== undefined && values.team2_set3 !== undefined ? (values.team1_set3 > values.team2_set3 ? 1 : 0) : 0
     ].reduce((a, b) => a + b, 0);
     
     const team2Sets = [
-      values.team2Set1 > values.team1Set1 ? 1 : 0,
-      values.team2Set2 > values.team1Set2 ? 1 : 0,
-      values.team2Set3 !== undefined && values.team1Set3 !== undefined ? (values.team2Set3 > values.team1Set3 ? 1 : 0) : 0
+      values.team2_set1 > values.team1_set1 ? 1 : 0,
+      values.team2_set2 > values.team1_set2 ? 1 : 0,
+      values.team2_set3 !== undefined && values.team1_set3 !== undefined ? (values.team2_set3 > values.team1_set3 ? 1 : 0) : 0
     ].reduce((a, b) => a + b, 0);
 
     const winnerTeamId = team1Sets > team2Sets ? match.team1_id : match.team2_id;
@@ -78,12 +78,12 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
 
     await submitResult.mutateAsync({
       matchId: match.id,
-      team1Set1: values.team1Set1,
-      team1Set2: values.team1Set2,
-      team1Set3: values.team1Set3,
-      team2Set1: values.team2Set1,
-      team2Set2: values.team2Set2,
-      team2Set3: values.team2Set3,
+      team1_set1: values.team1_set1,
+      team1_set2: values.team1_set2,
+      team1_set3: values.team1_set3,
+      team2_set1: values.team2_set1,
+      team2_set2: values.team2_set2,
+      team2_set3: values.team2_set3,
       winnerTeamId,
       pointsTeam1,
       pointsTeam2,
@@ -120,7 +120,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               <div className="flex items-center justify-center">Set 1</div>
               <FormField
                 control={form.control}
-                name="team1Set1"
+                name="team1_set1"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -139,7 +139,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="team2Set1"
+                name="team2_set1"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -161,7 +161,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               <div className="flex items-center justify-center">Set 2</div>
               <FormField
                 control={form.control}
-                name="team1Set2"
+                name="team1_set2"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -180,7 +180,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="team2Set2"
+                name="team2_set2"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -202,7 +202,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               <div className="flex items-center justify-center">Set 3 (Opcional)</div>
               <FormField
                 control={form.control}
-                name="team1Set3"
+                name="team1_set3"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -222,7 +222,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
               />
               <FormField
                 control={form.control}
-                name="team2Set3"
+                name="team2_set3"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>

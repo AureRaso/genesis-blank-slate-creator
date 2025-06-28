@@ -59,7 +59,7 @@ export const useCanUserSubmitResult = (matchId: string) => {
           )
         `)
         .eq('id', matchId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking match permissions:', error);
@@ -79,5 +79,47 @@ export const useCanUserSubmitResult = (matchId: string) => {
       return isInTeam1 || isInTeam2;
     },
     enabled: !!matchId && !!profile?.id,
+  });
+};
+
+export const useApproveMatchResult = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ matchId, approve }: { matchId: string; approve: boolean }) => {
+      const { error } = await supabase
+        .from('matches')
+        .update({
+          result_status: approve ? 'approved' : 'disputed',
+          status: approve ? 'completed' : 'pending'
+        })
+        .eq('id', matchId);
+
+      if (error) {
+        console.error('Error approving match result:', error);
+        throw error;
+      }
+
+      return { success: true };
+    },
+    onSuccess: (_, { approve }) => {
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['match-results'] });
+      toast({
+        title: approve ? "Resultado aprobado" : "Resultado disputado",
+        description: approve 
+          ? "El resultado ha sido aprobado correctamente." 
+          : "El resultado ha sido marcado como disputado.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error processing match result:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo procesar la acción. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    },
   });
 };
