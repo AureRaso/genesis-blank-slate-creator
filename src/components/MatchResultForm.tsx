@@ -57,25 +57,6 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Calculate winner
-    const team1Sets = [
-      values.team1_set1 > values.team2_set1 ? 1 : 0,
-      values.team1_set2 > values.team2_set2 ? 1 : 0,
-      values.team1_set3 !== undefined && values.team2_set3 !== undefined ? (values.team1_set3 > values.team2_set3 ? 1 : 0) : 0
-    ].reduce((a, b) => a + b, 0);
-    
-    const team2Sets = [
-      values.team2_set1 > values.team1_set1 ? 1 : 0,
-      values.team2_set2 > values.team1_set2 ? 1 : 0,
-      values.team2_set3 !== undefined && values.team1_set3 !== undefined ? (values.team2_set3 > values.team1_set3 ? 1 : 0) : 0
-    ].reduce((a, b) => a + b, 0);
-
-    const winnerTeamId = team1Sets > team2Sets ? match.team1_id : match.team2_id;
-
-    // Calculate points (this would depend on your league scoring system)
-    const pointsTeam1 = team1Sets > team2Sets ? 3 : 0;
-    const pointsTeam2 = team2Sets > team1Sets ? 3 : 0;
-
     await submitResult.mutateAsync({
       matchId: match.id,
       team1_set1: values.team1_set1,
@@ -84,9 +65,6 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
       team2_set1: values.team2_set1,
       team2_set2: values.team2_set2,
       team2_set3: values.team2_set3,
-      winnerTeamId,
-      pointsTeam1,
-      pointsTeam2,
     });
 
     onClose();
