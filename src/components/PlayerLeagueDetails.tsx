@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Trophy, Users, MessageCircle, BarChart3, Plus, UserPlus } from "lucide-react";
+import { ArrowLeft, Calendar, Trophy, Users, MessageCircle, BarChart3, Plus, UserPlus, Eye, Swords } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
@@ -11,6 +11,7 @@ import MatchesList from "./MatchesList";
 import LeagueStandingsTable from "./LeagueStandingsTable";
 import CreateMatchForm from "./CreateMatchForm";
 import PartnerSelectionModal from "./PartnerSelectionModal";
+import LeagueTeamsView from "./LeagueTeamsView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PlayerLeagueDetailsProps {
@@ -21,6 +22,8 @@ interface PlayerLeagueDetailsProps {
 const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => {
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [showPartnerSelection, setShowPartnerSelection] = useState(false);
+  const [showTeamsView, setShowTeamsView] = useState(false);
+  const [selectedOpponentTeamId, setSelectedOpponentTeamId] = useState<string | null>(null);
   const { profile } = useAuth();
   const { data: leagues } = useLeagues();
   const { data: playerTeam } = usePlayerTeams(leagueId, profile?.id);
@@ -44,6 +47,21 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
     playerTeam.player1?.id === profile.id ? playerTeam.player2 : playerTeam.player1
   ) : null;
 
+  if (showTeamsView) {
+    return (
+      <LeagueTeamsView
+        leagueId={leagueId}
+        leagueName={league.name}
+        onProposeMatch={(teamId) => {
+          setSelectedOpponentTeamId(teamId);
+          setShowTeamsView(false);
+          setShowCreateMatch(true);
+        }}
+        onBack={() => setShowTeamsView(false)}
+      />
+    );
+  }
+
   if (showCreateMatch) {
     return (
       <div className="space-y-6">
@@ -63,6 +81,7 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
           leagues={[league]}
           onSuccess={() => setShowCreateMatch(false)}
           onCancel={() => setShowCreateMatch(false)}
+          preselectedOpponentTeamId={selectedOpponentTeamId}
         />
       </div>
     );
@@ -93,7 +112,7 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
         </Button>
       </div>
 
-      {/* Partner Status Section */}
+      {/* Team Status Section */}
       <Card className="border-2 border-dashed border-green-200 bg-gradient-to-r from-green-50 to-blue-50">
         <CardHeader>
           <CardTitle className="text-green-800 flex items-center">
@@ -108,11 +127,11 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-green-500 text-white">
-                      {partner.full_name.charAt(0).toUpperCase()}
+                      {partner.full_name?.charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-green-800">{partner.full_name}</p>
+                    <p className="font-semibold text-green-800">{partner.full_name || 'Compañero'}</p>
                     <p className="text-sm text-green-600">Tu compañero de equipo</p>
                   </div>
                 </div>
@@ -121,13 +140,25 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
                   <p className="text-sm text-green-600">Nombre del equipo</p>
                 </div>
               </div>
-              <Button 
-                onClick={() => setShowCreateMatch(true)}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Partido
-              </Button>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Button 
+                  onClick={() => setShowTeamsView(true)}
+                  variant="outline"
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Equipos
+                </Button>
+                <Button 
+                  onClick={() => setShowCreateMatch(true)}
+                  className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+                >
+                  <Swords className="h-4 w-4 mr-2" />
+                  Crear Partido
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="text-center space-y-4">
@@ -149,28 +180,6 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* League Info - Simplified */}
-      <Card className="bg-gradient-to-r from-slate-50 to-blue-50 border-slate-200">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-xl font-bold text-slate-700">{league.points_victory}</div>
-              <div className="text-xs text-slate-600">Pts Victoria</div>
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-700">{league.points_defeat}</div>
-              <div className="text-xs text-slate-600">Pts Derrota</div>
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-700">
-                {league.points_per_set ? "Sí" : "No"}
-              </div>
-              <div className="text-xs text-slate-600">Pts por Set</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 

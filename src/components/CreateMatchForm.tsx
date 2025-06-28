@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCanCreateMatch, useCreatePlayerMatch } from "@/hooks/usePlayerMatchCreation";
+import { useCreatePlayerMatch } from "@/hooks/usePlayerMatchCreation";
 import { useToast } from "@/hooks/use-toast";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
 import { Calendar, Clock, Trophy } from "lucide-react";
@@ -26,10 +26,11 @@ interface CreateMatchFormProps {
   leagues: any[];
   onSuccess: () => void;
   onCancel: () => void;
+  preselectedOpponentTeamId?: string | null;
 }
 
-const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps) => {
-  const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
+const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeamId }: CreateMatchFormProps) => {
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>(leagues[0]?.id || "");
   const { profile } = useAuth();
   const { data: teams } = useLeagueTeams(selectedLeagueId);
   const createMatch = useCreatePlayerMatch();
@@ -38,9 +39,9 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      leagueId: "",
+      leagueId: leagues[0]?.id || "",
       team1Id: "",
-      team2Id: "",
+      team2Id: preselectedOpponentTeamId || "",
       scheduledDate: "",
       scheduledTime: "",
     },
@@ -51,6 +52,13 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
     const team = teamData.teams;
     if (!team || !profile) return false;
     return team.player1?.email === profile.email || team.player2?.email === profile.email;
+  }) || [];
+
+  const rivalTeams = teams?.filter(teamData => {
+    const team = teamData.teams;
+    if (!team || !profile) return false;
+    // Exclude teams where current player is involved
+    return team.player1?.email !== profile.email && team.player2?.email !== profile.email;
   }) || [];
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -165,7 +173,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {teams?.filter(teamData => teamData.teams.id !== form.watch("team1Id")).map((teamData) => {
+                          {rivalTeams.map((teamData) => {
                             const team = teamData.teams;
                             return (
                               <SelectItem key={team.id} value={team.id}>
