@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Users, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
-import { usePlayerTeams, usePlayerTeamsAll } from "@/hooks/usePlayerTeams";
+import { usePlayerTeamsAll } from "@/hooks/usePlayerTeams";
 import { usePlayerMatchCreation } from "@/hooks/usePlayerMatchCreation";
 
 const formSchema = z.object({
@@ -53,10 +53,14 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     return leagueTeams?.some(lt => lt.teams?.id === team.id);
   }) || [];
 
-  // Auto-select player's team when league changes
+  // Auto-select player's team when league changes or data loads
   useEffect(() => {
     if (playerTeamsInLeague.length > 0) {
-      form.setValue('myTeamId', playerTeamsInLeague[0].id);
+      const currentMyTeamId = form.getValues('myTeamId');
+      // Only auto-select if no team is currently selected or if the current selection is not valid for this league
+      if (!currentMyTeamId || !playerTeamsInLeague.find(team => team.id === currentMyTeamId)) {
+        form.setValue('myTeamId', playerTeamsInLeague[0].id);
+      }
     } else {
       form.setValue('myTeamId', '');
     }
@@ -84,7 +88,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     }
   };
 
-  // Filtrar equipos disponibles (excluir el equipo del jugador actual)
+  // Filter available opponent teams (exclude current player's team)
   const availableOpponentTeams = leagueTeams?.filter(teamData => {
     const team = teamData.teams;
     const selectedMyTeamId = form.watch('myTeamId');
