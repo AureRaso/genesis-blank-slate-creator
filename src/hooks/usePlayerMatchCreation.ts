@@ -10,17 +10,23 @@ export const useCanCreateMatch = () => {
   return useQuery({
     queryKey: ['can-create-match', profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return false;
+      if (!profile?.id) {
+        console.log('No profile ID available');
+        return false;
+      }
+      
+      console.log('Checking if user can create match for profile:', profile.id);
       
       // Llamar a la función que verifica si puede crear un partido
       const { data, error } = await supabase
-        .rpc('can_create_match_this_week', { profile_id: profile.id });
+        .rpc('can_create_match_this_week', { _profile_id: profile.id });
 
       if (error) {
         console.error('Error checking match creation:', error);
         return false;
       }
 
+      console.log('Can create match result:', data);
       return data;
     },
     enabled: !!profile?.id,
@@ -50,9 +56,18 @@ export const usePlayerMatchCreation = () => {
     }) => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
+      console.log('Creating match with profile ID:', profile.id);
+
       // Verificar que puede crear un partido
-      const { data: canCreate } = await supabase
-        .rpc('can_create_match_this_week', { profile_id: profile.id });
+      const { data: canCreate, error: checkError } = await supabase
+        .rpc('can_create_match_this_week', { _profile_id: profile.id });
+
+      console.log('Pre-creation check result:', canCreate, checkError);
+
+      if (checkError) {
+        console.error('Error checking match creation permission:', checkError);
+        throw new Error('Error verificando permisos');
+      }
 
       if (!canCreate) {
         throw new Error('Ya has creado un partido esta semana');
@@ -75,10 +90,21 @@ export const usePlayerMatchCreation = () => {
         .select()
         .single();
 
-      if (matchError) throw matchError;
+      if (matchError) {
+        console.error('Error creating match:', matchError);
+        throw matchError;
+      }
+
+      console.log('Match created successfully:', match);
 
       // Registrar la creación del partido
-      await supabase.rpc('record_match_creation', { profile_id: profile.id });
+      const { error: recordError } = await supabase
+        .rpc('record_match_creation', { _profile_id: profile.id, _week_start: new Date().toISOString().split('T')[0] });
+
+      if (recordError) {
+        console.error('Error recording match creation:', recordError);
+        // No lanzar error aquí porque el partido ya se creó
+      }
 
       return match;
     },
@@ -91,6 +117,7 @@ export const usePlayerMatchCreation = () => {
       });
     },
     onError: (error: Error) => {
+      console.error('Match creation error:', error);
       toast({
         title: "Error",
         description: error.message,

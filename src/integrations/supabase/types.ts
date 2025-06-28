@@ -404,7 +404,7 @@ export type Database = {
     }
     Functions: {
       can_create_match_this_week: {
-        Args: { profile_id: string }
+        Args: { _profile_id: string }
         Returns: boolean
       }
       has_role: {

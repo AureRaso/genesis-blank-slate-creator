@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +12,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
 import { usePlayerTeamsInLeague } from "@/hooks/usePlayerTeams";
 import { usePlayerMatchCreation } from "@/hooks/usePlayerMatchCreation";
+import MatchCreationStatus from "./match/MatchCreationStatus";
+import { useCanCreateMatch } from "@/hooks/usePlayerMatchCreation";
 
 const formSchema = z.object({
   leagueId: z.string().min(1, "Selecciona una liga"),
@@ -35,7 +36,9 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   const { data: leagueTeams } = useLeagueTeams(selectedLeagueId);
   const { data: playerTeamsInLeague } = usePlayerTeamsInLeague(selectedLeagueId, profile?.id);
   const { createMatch } = usePlayerMatchCreation();
+  const { data: canCreateMatch, isLoading: isCheckingPermission } = useCanCreateMatch();
 
+  console.log('CreateMatchForm - Can create match:', canCreateMatch);
   console.log('CreateMatchForm - leagueTeams:', leagueTeams);
   console.log('CreateMatchForm - playerTeamsInLeague:', playerTeamsInLeague);
 
@@ -69,6 +72,11 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   }, [selectedLeagueId, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!canCreateMatch) {
+      console.error('Cannot create match - weekly limit reached');
+      return;
+    }
+
     try {
       await createMatch.mutateAsync({
         leagueId: values.leagueId,
@@ -97,42 +105,71 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   console.log('Available opponent teams:', availableOpponentTeams);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Users className="h-5 w-5 mr-2" />
-          Crear Nuevo Partido
-        </CardTitle>
-        <CardDescription>
-          Programa un partido contra otro equipo
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {leagues.length > 1 && (
+    <div className="space-y-6">
+      <MatchCreationStatus />
+      
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Crear Nuevo Partido
+          </CardTitle>
+          <CardDescription>
+            Programa un partido contra otro equipo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {leagues.length > 1 && (
+                <FormField
+                  control={form.control}
+                  name="leagueId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Liga</FormLabel>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedLeagueId(value);
+                        }} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una liga" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {leagues.map((league) => (
+                            <SelectItem key={league.id} value={league.id}>
+                              {league.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
-                name="leagueId"
+                name="myTeamId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Liga</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        setSelectedLeagueId(value);
-                      }} 
-                      defaultValue={field.value}
-                    >
+                    <FormLabel>Tu Equipo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una liga" />
+                          <SelectValue placeholder="Selecciona tu equipo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {leagues.map((league) => (
-                          <SelectItem key={league.id} value={league.id}>
-                            {league.name}
+                        {playerTeamsInLeague?.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -141,125 +178,100 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                   </FormItem>
                 )}
               />
-            )}
 
-            <FormField
-              control={form.control}
-              name="myTeamId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tu Equipo</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona tu equipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {playerTeamsInLeague?.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="opponentTeamId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Equipo Rival</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un equipo rival" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableOpponentTeams.map((teamData) => {
-                        const team = teamData.teams;
-                        if (!team) return null;
-                        
-                        const player1Name = team.player1?.full_name || 'Jugador 1';
-                        const player2Name = team.player2?.full_name || 'Jugador 2';
-                        
-                        return (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name} ({player1Name} & {player2Name})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="scheduledDate"
+                name="opponentTeamId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Fecha
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
+                    <FormLabel>Equipo Rival</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un equipo rival" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableOpponentTeams.map((teamData) => {
+                          const team = teamData.teams;
+                          if (!team) return null;
+                          
+                          const player1Name = team.player1?.full_name || 'Jugador 1';
+                          const player2Name = team.player2?.full_name || 'Jugador 2';
+                          
+                          return (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name} ({player1Name} & {player2Name})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="scheduledTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
-                      Hora
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="scheduledDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Fecha
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                disabled={createMatch.isPending}
-                className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-              >
-                {createMatch.isPending ? "Creando..." : "Crear Partido"}
-              </Button>
-              {onCancel && (
+                <FormField
+                  control={form.control}
+                  name="scheduledTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Hora
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  className="flex-1"
+                  type="submit"
+                  disabled={createMatch.isPending || !canCreateMatch || isCheckingPermission}
+                  className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 disabled:opacity-50"
                 >
-                  Cancelar
+                  {createMatch.isPending ? "Creando..." : "Crear Partido"}
                 </Button>
-              )}
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
