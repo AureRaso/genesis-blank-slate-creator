@@ -101,7 +101,9 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
   };
 
   const handleApprove = (approve: boolean) => {
-    approveResult.mutate({ matchId: match.id, approve });
+    // TODO: Implement approve result functionality
+    // approveResult.mutate({ matchId: match.id, approve });
+    console.log('Approve result:', approve, 'for match:', match.id);
   };
 
   if (showResultForm) {
@@ -236,7 +238,8 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
               <Button 
                 size="sm" 
                 onClick={() => handleApprove(true)}
-                disabled={approveResult.isPending}
+                // TODO: Re-enable when approve result functionality is implemented
+                // disabled={approveResult.isPending}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -246,7 +249,8 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
                 size="sm" 
                 variant="destructive"
                 onClick={() => handleApprove(false)}
-                disabled={approveResult.isPending}
+                // TODO: Re-enable when approve result functionality is implemented
+                // disabled={approveResult.isPending}
                 className="flex-1"
               >
                 <XCircle className="h-4 w-4 mr-2" />
