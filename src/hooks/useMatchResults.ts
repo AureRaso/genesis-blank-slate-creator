@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -67,10 +68,10 @@ export const useCanUserEditMatch = (matchId: string, userEmail: string) => {
       if (!match) return false;
 
       // Check if user is part of either team
-      const team1Player1Email = Array.isArray(match.team1?.player1) ? match.team1.player1[0]?.email : match.team1?.player1?.email;
-      const team1Player2Email = Array.isArray(match.team1?.player2) ? match.team1.player2[0]?.email : match.team1?.player2?.email;
-      const team2Player1Email = Array.isArray(match.team2?.player1) ? match.team2.player1[0]?.email : match.team2?.player1?.email;
-      const team2Player2Email = Array.isArray(match.team2?.player2) ? match.team2.player2[0]?.email : match.team2?.player2?.email;
+      const team1Player1Email = match.team1?.player1?.email;
+      const team1Player2Email = match.team1?.player2?.email;
+      const team2Player1Email = match.team2?.player1?.email;
+      const team2Player2Email = match.team2?.player2?.email;
       
       return team1Player1Email === userEmail || 
              team1Player2Email === userEmail || 
@@ -194,6 +195,55 @@ export const useDeleteMatchResult = () => {
       toast({
         title: "Error",
         description: "No se pudo eliminar el resultado del partido.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useApproveMatchResult = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ matchId, approve }: { matchId: string; approve: boolean }) => {
+      console.log('Approving match result:', matchId, approve);
+      
+      const status = approve ? 'approved' : 'disputed';
+      
+      const { data, error } = await supabase
+        .from('matches')
+        .update({ 
+          result_status: status,
+          status: approve ? 'completed' : 'pending'
+        })
+        .eq('id', matchId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error approving match result:', error);
+        throw error;
+      }
+
+      console.log('Match result approved:', data);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['match-results'] });
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      toast({
+        title: variables.approve ? "Resultado aprobado" : "Resultado disputado",
+        description: variables.approve 
+          ? "El resultado del partido ha sido aprobado." 
+          : "El resultado ha sido marcado como disputado.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error approving match result:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo procesar la aprobación del resultado.",
         variant: "destructive",
       });
     },

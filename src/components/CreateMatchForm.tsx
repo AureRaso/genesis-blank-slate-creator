@@ -35,16 +35,22 @@ const CreateMatchForm = ({ onClose }: CreateMatchFormProps) => {
   // Filtrar equipos donde el usuario actual es miembro
   const userTeams = leagueTeams?.filter(lt => {
     const team = lt.teams;
-    const player1Email = Array.isArray(team?.player1) ? team.player1[0]?.email : team?.player1?.email;
-    const player2Email = Array.isArray(team?.player2) ? team.player2[0]?.email : team?.player2?.email;
+    if (!team?.player1 || !team?.player2) return false;
+    
+    const player1Email = team.player1.email;
+    const player2Email = team.player2.email;
+    
     return player1Email === user?.email || player2Email === user?.email;
   }) || [];
 
   // Filtrar equipos oponentes (que no incluyan al usuario)
   const opponentTeams = leagueTeams?.filter(lt => {
     const team = lt.teams;
-    const player1Email = Array.isArray(team?.player1) ? team.player1[0]?.email : team?.player1?.email;
-    const player2Email = Array.isArray(team?.player2) ? team.player2[0]?.email : team?.player2?.email;
+    if (!team?.player1 || !team?.player2) return false;
+    
+    const player1Email = team.player1.email;
+    const player2Email = team.player2.email;
+    
     return player1Email !== user?.email && player2Email !== user?.email;
   }) || [];
 

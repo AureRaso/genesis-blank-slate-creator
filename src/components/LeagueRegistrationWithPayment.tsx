@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration } from "@/hooks/useLeaguePlayers";
+import { useRegisterForLeague, useWithdrawFromLeague } from "@/hooks/useLeaguePlayers";
 import LeagueRegistration from "./LeagueRegistration";
 import PaymentIntegration from "./PaymentIntegration";
 
@@ -44,17 +44,12 @@ const LeagueRegistrationWithPayment = () => {
     return (
       <PaymentIntegration
         leagueId={selectedLeagueForPayment}
-        onSuccess={handlePaymentSuccess}
-        onCancel={() => setSelectedLeagueForPayment(null)}
       />
     );
   }
 
   return (
-    <LeagueRegistration
-      onRegister={handleRegisterWithPayment}
-      onWithdraw={handleWithdraw}
-    />
+    <LeagueRegistration />
   );
 };
 

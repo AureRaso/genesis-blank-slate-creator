@@ -36,16 +36,14 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
 
     const resultData = {
-      match_id: match.id,
-      team1_set1: parseInt(formData.team1_set1),
-      team1_set2: parseInt(formData.team1_set2),
-      team1_set3: formData.has_third_set ? parseInt(formData.team1_set3) : null,
-      team2_set1: parseInt(formData.team2_set1),
-      team2_set2: parseInt(formData.team2_set2),
-      team2_set3: formData.has_third_set ? parseInt(formData.team2_set3) : null,
-      winner_team_id: formData.winner_team_id,
-      points_team1: 0, // These will be calculated by the backend
-      points_team2: 0, // These will be calculated by the backend
+      matchId: match.id,
+      team1Set1: parseInt(formData.team1_set1),
+      team1Set2: parseInt(formData.team1_set2),
+      team1Set3: formData.has_third_set ? parseInt(formData.team1_set3) : null,
+      team2Set1: parseInt(formData.team2_set1),
+      team2Set2: parseInt(formData.team2_set2),
+      team2Set3: formData.has_third_set ? parseInt(formData.team2_set3) : null,
+      winnerTeamId: formData.winner_team_id,
     };
 
     submitResult.mutate(resultData, {

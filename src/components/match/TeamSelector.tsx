@@ -21,12 +21,14 @@ const TeamSelector = ({ label, placeholder, teams, selectedTeamId, onTeamChange 
         <SelectContent>
           {teams.map((lt) => {
             const team = lt.teams;
-            const player1Name = Array.isArray(team?.player1) ? team.player1[0]?.full_name : team?.player1?.full_name;
-            const player2Name = Array.isArray(team?.player2) ? team.player2[0]?.full_name : team?.player2?.full_name;
+            if (!team?.player1 || !team?.player2) return null;
+            
+            const player1Name = team.player1.full_name;
+            const player2Name = team.player2.full_name;
             
             return (
               <SelectItem key={lt.team_id} value={lt.team_id}>
-                {team?.name} ({player1Name} & {player2Name})
+                {team.name} ({player1Name} & {player2Name})
               </SelectItem>
             );
           })}

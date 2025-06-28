@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,10 +63,10 @@ const MatchesList = ({ leagueId, onSignUp }: MatchesListProps) => {
     if (!user || match.status !== 'pending') return false;
     
     // Check if user is part of either team
-    const team1Player1Email = Array.isArray(match.team1?.player1) ? match.team1.player1[0]?.email : match.team1?.player1?.email;
-    const team1Player2Email = Array.isArray(match.team1?.player2) ? match.team1.player2[0]?.email : match.team1?.player2?.email;
-    const team2Player1Email = Array.isArray(match.team2?.player1) ? match.team2.player1[0]?.email : match.team2?.player1?.email;
-    const team2Player2Email = Array.isArray(match.team2?.player2) ? match.team2.player2[0]?.email : match.team2?.player2?.email;
+    const team1Player1Email = match.team1?.player1?.email;
+    const team1Player2Email = match.team1?.player2?.email;
+    const team2Player1Email = match.team2?.player1?.email;
+    const team2Player2Email = match.team2?.player2?.email;
     
     return team1Player1Email === user.email || 
            team1Player2Email === user.email || 
@@ -117,7 +118,7 @@ const MatchesList = ({ leagueId, onSignUp }: MatchesListProps) => {
                   <div className="text-center">
                     <h3 className="font-semibold">{match.team1?.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {Array.isArray(match.team1?.player1) ? match.team1.player1[0]?.full_name : match.team1?.player1?.full_name} & {Array.isArray(match.team1?.player2) ? match.team1.player2[0]?.full_name : match.team1?.player2?.full_name}
+                      {match.team1?.player1?.full_name} & {match.team1?.player2?.full_name}
                     </p>
                   </div>
                   
@@ -130,7 +131,7 @@ const MatchesList = ({ leagueId, onSignUp }: MatchesListProps) => {
                   <div className="text-center">
                     <h3 className="font-semibold">{match.team2?.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {Array.isArray(match.team2?.player1) ? match.team2.player1[0]?.full_name : match.team2?.player1?.full_name} & {Array.isArray(match.team2?.player2) ? match.team2.player2[0]?.full_name : match.team2?.player2?.full_name}
+                      {match.team2?.player1?.full_name} & {match.team2?.player2?.full_name}
                     </p>
                   </div>
                 </div>
@@ -149,7 +150,7 @@ const MatchesList = ({ leagueId, onSignUp }: MatchesListProps) => {
               )}
             </div>
 
-            {match.match_results && match.match_results.length > 0 && (
+            {match.match_results && Array.isArray(match.match_results) && match.match_results.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <div className="text-sm">
                   <span className="font-medium">Resultado:</span>
