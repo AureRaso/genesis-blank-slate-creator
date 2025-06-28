@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +40,7 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
       // Filtrar equipos donde el jugador participa
       const playerTeam = leagueTeams?.find(lt => {
         const team = lt.teams;
-        return team?.player1?.id === profileId || team?.player2?.id === profileId;
+        return team?.player1?.[0]?.id === profileId || team?.player2?.[0]?.id === profileId;
       });
 
       console.log('Player team found:', playerTeam);

@@ -147,7 +147,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                           <div className="flex items-center">
                             <span className="font-medium">{playerTeam.name}</span>
                             <span className="text-sm text-muted-foreground ml-2">
-                              ({playerTeam.player1?.full_name} + {playerTeam.player2?.full_name})
+                              ({playerTeam.player1?.[0]?.full_name} + {playerTeam.player2?.[0]?.full_name})
                             </span>
                           </div>
                         </SelectItem>
@@ -181,7 +181,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                             <div className="flex items-center">
                               <span className="font-medium">{team.name}</span>
                               <span className="text-sm text-muted-foreground ml-2">
-                                ({team.player1?.full_name} + {team.player2?.full_name})
+                                ({team.player1?.[0]?.full_name} + {team.player2?.[0]?.full_name})
                               </span>
                             </div>
                           </SelectItem>

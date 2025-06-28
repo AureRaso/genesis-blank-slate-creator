@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -42,7 +41,7 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
 
   // Si ya tiene equipo, mostrar el dashboard del equipo
   if (playerTeam) {
-    const partner = playerTeam.player1?.id === profile.id ? playerTeam.player2 : playerTeam.player1;
+    const partner = playerTeam.player1?.[0]?.id === profile.id ? playerTeam.player2 : playerTeam.player1;
     
     return (
       <PlayerTeamDashboard

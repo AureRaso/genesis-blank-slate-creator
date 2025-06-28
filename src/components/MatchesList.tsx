@@ -1,4 +1,3 @@
-
 import { useMatches } from "@/hooks/useMatches";
 import { useAuth } from "@/contexts/AuthContext";
 import MatchCard from "./MatchCard";

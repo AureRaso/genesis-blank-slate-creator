@@ -97,11 +97,11 @@ const LeagueTeamsView = ({ leagueId, leagueName, onProposeMatch, onBack }: Leagu
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {getPlayerInitials(team.player1?.full_name || 'Jugador 1')}
+                        {getPlayerInitials(team.player1?.[0]?.full_name || 'Jugador 1')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-sm">{team.player1?.full_name || 'Jugador 1'}</p>
+                      <p className="font-medium text-sm">{team.player1?.[0]?.full_name || 'Jugador 1'}</p>
                       <p className="text-xs text-muted-foreground">Jugador 1</p>
                     </div>
                   </div>
@@ -111,11 +111,11 @@ const LeagueTeamsView = ({ leagueId, leagueName, onProposeMatch, onBack }: Leagu
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 text-white">
-                        {getPlayerInitials(team.player2?.full_name || 'Jugador 2')}
+                        {getPlayerInitials(team.player2?.[0]?.full_name || 'Jugador 2')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-sm">{team.player2?.full_name || 'Jugador 2'}</p>
+                      <p className="font-medium text-sm">{team.player2?.[0]?.full_name || 'Jugador 2'}</p>
                       <p className="text-xs text-muted-foreground">Jugador 2</p>
                     </div>
                   </div>
