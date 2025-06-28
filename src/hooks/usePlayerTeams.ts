@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,19 +15,11 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
         .from('league_teams')
         .select(`
           team_id,
-          teams!league_teams_team_id_fkey (
+          teams (
             id,
             name,
-            player1:profiles!teams_player1_id_fkey (
-              id,
-              full_name,
-              email
-            ),
-            player2:profiles!teams_player2_id_fkey (
-              id,
-              full_name,
-              email
-            )
+            player1_id,
+            player2_id
           )
         `)
         .eq('league_id', leagueId);
@@ -41,7 +32,7 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
       // Filtrar equipos donde el jugador participa
       const playerTeam = leagueTeams?.find(lt => {
         const team = lt.teams;
-        return team?.player1?.[0]?.id === profileId || team?.player2?.[0]?.id === profileId;
+        return team?.player1_id === profileId || team?.player2_id === profileId;
       });
 
       console.log('Player team found:', playerTeam);
@@ -51,7 +42,7 @@ export const usePlayerTeams = (leagueId: string, profileId?: string) => {
   });
 };
 
-// Nuevo hook para obtener todos los equipos del jugador (sin filtrar por liga)
+// Hook para obtener todos los equipos del jugador con información de los perfiles
 export const usePlayerTeamsAll = (profileId?: string) => {
   return useQuery({
     queryKey: ['player-teams-all', profileId],
@@ -66,16 +57,8 @@ export const usePlayerTeamsAll = (profileId?: string) => {
         .select(`
           id,
           name,
-          player1:profiles!teams_player1_id_fkey (
-            id,
-            full_name,
-            email
-          ),
-          player2:profiles!teams_player2_id_fkey (
-            id,
-            full_name,
-            email
-          )
+          player1_id,
+          player2_id
         `)
         .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`);
 
@@ -88,6 +71,61 @@ export const usePlayerTeamsAll = (profileId?: string) => {
       return teams || [];
     },
     enabled: !!profileId,
+  });
+};
+
+// Hook para obtener equipos del jugador en una liga específica con perfiles
+export const usePlayerTeamsInLeague = (leagueId: string, profileId?: string) => {
+  return useQuery({
+    queryKey: ['player-teams-in-league', leagueId, profileId],
+    queryFn: async () => {
+      if (!profileId || !leagueId) return [];
+      
+      console.log('Fetching player teams in league:', leagueId, 'for profile:', profileId);
+      
+      // Primero obtenemos todos los equipos del jugador
+      const { data: allPlayerTeams, error: teamsError } = await supabase
+        .from('teams')
+        .select(`
+          id,
+          name,
+          player1_id,
+          player2_id
+        `)
+        .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`);
+
+      if (teamsError) {
+        console.error('Error fetching player teams:', teamsError);
+        throw teamsError;
+      }
+
+      if (!allPlayerTeams || allPlayerTeams.length === 0) {
+        return [];
+      }
+
+      // Luego verificamos cuáles están en la liga específica
+      const teamIds = allPlayerTeams.map(team => team.id);
+      const { data: leagueTeams, error: leagueError } = await supabase
+        .from('league_teams')
+        .select('team_id')
+        .eq('league_id', leagueId)
+        .in('team_id', teamIds);
+
+      if (leagueError) {
+        console.error('Error fetching league teams:', leagueError);
+        throw leagueError;
+      }
+
+      // Filtrar solo los equipos que están en la liga
+      const leagueTeamIds = leagueTeams?.map(lt => lt.team_id) || [];
+      const playerTeamsInLeague = allPlayerTeams.filter(team => 
+        leagueTeamIds.includes(team.id)
+      );
+
+      console.log('Player teams in league found:', playerTeamsInLeague);
+      return playerTeamsInLeague;
+    },
+    enabled: !!profileId && !!leagueId,
   });
 };
 
@@ -206,6 +244,7 @@ export const useCreateTeam = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-teams'] });
       queryClient.invalidateQueries({ queryKey: ['player-teams-all'] });
+      queryClient.invalidateQueries({ queryKey: ['player-teams-in-league'] });
       queryClient.invalidateQueries({ queryKey: ['available-players'] });
       queryClient.invalidateQueries({ queryKey: ['league-teams'] });
       toast({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Users, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
-import { usePlayerTeamsAll } from "@/hooks/usePlayerTeams";
+import { usePlayerTeamsInLeague } from "@/hooks/usePlayerTeams";
 import { usePlayerMatchCreation } from "@/hooks/usePlayerMatchCreation";
 
 const formSchema = z.object({
@@ -33,7 +32,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   const { profile } = useAuth();
   const [selectedLeagueId, setSelectedLeagueId] = useState(leagues[0]?.id || "");
   const { data: leagueTeams } = useLeagueTeams(selectedLeagueId);
-  const { data: playerTeamsAll } = usePlayerTeamsAll(profile?.id);
+  const { data: playerTeamsInLeague } = usePlayerTeamsInLeague(selectedLeagueId, profile?.id);
   const { createMatch } = usePlayerMatchCreation();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -47,15 +46,9 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     },
   });
 
-  // Filter player teams for the selected league by checking if the team exists in league_teams
-  const playerTeamsInLeague = playerTeamsAll?.filter(team => {
-    // Check if this team is in the selected league by querying league_teams
-    return leagueTeams?.some(lt => lt.teams?.id === team.id);
-  }) || [];
-
   // Auto-select player's team when league changes or data loads
   useEffect(() => {
-    if (playerTeamsInLeague.length > 0) {
+    if (playerTeamsInLeague && playerTeamsInLeague.length > 0) {
       const currentMyTeamId = form.getValues('myTeamId');
       // Only auto-select if no team is currently selected or if the current selection is not valid for this league
       if (!currentMyTeamId || !playerTeamsInLeague.find(team => team.id === currentMyTeamId)) {
@@ -155,14 +148,9 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {playerTeamsInLeague.map((team) => (
+                      {playerTeamsInLeague?.map((team) => (
                         <SelectItem key={team.id} value={team.id}>
-                          <div className="flex items-center">
-                            <span className="font-medium">{team.name}</span>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              ({team.player1?.[0]?.full_name} + {team.player2?.[0]?.full_name})
-                            </span>
-                          </div>
+                          {team.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -191,12 +179,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                         
                         return (
                           <SelectItem key={team.id} value={team.id}>
-                            <div className="flex items-center">
-                              <span className="font-medium">{team.name}</span>
-                              <span className="text-sm text-muted-foreground ml-2">
-                                ({team.player1?.[0]?.full_name} + {team.player2?.[0]?.full_name})
-                              </span>
-                            </div>
+                            {team.name}
                           </SelectItem>
                         );
                       })}

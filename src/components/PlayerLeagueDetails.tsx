@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -27,6 +28,8 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
   
   const league = leagues?.find(l => l.id === leagueId);
 
+  console.log('PlayerLeagueDetails - playerTeam:', playerTeam, 'leagueId:', leagueId, 'profileId:', profile?.id);
+
   if (!league || !profile) {
     return (
       <div className="text-center py-8">
@@ -41,13 +44,15 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
 
   // Si ya tiene equipo, mostrar el dashboard del equipo
   if (playerTeam) {
-    const partner = playerTeam.player1?.[0]?.id === profile.id ? playerTeam.player2 : playerTeam.player1;
+    const partner = playerTeam.player1_id === profile.id ? 
+      { id: playerTeam.player2_id, full_name: 'Compañero' } : 
+      { id: playerTeam.player1_id, full_name: 'Compañero' };
     
     return (
       <PlayerTeamDashboard
         league={league}
         playerTeam={playerTeam}
-        partner={partner}
+        partner={[partner]}
         onBack={onBack}
       />
     );
