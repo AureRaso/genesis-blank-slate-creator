@@ -36,12 +36,6 @@ const MatchesPage = () => {
     createMatches.mutate({ leagueId: selectedLeagueId, teamIds });
   };
 
-  const handleSignUp = (matchId: string) => {
-    // TODO: Implement sign-up functionality
-    console.log('Sign up for match:', matchId);
-    // This could open a modal to select players or register interest
-  };
-
   const canGenerateMatches = selectedLeague && 
     leagueTeams && 
     leagueTeams.length >= 2 && 
@@ -63,7 +57,11 @@ const MatchesPage = () => {
           <h1 className="text-2xl font-bold">Crear Nuevo Partido</h1>
         </div>
         
-        <CreateMatchForm onClose={() => setShowCreateForm(false)} />
+        <CreateMatchForm 
+          leagues={activeLeagues}
+          onSuccess={() => setShowCreateForm(false)}
+          onCancel={() => setShowCreateForm(false)}
+        />
       </div>
     );
   }
@@ -160,7 +158,7 @@ const MatchesPage = () => {
 
       {/* Matches List */}
       {selectedLeagueId ? (
-        <MatchesList leagueId={selectedLeagueId} onSignUp={handleSignUp} />
+        <MatchesList leagueId={selectedLeagueId} />
       ) : (
         <Card>
           <CardContent className="pt-6">

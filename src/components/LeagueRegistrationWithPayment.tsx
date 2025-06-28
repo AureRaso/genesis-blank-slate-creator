@@ -54,7 +54,7 @@ const LeagueRegistrationWithPayment = () => {
         leagueId={selectedLeagueForPayment}
         leagueName={selectedLeague?.name || "Liga"}
         price={selectedLeague?.registration_price || 0}
-        onSuccess={handlePaymentSuccess}
+        onPaymentSuccess={handlePaymentSuccess}
         onCancel={handlePaymentCancel}
       />
     );

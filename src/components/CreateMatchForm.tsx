@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePlayerMatchCreation } from "@/hooks/usePlayerMatchCreation";
+import { useCanCreateMatch, useCreatePlayerMatch } from "@/hooks/usePlayerMatchCreation";
 import { useToast } from "@/hooks/use-toast";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
 import { Calendar, Clock, Trophy } from "lucide-react";
@@ -32,7 +32,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
   const { profile } = useAuth();
   const { data: teams } = useLeagueTeams(selectedLeagueId);
-  const createMatch = usePlayerMatchCreation();
+  const createMatch = useCreatePlayerMatch();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,7 +70,6 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
         team2Id: values.team2Id,
         scheduledDate: values.scheduledDate || undefined,
         scheduledTime: values.scheduledTime || undefined,
-        createdByProfileId: profile.id,
       });
       onSuccess();
     } catch (error) {
