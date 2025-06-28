@@ -93,6 +93,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   }) || [];
 
   console.log('Available opponent teams:', availableOpponentTeams);
+  console.log('Selected my team ID:', form.watch('myTeamId'));
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
