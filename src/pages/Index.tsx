@@ -2,6 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardStats from "@/components/DashboardStats";
 import QuickActions from "@/components/QuickActions";
+import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Calendar } from "lucide-react";
@@ -9,23 +10,25 @@ import { Trophy, Users, Calendar } from "lucide-react";
 const Index = () => {
   const { user, isAdmin } = useAuth();
 
+  // Si es jugador, mostrar el nuevo dashboard
+  if (!isAdmin) {
+    return <PlayerDashboard />;
+  }
+
+  // Dashboard de administrador (sin cambios)
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">
-          {isAdmin ? "Panel de Administración" : "Dashboard"}
-        </h1>
+        <h1 className="text-3xl font-bold">Panel de Administración</h1>
         <p className="text-muted-foreground">
           Bienvenido de vuelta, {user?.email}
-          <Badge className="ml-2" variant={isAdmin ? "default" : "secondary"}>
-            {isAdmin ? "Administrador" : "Jugador"}
+          <Badge className="ml-2" variant="default">
+            Administrador
           </Badge>
         </p>
       </div>
 
-      {isAdmin && (
-        <DashboardStats />
-      )}
+      <DashboardStats />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <QuickActions />

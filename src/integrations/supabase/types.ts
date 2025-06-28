@@ -397,7 +397,7 @@ export type Database = {
         Returns: boolean
       }
       has_role: {
-        Args: { _user_id: string; _role: string }
+        Args: { profile_id: string; expected_role: string }
         Returns: boolean
       }
       is_admin: {
@@ -405,7 +405,10 @@ export type Database = {
         Returns: boolean
       }
       record_match_creation: {
-        Args: { profile_id: string }
+        Args:
+          | { _profile_id: string; _week_start: string }
+          | { profile_id: string }
+          | { profile_id: string; match_id: string }
         Returns: undefined
       }
     }

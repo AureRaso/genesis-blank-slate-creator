@@ -1,12 +1,40 @@
 
 import { useState } from "react";
-import { ArrowLeft, Trophy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Trophy, ArrowLeft } from "lucide-react";
 import { useSubmitMatchResult } from "@/hooks/useSubmitMatchResult";
+
+const formSchema = z.object({
+  team1Set1: z.number().min(0).max(7),
+  team1Set2: z.number().min(0).max(7),
+  team1Set3: z.number().min(0).max(7).optional(),
+  team2Set1: z.number().min(0).max(7),
+  team2Set2: z.number().min(0).max(7),
+  team2Set3: z.number().min(0).max(7).optional(),
+}).refine((data) => {
+  // Validate that there's a valid winner
+  const team1Sets = [
+    data.team1Set1 > data.team2Set1 ? 1 : 0,
+    data.team1Set2 > data.team2Set2 ? 1 : 0,
+    data.team1Set3 !== undefined && data.team2Set3 !== undefined ? (data.team1Set3 > data.team2Set3 ? 1 : 0) : 0
+  ].reduce((a, b) => a + b, 0);
+  
+  const team2Sets = [
+    data.team2Set1 > data.team1Set1 ? 1 : 0,
+    data.team2Set2 > data.team1Set2 ? 1 : 0,
+    data.team2Set3 !== undefined && data.team1Set3 !== undefined ? (data.team2Set3 > data.team1Set3 ? 1 : 0) : 0
+  ].reduce((a, b) => a + b, 0);
+  
+  return team1Sets !== team2Sets; // Must have a clear winner
+}, {
+  message: "Debe haber un ganador claro",
+});
 
 interface MatchResultFormProps {
   match: any;
@@ -14,223 +42,225 @@ interface MatchResultFormProps {
 }
 
 const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
-  const [formData, setFormData] = useState({
-    team1_set1: '',
-    team1_set2: '',
-    team1_set3: '',
-    team2_set1: '',
-    team2_set2: '',
-    team2_set3: '',
-    winner_team_id: '',
-    has_third_set: false,
+  const submitResult = useSubmitMatchResult();
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      team1Set1: 0,
+      team1Set2: 0,
+      team1Set3: undefined,
+      team2Set1: 0,
+      team2Set2: 0,
+      team2Set3: undefined,
+    },
   });
 
-  const submitResult = useSubmitMatchResult();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Calculate winner
+    const team1Sets = [
+      values.team1Set1 > values.team2Set1 ? 1 : 0,
+      values.team1Set2 > values.team2Set2 ? 1 : 0,
+      values.team1Set3 !== undefined && values.team2Set3 !== undefined ? (values.team1Set3 > values.team2Set3 ? 1 : 0) : 0
+    ].reduce((a, b) => a + b, 0);
     
-    // Validate required fields
-    if (!formData.team1_set1 || !formData.team1_set2 || !formData.team2_set1 || !formData.team2_set2 || !formData.winner_team_id) {
-      return;
-    }
+    const team2Sets = [
+      values.team2Set1 > values.team1Set1 ? 1 : 0,
+      values.team2Set2 > values.team1Set2 ? 1 : 0,
+      values.team2Set3 !== undefined && values.team1Set3 !== undefined ? (values.team2Set3 > values.team1Set3 ? 1 : 0) : 0
+    ].reduce((a, b) => a + b, 0);
 
-    const resultData = {
+    const winnerTeamId = team1Sets > team2Sets ? match.team1_id : match.team2_id;
+
+    // Calculate points (this would depend on your league scoring system)
+    const pointsTeam1 = team1Sets > team2Sets ? 3 : 0;
+    const pointsTeam2 = team2Sets > team1Sets ? 3 : 0;
+
+    await submitResult.mutateAsync({
       matchId: match.id,
-      team1Set1: parseInt(formData.team1_set1),
-      team1Set2: parseInt(formData.team1_set2),
-      team1Set3: formData.has_third_set ? parseInt(formData.team1_set3) : null,
-      team2Set1: parseInt(formData.team2_set1),
-      team2Set2: parseInt(formData.team2_set2),
-      team2Set3: formData.has_third_set ? parseInt(formData.team2_set3) : null,
-      winnerTeamId: formData.winner_team_id,
-    };
-
-    submitResult.mutate(resultData, {
-      onSuccess: () => {
-        onClose();
-      },
+      team1Set1: values.team1Set1,
+      team1Set2: values.team1Set2,
+      team1Set3: values.team1Set3,
+      team2Set1: values.team2Set1,
+      team2Set2: values.team2Set2,
+      team2Set3: values.team2Set3,
+      winnerTeamId,
+      pointsTeam1,
+      pointsTeam2,
     });
-  };
 
-  const handleThirdSetToggle = (hasThirdSet: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      has_third_set: hasThirdSet,
-      team1_set3: hasThirdSet ? prev.team1_set3 : '',
-      team2_set3: hasThirdSet ? prev.team2_set3 : '',
-    }));
+    onClose();
   };
 
   return (
-    <Card className="border-0 shadow-lg">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Trophy className="h-5 w-5 mr-2" />
+            <CardTitle>Subir Resultado</CardTitle>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <CardTitle className="flex items-center">
-              <Trophy className="h-5 w-5 mr-2 text-green-600" />
-              Registrar Resultado
-            </CardTitle>
-            <CardDescription>
-              {match.team1?.name} vs {match.team2?.name}
-            </CardDescription>
-          </div>
         </div>
+        <CardDescription>
+          {match.team1?.name} vs {match.team2?.name}
+        </CardDescription>
       </CardHeader>
-
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Set 1 */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Set 1</Label>
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <div>
-                <Label htmlFor="team1_set1" className="text-sm">{match.team1?.name}</Label>
-                <Input
-                  id="team1_set1"
-                  type="number"
-                  min="0"
-                  max="7"
-                  value={formData.team1_set1}
-                  onChange={(e) => setFormData(prev => ({ ...prev, team1_set1: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="text-center text-lg font-semibold text-gray-500">-</div>
-              <div>
-                <Label htmlFor="team2_set1" className="text-sm">{match.team2?.name}</Label>
-                <Input
-                  id="team2_set1"
-                  type="number"
-                  min="0"
-                  max="7"
-                  value={formData.team2_set1}
-                  onChange={(e) => setFormData(prev => ({ ...prev, team2_set1: e.target.value }))}
-                  required
-                />
-              </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center font-medium">Set</div>
+              <div className="text-center font-medium">{match.team1?.name}</div>
+              <div className="text-center font-medium">{match.team2?.name}</div>
+              
+              {/* Set 1 */}
+              <div className="flex items-center justify-center">Set 1</div>
+              <FormField
+                control={form.control}
+                name="team1Set1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-center"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="team2Set1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-center"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Set 2 */}
+              <div className="flex items-center justify-center">Set 2</div>
+              <FormField
+                control={form.control}
+                name="team1Set2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-center"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="team2Set2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="text-center"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Set 3 (optional) */}
+              <div className="flex items-center justify-center">Set 3 (Opcional)</div>
+              <FormField
+                control={form.control}
+                name="team1Set3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        className="text-center"
+                        placeholder="--"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="team2Set3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        max="7" 
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        className="text-center"
+                        placeholder="--"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
 
-          {/* Set 2 */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Set 2</Label>
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <div>
-                <Label htmlFor="team1_set2" className="text-sm">{match.team1?.name}</Label>
-                <Input
-                  id="team1_set2"
-                  type="number"
-                  min="0"
-                  max="7"
-                  value={formData.team1_set2}
-                  onChange={(e) => setFormData(prev => ({ ...prev, team1_set2: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="text-center text-lg font-semibold text-gray-500">-</div>
-              <div>
-                <Label htmlFor="team2_set2" className="text-sm">{match.team2?.name}</Label>
-                <Input
-                  id="team2_set2"
-                  type="number"
-                  min="0"
-                  max="7"
-                  value={formData.team2_set2}
-                  onChange={(e) => setFormData(prev => ({ ...prev, team2_set2: e.target.value }))}
-                  required
-                />
-              </div>
+            <div className="flex gap-3 pt-4">
+              <Button 
+                type="submit" 
+                disabled={submitResult.isPending}
+                className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              >
+                {submitResult.isPending ? "Enviando..." : "Enviar Resultado"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
             </div>
-          </div>
-
-          {/* Third Set Toggle */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">¿Hubo tercer set?</Label>
-            <RadioGroup
-              value={formData.has_third_set.toString()}
-              onValueChange={(value) => handleThirdSetToggle(value === 'true')}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="false" id="no-third-set" />
-                <Label htmlFor="no-third-set">No</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="true" id="yes-third-set" />
-                <Label htmlFor="yes-third-set">Sí</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Set 3 - Only show if third set is enabled */}
-          {formData.has_third_set && (
-            <div className="space-y-3">
-              <Label className="text-base font-medium">Set 3</Label>
-              <div className="grid grid-cols-3 gap-4 items-center">
-                <div>
-                  <Label htmlFor="team1_set3" className="text-sm">{match.team1?.name}</Label>
-                  <Input
-                    id="team1_set3"
-                    type="number"
-                    min="0"
-                    max="7"
-                    value={formData.team1_set3}
-                    onChange={(e) => setFormData(prev => ({ ...prev, team1_set3: e.target.value }))}
-                    required={formData.has_third_set}
-                  />
-                </div>
-                <div className="text-center text-lg font-semibold text-gray-500">-</div>
-                <div>
-                  <Label htmlFor="team2_set3" className="text-sm">{match.team2?.name}</Label>
-                  <Input
-                    id="team2_set3"
-                    type="number"
-                    min="0"
-                    max="7"
-                    value={formData.team2_set3}
-                    onChange={(e) => setFormData(prev => ({ ...prev, team2_set3: e.target.value }))}
-                    required={formData.has_third_set}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Winner Selection */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Equipo Ganador</Label>
-            <RadioGroup
-              value={formData.winner_team_id}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, winner_team_id: value }))}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={match.team1_id} id="team1-winner" />
-                <Label htmlFor="team1-winner">{match.team1?.name}</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={match.team2_id} id="team2-winner" />
-                <Label htmlFor="team2-winner">{match.team2?.name}</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Actions */}
-          <div className="flex space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={submitResult.isPending}
-              className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-            >
-              {submitResult.isPending ? 'Guardando...' : 'Guardar Resultado'}
-            </Button>
-          </div>
-        </form>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

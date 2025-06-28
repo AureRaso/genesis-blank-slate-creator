@@ -1,5 +1,5 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,41 +16,29 @@ export interface SubmitMatchResultParams {
   pointsTeam2: number;
 }
 
-export const useSubmitMatchResult = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (params: SubmitMatchResultParams) => {
-      console.log('Submitting match result:', params);
+export const useCanUserSubmitResult = (matchId: string, userEmail: string) => {
+  return useQuery({
+    queryKey: ['can-submit-result', matchId, userEmail],
+    queryFn: async () => {
+      if (!matchId || !userEmail) return false;
       
-      // Get the match with team data to verify the user can submit the result
-      const { data: match, error: matchError } = await supabase
+      const { data: match } = await supabase
         .from('matches')
         .select(`
-          *,
+          result_status,
           team1:teams!matches_team1_id_fkey (
-            id,
             player1:profiles!teams_player1_id_fkey (email),
             player2:profiles!teams_player2_id_fkey (email)
           ),
           team2:teams!matches_team2_id_fkey (
-            id,
             player1:profiles!teams_player1_id_fkey (email),
             player2:profiles!teams_player2_id_fkey (email)
           )
         `)
-        .eq('id', params.matchId)
+        .eq('id', matchId)
         .single();
 
-      if (matchError) {
-        console.error('Error fetching match:', matchError);
-        throw matchError;
-      }
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      if (!match || match.result_status !== 'pending') return false;
 
       // Check if user is part of either team
       const team1Player1Email = match.team1?.player1?.email;
@@ -58,21 +46,25 @@ export const useSubmitMatchResult = () => {
       const team2Player1Email = match.team2?.player1?.email;
       const team2Player2Email = match.team2?.player2?.email;
       
-      const isUserInMatch = team1Player1Email === user.email || 
-                           team1Player2Email === user.email || 
-                           team2Player1Email === user.email || 
-                           team2Player2Email === user.email;
+      return team1Player1Email === userEmail || 
+             team1Player2Email === userEmail || 
+             team2Player1Email === userEmail || 
+             team2Player2Email === userEmail;
+    },
+    enabled: !!matchId && !!userEmail,
+  });
+};
 
-      if (!isUserInMatch) {
-        throw new Error('No tienes permisos para enviar el resultado de este partido');
-      }
+export const useSubmitMatchResult = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-      // Determine which team the user belongs to
-      const userBelongsToTeam1 = team1Player1Email === user.email || team1Player2Email === user.email;
-      const submittingTeamId = userBelongsToTeam1 ? match.team1_id : match.team2_id;
+  return useMutation({
+    mutationFn: async (params: SubmitMatchResultParams) => {
+      console.log('Submitting match result:', params);
 
-      // Create or update match result
-      const matchResult = {
+      // First, create the match result
+      const resultData = {
         match_id: params.matchId,
         team1_set1: params.team1Set1,
         team1_set2: params.team1Set2,
@@ -85,51 +77,49 @@ export const useSubmitMatchResult = () => {
         points_team2: params.pointsTeam2,
       };
 
-      // Insert or update match result
-      const { data: resultData, error: resultError } = await supabase
+      const { data: result, error: resultError } = await supabase
         .from('match_results')
-        .upsert(matchResult, { 
-          onConflict: 'match_id',
-          ignoreDuplicates: false 
-        })
+        .insert(resultData)
         .select()
         .single();
 
       if (resultError) {
-        console.error('Error creating/updating match result:', resultError);
+        console.error('Error creating match result:', resultError);
         throw resultError;
       }
 
-      // Update match status
-      const { error: matchUpdateError } = await supabase
+      // Then, update the match status
+      const { data: match, error: matchError } = await supabase
         .from('matches')
         .update({
-          result_submitted_by_team_id: submittingTeamId,
-          result_status: 'pending_approval',
-          status: 'pending'
+          result_status: 'submitted',
+          status: 'completed'
         })
-        .eq('id', params.matchId);
+        .eq('id', params.matchId)
+        .select()
+        .single();
 
-      if (matchUpdateError) {
-        console.error('Error updating match status:', matchUpdateError);
-        throw matchUpdateError;
+      if (matchError) {
+        console.error('Error updating match:', matchError);
+        throw matchError;
       }
 
-      return resultData;
+      console.log('Match result submitted successfully');
+      return { result, match };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['match-results'] });
       queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['match-results'] });
       toast({
         title: "Resultado enviado",
-        description: "El resultado del partido ha sido enviado y está pendiente de aprobación.",
+        description: "El resultado ha sido enviado y está esperando aprobación del otro equipo.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Error submitting match result:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo enviar el resultado del partido.",
+        description: "No se pudo enviar el resultado. Inténtalo de nuevo.",
         variant: "destructive",
       });
     },
