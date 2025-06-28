@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -65,7 +66,6 @@ export const usePlayerTeamsAll = (profileId?: string) => {
         .select(`
           id,
           name,
-          league_id,
           player1:profiles!teams_player1_id_fkey (
             id,
             full_name,
@@ -75,9 +75,6 @@ export const usePlayerTeamsAll = (profileId?: string) => {
             id,
             full_name,
             email
-          ),
-          league_teams!teams_id_fkey (
-            league_id
           )
         `)
         .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`);

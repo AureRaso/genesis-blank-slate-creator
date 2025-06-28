@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,10 +47,10 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     },
   });
 
-  // Filtrar equipos del jugador para la liga seleccionada
+  // Filter player teams for the selected league by checking if the team exists in league_teams
   const playerTeamsInLeague = playerTeamsAll?.filter(team => {
-    // Verificar si el equipo está en la liga seleccionada
-    return team.league_teams?.some(lt => lt.league_id === selectedLeagueId);
+    // Check if this team is in the selected league by querying league_teams
+    return leagueTeams?.some(lt => lt.teams?.id === team.id);
   }) || [];
 
   // Auto-select player's team when league changes
