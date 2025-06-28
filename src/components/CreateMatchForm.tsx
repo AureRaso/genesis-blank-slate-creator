@@ -137,11 +137,14 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableTeams.map((teamData) => (
-                            <SelectItem key={teamData.teams.id} value={teamData.teams.id}>
-                              {teamData.teams.name} ({teamData.teams.player1?.full_name} & {teamData.teams.player2?.full_name})
-                            </SelectItem>
-                          ))}
+                          {availableTeams.map((teamData) => {
+                            const team = teamData.teams;
+                            return (
+                              <SelectItem key={team.id} value={team.id}>
+                                {team.name} ({team.player1?.full_name} & {team.player2?.full_name})
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -162,11 +165,14 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel }: CreateMatchFormProps)
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {teams?.filter(teamData => teamData.teams.id !== form.watch("team1Id")).map((teamData) => (
-                            <SelectItem key={teamData.teams.id} value={teamData.teams.id}>
-                              {teamData.teams.name} ({teamData.teams.player1?.full_name} & {teamData.teams.player2?.full_name})
-                            </SelectItem>
-                          ))}
+                          {teams?.filter(teamData => teamData.teams.id !== form.watch("team1Id")).map((teamData) => {
+                            const team = teamData.teams;
+                            return (
+                              <SelectItem key={team.id} value={team.id}>
+                                {team.name} ({team.player1?.full_name} & {team.player2?.full_name})
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                       <FormMessage />
