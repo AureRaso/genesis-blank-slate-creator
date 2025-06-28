@@ -36,6 +36,9 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
   const { data: playerTeamsInLeague } = usePlayerTeamsInLeague(selectedLeagueId, profile?.id);
   const { createMatch } = usePlayerMatchCreation();
 
+  console.log('CreateMatchForm - leagueTeams:', leagueTeams);
+  console.log('CreateMatchForm - playerTeamsInLeague:', playerTeamsInLeague);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -88,6 +91,8 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     const selectedMyTeamId = form.watch('myTeamId');
     return team && team.id !== selectedMyTeamId;
   }) || [];
+
+  console.log('Available opponent teams:', availableOpponentTeams);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -167,7 +172,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Equipo Rival</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona un equipo rival" />
@@ -178,9 +183,12 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                         const team = teamData.teams;
                         if (!team) return null;
                         
+                        const player1Name = team.player1?.full_name || 'Jugador 1';
+                        const player2Name = team.player2?.full_name || 'Jugador 2';
+                        
                         return (
                           <SelectItem key={team.id} value={team.id}>
-                            {team.name}
+                            {team.name} ({player1Name} & {player2Name})
                           </SelectItem>
                         );
                       })}
@@ -244,7 +252,7 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                 >
                   Cancelar
                 </Button>
-                )}
+              )}
             </div>
           </form>
         </Form>

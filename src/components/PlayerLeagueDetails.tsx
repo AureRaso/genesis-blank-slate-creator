@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { usePlayerTeams } from "@/hooks/usePlayerTeams";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import CreateMatchForm from "./CreateMatchForm";
 import PartnerSelectionModal from "./PartnerSelectionModal";
 import LeagueTeamsView from "./LeagueTeamsView";
@@ -26,6 +28,33 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
   const { data: leagues } = useLeagues();
   const { data: playerTeam } = usePlayerTeams(leagueId, profile?.id);
   
+  // Obtener información del compañero
+  const { data: partnerInfo } = useQuery({
+    queryKey: ['partner-info', playerTeam?.id],
+    queryFn: async () => {
+      if (!playerTeam) return null;
+      
+      const partnerId = playerTeam.player1_id === profile?.id ? 
+        playerTeam.player2_id : playerTeam.player1_id;
+      
+      if (!partnerId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', partnerId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching partner info:', error);
+        return null;
+      }
+      
+      return data;
+    },
+    enabled: !!playerTeam && !!profile?.id,
+  });
+  
   const league = leagues?.find(l => l.id === leagueId);
 
   console.log('PlayerLeagueDetails - playerTeam:', playerTeam, 'leagueId:', leagueId, 'profileId:', profile?.id);
@@ -43,16 +72,12 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
   }
 
   // Si ya tiene equipo, mostrar el dashboard del equipo
-  if (playerTeam) {
-    const partner = playerTeam.player1_id === profile.id ? 
-      { id: playerTeam.player2_id, full_name: 'Compañero' } : 
-      { id: playerTeam.player1_id, full_name: 'Compañero' };
-    
+  if (playerTeam && partnerInfo) {
     return (
       <PlayerTeamDashboard
         league={league}
         playerTeam={playerTeam}
-        partner={[partner]}
+        partner={[partnerInfo]}
         onBack={onBack}
       />
     );
@@ -103,8 +128,8 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
       <LeagueHeader league={league} onBack={onBack} />
 
       <TeamStatusCard
-        playerTeam={null}
-        partner={null}
+        playerTeam={playerTeam}
+        partner={partnerInfo}
         onShowTeamsView={() => setShowTeamsView(true)}
         onCreateMatch={() => setShowCreateMatch(true)}
         onShowPartnerSelection={() => setShowPartnerSelection(true)}
