@@ -2,15 +2,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useLeagueStandings = (leagueId?: string) => {
+export interface TeamStanding {
+  team_id: string;
+  team_name: string;
+  player1_name: string;
+  player2_name: string;
+  matches_played: number;
+  matches_won: number;
+  matches_lost: number;
+  sets_won: number;
+  sets_lost: number;
+  games_won: number;
+  games_lost: number;
+  points: number;
+}
+
+export const useLeagueStandings = (leagueId: string) => {
   return useQuery({
     queryKey: ['league-standings', leagueId],
     queryFn: async () => {
       if (!leagueId) return [];
       
-      console.log('Fetching standings for league:', leagueId);
+      console.log('Fetching league standings for:', leagueId);
       
-      // Obtener todos los equipos de la liga
+      // Get all teams in the league
       const { data: leagueTeams, error: teamsError } = await supabase
         .from('league_teams')
         .select(`
@@ -35,22 +50,12 @@ export const useLeagueStandings = (leagueId?: string) => {
         throw teamsError;
       }
 
-      // Obtener todos los partidos finalizados de la liga
+      // Get all completed matches for this league
       const { data: matches, error: matchesError } = await supabase
         .from('matches')
         .select(`
           *,
-          match_results (
-            winner_team_id,
-            points_team1,
-            points_team2,
-            team1_set1,
-            team1_set2,
-            team1_set3,
-            team2_set1,
-            team2_set2,
-            team2_set3
-          )
+          match_results (*)
         `)
         .eq('league_id', leagueId)
         .eq('status', 'completed');
@@ -60,103 +65,93 @@ export const useLeagueStandings = (leagueId?: string) => {
         throw matchesError;
       }
 
-      // Calcular estadísticas para cada equipo
-      const standings = leagueTeams?.map(lt => {
+      // Calculate standings
+      const standings: Record<string, TeamStanding> = {};
+
+      // Initialize standings for all teams
+      leagueTeams?.forEach(lt => {
         const team = lt.teams;
-        if (!team) return null;
-
-        let points = 0;
-        let matchesPlayed = 0;
-        let matchesWon = 0;
-        let matchesLost = 0;
-        let setsWon = 0;
-        let setsLost = 0;
-        let gamesWon = 0;
-        let gamesLost = 0;
-
-        matches?.forEach(match => {
-          if (match.team1_id === team.id || match.team2_id === team.id) {
-            matchesPlayed++;
-            const result = match.match_results?.[0];
-            
-            if (result) {
-              const isTeam1 = match.team1_id === team.id;
-              const teamPoints = isTeam1 ? result.points_team1 : result.points_team2;
-              const opponentPoints = isTeam1 ? result.points_team2 : result.points_team1;
-              
-              points += teamPoints;
-              
-              if (result.winner_team_id === team.id) {
-                matchesWon++;
-              } else {
-                matchesLost++;
-              }
-
-              // Calcular sets y games
-              if (isTeam1) {
-                const team1Sets = [
-                  { t1: result.team1_set1, t2: result.team2_set1 },
-                  { t1: result.team1_set2, t2: result.team2_set2 },
-                  ...(result.team1_set3 !== null ? [{ t1: result.team1_set3, t2: result.team2_set3 }] : [])
-                ];
-                
-                team1Sets.forEach(set => {
-                  if (set.t1 > set.t2) setsWon++;
-                  else setsLost++;
-                  gamesWon += set.t1;
-                  gamesLost += set.t2;
-                });
-              } else {
-                const team2Sets = [
-                  { t1: result.team2_set1, t2: result.team1_set1 },
-                  { t1: result.team2_set2, t2: result.team1_set2 },
-                  ...(result.team2_set3 !== null ? [{ t1: result.team2_set3, t2: result.team1_set3 }] : [])
-                ];
-                
-                team2Sets.forEach(set => {
-                  if (set.t1 > set.t2) setsWon++;
-                  else setsLost++;
-                  gamesWon += set.t1;
-                  gamesLost += set.t2;
-                });
-              }
-            }
-          }
-        });
-
-        return {
+        if (!team) return;
+        
+        standings[team.id] = {
           team_id: team.id,
           team_name: team.name,
-          player1_name: team.player1?.full_name || 'Jugador 1',
-          player2_name: team.player2?.full_name || 'Jugador 2',
-          points,
-          matches_played: matchesPlayed,
-          matches_won: matchesWon,
-          matches_lost: matchesLost,
-          sets_won: setsWon,
-          sets_lost: setsLost,
-          games_won: gamesWon,
-          games_lost: gamesLost,
-          sets_difference: setsWon - setsLost,
-          games_difference: gamesWon - gamesLost
+          player1_name: team.player1?.[0]?.full_name || 'Jugador 1',
+          player2_name: team.player2?.[0]?.full_name || 'Jugador 2',
+          matches_played: 0,
+          matches_won: 0,
+          matches_lost: 0,
+          sets_won: 0,
+          sets_lost: 0,
+          games_won: 0,
+          games_lost: 0,
+          points: 0,
         };
-      }).filter(Boolean);
-
-      // Ordenar por puntos, diferencia de sets, diferencia de games
-      const sortedStandings = standings?.sort((a, b) => {
-        if (b!.points !== a!.points) return b!.points - a!.points;
-        if (b!.sets_difference !== a!.sets_difference) return b!.sets_difference - a!.sets_difference;
-        return b!.games_difference - a!.games_difference;
       });
 
-      // Añadir posición
-      const standingsWithPosition = sortedStandings?.map((standing, index) => ({
-        ...standing,
-        position: index + 1
-      }));
+      // Process completed matches
+      matches?.forEach(match => {
+        if (!match.match_results || match.match_results.length === 0) return;
+        
+        const result = match.match_results[0];
+        const team1Id = match.team1_id;
+        const team2Id = match.team2_id;
 
-      console.log('League standings calculated:', standingsWithPosition);
-      return standingsWithPosition || [];
+        if (standings[team1Id] && standings[team2Id]) {
+          // Update matches played
+          standings[team1Id].matches_played++;
+          standings[team2Id].matches_played++;
+
+          // Calculate sets
+          const team1Sets = [
+            result.team1_set1 > result.team2_set1 ? 1 : 0,
+            result.team1_set2 > result.team2_set2 ? 1 : 0,
+            result.team1_set3 && result.team2_set3 ? (result.team1_set3 > result.team2_set3 ? 1 : 0) : 0
+          ].reduce((a, b) => a + b, 0);
+
+          const team2Sets = [
+            result.team2_set1 > result.team1_set1 ? 1 : 0,
+            result.team2_set2 > result.team1_set2 ? 1 : 0,
+            result.team2_set3 && result.team1_set3 ? (result.team2_set3 > result.team1_set3 ? 1 : 0) : 0
+          ].reduce((a, b) => a + b, 0);
+
+          // Update sets
+          standings[team1Id].sets_won += team1Sets;
+          standings[team1Id].sets_lost += team2Sets;
+          standings[team2Id].sets_won += team2Sets;
+          standings[team2Id].sets_lost += team1Sets;
+
+          // Update games
+          standings[team1Id].games_won += (result.team1_set1 + result.team1_set2 + (result.team1_set3 || 0));
+          standings[team1Id].games_lost += (result.team2_set1 + result.team2_set2 + (result.team2_set3 || 0));
+          standings[team2Id].games_won += (result.team2_set1 + result.team2_set2 + (result.team2_set3 || 0));
+          standings[team2Id].games_lost += (result.team1_set1 + result.team1_set2 + (result.team1_set3 || 0));
+
+          // Update matches won/lost and points
+          if (team1Sets > team2Sets) {
+            standings[team1Id].matches_won++;
+            standings[team2Id].matches_lost++;
+            standings[team1Id].points += result.points_team1 || 3;
+            standings[team2Id].points += result.points_team2 || 0;
+          } else {
+            standings[team2Id].matches_won++;
+            standings[team1Id].matches_lost++;
+            standings[team2Id].points += result.points_team2 || 3;
+            standings[team1Id].points += result.points_team1 || 0;
+          }
+        }
+      });
+
+      // Convert to array and sort by points
+      const standingsArray = Object.values(standings).sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
+        if (b.sets_won !== a.sets_won) return b.sets_won - a.sets_won;
+        return b.games_won - a.games_won;
+      });
+
+      console.log('League standings calculated:', standingsArray);
+      return standingsArray;
     },
     enabled: !!leagueId,
   });

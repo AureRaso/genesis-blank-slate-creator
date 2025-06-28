@@ -16,10 +16,10 @@ const MatchesList = ({ leagueId, showPlayerMatches = false }: MatchesListProps) 
 
   const filteredMatches = showPlayerMatches && profile
     ? matches?.filter(match => {
-        const team1Player1Email = match.team1?.player1?.email;
-        const team1Player2Email = match.team1?.player2?.email;
-        const team2Player1Email = match.team2?.player1?.email;
-        const team2Player2Email = match.team2?.player2?.email;
+        const team1Player1Email = match.team1?.player1?.[0]?.email;
+        const team1Player2Email = match.team1?.player2?.[0]?.email;
+        const team2Player1Email = match.team2?.player1?.[0]?.email;
+        const team2Player2Email = match.team2?.player2?.[0]?.email;
         
         return team1Player1Email === profile.email || 
                team1Player2Email === profile.email || 

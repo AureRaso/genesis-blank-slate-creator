@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +53,11 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
       form.setValue('myTeamId', playerTeam.id);
     }
   }, [playerTeam, form]);
+
+  // Update league when selected league changes
+  useEffect(() => {
+    form.setValue('leagueId', selectedLeagueId);
+  }, [selectedLeagueId, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
