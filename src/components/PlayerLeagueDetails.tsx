@@ -1,18 +1,16 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Trophy, Users, MessageCircle, BarChart3, Plus, UserPlus, Eye, Swords } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { usePlayerTeams } from "@/hooks/usePlayerTeams";
-import MatchesList from "./MatchesList";
-import LeagueStandingsTable from "./LeagueStandingsTable";
 import CreateMatchForm from "./CreateMatchForm";
 import PartnerSelectionModal from "./PartnerSelectionModal";
 import LeagueTeamsView from "./LeagueTeamsView";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LeagueHeader from "./league/LeagueHeader";
+import TeamStatusCard from "./league/TeamStatusCard";
+import PlayerLeagueTabs from "./league/PlayerLeagueTabs";
 
 interface PlayerLeagueDetailsProps {
   leagueId: string;
@@ -89,138 +87,20 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{league.name}</h1>
-            <p className="text-muted-foreground flex items-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              {league.start_date} - {league.end_date}
-            </p>
-          </div>
-        </div>
-        <Button 
-          variant="outline"
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Contactar Admin
-        </Button>
-      </div>
+      <LeagueHeader league={league} onBack={onBack} />
 
-      {/* Team Status Section */}
-      <Card className="border-2 border-dashed border-green-200 bg-gradient-to-r from-green-50 to-blue-50">
-        <CardHeader>
-          <CardTitle className="text-green-800 flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            {playerTeam ? "Tu Equipo" : "Estado de Emparejamiento"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {playerTeam && partner ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-green-500 text-white">
-                      {partner.full_name?.charAt(0).toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-green-800">{partner.full_name || 'Compañero'}</p>
-                    <p className="text-sm text-green-600">Tu compañero de equipo</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-green-800">{playerTeam.name}</p>
-                  <p className="text-sm text-green-600">Nombre del equipo</p>
-                </div>
-              </div>
+      <TeamStatusCard
+        playerTeam={playerTeam}
+        partner={partner}
+        onShowTeamsView={() => setShowTeamsView(true)}
+        onCreateMatch={() => setShowCreateMatch(true)}
+        onShowPartnerSelection={() => setShowPartnerSelection(true)}
+      />
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Button 
-                  onClick={() => setShowTeamsView(true)}
-                  variant="outline"
-                  className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Ver Equipos
-                </Button>
-                <Button 
-                  onClick={() => setShowCreateMatch(true)}
-                  className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-                >
-                  <Swords className="h-4 w-4 mr-2" />
-                  Crear Partido
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center space-y-4">
-              <div className="p-6">
-                <Users className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-green-800 mb-2">
-                  Aún no tienes pareja en esta liga
-                </h3>
-                <p className="text-green-700 mb-4">
-                  Elige un compañero para empezar a jugar y crear partidos
-                </p>
-                <Button 
-                  onClick={() => setShowPartnerSelection(true)}
-                  className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Elegir Compañero
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Tabs - Only show if player has a team */}
       {playerTeam && (
-        <Tabs defaultValue="matches" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="matches" className="flex items-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              Mis Partidos
-            </TabsTrigger>
-            <TabsTrigger value="standings" className="flex items-center">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Clasificación
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="matches" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Tus Partidos
-                </CardTitle>
-                <CardDescription>
-                  Próximos partidos y resultados anteriores en esta liga
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MatchesList leagueId={leagueId} showPlayerMatches={true} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="standings" className="space-y-4">
-            <LeagueStandingsTable leagueId={leagueId} leagueName={league.name} />
-          </TabsContent>
-        </Tabs>
+        <PlayerLeagueTabs leagueId={leagueId} leagueName={league.name} />
       )}
 
-      {/* Partner Selection Modal */}
       <PartnerSelectionModal
         open={showPartnerSelection}
         onOpenChange={setShowPartnerSelection}
