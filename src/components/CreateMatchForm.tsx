@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Calendar, Users, MapPin, Clock } from "lucide-react";
+import { Calendar, Users, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagueTeams } from "@/hooks/useLeagueTeams";
 import { usePlayerTeams } from "@/hooks/usePlayerTeams";
@@ -16,6 +16,7 @@ import { usePlayerMatchCreation } from "@/hooks/usePlayerMatchCreation";
 
 const formSchema = z.object({
   leagueId: z.string().min(1, "Selecciona una liga"),
+  myTeamId: z.string().min(1, "Selecciona tu equipo"),
   opponentTeamId: z.string().min(1, "Selecciona un equipo rival"),
   scheduledDate: z.string().min(1, "Selecciona una fecha"),
   scheduledTime: z.string().min(1, "Selecciona una hora"),
@@ -39,22 +40,25 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
     resolver: zodResolver(formSchema),
     defaultValues: {
       leagueId: leagues[0]?.id || "",
+      myTeamId: "",
       opponentTeamId: preselectedOpponentTeamId || "",
       scheduledDate: "",
       scheduledTime: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!playerTeam) {
-      console.error('No player team found');
-      return;
+  // Auto-select player's team when league changes
+  useEffect(() => {
+    if (playerTeam) {
+      form.setValue('myTeamId', playerTeam.id);
     }
+  }, [playerTeam, form]);
 
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await createMatch.mutateAsync({
         leagueId: values.leagueId,
-        team1Id: playerTeam.id,
+        team1Id: values.myTeamId,
         team2Id: values.opponentTeamId,
         scheduledDate: values.scheduledDate,
         scheduledTime: values.scheduledTime,
@@ -119,6 +123,36 @@ const CreateMatchForm = ({ leagues, onSuccess, onCancel, preselectedOpponentTeam
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="myTeamId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tu Equipo</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona tu equipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {playerTeam && (
+                        <SelectItem value={playerTeam.id}>
+                          <div className="flex items-center">
+                            <span className="font-medium">{playerTeam.name}</span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              ({playerTeam.player1?.full_name} + {playerTeam.player2?.full_name})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

@@ -27,24 +27,26 @@ export const useCanCreateMatch = () => {
   });
 };
 
-export const useCreatePlayerMatch = () => {
+export const usePlayerMatchCreation = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { profile } = useAuth();
 
-  return useMutation({
+  const createMatch = useMutation({
     mutationFn: async ({ 
       leagueId, 
       team1Id, 
       team2Id, 
       scheduledDate, 
-      scheduledTime 
+      scheduledTime,
+      createdByProfileId
     }: {
       leagueId: string;
       team1Id: string;
       team2Id: string;
       scheduledDate?: string;
       scheduledTime?: string;
+      createdByProfileId: string;
     }) => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
@@ -63,7 +65,7 @@ export const useCreatePlayerMatch = () => {
           league_id: leagueId,
           team1_id: team1Id,
           team2_id: team2Id,
-          round: 1, // Los partidos creados por jugadores empiezan en ronda 1
+          round: 1,
           scheduled_date: scheduledDate,
           scheduled_time: scheduledTime,
           created_by_profile_id: profile.id,
@@ -96,4 +98,6 @@ export const useCreatePlayerMatch = () => {
       });
     },
   });
+
+  return { createMatch };
 };

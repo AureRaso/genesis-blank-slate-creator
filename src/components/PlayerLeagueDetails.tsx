@@ -11,6 +11,7 @@ import LeagueTeamsView from "./LeagueTeamsView";
 import LeagueHeader from "./league/LeagueHeader";
 import TeamStatusCard from "./league/TeamStatusCard";
 import PlayerLeagueTabs from "./league/PlayerLeagueTabs";
+import PlayerTeamDashboard from "./PlayerTeamDashboard";
 
 interface PlayerLeagueDetailsProps {
   leagueId: string;
@@ -40,10 +41,19 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
     );
   }
 
-  // Determinar quién es el compañero
-  const partner = playerTeam ? (
-    playerTeam.player1?.id === profile.id ? playerTeam.player2 : playerTeam.player1
-  ) : null;
+  // Si ya tiene equipo, mostrar el dashboard del equipo
+  if (playerTeam) {
+    const partner = playerTeam.player1?.id === profile.id ? playerTeam.player2 : playerTeam.player1;
+    
+    return (
+      <PlayerTeamDashboard
+        league={league}
+        playerTeam={playerTeam}
+        partner={partner}
+        onBack={onBack}
+      />
+    );
+  }
 
   if (showTeamsView) {
     return (
@@ -90,16 +100,12 @@ const PlayerLeagueDetails = ({ leagueId, onBack }: PlayerLeagueDetailsProps) => 
       <LeagueHeader league={league} onBack={onBack} />
 
       <TeamStatusCard
-        playerTeam={playerTeam}
-        partner={partner}
+        playerTeam={null}
+        partner={null}
         onShowTeamsView={() => setShowTeamsView(true)}
         onCreateMatch={() => setShowCreateMatch(true)}
         onShowPartnerSelection={() => setShowPartnerSelection(true)}
       />
-
-      {playerTeam && (
-        <PlayerLeagueTabs leagueId={leagueId} leagueName={league.name} />
-      )}
 
       <PartnerSelectionModal
         open={showPartnerSelection}
