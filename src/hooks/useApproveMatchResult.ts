@@ -15,6 +15,8 @@ export const useApproveMatchResult = () => {
         throw new Error('Usuario no autenticado');
       }
 
+      console.log('Fetching match for approval:', matchId);
+
       // Obtener información del partido
       const { data: match, error: matchError } = await supabase
         .from('matches')
@@ -35,10 +37,13 @@ export const useApproveMatchResult = () => {
         .single();
 
       if (matchError || !match) {
+        console.error('Error fetching match for approval:', matchError);
         throw new Error('No se pudo obtener la información del partido');
       }
 
-      // Verificar que el usuario puede aprobar/disputar - corregir acceso a arrays
+      console.log('Match fetched for approval:', match);
+
+      // Verificar que el usuario puede aprobar/disputar - acceso correcto a emails
       const team1Emails = [
         match.team1?.player1?.email, 
         match.team1?.player2?.email

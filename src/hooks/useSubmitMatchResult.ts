@@ -25,6 +25,12 @@ export const useSubmitMatchResult = () => {
         throw new Error('Usuario no autenticado');
       }
 
+      if (!data.matchId) {
+        throw new Error('ID del partido no válido');
+      }
+
+      console.log('Submitting result for match:', data.matchId);
+
       // Validar que todos los valores sean números válidos
       const scores = [
         data.team1_set1, data.team1_set2, data.team2_set1, data.team2_set2
@@ -67,7 +73,7 @@ export const useSubmitMatchResult = () => {
 
       console.log('Match data:', match);
 
-      // Determinar qué equipo está enviando el resultado - corregir acceso a arrays
+      // Determinar qué equipo está enviando el resultado - acceso correcto a emails
       const team1Emails = [
         match.team1?.player1?.email, 
         match.team1?.player2?.email
