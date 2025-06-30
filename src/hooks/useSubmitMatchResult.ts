@@ -75,13 +75,13 @@ export const useSubmitMatchResult = () => {
 
       // Determinar qué equipo está enviando el resultado - acceso correcto a emails
       const team1Emails = [
-        match.team1?.player1?.email, 
-        match.team1?.player2?.email
+        match.team1?.player1?.[0]?.email, 
+        match.team1?.player2?.[0]?.email
       ].filter(Boolean);
       
       const team2Emails = [
-        match.team2?.player1?.email, 
-        match.team2?.player2?.email
+        match.team2?.player1?.[0]?.email, 
+        match.team2?.player2?.[0]?.email
       ].filter(Boolean);
       
       let submittingTeamId: string;
