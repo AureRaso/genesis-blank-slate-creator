@@ -38,9 +38,16 @@ export const useApproveMatchResult = () => {
         throw new Error('No se pudo obtener la información del partido');
       }
 
-      // Verificar que el usuario puede aprobar/disputar
-      const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email].filter(Boolean);
-      const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email].filter(Boolean);
+      // Verificar que el usuario puede aprobar/disputar - corregir acceso a arrays
+      const team1Emails = [
+        match.team1?.player1?.email, 
+        match.team1?.player2?.email
+      ].filter(Boolean);
+      
+      const team2Emails = [
+        match.team2?.player1?.email, 
+        match.team2?.player2?.email
+      ].filter(Boolean);
       
       let approvingTeamId: string;
       

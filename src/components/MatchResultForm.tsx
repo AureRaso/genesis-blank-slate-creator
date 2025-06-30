@@ -57,17 +57,64 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await submitResult.mutateAsync({
-      matchId: match.id,
-      team1_set1: values.team1_set1,
-      team1_set2: values.team1_set2,
-      team1_set3: values.team1_set3,
-      team2_set1: values.team2_set1,
-      team2_set2: values.team2_set2,
-      team2_set3: values.team2_set3,
-    });
+    // Verificar que el partido existe
+    if (!match?.id) {
+      console.error('No match ID available');
+      return;
+    }
 
-    onClose();
+    // Validar que todos los valores sean números válidos
+    const requiredScores = [values.team1_set1, values.team1_set2, values.team2_set1, values.team2_set2];
+    const hasInvalidRequired = requiredScores.some(score => isNaN(Number(score)) || Number(score) < 0 || Number(score) > 7);
+    
+    if (hasInvalidRequired) {
+      console.error('Invalid required score values');
+      return;
+    }
+
+    // Validar valores opcionales si están presentes
+    if (values.team1_set3 !== undefined && (isNaN(Number(values.team1_set3)) || Number(values.team1_set3) < 0 || Number(values.team1_set3) > 7)) {
+      console.error('Invalid team1_set3 value');
+      return;
+    }
+
+    if (values.team2_set3 !== undefined && (isNaN(Number(values.team2_set3)) || Number(values.team2_set3) < 0 || Number(values.team2_set3) > 7)) {
+      console.error('Invalid team2_set3 value');
+      return;
+    }
+
+    try {
+      await submitResult.mutateAsync({
+        matchId: match.id,
+        team1_set1: values.team1_set1,
+        team1_set2: values.team1_set2,
+        team1_set3: values.team1_set3,
+        team2_set1: values.team2_set1,
+        team2_set2: values.team2_set2,
+        team2_set3: values.team2_set3,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Error submitting result:', error);
+    }
+  };
+
+  const handleNumberInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Solo permitir números válidos o campo vacío
+    if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0 && Number(value) <= 7)) {
+      onChange(value === '' ? 0 : parseInt(value));
+    }
+  };
+
+  const handleOptionalNumberInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      onChange(undefined);
+    } else if (!isNaN(Number(value)) && Number(value) >= 0 && Number(value) <= 7) {
+      onChange(parseInt(value));
+    }
   };
 
   return (
@@ -106,8 +153,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ''}
+                        onChange={handleNumberInput(field.onChange)}
                         className="text-center"
                       />
                     </FormControl>
@@ -125,8 +172,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ''}
+                        onChange={handleNumberInput(field.onChange)}
                         className="text-center"
                       />
                     </FormControl>
@@ -147,8 +194,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ''}
+                        onChange={handleNumberInput(field.onChange)}
                         className="text-center"
                       />
                     </FormControl>
@@ -166,8 +213,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ''}
+                        onChange={handleNumberInput(field.onChange)}
                         className="text-center"
                       />
                     </FormControl>
@@ -188,8 +235,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        value={field.value || ''}
+                        onChange={handleOptionalNumberInput(field.onChange)}
                         className="text-center"
                         placeholder="--"
                       />
@@ -208,8 +255,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                         type="number" 
                         min="0" 
                         max="7" 
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        value={field.value || ''}
+                        onChange={handleOptionalNumberInput(field.onChange)}
                         className="text-center"
                         placeholder="--"
                       />

@@ -25,6 +25,22 @@ export const useSubmitMatchResult = () => {
         throw new Error('Usuario no autenticado');
       }
 
+      // Validar que todos los valores sean números válidos
+      const scores = [
+        data.team1_set1, data.team1_set2, data.team2_set1, data.team2_set2
+      ];
+      
+      if (data.team1_set3 !== undefined) scores.push(data.team1_set3);
+      if (data.team2_set3 !== undefined) scores.push(data.team2_set3);
+
+      const hasInvalidScores = scores.some(score => 
+        isNaN(Number(score)) || Number(score) < 0 || Number(score) > 7
+      );
+
+      if (hasInvalidScores) {
+        throw new Error('Todos los valores de sets deben ser números válidos entre 0 y 7');
+      }
+
       // Obtener información del partido
       const { data: match, error: matchError } = await supabase
         .from('matches')
@@ -51,9 +67,16 @@ export const useSubmitMatchResult = () => {
 
       console.log('Match data:', match);
 
-      // Determinar qué equipo está enviando el resultado
-      const team1Emails = [match.team1?.player1?.email, match.team1?.player2?.email].filter(Boolean);
-      const team2Emails = [match.team2?.player1?.email, match.team2?.player2?.email].filter(Boolean);
+      // Determinar qué equipo está enviando el resultado - corregir acceso a arrays
+      const team1Emails = [
+        match.team1?.player1?.email, 
+        match.team1?.player2?.email
+      ].filter(Boolean);
+      
+      const team2Emails = [
+        match.team2?.player1?.email, 
+        match.team2?.player2?.email
+      ].filter(Boolean);
       
       let submittingTeamId: string;
       if (team1Emails.includes(user.email)) {
