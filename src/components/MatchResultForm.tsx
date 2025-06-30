@@ -98,24 +98,32 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
   };
 
-  // Single character numeric input handler
+  // Fixed single character numeric input handler
   const handleSingleDigitInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Only allow single digit 0-7
+    console.log('Input value:', value); // Debug log
+    
+    // Allow empty input or single digit 0-7
     if (value === '') {
       onChange(0);
     } else if (/^[0-7]$/.test(value)) {
-      onChange(parseInt(value));
+      const numValue = parseInt(value, 10);
+      console.log('Setting value:', numValue); // Debug log
+      onChange(numValue);
     }
-    // If more than one character or invalid, don't update
+    // If more than one character or invalid, prevent the change by not calling onChange
   };
 
   const handleOptionalSingleDigitInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Optional input value:', value); // Debug log
+    
     if (value === '') {
       onChange(undefined);
     } else if (/^[0-7]$/.test(value)) {
-      onChange(parseInt(value));
+      const numValue = parseInt(value, 10);
+      console.log('Setting optional value:', numValue); // Debug log
+      onChange(numValue);
     }
   };
 
@@ -204,7 +212,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : '0'}
                             onChange={handleSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
@@ -224,7 +232,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : '0'}
                             onChange={handleSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
@@ -253,7 +261,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : '0'}
                             onChange={handleSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
@@ -273,7 +281,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : '0'}
                             onChange={handleSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
@@ -303,7 +311,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : ''}
                             onChange={handleOptionalSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-orange-200 focus:border-orange-400 rounded-lg"
@@ -323,7 +331,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value !== undefined ? field.value.toString() : ''}
                             onChange={handleOptionalSingleDigitInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-orange-200 focus:border-orange-400 rounded-lg"
@@ -353,7 +361,6 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col md:flex-row gap-3 pt-6">
                 <Button 
                   type="submit" 
