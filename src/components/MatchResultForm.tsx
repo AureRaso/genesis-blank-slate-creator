@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -196,25 +195,31 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
   };
 
-  const handleSingleDigitInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNumberInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
     if (value === '') {
       onChange(0);
-    } else if (/^[0-7]$/.test(value)) {
-      const numValue = parseInt(value, 10);
-      onChange(numValue);
+      return;
+    }
+    
+    // Solo permitir dígitos del 0-7
+    if (/^[0-7]$/.test(value)) {
+      onChange(parseInt(value, 10));
     }
   };
 
-  const handleOptionalSingleDigitInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOptionalNumberInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
     if (value === '') {
       onChange(undefined);
-    } else if (/^[0-7]$/.test(value)) {
-      const numValue = parseInt(value, 10);
-      onChange(numValue);
+      return;
+    }
+    
+    // Solo permitir dígitos del 0-7
+    if (/^[0-7]$/.test(value)) {
+      onChange(parseInt(value, 10));
     }
   };
 
@@ -321,8 +326,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : '0'}
-                            onChange={handleSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
                             placeholder="0"
@@ -341,8 +346,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : '0'}
-                            onChange={handleSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
                             placeholder="0"
@@ -370,8 +375,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : '0'}
-                            onChange={handleSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
                             placeholder="0"
@@ -390,8 +395,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : '0'}
-                            onChange={handleSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
                             placeholder="0"
@@ -426,8 +431,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : ''}
-                            onChange={handleOptionalSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleOptionalNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             disabled={!set3Enabled}
                             className={`text-center text-xl font-bold h-12 border-2 rounded-lg ${
@@ -451,8 +456,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value !== undefined ? field.value.toString() : ''}
-                            onChange={handleOptionalSingleDigitInput(field.onChange)}
+                            value={field.value?.toString() || ''}
+                            onChange={handleOptionalNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             disabled={!set3Enabled}
                             className={`text-center text-xl font-bold h-12 border-2 rounded-lg ${
