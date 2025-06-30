@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Trophy, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLeagues } from "@/hooks/useLeagues";
 import LeagueStandingsTable from "@/components/LeagueStandingsTable";
+import PlayerStandingsTable from "@/components/PlayerStandingsTable";
 
 const StandingsPage = () => {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
@@ -72,12 +74,34 @@ const StandingsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Standings Table */}
+      {/* Standings Tables */}
       {selectedLeagueId ? (
-        <LeagueStandingsTable 
-          leagueId={selectedLeagueId} 
-          leagueName={selectedLeague?.name}
-        />
+        <Tabs defaultValue="teams" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="teams" className="flex items-center">
+              <Trophy className="h-4 w-4 mr-2" />
+              Por Parejas
+            </TabsTrigger>
+            <TabsTrigger value="players" className="flex items-center">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Individual
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="teams" className="space-y-4">
+            <LeagueStandingsTable 
+              leagueId={selectedLeagueId} 
+              leagueName={selectedLeague?.name}
+            />
+          </TabsContent>
+          
+          <TabsContent value="players" className="space-y-4">
+            <PlayerStandingsTable 
+              leagueId={selectedLeagueId} 
+              leagueName={selectedLeague?.name}
+            />
+          </TabsContent>
+        </Tabs>
       ) : (
         <Card>
           <CardContent className="pt-6">

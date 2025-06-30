@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -80,11 +81,11 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      team1_set1: 0,
-      team1_set2: 0,
+      team1_set1: undefined,
+      team1_set2: undefined,
       team1_set3: undefined,
-      team2_set1: 0,
-      team2_set2: 0,
+      team2_set1: undefined,
+      team2_set2: undefined,
       team2_set3: undefined,
     },
   });
@@ -195,15 +196,15 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
   };
 
-  // Función corregida para manejar inputs numéricos principales (Set 1 y 2)
-  const handleNumberInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Función mejorada para manejar inputs numéricos principales (Set 1 y 2)
+  const handleNumberInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     console.log('Input value received:', value); // Para debug
     
-    // Si está vacío, establecer 0 por defecto
+    // Si está vacío, mantener undefined
     if (value === '') {
-      console.log('Empty value, setting to 0');
-      onChange(0);
+      console.log('Empty value, setting to undefined');
+      onChange(undefined);
       return;
     }
     
@@ -213,8 +214,9 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
       console.log('Valid number, setting:', numValue);
       onChange(numValue);
     } else {
-      // Si el valor no es válido, mantener el valor anterior
-      console.log('Invalid value, ignoring');
+      // Si el valor no es válido, mantener vacío
+      console.log('Invalid value, clearing field');
+      onChange(undefined);
     }
   };
 
@@ -339,11 +341,11 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || '0'}
+                            value={field.value?.toString() || ''}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
-                            placeholder="0"
+                            placeholder="--"
                           />
                         </FormControl>
                         <FormMessage />
@@ -359,11 +361,11 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || '0'}
+                            value={field.value?.toString() || ''}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
-                            placeholder="0"
+                            placeholder="--"
                           />
                         </FormControl>
                         <FormMessage />
@@ -388,11 +390,11 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || '0'}
+                            value={field.value?.toString() || ''}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
-                            placeholder="0"
+                            placeholder="--"
                           />
                         </FormControl>
                         <FormMessage />
@@ -408,11 +410,11 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || '0'}
+                            value={field.value?.toString() || ''}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
-                            placeholder="0"
+                            placeholder="--"
                           />
                         </FormControl>
                         <FormMessage />
@@ -453,7 +455,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                                 ? 'border-orange-200 focus:border-orange-400' 
                                 : 'border-gray-200 bg-gray-100'
                             }`}
-                            placeholder={set3Enabled ? "0" : "--"}
+                            placeholder={set3Enabled ? "--" : "--"}
                           />
                         </FormControl>
                         <FormMessage />
@@ -478,7 +480,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                                 ? 'border-orange-200 focus:border-orange-400' 
                                 : 'border-gray-200 bg-gray-100'
                             }`}
-                            placeholder={set3Enabled ? "0" : "--"}
+                            placeholder={set3Enabled ? "--" : "--"}
                           />
                         </FormControl>
                         <FormMessage />
