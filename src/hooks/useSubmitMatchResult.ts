@@ -73,7 +73,7 @@ export const useSubmitMatchResult = () => {
                        (data.team2_set2 > data.team1_set2 ? 1 : 0) +
                        (data.team1_set3 !== undefined && data.team2_set3 !== undefined ? (data.team2_set3 > data.team1_set3 ? 1 : 0) : 0);
 
-      const winner_team_id = team1Sets > team2Sets ? match.team1_id : match.team_id;
+      const winner_team_id = team1Sets > team2Sets ? match.team1_id : match.team2_id;
       const points_team1 = team1Sets > team2Sets ? 3 : 0;
       const points_team2 = team2Sets > team1Sets ? 3 : 0;
 
