@@ -86,6 +86,8 @@ export const useLeagueStandings = (leagueId: string) => {
         throw matchesError;
       }
 
+      console.log('Matches with results:', matches);
+
       // Create maps for quick lookup
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
@@ -123,6 +125,13 @@ export const useLeagueStandings = (leagueId: string) => {
         const result = match.match_results[0];
         const team1Id = match.team1_id;
         const team2Id = match.team2_id;
+
+        console.log('Processing match result:', {
+          match_id: match.id,
+          team1Id,
+          team2Id,
+          result
+        });
 
         if (standings[team1Id] && standings[team2Id]) {
           // Update matches played

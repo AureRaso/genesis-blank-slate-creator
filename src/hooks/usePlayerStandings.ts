@@ -85,6 +85,8 @@ export const usePlayerStandings = (leagueId: string) => {
         throw matchesError;
       }
 
+      console.log('Matches with results for players:', matches);
+
       // Create maps for quick lookup
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
@@ -122,6 +124,13 @@ export const usePlayerStandings = (leagueId: string) => {
         const result = match.match_results[0];
         const team1Players = teamPlayersMap.get(match.team1_id) || [];
         const team2Players = teamPlayersMap.get(match.team2_id) || [];
+
+        console.log('Processing match for players:', {
+          match_id: match.id,
+          team1Players,
+          team2Players,
+          result
+        });
 
         // Calculate sets
         const team1Sets = [
