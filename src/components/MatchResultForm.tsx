@@ -195,35 +195,42 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
   };
 
+  // Función corregida para manejar inputs numéricos
   const handleNumberInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Input value:', value); // Para debug
     
+    // Si está vacío, no hacer nada (mantener el valor actual)
     if (value === '') {
-      onChange(0);
       return;
     }
     
     // Solo permitir dígitos del 0-7
-    if (/^[0-7]$/.test(value)) {
-      onChange(parseInt(value, 10));
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7) {
+      console.log('Setting value:', numValue); // Para debug
+      onChange(numValue);
     }
   };
 
   const handleOptionalNumberInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('Optional input value:', value); // Para debug
     
     if (value === '') {
       onChange(undefined);
       return;
     }
     
-    // Solo permitir dígitos del 0-7
-    if (/^[0-7]$/.test(value)) {
-      onChange(parseInt(value, 10));
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7) {
+      console.log('Setting optional value:', numValue); // Para debug
+      onChange(numValue);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Permitir teclas de navegación y números 0-7
     const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', 'Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'];
     if (!allowedKeys.includes(e.key)) {
       e.preventDefault();

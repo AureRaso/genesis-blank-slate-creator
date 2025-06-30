@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -98,16 +97,19 @@ const AuthPage = () => {
   const passwordStrength = getPasswordStrength(signupPassword);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decorative elements */}
+    <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4 overflow-hidden">
+      {/* Background decorative elements - now cover full screen */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-green-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-green-400/20 to-blue-400/20 rounded-full blur-3xl"></div>
         <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-blue-400/30 rounded-full animate-pulse"></div>
         <div className="absolute top-3/4 right-1/4 w-6 h-6 bg-green-400/30 rounded-full animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/6 w-3 h-3 bg-purple-400/20 rounded-full animate-pulse delay-500"></div>
+        <div className="absolute bottom-1/4 left-3/4 w-5 h-5 bg-yellow-400/25 rounded-full animate-pulse delay-700"></div>
       </div>
 
-      <div className="w-full max-w-lg relative z-10">
+      {/* Main content container - centered and full height */}
+      <div className="w-full max-w-lg relative z-10 flex flex-col justify-center min-h-screen py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="relative inline-block">
