@@ -195,27 +195,33 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
   };
 
-  // Función corregida para manejar inputs numéricos
+  // Función corregida para manejar inputs numéricos principales (Set 1 y 2)
   const handleNumberInput = (onChange: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Input value:', value); // Para debug
+    console.log('Input value received:', value); // Para debug
     
-    // Si está vacío, no hacer nada (mantener el valor actual)
+    // Si está vacío, establecer 0 por defecto
     if (value === '') {
+      console.log('Empty value, setting to 0');
+      onChange(0);
       return;
     }
     
-    // Solo permitir dígitos del 0-7
+    // Solo permitir un solo dígito del 0-7
     const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7) {
-      console.log('Setting value:', numValue); // Para debug
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7 && value.length === 1) {
+      console.log('Valid number, setting:', numValue);
       onChange(numValue);
+    } else {
+      // Si el valor no es válido, mantener el valor anterior
+      console.log('Invalid value, ignoring');
     }
   };
 
+  // Función para inputs opcionales (Set 3)
   const handleOptionalNumberInput = (onChange: (value: number | undefined) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Optional input value:', value); // Para debug
+    console.log('Optional input value received:', value);
     
     if (value === '') {
       onChange(undefined);
@@ -223,8 +229,8 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
     }
     
     const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7) {
-      console.log('Setting optional value:', numValue); // Para debug
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 7 && value.length === 1) {
+      console.log('Valid optional number, setting:', numValue);
       onChange(numValue);
     }
   };
@@ -333,7 +339,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value?.toString() || '0'}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
@@ -353,7 +359,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value?.toString() || '0'}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
@@ -382,7 +388,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value?.toString() || '0'}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-green-200 focus:border-green-400 rounded-lg"
@@ -402,7 +408,7 @@ const MatchResultForm = ({ match, onClose }: MatchResultFormProps) => {
                           <Input 
                             type="text" 
                             maxLength={1}
-                            value={field.value?.toString() || ''}
+                            value={field.value?.toString() || '0'}
                             onChange={handleNumberInput(field.onChange)}
                             onKeyDown={handleKeyDown}
                             className="text-center text-xl font-bold h-12 border-2 border-blue-200 focus:border-blue-400 rounded-lg"
