@@ -25,29 +25,50 @@ export const useLeagueStandings = (leagueId: string) => {
       
       console.log('Fetching league standings for:', leagueId);
       
-      // Get all teams in the league
-      const { data: leagueTeams, error: teamsError } = await supabase
+      // Get all teams in the league - simplified query
+      const { data: leagueTeamsData, error: leagueTeamsError } = await supabase
         .from('league_teams')
-        .select(`
-          team_id,
-          teams!league_teams_team_id_fkey (
-            id,
-            name,
-            player1:profiles!teams_player1_id_fkey (
-              id,
-              full_name
-            ),
-            player2:profiles!teams_player2_id_fkey (
-              id,
-              full_name
-            )
-          )
-        `)
+        .select('team_id')
         .eq('league_id', leagueId);
 
+      if (leagueTeamsError) {
+        console.error('Error fetching league teams:', leagueTeamsError);
+        throw leagueTeamsError;
+      }
+
+      if (!leagueTeamsData || leagueTeamsData.length === 0) {
+        return [];
+      }
+
+      const teamIds = leagueTeamsData.map(lt => lt.team_id);
+
+      // Get teams data separately
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('id, name, player1_id, player2_id')
+        .in('id', teamIds);
+
       if (teamsError) {
-        console.error('Error fetching league teams:', teamsError);
+        console.error('Error fetching teams:', teamsError);
         throw teamsError;
+      }
+
+      // Get all unique player IDs
+      const playerIds = new Set<string>();
+      teamsData?.forEach(team => {
+        if (team.player1_id) playerIds.add(team.player1_id);
+        if (team.player2_id) playerIds.add(team.player2_id);
+      });
+
+      // Get player profiles separately
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', Array.from(playerIds));
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
       // Get all completed matches for this league
@@ -65,19 +86,25 @@ export const useLeagueStandings = (leagueId: string) => {
         throw matchesError;
       }
 
+      // Create maps for quick lookup
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
       // Calculate standings
       const standings: Record<string, TeamStanding> = {};
 
       // Initialize standings for all teams
-      leagueTeams?.forEach(lt => {
-        const team = lt.teams;
-        if (!team) return;
+      teamsData?.forEach(team => {
+        const player1 = profilesMap.get(team.player1_id);
+        const player2 = profilesMap.get(team.player2_id);
         
         standings[team.id] = {
           team_id: team.id,
           team_name: team.name,
-          player1_name: team.player1?.[0]?.full_name || 'Jugador 1',
-          player2_name: team.player2?.[0]?.full_name || 'Jugador 2',
+          player1_name: player1?.full_name || 'Jugador 1',
+          player2_name: player2?.full_name || 'Jugador 2',
           matches_played: 0,
           matches_won: 0,
           matches_lost: 0,

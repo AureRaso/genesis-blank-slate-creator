@@ -24,31 +24,50 @@ export const usePlayerStandings = (leagueId: string) => {
       
       console.log('Fetching player standings for:', leagueId);
       
-      // Get all teams in the league with their players
-      const { data: leagueTeams, error: teamsError } = await supabase
+      // Get all teams in the league - simplified query
+      const { data: leagueTeamsData, error: leagueTeamsError } = await supabase
         .from('league_teams')
-        .select(`
-          team_id,
-          teams!league_teams_team_id_fkey (
-            id,
-            name,
-            player1_id,
-            player2_id,
-            player1:profiles!teams_player1_id_fkey (
-              id,
-              full_name
-            ),
-            player2:profiles!teams_player2_id_fkey (
-              id,
-              full_name
-            )
-          )
-        `)
+        .select('team_id')
         .eq('league_id', leagueId);
 
+      if (leagueTeamsError) {
+        console.error('Error fetching league teams:', leagueTeamsError);
+        throw leagueTeamsError;
+      }
+
+      if (!leagueTeamsData || leagueTeamsData.length === 0) {
+        return [];
+      }
+
+      const teamIds = leagueTeamsData.map(lt => lt.team_id);
+
+      // Get teams data separately
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('id, name, player1_id, player2_id')
+        .in('id', teamIds);
+
       if (teamsError) {
-        console.error('Error fetching league teams:', teamsError);
+        console.error('Error fetching teams:', teamsError);
         throw teamsError;
+      }
+
+      // Get all unique player IDs
+      const playerIds = new Set<string>();
+      teamsData?.forEach(team => {
+        if (team.player1_id) playerIds.add(team.player1_id);
+        if (team.player2_id) playerIds.add(team.player2_id);
+      });
+
+      // Get player profiles separately
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', Array.from(playerIds));
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
       // Get all completed matches for this league
@@ -66,65 +85,34 @@ export const usePlayerStandings = (leagueId: string) => {
         throw matchesError;
       }
 
-      // Create a map of players
-      const playersMap: Record<string, PlayerStanding> = {};
-      
-      // Initialize all players
-      leagueTeams?.forEach(lt => {
-        const team = lt.teams;
-        if (!team) return;
-        
-        // Add player1
-        if (team.player1?.[0]) {
-          const player = team.player1[0];
-          if (!playersMap[player.id]) {
-            playersMap[player.id] = {
-              player_id: player.id,
-              player_name: player.full_name,
-              matches_played: 0,
-              matches_won: 0,
-              matches_lost: 0,
-              sets_won: 0,
-              sets_lost: 0,
-              games_won: 0,
-              games_lost: 0,
-              points: 0,
-              win_percentage: 0,
-            };
-          }
-        }
-        
-        // Add player2
-        if (team.player2?.[0]) {
-          const player = team.player2[0];
-          if (!playersMap[player.id]) {
-            playersMap[player.id] = {
-              player_id: player.id,
-              player_name: player.full_name,
-              matches_played: 0,
-              matches_won: 0,
-              matches_lost: 0,
-              sets_won: 0,
-              sets_lost: 0,
-              games_won: 0,
-              games_lost: 0,
-              points: 0,
-              win_percentage: 0,
-            };
-          }
-        }
+      // Create maps for quick lookup
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
       });
 
-      // Create team to players mapping
-      const teamPlayersMap: Record<string, string[]> = {};
-      leagueTeams?.forEach(lt => {
-        const team = lt.teams;
-        if (!team) return;
-        
-        teamPlayersMap[team.id] = [
-          team.player1?.[0]?.id,
-          team.player2?.[0]?.id
-        ].filter(Boolean);
+      const teamPlayersMap = new Map();
+      teamsData?.forEach(team => {
+        teamPlayersMap.set(team.id, [team.player1_id, team.player2_id].filter(Boolean));
+      });
+
+      // Initialize player standings
+      const playersMap: Record<string, PlayerStanding> = {};
+      
+      profilesData?.forEach(profile => {
+        playersMap[profile.id] = {
+          player_id: profile.id,
+          player_name: profile.full_name,
+          matches_played: 0,
+          matches_won: 0,
+          matches_lost: 0,
+          sets_won: 0,
+          sets_lost: 0,
+          games_won: 0,
+          games_lost: 0,
+          points: 0,
+          win_percentage: 0,
+        };
       });
 
       // Process completed matches
@@ -132,8 +120,8 @@ export const usePlayerStandings = (leagueId: string) => {
         if (!match.match_results || !Array.isArray(match.match_results) || match.match_results.length === 0) return;
         
         const result = match.match_results[0];
-        const team1Players = teamPlayersMap[match.team1_id] || [];
-        const team2Players = teamPlayersMap[match.team2_id] || [];
+        const team1Players = teamPlayersMap.get(match.team1_id) || [];
+        const team2Players = teamPlayersMap.get(match.team2_id) || [];
 
         // Calculate sets
         const team1Sets = [
