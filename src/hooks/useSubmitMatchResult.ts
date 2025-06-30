@@ -47,24 +47,10 @@ export const useSubmitMatchResult = () => {
         throw new Error('Todos los valores de sets deben ser números válidos entre 0 y 7');
       }
 
-      // Obtener información del partido con consulta corregida
+      // Obtener información del partido primero
       const { data: match, error: matchError } = await supabase
         .from('matches')
-        .select(`
-          *,
-          team1:teams!matches_team1_id_fkey (
-            id,
-            name,
-            player1:profiles!teams_player1_id_fkey (id, email, full_name),
-            player2:profiles!teams_player2_id_fkey (id, email, full_name)
-          ),
-          team2:teams!matches_team2_id_fkey (
-            id,
-            name,
-            player1:profiles!teams_player1_id_fkey (id, email, full_name),
-            player2:profiles!teams_player2_id_fkey (id, email, full_name)
-          )
-        `)
+        .select('*')
         .eq('id', data.matchId)
         .single();
 
@@ -73,17 +59,50 @@ export const useSubmitMatchResult = () => {
         throw new Error('No se pudo obtener la información del partido');
       }
 
-      console.log('Match data:', match);
+      // Obtener información de los teams por separado
+      const { data: teams, error: teamsError } = await supabase
+        .from('teams')
+        .select('id, name, player1_id, player2_id')
+        .in('id', [match.team1_id, match.team2_id]);
 
-      // Determinar qué equipo está enviando el resultado - acceso directo a emails
+      if (teamsError || !teams) {
+        console.error('Error fetching teams:', teamsError);
+        throw new Error('No se pudo obtener la información de los equipos');
+      }
+
+      // Obtener todos los player IDs
+      const playerIds = teams.flatMap(team => [team.player1_id, team.player2_id]).filter(Boolean);
+      
+      const { data: players, error: playersError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', playerIds);
+
+      if (playersError || !players) {
+        console.error('Error fetching players:', playersError);
+        throw new Error('No se pudo obtener la información de los jugadores');
+      }
+
+      // Construir estructura de datos
+      const playersMap = new Map(players.map(p => [p.id, p]));
+      const team1 = teams.find(t => t.id === match.team1_id);
+      const team2 = teams.find(t => t.id === match.team2_id);
+
+      if (!team1 || !team2) {
+        throw new Error('No se pudieron encontrar los equipos del partido');
+      }
+
+      console.log('Match data constructed successfully');
+
+      // Determinar qué equipo está enviando el resultado
       const team1Emails = [
-        match.team1?.player1?.email, 
-        match.team1?.player2?.email
+        playersMap.get(team1.player1_id)?.email,
+        playersMap.get(team1.player2_id)?.email
       ].filter(Boolean);
       
       const team2Emails = [
-        match.team2?.player1?.email, 
-        match.team2?.player2?.email
+        playersMap.get(team2.player1_id)?.email,
+        playersMap.get(team2.player2_id)?.email
       ].filter(Boolean);
       
       console.log('Team 1 emails:', team1Emails);
