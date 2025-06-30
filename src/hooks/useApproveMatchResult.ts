@@ -17,20 +17,22 @@ export const useApproveMatchResult = () => {
 
       console.log('Fetching match for approval:', matchId);
 
-      // Obtener información del partido
+      // Obtener información del partido con consulta corregida
       const { data: match, error: matchError } = await supabase
         .from('matches')
         .select(`
           *,
           team1:teams!matches_team1_id_fkey (
             id,
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
+            name,
+            player1:profiles!teams_player1_id_fkey (id, email, full_name),
+            player2:profiles!teams_player2_id_fkey (id, email, full_name)
           ),
           team2:teams!matches_team2_id_fkey (
             id,
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
+            name,
+            player1:profiles!teams_player1_id_fkey (id, email, full_name),
+            player2:profiles!teams_player2_id_fkey (id, email, full_name)
           )
         `)
         .eq('id', matchId)
@@ -43,16 +45,20 @@ export const useApproveMatchResult = () => {
 
       console.log('Match fetched for approval:', match);
 
-      // Verificar que el usuario puede aprobar/disputar - acceso correcto a emails
+      // Verificar que el usuario puede aprobar/disputar - acceso directo a emails
       const team1Emails = [
-        match.team1?.player1?.[0]?.email, 
-        match.team1?.player2?.[0]?.email
+        match.team1?.player1?.email, 
+        match.team1?.player2?.email
       ].filter(Boolean);
       
       const team2Emails = [
-        match.team2?.player1?.[0]?.email, 
-        match.team2?.player2?.[0]?.email
+        match.team2?.player1?.email, 
+        match.team2?.player2?.email
       ].filter(Boolean);
+      
+      console.log('Team 1 emails:', team1Emails);
+      console.log('Team 2 emails:', team2Emails);
+      console.log('Current user email:', user.email);
       
       let approvingTeamId: string;
       

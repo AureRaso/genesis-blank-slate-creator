@@ -47,20 +47,22 @@ export const useSubmitMatchResult = () => {
         throw new Error('Todos los valores de sets deben ser números válidos entre 0 y 7');
       }
 
-      // Obtener información del partido
+      // Obtener información del partido con consulta corregida
       const { data: match, error: matchError } = await supabase
         .from('matches')
         .select(`
           *,
           team1:teams!matches_team1_id_fkey (
             id,
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
+            name,
+            player1:profiles!teams_player1_id_fkey (id, email, full_name),
+            player2:profiles!teams_player2_id_fkey (id, email, full_name)
           ),
           team2:teams!matches_team2_id_fkey (
             id,
-            player1:profiles!teams_player1_id_fkey (email),
-            player2:profiles!teams_player2_id_fkey (email)
+            name,
+            player1:profiles!teams_player1_id_fkey (id, email, full_name),
+            player2:profiles!teams_player2_id_fkey (id, email, full_name)
           )
         `)
         .eq('id', data.matchId)
@@ -73,16 +75,20 @@ export const useSubmitMatchResult = () => {
 
       console.log('Match data:', match);
 
-      // Determinar qué equipo está enviando el resultado - acceso correcto a emails
+      // Determinar qué equipo está enviando el resultado - acceso directo a emails
       const team1Emails = [
-        match.team1?.player1?.[0]?.email, 
-        match.team1?.player2?.[0]?.email
+        match.team1?.player1?.email, 
+        match.team1?.player2?.email
       ].filter(Boolean);
       
       const team2Emails = [
-        match.team2?.player1?.[0]?.email, 
-        match.team2?.player2?.[0]?.email
+        match.team2?.player1?.email, 
+        match.team2?.player2?.email
       ].filter(Boolean);
+      
+      console.log('Team 1 emails:', team1Emails);
+      console.log('Team 2 emails:', team2Emails);
+      console.log('Current user email:', user.email);
       
       let submittingTeamId: string;
       if (team1Emails.includes(user.email)) {
