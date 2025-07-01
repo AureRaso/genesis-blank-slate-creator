@@ -17,40 +17,68 @@ export const useClubsWithActiveClasses = () => {
   return useQuery({
     queryKey: ['clubs-with-active-classes'],
     queryFn: async () => {
-      // Obtener clubes con sus class_slots activos y reservaciones
-      const { data, error } = await supabase
+      console.log('Fetching clubs with active classes...');
+      
+      // First get all clubs
+      const { data: clubs, error: clubsError } = await supabase
         .from('clubs')
+        .select('*');
+
+      if (clubsError) {
+        console.error('Error fetching clubs:', clubsError);
+        throw clubsError;
+      }
+
+      console.log('Clubs fetched:', clubs);
+
+      // Then get all active class slots with their reservations
+      const { data: classSlots, error: slotsError } = await supabase
+        .from('class_slots')
         .select(`
           id,
-          name,
-          address,
-          court_count,
-          court_types,
-          description,
-          class_slots!inner(
+          club_id,
+          max_players,
+          is_active,
+          class_reservations!inner(
             id,
-            max_players,
-            is_active,
-            class_reservations(
-              id,
-              status
-            )
+            status
           )
         `)
-        .eq('class_slots.is_active', true);
+        .eq('is_active', true);
 
-      if (error) throw error;
+      if (slotsError) {
+        console.error('Error fetching class slots:', slotsError);
+        throw slotsError;
+      }
 
-      // Procesar datos para calcular estadísticas
-      const clubsWithStats: ClubWithStats[] = data.map(club => {
-        const activeClasses = club.class_slots.filter(slot => slot.is_active);
+      console.log('Active class slots fetched:', classSlots);
+
+      // Also get class slots without any reservations
+      const { data: slotsWithoutReservations, error: emptyError } = await supabase
+        .from('class_slots')
+        .select('id, club_id, max_players, is_active')
+        .eq('is_active', true);
+
+      if (emptyError) {
+        console.error('Error fetching empty slots:', emptyError);
+        throw emptyError;
+      }
+
+      // Process data to calculate statistics
+      const clubsWithStats: ClubWithStats[] = clubs.map(club => {
+        // Get all active slots for this club
+        const clubSlots = slotsWithoutReservations.filter(slot => slot.club_id === club.id);
+        
         let totalAvailableSpots = 0;
 
-        activeClasses.forEach(classSlot => {
-          const reservedSpots = classSlot.class_reservations?.filter(
-            reservation => reservation.status === 'reservado'
-          ).length || 0;
-          const availableSpots = classSlot.max_players - reservedSpots;
+        clubSlots.forEach(slot => {
+          // Count reserved spots for this slot
+          const slotsWithReservations = classSlots.filter(s => s.id === slot.id);
+          const reservedSpots = slotsWithReservations.reduce((count, s) => {
+            return count + (s.class_reservations?.filter(r => r.status === 'reservado').length || 0);
+          }, 0);
+          
+          const availableSpots = slot.max_players - reservedSpots;
           totalAvailableSpots += Math.max(0, availableSpots);
         });
 
@@ -61,12 +89,14 @@ export const useClubsWithActiveClasses = () => {
           court_count: club.court_count,
           court_types: club.court_types,
           description: club.description,
-          active_classes_count: activeClasses.length,
+          active_classes_count: clubSlots.length,
           available_spots: totalAvailableSpots
         };
-      }).filter(club => club.available_spots > 0); // Solo clubes con plazas disponibles
+      }).filter(club => club.available_spots > 0); // Only clubs with available spots
 
+      console.log('Clubs with stats:', clubsWithStats);
       return clubsWithStats;
     },
+    staleTime: 30000, // Cache for 30 seconds
   });
 };
