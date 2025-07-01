@@ -25,6 +25,7 @@ export interface League {
   points_per_set: boolean; // punto extra por set ganado
   registration_price: number; // precio de inscripción
   status: "upcoming" | "active" | "completed";
+  club_id?: string; // referencia al club donde se juega la liga
   created_at: string;
 }
 
