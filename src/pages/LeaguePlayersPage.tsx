@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useLeagues } from "@/hooks/useLeagues";
 import { useRegisterForLeague, useWithdrawFromLeague, usePlayerRegistration, useLeaguePlayers } from "@/hooks/useLeaguePlayers";
@@ -211,14 +210,16 @@ const LeagueRegistrationCard = ({
               Administrar Liga
             </Button>
           ) : !registration ? (
-            <Button
-              onClick={() => onRegister(league.id)}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              {isFree ? "Inscribirse Gratis" : `Inscribirse (${league.registration_price}€)`}
-            </Button>
+            isFree ? (
+              <Button
+                onClick={() => onRegister(league.id)}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Inscribirse Gratis
+              </Button>
+            ) : null
           ) : registration.status === 'approved' ? (
             <Button disabled className="w-full bg-green-100 text-green-800">
               <Users className="h-4 w-4 mr-2" />
