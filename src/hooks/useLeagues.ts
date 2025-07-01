@@ -11,7 +11,15 @@ export const useLeagues = () => {
       console.log('Fetching leagues...');
       const { data, error } = await supabase
         .from('leagues')
-        .select('*')
+        .select(`
+          *,
+          clubs (
+            id,
+            name,
+            address,
+            phone
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {

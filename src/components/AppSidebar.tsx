@@ -1,5 +1,4 @@
-
-import { Users, Trophy, Calendar, BarChart3, UserPlus, Home } from "lucide-react";
+import { Users, Trophy, Calendar, BarChart3, UserPlus, Home, Building2 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -33,6 +32,12 @@ const AppSidebar = () => {
       title: "Jugadores",
       url: "/players",
       icon: Users,
+      adminOnly: true,
+    },
+    {
+      title: "Clubs",
+      url: "/clubs",
+      icon: Building2,
       adminOnly: true,
     },
     {

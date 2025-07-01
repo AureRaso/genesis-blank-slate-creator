@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clubs: {
+        Row: {
+          address: string
+          court_count: number
+          court_types: string[]
+          created_at: string
+          created_by_profile_id: string
+          description: string | null
+          id: string
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          court_count: number
+          court_types: string[]
+          created_at?: string
+          created_by_profile_id: string
+          description?: string | null
+          id?: string
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          court_count?: number
+          court_types?: string[]
+          created_at?: string
+          created_by_profile_id?: string
+          description?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clubs_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clubs_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_players: {
         Row: {
           created_at: string
@@ -93,6 +147,7 @@ export type Database = {
       }
       leagues: {
         Row: {
+          club_id: string | null
           created_at: string
           end_date: string
           id: string
@@ -105,6 +160,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          club_id?: string | null
           created_at?: string
           end_date: string
           id?: string
@@ -117,6 +173,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          club_id?: string | null
           created_at?: string
           end_date?: string
           id?: string
@@ -128,7 +185,15 @@ export type Database = {
           start_date?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leagues_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       match_results: {
         Row: {

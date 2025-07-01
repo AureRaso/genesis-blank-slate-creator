@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateLeague, useUpdateLeague } from "@/hooks/useLeagues";
+import { useClubs } from "@/hooks/useClubs";
 import { League } from "@/types/padel";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LeagueFormProps {
   league?: League;
@@ -25,12 +27,14 @@ interface LeagueFormData {
   points_per_set: boolean;
   registration_price: number;
   status: "upcoming" | "active" | "completed";
+  club_id: string;
 }
 
 const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
   const isEditing = !!league;
   const createLeague = useCreateLeague();
   const updateLeague = useUpdateLeague();
+  const { data: clubs, isLoading: clubsLoading } = useClubs();
 
   const {
     register,
@@ -49,6 +53,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_per_set: league.points_per_set,
           registration_price: league.registration_price,
           status: league.status,
+          club_id: league.club_id || "",
         }
       : {
           name: "",
@@ -59,10 +64,12 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_per_set: false,
           registration_price: 0,
           status: "upcoming",
+          club_id: "",
         },
   });
 
   const pointsPerSet = watch("points_per_set");
+  const selectedClubId = watch("club_id");
 
   const onSubmit = async (data: LeagueFormData) => {
     try {
@@ -80,6 +87,9 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
     }
   };
 
+  const hasClubs = clubs && clubs.length > 0;
+  const canCreateLeague = hasClubs && selectedClubId;
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -96,6 +106,22 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
         </Button>
       </CardHeader>
       <CardContent>
+        {!hasClubs && !clubsLoading && (
+          <Alert className="mb-6 border-orange-200 bg-orange-50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-orange-800">
+              Primero debes crear un club para poder crear una liga.{" "}
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-orange-800 underline"
+                onClick={() => window.location.href = '/clubs'}
+              >
+                Ir a gestión de clubs
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre de la Liga</Label>
@@ -228,13 +254,42 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="club_id">Club donde se juega la liga *</Label>
+            <Select
+              value={selectedClubId}
+              onValueChange={(value) => setValue("club_id", value)}
+              disabled={clubsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={
+                  clubsLoading 
+                    ? "Cargando clubs..." 
+                    : hasClubs 
+                      ? "Selecciona un club" 
+                      : "No hay clubs disponibles"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {clubs?.map((club) => (
+                  <SelectItem key={club.id} value={club.id}>
+                    {club.name} - {club.address.substring(0, 30)}...
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!selectedClubId && hasClubs && (
+              <p className="text-sm text-destructive">Debes seleccionar un club</p>
+            )}
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
             <Button 
               type="submit" 
-              disabled={createLeague.isPending || updateLeague.isPending}
+              disabled={createLeague.isPending || updateLeague.isPending || !canCreateLeague}
               className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
             >
               {(createLeague.isPending || updateLeague.isPending) 
