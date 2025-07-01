@@ -54,14 +54,14 @@ const LeagueRegistrationWithPayment = ({
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <span className="text-lg font-medium">Precio de inscripción:</span>
-            <span className="text-2xl font-bold text-green-600">
+            <span className="text-2xl font-bold text-playtomic-green">
               €{league.registration_price}
             </span>
           </div>
 
           <Button 
             onClick={() => setShowPayment(true)}
-            className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+            className="w-full bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
             size="lg"
           >
             <CreditCard className="h-5 w-5 mr-2" />

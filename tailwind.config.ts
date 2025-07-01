@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Colores específicos de Playtomic
+				playtomic: {
+					orange: '#FF6B35', // Naranja principal de Playtomic
+					'orange-light': '#FF8A65',
+					'orange-dark': '#E55722',
+					green: '#4CAF50', // Verde secundario
+					'green-light': '#81C784',
+					'green-dark': '#388E3C',
+					gray: {
+						50: '#FAFAFA',
+						100: '#F5F5F5',
+						200: '#EEEEEE',
+						300: '#E0E0E0',
+						400: '#BDBDBD',
+						500: '#9E9E9E',
+						600: '#757575',
+						700: '#616161',
+						800: '#424242',
+						900: '#212121'
+					}
 				}
 			},
 			borderRadius: {

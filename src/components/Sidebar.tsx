@@ -14,43 +14,43 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
       id: "dashboard" as const,
       label: "Dashboard",
       icon: BarChart3,
-      color: "text-blue-600"
+      color: "text-playtomic-orange"
     },
     {
       id: "players" as const,
       label: "Jugadores",
       icon: Users,
-      color: "text-green-600"
+      color: "text-playtomic-green"
     },
     {
       id: "leagues" as const,
       label: "Ligas",
       icon: Trophy,
-      color: "text-purple-600"
+      color: "text-playtomic-orange-dark"
     },
     {
       id: "matches" as const,
       label: "Partidos",
       icon: Calendar,
-      color: "text-orange-600"
+      color: "text-playtomic-orange-light"
     },
     {
       id: "standings" as const,
       label: "Clasificación",
       icon: BarChart3,
-      color: "text-red-600"
+      color: "text-playtomic-green-dark"
     }
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 shadow-lg flex flex-col">
-      <div className="p-6 border-b border-gray-200">
+    <div className="w-64 bg-white border-r border-playtomic-gray-200 shadow-lg flex flex-col">
+      <div className="p-6 border-b border-playtomic-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark rounded-lg flex items-center justify-center">
             <Trophy className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            <h2 className="text-lg font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
               PadelApp
             </h2>
             <p className="text-xs text-muted-foreground">Liga de Pádel</p>
@@ -70,8 +70,8 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
               className={cn(
                 "w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-left",
                 isActive
-                  ? "bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white shadow-lg"
+                  : "text-playtomic-gray-600 hover:bg-playtomic-gray-100 hover:text-playtomic-gray-900"
               )}
             >
               <Icon className={cn(
@@ -84,7 +84,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-playtomic-gray-200">
         <UserMenu />
       </div>
     </div>

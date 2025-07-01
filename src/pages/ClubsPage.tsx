@@ -40,7 +40,7 @@ const ClubsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
             Gestión de Clubs
           </h1>
           <p className="text-muted-foreground">
@@ -50,7 +50,7 @@ const ClubsPage = () => {
         {isAdmin && (
           <Button 
             onClick={handleCreateNew}
-            className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Club
@@ -61,8 +61,8 @@ const ClubsPage = () => {
       {!isAdmin && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle className="text-orange-800">Acceso de Solo Lectura</CardTitle>
-            <CardDescription className="text-orange-700">
+            <CardTitle className="text-playtomic-orange-dark">Acceso de Solo Lectura</CardTitle>
+            <CardDescription className="text-playtomic-orange">
               Solo los administradores pueden crear y editar clubs. Contacta a un administrador si necesitas crear un nuevo club.
             </CardDescription>
           </CardHeader>
