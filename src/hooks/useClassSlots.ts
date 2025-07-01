@@ -1,0 +1,186 @@
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+export type ClassSlot = {
+  id: string;
+  created_by_profile_id: string;
+  club_id: string;
+  court_number: number;
+  trainer_name: string;
+  objective: string;
+  level: 'iniciacion' | 'intermedio' | 'avanzado';
+  day_of_week: 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo';
+  start_time: string;
+  duration_minutes: number;
+  price_per_player: number;
+  max_players: number;
+  repeat_weekly: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  clubs?: {
+    name: string;
+  };
+  class_reservations?: Array<{
+    id: string;
+    player_profile_id: string;
+    status: string;
+    profiles: {
+      full_name: string;
+    };
+  }>;
+};
+
+export const useClassSlots = () => {
+  return useQuery({
+    queryKey: ['class-slots'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('class_slots')
+        .select(`
+          *,
+          clubs!inner(name),
+          class_reservations(
+            id,
+            player_profile_id,
+            status,
+            profiles!inner(full_name)
+          )
+        `)
+        .eq('is_active', true)
+        .order('day_of_week')
+        .order('start_time');
+
+      if (error) throw error;
+      return data as ClassSlot[];
+    },
+  });
+};
+
+export const useMyClassSlots = () => {
+  return useQuery({
+    queryKey: ['my-class-slots'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('class_slots')
+        .select(`
+          *,
+          clubs!inner(name),
+          class_reservations(
+            id,
+            player_profile_id,
+            status,
+            profiles!inner(full_name)
+          )
+        `)
+        .order('day_of_week')
+        .order('start_time');
+
+      if (error) throw error;
+      return data as ClassSlot[];
+    },
+  });
+};
+
+export const useCreateClassSlot = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (classSlot: Omit<ClassSlot, 'id' | 'created_at' | 'updated_at' | 'created_by_profile_id'>) => {
+      const { data, error } = await supabase
+        .from('class_slots')
+        .insert([classSlot])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-class-slots'] });
+      queryClient.invalidateQueries({ queryKey: ['class-slots'] });
+      toast({
+        title: "Éxito",
+        description: "Clase creada correctamente",
+      });
+    },
+    onError: (error) => {
+      console.error('Error creating class slot:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la clase",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateClassSlot = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ClassSlot> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('class_slots')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-class-slots'] });
+      queryClient.invalidateQueries({ queryKey: ['class-slots'] });
+      toast({
+        title: "Éxito",
+        description: "Clase actualizada correctamente",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating class slot:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la clase",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDeleteClassSlot = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('class_slots')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-class-slots'] });
+      queryClient.invalidateQueries({ queryKey: ['class-slots'] });
+      toast({
+        title: "Éxito",
+        description: "Clase eliminada correctamente",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting class slot:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la clase",
+        variant: "destructive",
+      });
+    },
+  });
+};

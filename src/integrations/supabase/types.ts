@@ -9,6 +9,137 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      class_reservations: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          player_profile_id: string
+          slot_id: string
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_profile_id: string
+          slot_id: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          player_profile_id?: string
+          slot_id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_reservations_player_profile_id_fkey"
+            columns: ["player_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_reservations_player_profile_id_fkey"
+            columns: ["player_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_reservations_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "class_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_slots: {
+        Row: {
+          club_id: string
+          court_number: number
+          created_at: string
+          created_by_profile_id: string
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          max_players: number
+          objective: string
+          price_per_player: number
+          repeat_weekly: boolean
+          start_time: string
+          trainer_name: string
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          court_number: number
+          created_at?: string
+          created_by_profile_id: string
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          max_players?: number
+          objective: string
+          price_per_player: number
+          repeat_weekly?: boolean
+          start_time: string
+          trainer_name: string
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          court_number?: number
+          created_at?: string
+          created_by_profile_id?: string
+          day_of_week?: Database["public"]["Enums"]["day_of_week"]
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          level?: Database["public"]["Enums"]["class_level"]
+          max_players?: number
+          objective?: string
+          price_per_player?: number
+          repeat_weekly?: boolean
+          start_time?: string
+          trainer_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_slots_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_slots_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_slots_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           address: string
@@ -489,7 +620,16 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      class_level: "iniciacion" | "intermedio" | "avanzado"
+      day_of_week:
+        | "lunes"
+        | "martes"
+        | "miercoles"
+        | "jueves"
+        | "viernes"
+        | "sabado"
+        | "domingo"
+      reservation_status: "reservado" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -604,6 +744,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      class_level: ["iniciacion", "intermedio", "avanzado"],
+      day_of_week: [
+        "lunes",
+        "martes",
+        "miercoles",
+        "jueves",
+        "viernes",
+        "sabado",
+        "domingo",
+      ],
+      reservation_status: ["reservado", "cancelado"],
+    },
   },
 } as const

@@ -11,6 +11,7 @@ import Index from "@/pages/Index";
 import PlayersPage from "@/pages/PlayersPage";
 import LeaguesPage from "@/pages/LeaguesPage";
 import ClubsPage from "@/pages/ClubsPage";
+import ClassesPage from "@/pages/ClassesPage";
 import MatchesPage from "@/pages/MatchesPage";
 import StandingsPage from "@/pages/StandingsPage";
 import LeaguePlayersPage from "@/pages/LeaguePlayersPage";
@@ -43,6 +44,7 @@ function App() {
                           <Route path="/" element={<Index />} />
                           <Route path="/players" element={<PlayersPage />} />
                           <Route path="/clubs" element={<ClubsPage />} />
+                          <Route path="/classes" element={<ClassesPage />} />
                           <Route path="/leagues" element={<LeaguesPage />} />
                           <Route path="/matches" element={<MatchesPage />} />
                           <Route path="/standings" element={<StandingsPage />} />

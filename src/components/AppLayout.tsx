@@ -19,6 +19,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         return { title: "Dashboard", path: "/" };
       case "/players":
         return { title: "Jugadores", path: "/players" };
+      case "/clubs":
+        return { title: "Clubs", path: "/clubs" };
+      case "/classes":
+        return { title: "Clases", path: "/classes" };
       case "/leagues":
         return { title: "Ligas", path: "/leagues" };
       case "/matches":

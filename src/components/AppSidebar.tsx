@@ -1,4 +1,5 @@
-import { Users, Trophy, Calendar, BarChart3, UserPlus, Home, Building2 } from "lucide-react";
+
+import { Users, Trophy, Calendar, BarChart3, UserPlus, Home, Building2, GraduationCap } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -41,6 +42,11 @@ const AppSidebar = () => {
       adminOnly: true,
     },
     {
+      title: "Clases",
+      url: "/classes",
+      icon: GraduationCap,
+    },
+    {
       title: "Ligas",
       url: "/leagues",
       icon: Trophy,
@@ -72,12 +78,12 @@ const AppSidebar = () => {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="flex items-center space-x-3 px-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark rounded-lg flex items-center justify-center">
             <Trophy className="h-5 w-5 text-white" />
           </div>
           {!isCollapsed && (
             <div>
-              <h2 className="text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
                 PadelApp
               </h2>
               <p className="text-xs text-muted-foreground">Liga de Pádel</p>
