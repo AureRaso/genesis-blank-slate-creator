@@ -2,19 +2,39 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Users, Plus } from "lucide-react";
+import { Trophy, Calendar, Users, Plus, ArrowRight } from "lucide-react";
 import { usePlayerLeagues } from "@/hooks/usePlayerLeagues";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import PlayerLeagueDetails from "./PlayerLeagueDetails";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
   const { data: playerLeagues, isLoading } = usePlayerLeagues(profile?.id);
   const navigate = useNavigate();
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
 
   const handleInscriptionClick = () => {
     navigate('/league-players');
   };
+
+  const handleLeagueClick = (leagueId: string) => {
+    setSelectedLeagueId(leagueId);
+  };
+
+  const handleBackToLeagues = () => {
+    setSelectedLeagueId(null);
+  };
+
+  if (selectedLeagueId) {
+    return (
+      <PlayerLeagueDetails
+        leagueId={selectedLeagueId}
+        onBack={handleBackToLeagues}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -74,7 +94,7 @@ const PlayerDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {playerLeagues.map((league) => (
-          <Card key={league.id} className="hover:shadow-lg transition-shadow">
+          <Card key={league.id} className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{league.name}</CardTitle>
@@ -95,7 +115,7 @@ const PlayerDashboard = () => {
                 </span>
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Puntos victoria:</span>
@@ -112,6 +132,14 @@ const PlayerDashboard = () => {
                   </span>
                 </div>
               </div>
+              <Button 
+                onClick={() => handleLeagueClick(league.id)}
+                className="w-full"
+                variant="outline"
+              >
+                Ver Liga
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </CardContent>
           </Card>
         ))}
