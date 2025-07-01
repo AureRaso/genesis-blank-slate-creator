@@ -33,6 +33,21 @@ export type ClassSlot = {
   }>;
 };
 
+export type CreateClassSlotData = {
+  club_id: string;
+  court_number: number;
+  trainer_name: string;
+  objective: string;
+  level: 'iniciacion' | 'intermedio' | 'avanzado';
+  day_of_week: 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo';
+  start_time: string;
+  duration_minutes: number;
+  price_per_player: number;
+  max_players: number;
+  repeat_weekly: boolean;
+  is_active: boolean;
+};
+
 export const useClassSlots = () => {
   return useQuery({
     queryKey: ['class-slots'],
@@ -89,10 +104,17 @@ export const useCreateClassSlot = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (classSlot: Omit<ClassSlot, 'id' | 'created_at' | 'updated_at' | 'created_by_profile_id'>) => {
+    mutationFn: async (classSlot: CreateClassSlotData) => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
       const { data, error } = await supabase
         .from('class_slots')
-        .insert([classSlot])
+        .insert([{
+          ...classSlot,
+          created_by_profile_id: userData.user.id
+        }])
         .select()
         .single();
 

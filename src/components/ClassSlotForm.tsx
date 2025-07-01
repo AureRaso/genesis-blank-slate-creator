@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
-import { useCreateClassSlot, useUpdateClassSlot, ClassSlot } from "@/hooks/useClassSlots";
+import { useCreateClassSlot, useUpdateClassSlot, ClassSlot, CreateClassSlotData } from "@/hooks/useClassSlots";
 
 const formSchema = z.object({
   club_id: z.string().min(1, "Selecciona un club"),
@@ -67,7 +66,22 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
         onSuccess: () => onClose(),
       });
     } else {
-      createMutation.mutate(data, {
+      const createData: CreateClassSlotData = {
+        club_id: data.club_id,
+        court_number: data.court_number,
+        trainer_name: data.trainer_name,
+        objective: data.objective,
+        level: data.level,
+        day_of_week: data.day_of_week,
+        start_time: data.start_time,
+        duration_minutes: data.duration_minutes,
+        price_per_player: data.price_per_player,
+        max_players: data.max_players,
+        repeat_weekly: data.repeat_weekly,
+        is_active: data.is_active,
+      };
+      
+      createMutation.mutate(createData, {
         onSuccess: () => onClose(),
       });
     }
