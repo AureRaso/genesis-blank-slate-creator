@@ -12,6 +12,14 @@ interface LeagueHeaderProps {
 }
 
 const LeagueHeader = ({ league, onBack }: LeagueHeaderProps) => {
+  const handleContactAdmin = () => {
+    // Número temporal del club - en el futuro será un parámetro configurable
+    const clubPhoneNumber = "+34666123456";
+    const message = `Hola, necesito información sobre la liga ${league.name}`;
+    const whatsappUrl = `https://wa.me/${clubPhoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -28,6 +36,7 @@ const LeagueHeader = ({ league, onBack }: LeagueHeaderProps) => {
       </div>
       <Button 
         variant="outline"
+        onClick={handleContactAdmin}
         className="border-blue-200 text-blue-700 hover:bg-blue-50"
       >
         <MessageCircle className="h-4 w-4 mr-2" />

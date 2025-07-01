@@ -122,10 +122,10 @@ const MatchCard = ({ match, onSignUp }: MatchCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
-            <Badge className={`${getStatusColor(match.status)} font-medium`}>
+            <Badge className={`${getStatusColor(match.status)} font-medium pointer-events-none`}>
               {getStatusText(match.status)}
             </Badge>
-            <Badge className={`${getResultStatusColor(match.result_status)} font-medium`}>
+            <Badge className={`${getResultStatusColor(match.result_status)} font-medium pointer-events-none`}>
               {getResultStatusText(match.result_status)}
             </Badge>
           </div>
