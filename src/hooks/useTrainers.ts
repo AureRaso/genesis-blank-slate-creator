@@ -65,6 +65,34 @@ export const useTrainers = () => {
   });
 };
 
+export const useMyTrainerProfile = () => {
+  return useQuery({
+    queryKey: ['my-trainer-profile'],
+    queryFn: async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data: trainer, error: trainerError } = await supabase
+        .from('trainers')
+        .select(`
+          *,
+          profiles!inner(id, full_name, email),
+          trainer_clubs(
+            club_id,
+            clubs!inner(name)
+          )
+        `)
+        .eq('profile_id', userData.user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
+      return trainer as Trainer | null;
+    },
+  });
+};
+
 export const useTrainersByClub = (clubId: string) => {
   return useQuery({
     queryKey: ['trainers', 'by-club', clubId],

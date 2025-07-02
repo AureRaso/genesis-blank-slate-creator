@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +25,9 @@ export type ClassSlot = {
     name: string;
   };
   trainers?: {
-    full_name: string;
+    profiles?: {
+      full_name: string;
+    };
   };
   class_reservations?: Array<{
     id: string;
@@ -61,7 +64,9 @@ export const useClassSlots = () => {
         .select(`
           *,
           clubs!inner(name),
-          trainers(full_name),
+          trainers(
+            profiles!inner(full_name)
+          ),
           class_reservations(
             id,
             player_profile_id,

@@ -57,7 +57,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Error fetching profile:", error);
       }
 
-      setProfile(profileData);
+      if (profileData) {
+        // Cast the role to the expected type
+        const typedProfile: Profile = {
+          ...profileData,
+          role: profileData.role as 'admin' | 'player' | 'captain' | 'trainer'
+        };
+        setProfile(typedProfile);
+      }
     } catch (error) {
       console.error("Unexpected error fetching profile:", error);
     }
