@@ -31,15 +31,15 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={trainer.photo_url} alt={trainer.profiles?.full_name} />
+              <AvatarImage src={trainer.photo_url} alt={trainer.full_name} />
               <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white">
-                {getInitials(trainer.profiles?.full_name || '')}
+                {getInitials(trainer.full_name || '')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{trainer.profiles?.full_name}</CardTitle>
+              <CardTitle className="text-lg">{trainer.full_name}</CardTitle>
               <CardDescription className="text-sm">
-                {trainer.profiles?.email}
+                {trainer.email}
               </CardDescription>
             </div>
           </div>
@@ -57,9 +57,9 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>¿Desactivar profesor?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción desactivará al profesor "{trainer.profiles?.full_name}". Podrás reactivarlo más tarde.
-                    </AlertDialogDescription>
+                     <AlertDialogDescription>
+                       Esta acción desactivará al profesor "{trainer.full_name}". Podrás reactivarlo más tarde.
+                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -89,13 +89,11 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
 
         <div className="space-y-1">
           <p className="text-sm font-medium">Clubs asignados:</p>
-          <div className="flex flex-wrap gap-1">
-            {trainer.trainer_clubs?.map((tc) => (
-              <Badge key={tc.club_id} variant="secondary" className="text-xs">
-                {tc.clubs?.name}
-              </Badge>
-            ))}
-          </div>
+           <div className="flex flex-wrap gap-1">
+             <Badge variant="secondary" className="text-xs">
+               {trainer.clubs?.name}
+             </Badge>
+           </div>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">

@@ -5,30 +5,25 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  profile_id: string;
+  club_id: string;
+  full_name: string;
+  email: string | null;
+  phone: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  profiles?: {
-    id: string;
-    full_name: string;
-    email: string;
+  clubs?: {
+    name: string;
   };
-  trainer_clubs?: Array<{
-    club_id: string;
-    clubs?: {
-      name: string;
-    };
-  }>;
 };
 
 export type CreateTrainerData = {
   full_name: string;
   email: string;
-  phone?: string;
-  club_ids: string[];
+  phone: string;
+  club_id: string;
   specialty?: string;
   photo_url?: string;
   is_active: boolean;
@@ -36,11 +31,13 @@ export type CreateTrainerData = {
 
 export type UpdateTrainerData = {
   id: string;
-  profile_id: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  club_id?: string;
   specialty?: string;
   photo_url?: string;
-  is_active: boolean;
-  club_ids: string[];
+  is_active?: boolean;
 };
 
 export const useTrainers = () => {
@@ -51,11 +48,7 @@ export const useTrainers = () => {
         .from('trainers')
         .select(`
           *,
-          profiles!inner(id, full_name, email),
-          trainer_clubs(
-            club_id,
-            clubs!inner(name)
-          )
+          clubs!inner(name)
         `)
         .eq('is_active', true);
 
@@ -77,13 +70,9 @@ export const useMyTrainerProfile = () => {
         .from('trainers')
         .select(`
           *,
-          profiles!inner(id, full_name, email),
-          trainer_clubs(
-            club_id,
-            clubs!inner(name)
-          )
+          clubs!inner(name)
         `)
-        .eq('profile_id', userData.user.id)
+        .eq('email', userData.user.email)
         .eq('is_active', true)
         .single();
 
@@ -103,11 +92,10 @@ export const useTrainersByClub = (clubId: string) => {
         .from('trainers')
         .select(`
           *,
-          profiles!inner(id, full_name, email),
-          trainer_clubs!inner(club_id)
+          clubs!inner(name)
         `)
         .eq('is_active', true)
-        .eq('trainer_clubs.club_id', clubId);
+        .eq('club_id', clubId);
 
       if (error) throw error;
       return data as Trainer[];
@@ -122,26 +110,14 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      // Crear el perfil del profesor
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: trainerData.email,
-        password: 'temp123', // Contraseña temporal
-        options: {
-          data: {
-            full_name: trainerData.full_name,
-            role: 'trainer',
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No se pudo crear el usuario');
-
-      // Crear el registro de trainer
+      // Crear el registro de trainer directamente
       const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
         .insert([{
-          profile_id: authData.user.id,
+          club_id: trainerData.club_id,
+          full_name: trainerData.full_name,
+          email: trainerData.email,
+          phone: trainerData.phone,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
           is_active: trainerData.is_active,
@@ -150,21 +126,6 @@ export const useCreateTrainer = () => {
         .single();
 
       if (trainerError) throw trainerError;
-
-      // Asociar con clubs
-      if (trainerData.club_ids.length > 0) {
-        const clubAssociations = trainerData.club_ids.map(clubId => ({
-          trainer_profile_id: authData.user.id,
-          club_id: clubId,
-        }));
-
-        const { error: clubError } = await supabase
-          .from('trainer_clubs')
-          .insert(clubAssociations);
-
-        if (clubError) throw clubError;
-      }
-
       return trainer;
     },
     onSuccess: () => {
@@ -191,10 +152,13 @@ export const useUpdateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: UpdateTrainerData) => {
-      // Actualizar datos del trainer
       const { data, error } = await supabase
         .from('trainers')
         .update({
+          full_name: trainerData.full_name,
+          email: trainerData.email,
+          phone: trainerData.phone,
+          club_id: trainerData.club_id,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
           is_active: trainerData.is_active,
@@ -204,26 +168,6 @@ export const useUpdateTrainer = () => {
         .single();
 
       if (error) throw error;
-
-      // Actualizar asociaciones con clubs
-      await supabase
-        .from('trainer_clubs')
-        .delete()
-        .eq('trainer_profile_id', trainerData.profile_id);
-
-      if (trainerData.club_ids.length > 0) {
-        const clubAssociations = trainerData.club_ids.map(clubId => ({
-          trainer_profile_id: trainerData.profile_id,
-          club_id: clubId,
-        }));
-
-        const { error: clubError } = await supabase
-          .from('trainer_clubs')
-          .insert(clubAssociations);
-
-        if (clubError) throw clubError;
-      }
-
       return data;
     },
     onSuccess: () => {

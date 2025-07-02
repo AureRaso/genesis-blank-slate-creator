@@ -52,7 +52,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
     const submitData = {
       club_id: data.club_id,
       court_number: data.court_number,
-      trainer_name: trainerProfile?.profiles?.full_name || "Profesor",
+      trainer_name: trainerProfile?.full_name || "Profesor",
       trainer_id: trainerProfile?.id,
       objective: data.objective,
       level: data.level,
@@ -108,11 +108,9 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {trainerProfile?.trainer_clubs?.map((tc) => (
-                            <SelectItem key={tc.club_id} value={tc.club_id}>
-                              {tc.clubs?.name}
-                            </SelectItem>
-                          ))}
+                           <SelectItem value={trainerProfile?.club_id || ""}>
+                             {trainerProfile?.clubs?.name}
+                           </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

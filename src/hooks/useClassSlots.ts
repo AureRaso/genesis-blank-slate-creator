@@ -25,9 +25,7 @@ export type ClassSlot = {
     name: string;
   };
   trainers?: {
-    profiles?: {
-      full_name: string;
-    };
+    full_name: string;
   };
   class_reservations?: Array<{
     id: string;
@@ -65,7 +63,7 @@ export const useClassSlots = () => {
           *,
           clubs!inner(name),
           trainers(
-            profiles!inner(full_name)
+            full_name
           ),
           class_reservations(
             id,
@@ -108,7 +106,7 @@ export const useMyClassSlots = () => {
           clubs!inner(name),
           trainers(
             id,
-            profiles!inner(full_name)
+            full_name
           ),
           class_reservations(
             id,

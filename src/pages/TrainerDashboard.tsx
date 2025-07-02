@@ -48,7 +48,7 @@ const TrainerDashboard = () => {
           Panel del Profesor
         </h1>
         <p className="text-muted-foreground">
-          Bienvenido, {trainerProfile?.profiles?.full_name}
+          Bienvenido, {trainerProfile?.full_name}
         </p>
       </div>
 
@@ -62,11 +62,9 @@ const TrainerDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {trainerProfile?.trainer_clubs?.map((tc) => (
-              <Badge key={tc.club_id} variant="outline">
-                {tc.clubs?.name}
-              </Badge>
-            ))}
+            <Badge variant="outline">
+              {trainerProfile?.clubs?.name}
+            </Badge>
           </div>
         </CardContent>
       </Card>

@@ -36,10 +36,10 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: trainer?.profiles?.full_name || "",
-      email: trainer?.profiles?.email || "",
-      phone: "",
-      club_ids: trainer?.trainer_clubs?.map(tc => tc.club_id) || [],
+      full_name: trainer?.full_name || "",
+      email: trainer?.email || "",
+      phone: trainer?.phone || "",
+      club_ids: trainer?.club_id ? [trainer.club_id] : [],
       specialty: trainer?.specialty || "",
       photo_url: trainer?.photo_url || "",
       is_active: trainer?.is_active ?? true,
@@ -49,12 +49,14 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   const onSubmit = (data: FormData) => {
     if (trainer) {
       updateMutation.mutate({ 
-        id: trainer.id, 
-        profile_id: trainer.profile_id,
+        id: trainer.id,
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone || "",
+        club_id: data.club_ids[0], // Use first selected club
         specialty: data.specialty,
         photo_url: data.photo_url || undefined,
         is_active: data.is_active,
-        club_ids: data.club_ids
       }, {
         onSuccess: () => onClose(),
       });
@@ -62,8 +64,8 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
       const createData = {
         full_name: data.full_name,
         email: data.email,
-        phone: data.phone,
-        club_ids: data.club_ids,
+        phone: data.phone || "",
+        club_id: data.club_ids[0], // Use first selected club
         specialty: data.specialty,
         photo_url: data.photo_url,
         is_active: data.is_active,
