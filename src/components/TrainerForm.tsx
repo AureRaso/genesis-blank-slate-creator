@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -5,17 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserCheck } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
-import { useCreateTrainer, useUpdateTrainer, Trainer, CreateTrainerData } from "@/hooks/useTrainers";
+import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
 
 const formSchema = z.object({
-  club_id: z.string().min(1, "Selecciona un club"),
   full_name: z.string().min(1, "Introduce el nombre completo"),
-  phone: z.string().min(1, "Introduce el teléfono"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  email: z.string().email("Email inválido"),
+  phone: z.string().optional(),
+  club_ids: z.array(z.string()).min(1, "Selecciona al menos un club"),
   specialty: z.string().optional(),
   photo_url: z.string().url("URL inválida").optional().or(z.literal("")),
   is_active: z.boolean(),
@@ -36,10 +36,10 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: trainer?.club_id || "",
-      full_name: trainer?.full_name || "",
-      phone: trainer?.phone || "",
-      email: trainer?.email || "",
+      full_name: trainer?.profiles?.full_name || "",
+      email: trainer?.profiles?.email || "",
+      phone: "",
+      club_ids: trainer?.trainer_clubs?.map(tc => tc.club_id) || [],
       specialty: trainer?.specialty || "",
       photo_url: trainer?.photo_url || "",
       is_active: trainer?.is_active ?? true,
@@ -47,22 +47,19 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   });
 
   const onSubmit = (data: FormData) => {
-    const submitData: CreateTrainerData = {
-      club_id: data.club_id,
-      full_name: data.full_name,
-      phone: data.phone,
-      email: data.email || undefined,
-      specialty: data.specialty || undefined,
-      photo_url: data.photo_url || undefined,
-      is_active: data.is_active,
-    };
-
     if (trainer) {
-      updateMutation.mutate({ id: trainer.id, ...submitData }, {
+      updateMutation.mutate({ 
+        id: trainer.id, 
+        profile_id: trainer.profile_id,
+        specialty: data.specialty,
+        photo_url: data.photo_url || undefined,
+        is_active: data.is_active,
+        club_ids: data.club_ids
+      }, {
         onSuccess: () => onClose(),
       });
     } else {
-      createMutation.mutate(submitData, {
+      createMutation.mutate(data, {
         onSuccess: () => onClose(),
       });
     }
@@ -86,7 +83,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
             <span>Datos del Profesor</span>
           </CardTitle>
           <CardDescription>
-            Configura la información del profesor/entrenador
+            {trainer ? 'Edita la información del profesor' : 'Crea un nuevo profesor en el sistema'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,51 +92,12 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="club_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Club</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un club" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clubs?.map((club) => (
-                            <SelectItem key={club.id} value={club.id}>
-                              {club.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="full_name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nombre Completo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Juan Pérez García" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Teléfono</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+34 666 123 456" {...field} />
+                        <Input placeholder="Juan Pérez García" {...field} disabled={!!trainer} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -151,9 +109,23 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email (opcional)</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="juan@example.com" {...field} />
+                        <Input type="email" placeholder="juan@example.com" {...field} disabled={!!trainer} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+34 666 123 456" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -188,6 +160,57 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="club_ids"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">Clubs Asignados</FormLabel>
+                      <FormDescription>
+                        Selecciona los clubs donde podrá dar clases este profesor
+                      </FormDescription>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {clubs?.map((club) => (
+                        <FormField
+                          key={club.id}
+                          control={form.control}
+                          name="club_ids"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={club.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(club.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, club.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== club.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {club.name}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

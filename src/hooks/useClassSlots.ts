@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -84,12 +83,28 @@ export const useMyClassSlots = () => {
   return useQuery({
     queryKey: ['my-class-slots'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // Obtener el ID del trainer si el usuario es un trainer
+      const { data: trainerData, error: trainerError } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('profile_id', userData.user.id)
+        .single();
+
+      if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
+
+      let query = supabase
         .from('class_slots')
         .select(`
           *,
           clubs!inner(name),
-          trainers(full_name),
+          trainers(
+            id,
+            profiles!inner(full_name)
+          ),
           class_reservations(
             id,
             player_profile_id,
@@ -100,6 +115,12 @@ export const useMyClassSlots = () => {
         .order('day_of_week')
         .order('start_time');
 
+      // Si es trainer, filtrar solo sus clases
+      if (trainerData) {
+        query = query.eq('trainer_id', trainerData.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as ClassSlot[];
     },

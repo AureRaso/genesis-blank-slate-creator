@@ -1,68 +1,94 @@
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { QueryClient } from "@tanstack/react-query";
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AuthProvider } from "@/contexts/AuthContext";
-import AppLayout from "@/components/AppLayout";
-import AuthPage from "@/components/auth/AuthPage";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import Index from "@/pages/Index";
-import PlayersPage from "@/pages/PlayersPage";
-import LeaguesPage from "@/pages/LeaguesPage";
-import ClubsPage from "@/pages/ClubsPage";
-import ClassesPage from "@/pages/ClassesPage";
-import MatchesPage from "@/pages/MatchesPage";
-import StandingsPage from "@/pages/StandingsPage";
-import LeaguePlayersPage from "@/pages/LeaguePlayersPage";
-import NotFound from "@/pages/NotFound";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import { useAuth } from "@/contexts/AuthContext";
+import { AppLayout } from "@/components/AppLayout";
+import { AuthPage } from "@/pages/AuthPage";
+import { Index } from "@/pages/Index";
+import { LeaguesPage } from "@/pages/LeaguesPage";
+import { MatchesPage } from "@/pages/MatchesPage";
+import { ClassesPage } from "@/pages/ClassesPage";
+import { PlayersPage } from "@/pages/PlayersPage";
+import { ClubsPage } from "@/pages/ClubsPage";
+import { NotFound } from "@/pages/NotFound";
+import TrainersPage from "@/pages/TrainersPage";
+import TrainerDashboard from "@/pages/TrainerDashboard";
 
 function App() {
+  const { isAdmin, isCaptain, isTrainer, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange"></div>
+      </div>
+    );
+  }
+
+  // Redireccionar según el rol del usuario
+  if (isTrainer) {
+    return (
+      <Router>
+        <QueryClient>
+          <Routes>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Routes>
+                    <Route path="/" element={<TrainerDashboard />} />
+                    <Route path="/dashboard" element={<TrainerDashboard />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </QueryClient>
+      </Router>
+    );
+  }
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <SidebarProvider>
-            <div className="min-h-screen flex w-full">
-              <Routes>
-                <Route path="/auth" element={<AuthPage />} />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <AppLayout>
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/players" element={<PlayersPage />} />
-                          <Route path="/clubs" element={<ClubsPage />} />
-                          <Route path="/classes" element={<ClassesPage />} />
-                          <Route path="/leagues" element={<LeaguesPage />} />
-                          <Route path="/matches" element={<MatchesPage />} />
-                          <Route path="/standings" element={<StandingsPage />} />
-                          <Route path="/league-players" element={<LeaguePlayersPage />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </AppLayout>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </div>
-          </SidebarProvider>
-        </Router>
-      </AuthProvider>
-      <Toaster />
-    </QueryClientProvider>
+    <Router>
+      <QueryClient>
+        <Routes>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/leagues" element={isAdmin ? <LeaguesPage /> : <Navigate to="/" replace />} />
+                  <Route path="/matches" element={<MatchesPage />} />
+                  <Route path="/classes" element={<ClassesPage />} />
+                  <Route path="/players" element={<PlayersPage />} />
+                  <Route path="/clubs" element={<ClubsPage />} />
+                  <Route path="/trainers" element={<TrainersPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </QueryClient>
+    </Router>
   );
 }
 
 export default App;
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return children;
+};

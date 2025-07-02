@@ -1,145 +1,224 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Building2,
+  Calendar,
+  GraduationCap,
+  ListChecks,
+  Settings,
+  SquareTerminal,
+  Trophy,
+  User,
+  UserCheck,
+  Users,
+  Zap,
+} from "lucide-react";
 
-import { Users, Trophy, Calendar, BarChart3, UserPlus, Home, Building2, GraduationCap } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
-import UserMenu from "./UserMenu";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AppSidebar = () => {
-  const { isAdmin } = useAuth();
-  const { state } = useSidebar();
-  const location = useLocation();
-  const isCollapsed = state === "collapsed";
+  const { isAdmin, isTrainer } = useAuth();
 
-  const mainItems = [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Jugadores",
-      url: "/players",
-      icon: Users,
-      adminOnly: true,
-    },
-    {
-      title: "Clubs",
-      url: "/clubs",
-      icon: Building2,
-      adminOnly: true,
-    },
-    {
-      title: "Clases",
-      url: "/classes",
-      icon: GraduationCap,
-    },
-    {
-      title: "Ligas",
-      url: "/leagues",
-      icon: Trophy,
-      adminOnly: true,
-    },
-    {
-      title: "Partidos",
-      url: "/matches",
-      icon: Calendar,
-    },
-    {
-      title: "Clasificaciones",
-      url: "/standings",
-      icon: BarChart3,
-    },
-  ];
+  // Si es trainer, mostrar solo el dashboard
+  if (isTrainer) {
+    return (
+      <Sidebar variant="inset">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link to="/">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <UserCheck className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">Padel Pro</span>
+                    <span className="truncate text-xs">Panel Profesor</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Mis Clases</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/">
+                    <Calendar />
+                    <span>Mi Calendario</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <UserMenu />
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
-  const playerItems = [
-    {
-      title: "Inscripciones",
-      url: "/league-players",
-      icon: UserPlus,
-    },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
+  const data = {
+    navAccount: [
+      {
+        title: "Mi Perfil",
+        url: "/profile",
+        icon: User,
+      },
+      {
+        title: "Ajustes",
+        url: "/settings",
+        icon: Settings,
+      },
+    ],
+    navMain: [
+      {
+        title: "Dashboard",
+        url: "/",
+        icon: SquareTerminal,
+        isActive: true,
+      },
+      {
+        title: "Ligas",
+        url: "/leagues",
+        icon: Trophy,
+        items: [
+          {
+            title: "Ver Ligas",
+            url: "/leagues",
+          },
+          {
+            title: "Clasificación",
+            url: "/standings",
+          },
+        ],
+      },
+      {
+        title: "Partidos",
+        url: "/matches",
+        icon: Zap,
+      },
+      {
+        title: "Clases",
+        url: "/classes",
+        icon: GraduationCap,
+      },
+      {
+        title: "Jugadores",
+        url: "/players",
+        icon: Users,
+      },
+      {
+        title: "Profesores",
+        url: "/trainers",
+        icon: UserCheck,
+      },
+      {
+        title: "Clubs",
+        url: "/clubs",
+        icon: Building2,
+      },
+    ],
+    navMisc: [
+      {
+        title: "Listados",
+        url: "/listings",
+        icon: ListChecks,
+      },
+    ],
+  };
 
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <div className="flex items-center space-x-3 px-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark rounded-lg flex items-center justify-center">
-            <Trophy className="h-5 w-5 text-white" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h2 className="text-lg font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-                PadelApp
-              </h2>
-              <p className="text-xs text-muted-foreground">Liga de Pádel</p>
-            </div>
-          )}
-        </div>
-      </SidebarHeader>
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems
-                .filter(item => !item.adminOnly || isAdmin)
-                .map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {!isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Jugador</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {playerItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-      </SidebarContent>
-
-      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <UserMenu />
+            <SidebarMenuButton size="lg" asChild>
+              <Link to="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <SquareTerminal className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Padel Pro</span>
+                  <span className="truncate text-xs">Panel Administrador</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+          <SidebarMenu>
+            {data.navMain.map((item) => {
+              if (item.items) {
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                    <SidebarMenu indent>
+                      {item.items.map((subItem) => (
+                        <SidebarMenuItem key={subItem.title}>
+                          <SidebarMenuButton asChild>
+                            <Link to={subItem.url}>{subItem.title}</Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarMenuItem>
+                );
+              }
+
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link to={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Misc</SidebarGroupLabel>
+          <SidebarMenu>
+            {data.navMisc.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  <Link to={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <UserMenu />
       </SidebarFooter>
     </Sidebar>
   );

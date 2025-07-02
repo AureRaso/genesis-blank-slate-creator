@@ -3,7 +3,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'player' | 'captain';
+  role: 'admin' | 'player' | 'captain' | 'trainer';
   created_at: string;
   updated_at: string;
 }
@@ -17,4 +17,5 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isCaptain: boolean;
+  isTrainer: boolean;
 }
