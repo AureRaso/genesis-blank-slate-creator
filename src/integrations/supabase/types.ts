@@ -77,6 +77,7 @@ export type Database = {
           price_per_player: number
           repeat_weekly: boolean
           start_time: string
+          trainer_id: string | null
           trainer_name: string
           updated_at: string
         }
@@ -95,6 +96,7 @@ export type Database = {
           price_per_player: number
           repeat_weekly?: boolean
           start_time: string
+          trainer_id?: string | null
           trainer_name: string
           updated_at?: string
         }
@@ -113,6 +115,7 @@ export type Database = {
           price_per_player?: number
           repeat_weekly?: boolean
           start_time?: string
+          trainer_id?: string | null
           trainer_name?: string
           updated_at?: string
         }
@@ -136,6 +139,13 @@ export type Database = {
             columns: ["created_by_profile_id"]
             isOneToOne: false
             referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_slots_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "trainers"
             referencedColumns: ["id"]
           },
         ]
@@ -570,6 +580,53 @@ export type Database = {
             columns: ["league_id"]
             isOneToOne: false
             referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainers: {
+        Row: {
+          club_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          phone: string
+          photo_url: string | null
+          specialty: string | null
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          phone: string
+          photo_url?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          phone?: string
+          photo_url?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainers_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
             referencedColumns: ["id"]
           },
         ]

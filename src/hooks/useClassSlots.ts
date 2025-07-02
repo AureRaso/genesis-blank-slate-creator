@@ -8,7 +8,8 @@ export type ClassSlot = {
   created_by_profile_id: string;
   club_id: string;
   court_number: number;
-  trainer_name: string;
+  trainer_name?: string; // Mantener por compatibilidad
+  trainer_id?: string; // Nueva columna
   objective: string;
   level: 'iniciacion' | 'intermedio' | 'avanzado';
   day_of_week: 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo';
@@ -23,6 +24,9 @@ export type ClassSlot = {
   clubs?: {
     name: string;
   };
+  trainers?: {
+    full_name: string;
+  };
   class_reservations?: Array<{
     id: string;
     player_profile_id: string;
@@ -36,7 +40,8 @@ export type ClassSlot = {
 export type CreateClassSlotData = {
   club_id: string;
   court_number: number;
-  trainer_name: string;
+  trainer_name: string; // Obligatorio para compatibilidad con DB
+  trainer_id?: string; // Nueva columna opcional
   objective: string;
   level: 'iniciacion' | 'intermedio' | 'avanzado';
   day_of_week: 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado' | 'domingo';
@@ -57,6 +62,7 @@ export const useClassSlots = () => {
         .select(`
           *,
           clubs!inner(name),
+          trainers(full_name),
           class_reservations(
             id,
             player_profile_id,
@@ -83,6 +89,7 @@ export const useMyClassSlots = () => {
         .select(`
           *,
           clubs!inner(name),
+          trainers(full_name),
           class_reservations(
             id,
             player_profile_id,

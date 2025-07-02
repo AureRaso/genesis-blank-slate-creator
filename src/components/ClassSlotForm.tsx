@@ -11,11 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
 import { useCreateClassSlot, useUpdateClassSlot, ClassSlot, CreateClassSlotData } from "@/hooks/useClassSlots";
+import { useTrainersByClub } from "@/hooks/useTrainers";
 
 const formSchema = z.object({
   club_id: z.string().min(1, "Selecciona un club"),
   court_number: z.number().min(1, "Selecciona una pista"),
-  trainer_name: z.string().min(1, "Introduce el nombre del entrenador"),
+  trainer_id: z.string().min(1, "Selecciona un entrenador"),
   objective: z.string().min(1, "Describe el objetivo de la clase"),
   level: z.enum(['iniciacion', 'intermedio', 'avanzado']),
   day_of_week: z.enum(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']),
@@ -37,6 +38,7 @@ interface ClassSlotFormProps {
 const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
   const [selectedClub, setSelectedClub] = useState<string>(classSlot?.club_id || "");
   const { data: clubs } = useClubs();
+  const { data: trainers } = useTrainersByClub(selectedClub);
   const createMutation = useCreateClassSlot();
   const updateMutation = useUpdateClassSlot();
 
@@ -45,7 +47,7 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
     defaultValues: {
       club_id: classSlot?.club_id || "",
       court_number: classSlot?.court_number || 1,
-      trainer_name: classSlot?.trainer_name || "",
+      trainer_id: classSlot?.trainer_id || "",
       objective: classSlot?.objective || "",
       level: classSlot?.level || 'intermedio',
       day_of_week: classSlot?.day_of_week || 'lunes',
@@ -66,10 +68,14 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
         onSuccess: () => onClose(),
       });
     } else {
+      // Buscar el nombre del entrenador para compatibilidad
+      const selectedTrainer = trainers?.find(t => t.id === data.trainer_id);
+      
       const createData: CreateClassSlotData = {
         club_id: data.club_id,
         court_number: data.court_number,
-        trainer_name: data.trainer_name,
+        trainer_name: selectedTrainer?.full_name || "Entrenador", // Para compatibilidad
+        trainer_id: data.trainer_id,
         objective: data.objective,
         level: data.level,
         day_of_week: data.day_of_week,
@@ -170,14 +176,30 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
 
                 <FormField
                   control={form.control}
-                  name="trainer_name"
+                  name="trainer_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Entrenador</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nombre del entrenador" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un entrenador" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {trainers?.map((trainer) => (
+                            <SelectItem key={trainer.id} value={trainer.id}>
+                              {trainer.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
+                      {selectedClub && (!trainers || trainers.length === 0) && (
+                        <p className="text-sm text-destructive">
+                          Debes añadir al menos un profesor para poder crear clases
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -361,7 +383,7 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
                 <Button 
                   type="submit" 
                   className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={createMutation.isPending || updateMutation.isPending || (selectedClub && (!trainers || trainers.length === 0))}
                 >
                   {classSlot ? 'Actualizar' : 'Crear'} Clase
                 </Button>
