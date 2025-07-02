@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -85,7 +84,7 @@ export const useClassSlots = () => {
 export const useMyClassSlots = () => {
   return useQuery({
     queryKey: ['my-class-slots'],
-    queryFn: async () => {
+    queryFn: async (): Promise<ClassSlot[]> => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
@@ -94,7 +93,7 @@ export const useMyClassSlots = () => {
       const { data: trainerData, error: trainerError } = await supabase
         .from('trainers')
         .select('id')
-        .eq('profile_id', userData.user.id)
+        .eq('email', userData.user.email)
         .single();
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
@@ -102,12 +101,25 @@ export const useMyClassSlots = () => {
       let query = supabase
         .from('class_slots')
         .select(`
-          *,
+          id,
+          created_by_profile_id,
+          club_id,
+          court_number,
+          trainer_name,
+          trainer_id,
+          objective,
+          level,
+          day_of_week,
+          start_time,
+          duration_minutes,
+          price_per_player,
+          max_players,
+          repeat_weekly,
+          is_active,
+          created_at,
+          updated_at,
           clubs!inner(name),
-          trainers(
-            id,
-            full_name
-          ),
+          trainers(full_name),
           class_reservations(
             id,
             player_profile_id,
@@ -125,7 +137,9 @@ export const useMyClassSlots = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as ClassSlot[];
+      
+      // Explicitly cast to avoid type inference issues
+      return (data || []) as unknown as ClassSlot[];
     },
   });
 };
