@@ -50,9 +50,17 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
 
   const onSubmit = (data: FormData) => {
     const submitData = {
-      ...data,
+      club_id: data.club_id,
+      court_number: data.court_number,
       trainer_name: trainerProfile?.profiles?.full_name || "Profesor",
       trainer_id: trainerProfile?.id,
+      objective: data.objective,
+      level: data.level,
+      day_of_week: data.day_of_week,
+      start_time: data.start_time,
+      duration_minutes: data.duration_minutes,
+      price_per_player: data.price_per_player,
+      max_players: data.max_players,
       repeat_weekly: true,
       is_active: true,
     };

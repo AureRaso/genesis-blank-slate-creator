@@ -1,23 +1,26 @@
+
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { AppLayout } from "@/components/AppLayout";
-import { AuthPage } from "@/pages/AuthPage";
-import { Index } from "@/pages/Index";
-import { LeaguesPage } from "@/pages/LeaguesPage";
-import { MatchesPage } from "@/pages/MatchesPage";
-import { ClassesPage } from "@/pages/ClassesPage";
-import { PlayersPage } from "@/pages/PlayersPage";
-import { ClubsPage } from "@/pages/ClubsPage";
-import { NotFound } from "@/pages/NotFound";
+import AppLayout from "@/components/AppLayout";
+import AuthPage from "@/pages/AuthPage";
+import Index from "@/pages/Index";
+import LeaguesPage from "@/pages/LeaguesPage";
+import MatchesPage from "@/pages/MatchesPage";
+import ClassesPage from "@/pages/ClassesPage";
+import PlayersPage from "@/pages/PlayersPage";
+import ClubsPage from "@/pages/ClubsPage";
+import NotFound from "@/pages/NotFound";
 import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
+
+const queryClient = new QueryClient();
 
 function App() {
   const { isAdmin, isCaptain, isTrainer, loading } = useAuth();
@@ -34,7 +37,7 @@ function App() {
   if (isTrainer) {
     return (
       <Router>
-        <QueryClient>
+        <QueryClientProvider client={queryClient}>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/*" element={
@@ -49,14 +52,14 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
-        </QueryClient>
+        </QueryClientProvider>
       </Router>
     );
   }
 
   return (
     <Router>
-      <QueryClient>
+      <QueryClientProvider client={queryClient}>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/*" element={
@@ -76,7 +79,7 @@ function App() {
             </ProtectedRoute>
           } />
         </Routes>
-      </QueryClient>
+      </QueryClientProvider>
     </Router>
   );
 }

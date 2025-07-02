@@ -6,15 +6,15 @@ import { useToast } from "@/hooks/use-toast";
 export type Trainer = {
   id: string;
   profile_id: string;
-  specialty?: string;
-  photo_url?: string;
+  specialty: string | null;
+  photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   profiles?: {
+    id: string;
     full_name: string;
     email: string;
-    phone?: string;
   };
   trainer_clubs?: Array<{
     club_id: string;
@@ -31,7 +31,16 @@ export type CreateTrainerData = {
   club_ids: string[];
   specialty?: string;
   photo_url?: string;
-  is_active?: boolean;
+  is_active: boolean;
+};
+
+export type UpdateTrainerData = {
+  id: string;
+  profile_id: string;
+  specialty?: string;
+  photo_url?: string;
+  is_active: boolean;
+  club_ids: string[];
 };
 
 export const useTrainers = () => {
@@ -42,14 +51,13 @@ export const useTrainers = () => {
         .from('trainers')
         .select(`
           *,
-          profiles!inner(full_name, email),
+          profiles!inner(id, full_name, email),
           trainer_clubs(
             club_id,
             clubs!inner(name)
           )
         `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
 
       if (error) throw error;
       return data as Trainer[];
@@ -57,25 +65,24 @@ export const useTrainers = () => {
   });
 };
 
-export const useTrainersByClub = (clubId: string | null) => {
+export const useTrainersByClub = (clubId: string) => {
   return useQuery({
-    queryKey: ['trainers-by-club', clubId],
+    queryKey: ['trainers', 'by-club', clubId],
     queryFn: async () => {
       if (!clubId) return [];
       
       const { data, error } = await supabase
-        .from('trainer_clubs')
+        .from('trainers')
         .select(`
-          trainers!inner(
-            *,
-            profiles!inner(full_name, email)
-          )
+          *,
+          profiles!inner(id, full_name, email),
+          trainer_clubs!inner(club_id)
         `)
-        .eq('club_id', clubId)
-        .eq('trainers.is_active', true);
+        .eq('is_active', true)
+        .eq('trainer_clubs.club_id', clubId);
 
       if (error) throw error;
-      return data.map(item => item.trainers) as Trainer[];
+      return data as Trainer[];
     },
     enabled: !!clubId,
   });
@@ -87,51 +94,40 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      // 1. Crear el perfil del usuario
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Crear el perfil del profesor
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: trainerData.email,
-        password: Math.random().toString(36).slice(-12), // Contraseña temporal
-        email_confirm: true,
-        user_metadata: {
-          full_name: trainerData.full_name,
-          role: 'trainer'
-        }
+        password: 'temp123', // Contraseña temporal
+        options: {
+          data: {
+            full_name: trainerData.full_name,
+            role: 'trainer',
+          },
+        },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear el usuario');
 
-      // 2. Crear el perfil en la tabla profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: authData.user.id,
-          email: trainerData.email,
-          full_name: trainerData.full_name,
-          role: 'trainer'
-        }]);
-
-      if (profileError) throw profileError;
-
-      // 3. Crear el registro en trainers
-      const { data: trainerRecord, error: trainerError } = await supabase
+      // Crear el registro de trainer
+      const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
         .insert([{
           profile_id: authData.user.id,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
-          is_active: trainerData.is_active ?? true
+          is_active: trainerData.is_active,
         }])
         .select()
         .single();
 
       if (trainerError) throw trainerError;
 
-      // 4. Asociar con los clubs
+      // Asociar con clubs
       if (trainerData.club_ids.length > 0) {
         const clubAssociations = trainerData.club_ids.map(clubId => ({
           trainer_profile_id: authData.user.id,
-          club_id: clubId
+          club_id: clubId,
         }));
 
         const { error: clubError } = await supabase
@@ -141,14 +137,13 @@ export const useCreateTrainer = () => {
         if (clubError) throw clubError;
       }
 
-      return trainerRecord;
+      return trainer;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      queryClient.invalidateQueries({ queryKey: ['trainers-by-club'] });
       toast({
         title: "Éxito",
-        description: "Profesor creado correctamente. Se le enviará un email para establecer su contraseña.",
+        description: "Profesor creado correctamente",
       });
     },
     onError: (error) => {
@@ -167,45 +162,44 @@ export const useUpdateTrainer = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, profile_id, club_ids, ...updates }: Partial<Trainer> & { id: string; profile_id: string; club_ids?: string[] }) => {
-      // 1. Actualizar el trainer
+    mutationFn: async (trainerData: UpdateTrainerData) => {
+      // Actualizar datos del trainer
       const { data, error } = await supabase
         .from('trainers')
-        .update(updates)
-        .eq('id', id)
+        .update({
+          specialty: trainerData.specialty,
+          photo_url: trainerData.photo_url,
+          is_active: trainerData.is_active,
+        })
+        .eq('id', trainerData.id)
         .select()
         .single();
 
       if (error) throw error;
 
-      // 2. Si se proporcionan club_ids, actualizar las asociaciones
-      if (club_ids) {
-        // Eliminar asociaciones existentes
-        await supabase
+      // Actualizar asociaciones con clubs
+      await supabase
+        .from('trainer_clubs')
+        .delete()
+        .eq('trainer_profile_id', trainerData.profile_id);
+
+      if (trainerData.club_ids.length > 0) {
+        const clubAssociations = trainerData.club_ids.map(clubId => ({
+          trainer_profile_id: trainerData.profile_id,
+          club_id: clubId,
+        }));
+
+        const { error: clubError } = await supabase
           .from('trainer_clubs')
-          .delete()
-          .eq('trainer_profile_id', profile_id);
+          .insert(clubAssociations);
 
-        // Crear nuevas asociaciones
-        if (club_ids.length > 0) {
-          const clubAssociations = club_ids.map(clubId => ({
-            trainer_profile_id: profile_id,
-            club_id: clubId
-          }));
-
-          const { error: clubError } = await supabase
-            .from('trainer_clubs')
-            .insert(clubAssociations);
-
-          if (clubError) throw clubError;
-        }
+        if (clubError) throw clubError;
       }
 
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      queryClient.invalidateQueries({ queryKey: ['trainers-by-club'] });
       toast({
         title: "Éxito",
         description: "Profesor actualizado correctamente",
@@ -237,7 +231,6 @@ export const useDeleteTrainer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      queryClient.invalidateQueries({ queryKey: ['trainers-by-club'] });
       toast({
         title: "Éxito",
         description: "Profesor desactivado correctamente",
@@ -250,29 +243,6 @@ export const useDeleteTrainer = () => {
         description: "No se pudo desactivar el profesor",
         variant: "destructive",
       });
-    },
-  });
-};
-
-export const useMyTrainerProfile = () => {
-  return useQuery({
-    queryKey: ['my-trainer-profile'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trainers')
-        .select(`
-          *,
-          profiles!inner(full_name, email),
-          trainer_clubs(
-            club_id,
-            clubs!inner(name, address, phone)
-          )
-        `)
-        .eq('profile_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (error) throw error;
-      return data as Trainer;
     },
   });
 };

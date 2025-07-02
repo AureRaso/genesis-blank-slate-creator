@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -25,7 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { UserMenu } from "@/components/UserMenu";
+import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AppSidebar = () => {
@@ -175,7 +176,7 @@ const AppSidebar = () => {
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </SidebarMenuButton>
-                    <SidebarMenu indent>
+                    <SidebarMenu>
                       {item.items.map((subItem) => (
                         <SidebarMenuItem key={subItem.title}>
                           <SidebarMenuButton asChild>

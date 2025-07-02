@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserCheck } from "lucide-react";
@@ -59,7 +59,17 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         onSuccess: () => onClose(),
       });
     } else {
-      createMutation.mutate(data, {
+      const createData = {
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        club_ids: data.club_ids,
+        specialty: data.specialty,
+        photo_url: data.photo_url,
+        is_active: data.is_active,
+      };
+      
+      createMutation.mutate(createData, {
         onSuccess: () => onClose(),
       });
     }
