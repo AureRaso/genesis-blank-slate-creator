@@ -660,6 +660,17 @@ export type Database = {
         Args: { _profile_id: string }
         Returns: boolean
       }
+      create_trainer_user: {
+        Args: {
+          trainer_email: string
+          trainer_full_name: string
+          club_id: string
+          trainer_phone?: string
+          trainer_specialty?: string
+          trainer_photo_url?: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: { profile_id: string; expected_role: string }
         Returns: boolean

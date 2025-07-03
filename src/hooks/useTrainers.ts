@@ -110,36 +110,47 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      // Crear el registro de trainer directamente
-      const { data: trainer, error: trainerError } = await supabase
-        .from('trainers')
-        .insert([{
-          club_id: trainerData.club_id,
-          full_name: trainerData.full_name,
-          email: trainerData.email,
-          phone: trainerData.phone,
-          specialty: trainerData.specialty,
-          photo_url: trainerData.photo_url,
-          is_active: trainerData.is_active,
-        }])
-        .select()
-        .single();
-
-      if (trainerError) throw trainerError;
-      return trainer;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      toast({
-        title: "Éxito",
-        description: "Profesor creado correctamente",
+      // Usar la nueva función de base de datos para crear el usuario completo
+      const { data, error } = await supabase.rpc('create_trainer_user', {
+        trainer_email: trainerData.email,
+        trainer_full_name: trainerData.full_name,
+        club_id: trainerData.club_id,
+        trainer_phone: trainerData.phone,
+        trainer_specialty: trainerData.specialty || null,
+        trainer_photo_url: trainerData.photo_url || null
       });
+
+      if (error) throw error;
+      
+      // Verificar si hay error en la respuesta de la función
+      if (data && data.error) {
+        throw new Error(data.error);
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['trainers'] });
+      
+      // Mostrar la contraseña temporal al administrador
+      if (data && data.temporary_password) {
+        toast({
+          title: "Profesor creado exitosamente",
+          description: `Contraseña temporal: ${data.temporary_password}. Comparte esta información con el profesor.`,
+          duration: 10000, // 10 segundos para que pueda leer y copiar
+        });
+      } else {
+        toast({
+          title: "Éxito",
+          description: "Profesor creado correctamente",
+        });
+      }
     },
     onError: (error) => {
       console.error('Error creating trainer:', error);
       toast({
         title: "Error",
-        description: "No se pudo crear el profesor",
+        description: "No se pudo crear el profesor: " + error.message,
         variant: "destructive",
       });
     },

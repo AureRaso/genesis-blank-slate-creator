@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, UserCheck } from "lucide-react";
+import { ArrowLeft, UserCheck, Info } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
@@ -88,6 +89,16 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         </h1>
       </div>
 
+      {!trainer && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Info className="h-4 w-4 text-playtomic-orange" />
+          <AlertDescription className="text-playtomic-orange-dark">
+            <strong>Importante:</strong> Al crear un nuevo profesor se generará automáticamente una cuenta de usuario con contraseña temporal. 
+            La contraseña se mostrará una vez creado para que puedas compartirla con el profesor.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -125,6 +136,11 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                       <FormControl>
                         <Input type="email" placeholder="juan@example.com" {...field} disabled={!!trainer} />
                       </FormControl>
+                      {!trainer && (
+                        <FormDescription>
+                          Se creará automáticamente una cuenta de usuario con este email
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -251,7 +267,14 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  {trainer ? 'Actualizar' : 'Crear'} Profesor
+                  {createMutation.isPending || updateMutation.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      {trainer ? 'Actualizando...' : 'Creando...'}
+                    </div>
+                  ) : (
+                    <>{trainer ? 'Actualizar' : 'Crear'} Profesor</>
+                  )}
                 </Button>
               </div>
             </form>
