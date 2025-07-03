@@ -114,11 +114,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (!error) {
+    if (error) {
+      console.error('Error signing out:', error);
+    } else {
       setUser(null);
       setProfile(null);
     }
-    return error;
   };
 
   const isAdmin = profile?.role === 'admin';
