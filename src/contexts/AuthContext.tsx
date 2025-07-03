@@ -24,36 +24,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     console.log('AuthProvider - Initializing...');
-    
-    // Clear any problematic cached session first
-    const clearProblematicSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email === 'sefaca24@gmail.com') {
-          console.log('Clearing problematic session for sefaca24@gmail.com');
-          await supabase.auth.signOut();
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-          return true;
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
-      }
-      return false;
-    };
 
     // Get initial session
     const getInitialSession = async () => {
       try {
         console.log('AuthProvider - Getting initial session...');
         
-        // Check and clear problematic session first
-        const wasCleared = await clearProblematicSession();
-        if (wasCleared) {
-          return;
-        }
-
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log('AuthProvider - Initial session result:', { 
           userEmail: session?.user?.email, 
@@ -86,16 +62,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
-        
-        // Block problematic user
-        if (session?.user?.email === 'sefaca24@gmail.com') {
-          console.log('Blocking problematic user sefaca24@gmail.com');
-          await supabase.auth.signOut();
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-          return;
-        }
         
         if (session?.user) {
           setUser(session.user);
