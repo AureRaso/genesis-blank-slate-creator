@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +37,17 @@ export type UpdateTrainerData = {
   specialty?: string;
   photo_url?: string;
   is_active?: boolean;
+};
+
+// Type for the database function response
+type CreateTrainerUserResponse = {
+  user_id?: string;
+  trainer_id?: string;
+  email?: string;
+  temporary_password?: string;
+  full_name?: string;
+  error?: string;
+  error_code?: string;
 };
 
 export const useTrainers = () => {
@@ -122,12 +132,15 @@ export const useCreateTrainer = () => {
 
       if (error) throw error;
       
+      // Cast the response to our expected type
+      const response = data as CreateTrainerUserResponse;
+      
       // Verificar si hay error en la respuesta de la función
-      if (data && data.error) {
-        throw new Error(data.error);
+      if (response && response.error) {
+        throw new Error(response.error);
       }
 
-      return data;
+      return response;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
