@@ -584,6 +584,49 @@ export type Database = {
           },
         ]
       }
+      trainer_clubs: {
+        Row: {
+          club_id: string
+          created_at: string
+          id: string
+          trainer_profile_id: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          id?: string
+          trainer_profile_id: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          id?: string
+          trainer_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_clubs_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_clubs_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainer_clubs_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainers: {
         Row: {
           club_id: string
@@ -594,6 +637,7 @@ export type Database = {
           is_active: boolean
           phone: string
           photo_url: string | null
+          profile_id: string | null
           specialty: string | null
           updated_at: string
         }
@@ -606,6 +650,7 @@ export type Database = {
           is_active?: boolean
           phone: string
           photo_url?: string | null
+          profile_id?: string | null
           specialty?: string | null
           updated_at?: string
         }
@@ -618,6 +663,7 @@ export type Database = {
           is_active?: boolean
           phone?: string
           photo_url?: string | null
+          profile_id?: string | null
           specialty?: string | null
           updated_at?: string
         }
@@ -627,6 +673,20 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]

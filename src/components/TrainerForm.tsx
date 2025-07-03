@@ -11,7 +11,7 @@ import { ArrowLeft, UserCheck } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
 
-const formSchema = z.object({
+const createFormSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(1, "Introduce el teléfono"),
@@ -21,7 +21,14 @@ const formSchema = z.object({
   is_active: z.boolean(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+const editFormSchema = z.object({
+  specialty: z.string().optional(),
+  photo_url: z.string().url("URL inválida").optional().or(z.literal("")),
+  is_active: z.boolean(),
+});
+
+type CreateFormData = z.infer<typeof createFormSchema>;
+type EditFormData = z.infer<typeof editFormSchema>;
 
 interface TrainerFormProps {
   trainer?: Trainer;
@@ -33,43 +40,156 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   const createMutation = useCreateTrainer();
   const updateMutation = useUpdateTrainer();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const isEditing = !!trainer;
+
+  const createForm = useForm<CreateFormData>({
+    resolver: zodResolver(createFormSchema),
     defaultValues: {
-      full_name: trainer?.full_name || "",
-      email: trainer?.email || "",
-      phone: trainer?.phone || "",
-      club_id: trainer?.club_id || "",
+      full_name: "",
+      email: "",
+      phone: "",
+      club_id: "",
+      specialty: "",
+      photo_url: "",
+      is_active: true,
+    },
+  });
+
+  const editForm = useForm<EditFormData>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: {
       specialty: trainer?.specialty || "",
       photo_url: trainer?.photo_url || "",
       is_active: trainer?.is_active ?? true,
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    if (trainer) {
-      updateMutation.mutate({ 
-        id: trainer.id,
-        ...data,
-      }, {
-        onSuccess: () => onClose(),
-      });
-    } else {
-      const createData = {
-        full_name: data.full_name,
-        email: data.email,
-        phone: data.phone,
-        club_id: data.club_id,
-        specialty: data.specialty,
-        photo_url: data.photo_url,
-        is_active: data.is_active,
-      };
-      
-      createMutation.mutate(createData, {
-        onSuccess: () => onClose(),
-      });
-    }
+  const onCreateSubmit = (data: CreateFormData) => {
+    createMutation.mutate(data, {
+      onSuccess: () => onClose(),
+    });
   };
+
+  const onEditSubmit = (data: EditFormData) => {
+    if (!trainer) return;
+    
+    updateMutation.mutate({ 
+      id: trainer.id,
+      ...data,
+    }, {
+      onSuccess: () => onClose(),
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold text-playtomic-orange">
+            Editar Profesor
+          </h1>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <UserCheck className="h-5 w-5" />
+              <span>Datos del Profesor</span>
+            </CardTitle>
+            <CardDescription>
+              Edita la información del profesor (nombre y email no se pueden cambiar)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="font-medium text-gray-900">Información del perfil</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Nombre: {trainer.profiles?.full_name || 'No disponible'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Email: {trainer.profiles?.email || 'No disponible'}
+                    </p>
+                  </div>
+
+                  <FormField
+                    control={editForm.control}
+                    name="specialty"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Especialidad (opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Iniciación, Técnica avanzada..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="photo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL de la foto (opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="is_active"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Profesor activo</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+                    disabled={updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Actualizando...
+                      </div>
+                    ) : (
+                      'Actualizar Profesor'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -78,7 +198,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold text-playtomic-orange">
-          {trainer ? 'Editar Profesor' : 'Nuevo Profesor'}
+          Nuevo Profesor
         </h1>
       </div>
 
@@ -89,15 +209,15 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
             <span>Datos del Profesor</span>
           </CardTitle>
           <CardDescription>
-            {trainer ? 'Edita la información del profesor' : 'Crea un nuevo profesor en el sistema'}
+            Crea un nuevo profesor en el sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="full_name"
                   render={({ field }) => (
                     <FormItem>
@@ -111,7 +231,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -125,7 +245,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
@@ -139,7 +259,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
@@ -153,7 +273,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="photo_url"
                   render={({ field }) => (
                     <FormItem>
@@ -168,7 +288,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
               </div>
 
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="club_id"
                 render={({ field }) => (
                   <FormItem>
@@ -195,7 +315,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
               />
 
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="is_active"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -219,15 +339,15 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                 <Button 
                   type="submit" 
                   className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={createMutation.isPending}
                 >
-                  {createMutation.isPending || updateMutation.isPending ? (
+                  {createMutation.isPending ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      {trainer ? 'Actualizando...' : 'Creando...'}
+                      Creando...
                     </div>
                   ) : (
-                    <>{trainer ? 'Actualizar' : 'Crear'} Profesor</>
+                    'Crear Profesor'
                   )}
                 </Button>
               </div>

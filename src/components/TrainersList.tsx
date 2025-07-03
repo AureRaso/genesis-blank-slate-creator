@@ -25,21 +25,28 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
     return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'PR';
   };
 
+  // Get trainer info from the profiles join
+  const trainerName = trainer.profiles?.full_name || 'Nombre no disponible';
+  const trainerEmail = trainer.profiles?.email || 'Email no disponible';
+  
+  // Get club info from trainer_clubs join
+  const clubName = trainer.trainer_clubs?.[0]?.clubs?.name || 'Club no asignado';
+
   return (
     <Card className="hover:shadow-lg transition-all duration-300">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={trainer.photo_url || undefined} alt={trainer.full_name} />
+              <AvatarImage src={trainer.photo_url || undefined} alt={trainerName} />
               <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white">
-                {getInitials(trainer.full_name)}
+                {getInitials(trainerName)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{trainer.full_name}</CardTitle>
+              <CardTitle className="text-lg">{trainerName}</CardTitle>
               <CardDescription className="text-sm">
-                {trainer.email}
+                {trainerEmail}
               </CardDescription>
             </div>
           </div>
@@ -58,7 +65,7 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
                   <AlertDialogHeader>
                     <AlertDialogTitle>¿Desactivar profesor?</AlertDialogTitle>
                      <AlertDialogDescription>
-                       Esta acción desactivará al profesor "{trainer.full_name}". Podrás reactivarlo más tarde.
+                       Esta acción desactivará al profesor "{trainerName}". Podrás reactivarlo más tarde.
                      </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -90,13 +97,8 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         <div className="space-y-1">
           <p className="text-sm font-medium">Club asignado:</p>
           <Badge variant="secondary" className="text-xs">
-            {trainer.clubs?.name || 'Club no encontrado'}
+            {clubName}
           </Badge>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Contacto:</p>
-          <p className="text-sm text-muted-foreground">{trainer.phone}</p>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">

@@ -5,17 +5,26 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  full_name: string;
-  email: string | null;
-  phone: string;
-  club_id: string;
+  profile_id: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  // Club information
-  clubs?: { id: string; name: string; };
+  // Profile information from join
+  profiles?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+  // Club information from trainer_clubs join
+  trainer_clubs?: Array<{
+    club_id: string;
+    clubs: {
+      id: string;
+      name: string;
+    };
+  }>;
 };
 
 export type CreateTrainerData = {
@@ -30,9 +39,6 @@ export type CreateTrainerData = {
 
 export type UpdateTrainerData = {
   id: string;
-  full_name?: string;
-  email?: string;
-  phone?: string;
   specialty?: string;
   photo_url?: string;
   is_active?: boolean;
@@ -46,19 +52,24 @@ export const useTrainers = () => {
         .from('trainers')
         .select(`
           *,
-          clubs:club_id (
+          profiles:profile_id (
             id,
-            name
+            full_name,
+            email
+          ),
+          trainer_clubs (
+            club_id,
+            clubs:club_id (
+              id,
+              name
+            )
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
       
-      return data?.map(trainer => ({
-        ...trainer,
-        clubs: trainer.clubs
-      })) || [];
+      return data || [];
     },
   });
 };
@@ -71,41 +82,31 @@ export const useMyTrainerProfile = () => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // Get user profile first to verify they are a trainer
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userData.user.id)
-        .eq('role', 'trainer')
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') throw profileError;
-      if (!profile) return null;
-
-      // Get trainer data using email match
+      // Get trainer data using profile_id
       const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
         .select(`
           *,
-          clubs:club_id (
+          profiles:profile_id (
             id,
-            name
+            full_name,
+            email
+          ),
+          trainer_clubs (
+            club_id,
+            clubs:club_id (
+              id,
+              name
+            )
           )
         `)
-        .eq('email', profile.email)
+        .eq('profile_id', userData.user.id)
         .eq('is_active', true)
         .single();
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
       
-      if (trainer) {
-        return {
-          ...trainer,
-          clubs: trainer.clubs
-        };
-      }
-      
-      return null;
+      return trainer;
     },
   });
 };
@@ -117,23 +118,24 @@ export const useTrainersByClub = (clubId: string) => {
       if (!clubId) return [];
       
       const { data, error } = await supabase
-        .from('trainers')
+        .from('trainer_clubs')
         .select(`
-          *,
-          clubs:club_id (
-            id,
-            name
+          trainer_profile_id,
+          trainers:trainer_profile_id (
+            *,
+            profiles:profile_id (
+              id,
+              full_name,
+              email
+            )
           )
         `)
-        .eq('club_id', clubId)
-        .eq('is_active', true);
+        .eq('club_id', clubId);
 
       if (error) throw error;
       
-      return data?.map(trainer => ({
-        ...trainer,
-        clubs: trainer.clubs
-      })) || [];
+      // Transform the data to match the expected format
+      return data?.map(item => item.trainers).filter(Boolean) || [];
     },
     enabled: !!clubId,
   });
@@ -201,9 +203,6 @@ export const useUpdateTrainer = () => {
       const { data, error } = await supabase
         .from('trainers')
         .update({
-          full_name: trainerData.full_name,
-          email: trainerData.email,
-          phone: trainerData.phone,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
           is_active: trainerData.is_active,
