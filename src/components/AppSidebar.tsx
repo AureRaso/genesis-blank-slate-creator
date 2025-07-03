@@ -4,6 +4,7 @@ import {
   Building2,
   Calendar,
   GraduationCap,
+  LogOut,
   SquareTerminal,
   Trophy,
   UserCheck,
@@ -61,6 +62,19 @@ const AppSidebar = () => {
                   <Link to="/">
                     <Calendar />
                     <span>Mi Calendario</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Cuenta</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/logout">
+                    <LogOut />
+                    <span>Cerrar Sesión</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -148,6 +162,19 @@ const AppSidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Cuenta</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/logout">
+                  <LogOut />
+                  <span>Cerrar Sesión</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

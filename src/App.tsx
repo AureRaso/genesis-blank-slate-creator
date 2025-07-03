@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -18,6 +17,7 @@ import ClubsPage from "@/pages/ClubsPage";
 import NotFound from "@/pages/NotFound";
 import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
+import LogoutPage from "@/pages/LogoutPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
@@ -62,6 +62,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout>
