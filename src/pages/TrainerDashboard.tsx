@@ -22,6 +22,11 @@ const TrainerDashboard = () => {
     setShowClassForm(true);
   };
 
+  // Get club info from trainer profile
+  const trainerClub = trainerProfile?.trainer_clubs?.[0];
+  const clubName = trainerClub?.clubs?.name || 'Club no asignado';
+  const trainerName = trainerProfile?.profiles?.full_name || 'Profesor';
+
   if (profileLoading) {
     return (
       <div className="space-y-6">
@@ -48,7 +53,7 @@ const TrainerDashboard = () => {
           Panel del Profesor
         </h1>
         <p className="text-muted-foreground">
-          Bienvenido, {trainerProfile?.full_name}
+          Bienvenido, {trainerName}
         </p>
       </div>
 
@@ -62,7 +67,7 @@ const TrainerDashboard = () => {
           </CardHeader>
           <CardContent>
             <Badge variant="outline">
-              {trainerProfile.clubs?.name || 'Club no asignado'}
+              {clubName}
             </Badge>
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -32,10 +33,16 @@ interface TrainerClassFormProps {
 const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) => {
   const createMutation = useCreateClassSlot();
 
+  // Get club data from trainer profile
+  const trainerClub = trainerProfile?.trainer_clubs?.[0];
+  const clubId = trainerClub?.club_id || "";
+  const clubName = trainerClub?.clubs?.name || "Club no asignado";
+  const trainerName = trainerProfile?.profiles?.full_name || "Profesor";
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: trainerProfile?.club_id || "",
+      club_id: clubId,
       court_number: 1,
       objective: "",
       level: "iniciacion",
@@ -51,7 +58,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
     const submitData = {
       club_id: data.club_id,
       court_number: data.court_number,
-      trainer_name: trainerProfile?.full_name || "Profesor",
+      trainer_name: trainerName,
       trainer_id: trainerProfile?.id,
       objective: data.objective,
       level: data.level,
@@ -107,9 +114,9 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {trainerProfile?.clubs && (
-                            <SelectItem key={trainerProfile.clubs.id} value={trainerProfile.clubs.id}>
-                              {trainerProfile.clubs.name}
+                          {trainerClub && (
+                            <SelectItem key={trainerClub.clubs.id} value={trainerClub.clubs.id}>
+                              {clubName}
                             </SelectItem>
                           )}
                         </SelectContent>

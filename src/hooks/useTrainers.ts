@@ -57,7 +57,7 @@ export const useTrainers = () => {
             full_name,
             email
           ),
-          trainer_clubs (
+          trainer_clubs!trainer_clubs_trainer_profile_id_fkey (
             club_id,
             clubs:club_id (
               id,
@@ -92,7 +92,7 @@ export const useMyTrainerProfile = () => {
             full_name,
             email
           ),
-          trainer_clubs (
+          trainer_clubs!trainer_clubs_trainer_profile_id_fkey (
             club_id,
             clubs:club_id (
               id,
