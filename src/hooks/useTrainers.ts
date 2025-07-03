@@ -5,15 +5,17 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  club_id: string;
+  profile_id: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  email: string | null;
+  // Datos del perfil asociado
+  email: string;
   full_name: string;
-  phone: string;
+  // Datos de los clubs asignados
+  clubs?: { id: string; name: string; }[];
 };
 
 export type CreateTrainerData = {
@@ -49,11 +51,30 @@ export const useTrainers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trainers')
-        .select('*')
+        .select(`
+          *,
+          profiles:profile_id (
+            email,
+            full_name
+          ),
+          trainer_clubs (
+            clubs (
+              id,
+              name
+            )
+          )
+        `)
         .eq('is_active', true);
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match our Trainer type
+      return data?.map(trainer => ({
+        ...trainer,
+        email: trainer.profiles?.email || '',
+        full_name: trainer.profiles?.full_name || '',
+        clubs: trainer.trainer_clubs?.map(tc => tc.clubs).filter(Boolean) || []
+      })) || [];
     },
   });
 };
@@ -66,7 +87,7 @@ export const useMyTrainerProfile = () => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // Get user profile first
+      // Get user profile first to verify they are a trainer
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -77,16 +98,34 @@ export const useMyTrainerProfile = () => {
       if (profileError && profileError.code !== 'PGRST116') throw profileError;
       if (!profile) return null;
 
-      // Get trainer data based on email match
+      // Get trainer data
       const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
-        .select('*')
-        .eq('email', profile.email)
+        .select(`
+          *,
+          trainer_clubs (
+            clubs (
+              id,
+              name
+            )
+          )
+        `)
+        .eq('profile_id', profile.id)
         .eq('is_active', true)
         .single();
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
-      return trainer;
+      
+      if (trainer) {
+        return {
+          ...trainer,
+          email: profile.email,
+          full_name: profile.full_name,
+          clubs: trainer.trainer_clubs?.map(tc => tc.clubs).filter(Boolean) || []
+        };
+      }
+      
+      return null;
     },
   });
 };
@@ -98,13 +137,26 @@ export const useTrainersByClub = (clubId: string) => {
       if (!clubId) return [];
       
       const { data, error } = await supabase
-        .from('trainers')
-        .select('*')
-        .eq('is_active', true)
-        .eq('club_id', clubId);
+        .from('trainer_clubs')
+        .select(`
+          trainers (
+            *,
+            profiles:profile_id (
+              email,
+              full_name
+            )
+          )
+        `)
+        .eq('club_id', clubId)
+        .eq('trainers.is_active', true);
 
       if (error) throw error;
-      return data;
+      
+      return data?.map(tc => ({
+        ...tc.trainers,
+        email: tc.trainers.profiles?.email || '',
+        full_name: tc.trainers.profiles?.full_name || ''
+      })).filter(Boolean) || [];
     },
     enabled: !!clubId,
   });
@@ -116,11 +168,12 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      // Usar la nueva función de base de datos para crear el usuario completo
+      // Usar la función de base de datos para crear el usuario completo
       const { data, error } = await supabase.rpc('create_trainer_user', {
         trainer_email: trainerData.email,
         trainer_full_name: trainerData.full_name,
         club_id: trainerData.club_id,
+        trainer_phone: '', // Campo ya no necesario
         trainer_specialty: trainerData.specialty || null,
         trainer_photo_url: trainerData.photo_url || null
       });

@@ -88,10 +88,20 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         )}
 
         <div className="space-y-1">
-          <p className="text-sm font-medium">Club:</p>
-          <Badge variant="secondary" className="text-xs">
-            Club ID: {trainer.club_id}
-          </Badge>
+          <p className="text-sm font-medium">Clubs asignados:</p>
+          <div className="flex flex-wrap gap-1">
+            {trainer.clubs && trainer.clubs.length > 0 ? (
+              trainer.clubs.map((club) => (
+                <Badge key={club.id} variant="secondary" className="text-xs">
+                  {club.name}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                Sin clubs asignados
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">

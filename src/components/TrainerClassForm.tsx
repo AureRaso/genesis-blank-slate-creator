@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Calendar } from "lucide-react";
 import { useCreateClassSlot } from "@/hooks/useClassSlots";
 import { Trainer } from "@/hooks/useTrainers";
-import { useClubs } from "@/hooks/useClubs";
 
 const formSchema = z.object({
   club_id: z.string().min(1, "Selecciona un club"),
@@ -33,12 +31,11 @@ interface TrainerClassFormProps {
 
 const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) => {
   const createMutation = useCreateClassSlot();
-  const { data: clubs } = useClubs();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: trainerProfile?.club_id || "",
+      club_id: trainerProfile?.clubs?.[0]?.id || "",
       court_number: 1,
       objective: "",
       level: "iniciacion",
@@ -71,9 +68,6 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
       onSuccess: () => onClose(),
     });
   };
-
-  // Filter clubs to only show the trainer's club
-  const trainerClubs = clubs?.filter(club => club.id === trainerProfile?.club_id) || [];
 
   return (
     <div className="space-y-6">
@@ -113,7 +107,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {trainerClubs.map((club) => (
+                           {trainerProfile?.clubs?.map((club) => (
                              <SelectItem key={club.id} value={club.id}>
                                {club.name}
                              </SelectItem>
