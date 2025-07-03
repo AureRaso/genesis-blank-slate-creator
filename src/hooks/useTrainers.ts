@@ -5,22 +5,15 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  profile_id: string;
+  club_id: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  profiles?: {
-    email: string;
-    full_name: string;
-  };
-  trainer_clubs?: {
-    clubs: {
-      id: string;
-      name: string;
-    };
-  }[];
+  email: string | null;
+  full_name: string;
+  phone: string;
 };
 
 export type CreateTrainerData = {
@@ -56,13 +49,7 @@ export const useTrainers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trainers')
-        .select(`
-          *,
-          profiles!inner(email, full_name),
-          trainer_clubs(
-            clubs(id, name)
-          )
-        `)
+        .select('*')
         .eq('is_active', true);
 
       if (error) throw error;
@@ -79,16 +66,22 @@ export const useMyTrainerProfile = () => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
+      // Get user profile first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userData.user.id)
+        .eq('role', 'trainer')
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') throw profileError;
+      if (!profile) return null;
+
+      // Get trainer data based on email match
       const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
-        .select(`
-          *,
-          profiles!inner(email, full_name),
-          trainer_clubs(
-            clubs(id, name)
-          )
-        `)
-        .eq('profile_id', userData.user.id)
+        .select('*')
+        .eq('email', profile.email)
         .eq('is_active', true)
         .single();
 
@@ -106,15 +99,9 @@ export const useTrainersByClub = (clubId: string) => {
       
       const { data, error } = await supabase
         .from('trainers')
-        .select(`
-          *,
-          profiles!inner(email, full_name),
-          trainer_clubs!inner(
-            clubs!inner(id, name)
-          )
-        `)
+        .select('*')
         .eq('is_active', true)
-        .eq('trainer_clubs.club_id', clubId);
+        .eq('club_id', clubId);
 
       if (error) throw error;
       return data;

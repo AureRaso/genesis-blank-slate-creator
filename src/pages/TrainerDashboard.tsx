@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Calendar, Plus, Clock, Users, MapPin } from "lucide-react";
+import { Calendar, Plus, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,28 +48,25 @@ const TrainerDashboard = () => {
           Panel del Profesor
         </h1>
         <p className="text-muted-foreground">
-          Bienvenido, {trainerProfile?.profiles?.full_name}
+          Bienvenido, {trainerProfile?.full_name}
         </p>
       </div>
 
-      {/* Clubs asignados */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MapPin className="h-5 w-5" />
-            <span>Mis Clubs</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {trainerProfile?.trainer_clubs?.map((tc) => (
-              <Badge key={tc.clubs.id} variant="outline">
-                {tc.clubs.name}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Club asignado */}
+      {trainerProfile && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>Mi Club</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badge variant="outline">
+              Club ID: {trainerProfile.club_id}
+            </Badge>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="calendar" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
