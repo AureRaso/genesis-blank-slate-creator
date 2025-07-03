@@ -8,14 +8,58 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Calendar } from "lucide-react";
 
 const Index = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin, loading } = useAuth();
 
-  // Si es jugador, mostrar el nuevo dashboard
+  console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated but no profile exists yet, show a basic welcome
+  if (user && !profile) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Bienvenido</h1>
+          <p className="text-muted-foreground">
+            Hola, {user.email}
+            <Badge className="ml-2" variant="outline">
+              Usuario
+            </Badge>
+          </p>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de Perfil</CardTitle>
+            <CardDescription>
+              Tu cuenta está activa pero necesitas completar tu perfil
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Contacta con el administrador para configurar tu rol y permisos.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Si es jugador, mostrar el dashboard de jugador
   if (!isAdmin) {
     return <PlayerDashboard />;
   }
 
-  // Dashboard de administrador (sin cambios)
+  // Dashboard de administrador
   return (
     <div className="space-y-6">
       <div>

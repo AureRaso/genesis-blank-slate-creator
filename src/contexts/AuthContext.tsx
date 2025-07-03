@@ -41,10 +41,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user.id);
+        } else {
+          console.log('AuthProvider - No session found');
+          setLoading(false);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-      } finally {
         setLoading(false);
       }
     };
@@ -62,8 +64,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
           setUser(null);
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -79,13 +81,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .eq('id', userId)
         .single();
 
+      console.log('Profile query result:', { data, error });
+
       if (error) {
         console.error('Error fetching profile:', error);
+        // If profile doesn't exist, we'll still allow the user to continue
+        // but we'll create a basic profile structure
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, user can still continue');
+          setProfile(null);
+        }
+        setLoading(false);
         return;
       }
 
       if (data) {
-        console.log('Profile fetched:', data);
+        console.log('Profile fetched successfully:', data);
         const profileData: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
@@ -94,6 +105,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,12 +132,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-    } else {
-      setUser(null);
-      setProfile(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('Error in signOut:', error);
     }
   };
 
@@ -144,7 +161,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isTrainer,
   };
 
-  console.log('AuthProvider - Current state:', { user: user?.email, profile: profile?.role, loading, isAdmin });
+  console.log('AuthProvider - Current state:', { 
+    user: user?.email, 
+    profile: profile?.role, 
+    loading, 
+    isAdmin,
+    hasUser: !!user,
+    hasProfile: !!profile 
+  });
 
   return (
     <AuthContext.Provider value={value}>

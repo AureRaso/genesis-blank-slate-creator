@@ -20,7 +20,20 @@ import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  console.log('ProtectedRoute - Auth state:', { user: user?.email, loading });
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -32,10 +45,15 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 function App() {
   const { isAdmin, isCaptain, isTrainer, loading, user } = useAuth();
 
+  console.log('App - Auth state:', { isAdmin, isCaptain, isTrainer, loading, user: user?.email });
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Inicializando aplicación...</p>
+        </div>
       </div>
     );
   }
