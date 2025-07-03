@@ -36,9 +36,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: trainer?.profiles?.full_name || "",
-      email: trainer?.profiles?.email || "",
-      club_id: trainer?.trainer_clubs?.[0]?.clubs?.id || "",
+      full_name: trainer?.full_name || "",
+      email: trainer?.email || "",
+      club_id: trainer?.club_id || "",
       specialty: trainer?.specialty || "",
       photo_url: trainer?.photo_url || "",
       is_active: trainer?.is_active ?? true,
