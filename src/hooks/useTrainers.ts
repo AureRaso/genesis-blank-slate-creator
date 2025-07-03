@@ -59,14 +59,14 @@ export const useTrainers = () => {
         .select(`
           *,
           profiles!inner(email, full_name),
-          trainer_clubs!inner(
-            clubs!inner(id, name)
+          trainer_clubs(
+            clubs(id, name)
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
-      return data as Trainer[];
+      return data;
     },
   });
 };
@@ -84,8 +84,8 @@ export const useMyTrainerProfile = () => {
         .select(`
           *,
           profiles!inner(email, full_name),
-          trainer_clubs!inner(
-            clubs!inner(id, name)
+          trainer_clubs(
+            clubs(id, name)
           )
         `)
         .eq('profile_id', userData.user.id)
@@ -93,7 +93,7 @@ export const useMyTrainerProfile = () => {
         .single();
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
-      return trainer as Trainer | null;
+      return trainer;
     },
   });
 };
@@ -117,7 +117,7 @@ export const useTrainersByClub = (clubId: string) => {
         .eq('trainer_clubs.club_id', clubId);
 
       if (error) throw error;
-      return data as Trainer[];
+      return data;
     },
     enabled: !!clubId,
   });
