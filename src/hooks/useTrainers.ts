@@ -145,29 +145,41 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      const { data, error } = await supabase
-        .from('trainers')
-        .insert({
-          full_name: trainerData.full_name,
-          email: trainerData.email,
-          phone: trainerData.phone,
-          club_id: trainerData.club_id,
-          specialty: trainerData.specialty,
-          photo_url: trainerData.photo_url,
-          is_active: trainerData.is_active,
-        })
-        .select()
-        .single();
+      // Usar la función RPC para crear el usuario completo con autenticación
+      const { data, error } = await supabase.rpc('create_trainer_user', {
+        trainer_email: trainerData.email,
+        trainer_full_name: trainerData.full_name,
+        club_id: trainerData.club_id,
+        trainer_phone: trainerData.phone,
+        trainer_specialty: trainerData.specialty || null,
+        trainer_photo_url: trainerData.photo_url || null
+      });
 
       if (error) throw error;
+      
+      // Verificar si hay errores en la respuesta de la función
+      if (data && typeof data === 'object' && 'error' in data) {
+        throw new Error(data.error as string);
+      }
+
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      toast({
-        title: "Éxito",
-        description: "Profesor creado correctamente",
-      });
+      
+      // Mostrar información de la contraseña temporal si está disponible
+      if (data && typeof data === 'object' && 'temporary_password' in data) {
+        toast({
+          title: "Profesor creado correctamente",
+          description: `Usuario creado con contraseña temporal: ${data.temporary_password}`,
+          duration: 10000, // Mostrar por más tiempo para que pueda copiar la contraseña
+        });
+      } else {
+        toast({
+          title: "Éxito",
+          description: "Profesor creado correctamente",
+        });
+      }
     },
     onError: (error) => {
       console.error('Error creating trainer:', error);
