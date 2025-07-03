@@ -1,72 +1,93 @@
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/auth';
-import { useNavigate } from 'react-router-dom';
+import { AuthContextType, Profile } from '@/types/auth';
 
-interface AuthContextProps {
-  children: React.ReactNode;
-}
-
-const AuthContext = createContext<any>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const session = supabase.auth.getSession();
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await getProfile(session.user.id);
-      } else {
-        setProfile(null);
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
-
-    const getInitialProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user ?? null);
-      if (user) {
-        await getProfile(user.id);
-      }
-      setLoading(false);
     };
 
-    getInitialProfile();
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const getProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string) => {
     try {
-      const { data: profileData, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error('Error fetching profile:', error);
+        return;
       }
 
-      if (profileData) {
-        // Cast the role to the expected type
-        const typedProfile: Profile = {
-          ...profileData,
-          role: profileData.role as 'admin' | 'player' | 'captain' | 'trainer'
+      if (data) {
+        // Cast the role to ensure it matches our Profile type
+        const profileData: Profile = {
+          ...data,
+          role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
         };
-        setProfile(typedProfile);
+        setProfile(profileData);
       }
     } catch (error) {
-      console.error("Unexpected error fetching profile:", error);
+      console.error('Error in fetchProfile:', error);
     }
   };
 
@@ -75,51 +96,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
     });
-
-    if (error) {
-      console.error("Error signing in:", error);
-      return { error };
-    }
-
-    return { error: null };
+    return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          role: 'player',
         },
       },
     });
-
-    if (error) {
-      console.error("Error signing up:", error);
-      return { error };
-    }
-
-    if (data.user) {
-      await getProfile(data.user.id);
-    }
-
-    return { error: null };
+    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    navigate('/auth');
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      setUser(null);
+      setProfile(null);
+    }
+    return error;
   };
-  
+
   const isAdmin = profile?.role === 'admin';
   const isCaptain = profile?.role === 'captain';
   const isTrainer = profile?.role === 'trainer';
 
-  const value = {
+  const value: AuthContextType = {
     user,
     profile,
     loading,
@@ -131,5 +137,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isTrainer,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

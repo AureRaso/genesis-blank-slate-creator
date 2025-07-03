@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Building2,
@@ -30,7 +29,10 @@ import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AppSidebar = () => {
-  const { isAdmin, isTrainer } = useAuth();
+  const authContext = useAuth();
+  
+  // Provide safe defaults if auth context is not available
+  const { isAdmin = false, isTrainer = false } = authContext || {};
 
   // Si es trainer, mostrar solo el dashboard
   if (isTrainer) {
@@ -76,18 +78,6 @@ const AppSidebar = () => {
   }
 
   const data = {
-    navAccount: [
-      {
-        title: "Mi Perfil",
-        url: "/profile",
-        icon: User,
-      },
-      {
-        title: "Ajustes",
-        url: "/settings",
-        icon: Settings,
-      },
-    ],
     navMain: [
       {
         title: "Dashboard",
