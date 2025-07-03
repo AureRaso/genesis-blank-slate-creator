@@ -1,27 +1,31 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  club_id: string;
-  full_name: string;
-  email: string | null;
-  phone: string;
+  profile_id: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  clubs?: {
-    name: string;
+  profiles?: {
+    email: string;
+    full_name: string;
   };
+  trainer_clubs?: {
+    clubs: {
+      id: string;
+      name: string;
+    };
+  }[];
 };
 
 export type CreateTrainerData = {
   full_name: string;
   email: string;
-  phone: string;
   club_id: string;
   specialty?: string;
   photo_url?: string;
@@ -30,10 +34,6 @@ export type CreateTrainerData = {
 
 export type UpdateTrainerData = {
   id: string;
-  full_name?: string;
-  email?: string;
-  phone?: string;
-  club_id?: string;
   specialty?: string;
   photo_url?: string;
   is_active?: boolean;
@@ -58,7 +58,10 @@ export const useTrainers = () => {
         .from('trainers')
         .select(`
           *,
-          clubs!inner(name)
+          profiles!inner(email, full_name),
+          trainer_clubs!inner(
+            clubs!inner(id, name)
+          )
         `)
         .eq('is_active', true);
 
@@ -80,9 +83,12 @@ export const useMyTrainerProfile = () => {
         .from('trainers')
         .select(`
           *,
-          clubs!inner(name)
+          profiles!inner(email, full_name),
+          trainer_clubs!inner(
+            clubs!inner(id, name)
+          )
         `)
-        .eq('email', userData.user.email)
+        .eq('profile_id', userData.user.id)
         .eq('is_active', true)
         .single();
 
@@ -102,10 +108,13 @@ export const useTrainersByClub = (clubId: string) => {
         .from('trainers')
         .select(`
           *,
-          clubs!inner(name)
+          profiles!inner(email, full_name),
+          trainer_clubs!inner(
+            clubs!inner(id, name)
+          )
         `)
         .eq('is_active', true)
-        .eq('club_id', clubId);
+        .eq('trainer_clubs.club_id', clubId);
 
       if (error) throw error;
       return data as Trainer[];
@@ -125,7 +134,6 @@ export const useCreateTrainer = () => {
         trainer_email: trainerData.email,
         trainer_full_name: trainerData.full_name,
         club_id: trainerData.club_id,
-        trainer_phone: trainerData.phone,
         trainer_specialty: trainerData.specialty || null,
         trainer_photo_url: trainerData.photo_url || null
       });
@@ -179,10 +187,6 @@ export const useUpdateTrainer = () => {
       const { data, error } = await supabase
         .from('trainers')
         .update({
-          full_name: trainerData.full_name,
-          email: trainerData.email,
-          phone: trainerData.phone,
-          club_id: trainerData.club_id,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
           is_active: trainerData.is_active,

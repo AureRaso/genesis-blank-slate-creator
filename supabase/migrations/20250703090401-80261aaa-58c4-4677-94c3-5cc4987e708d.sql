@@ -66,22 +66,25 @@ BEGIN
 
   -- Crear el registro de trainer
   INSERT INTO public.trainers (
-    club_id,
-    full_name,
-    email,
-    phone,
+    profile_id,
     specialty,
     photo_url,
     is_active
   ) VALUES (
-    club_id,
-    trainer_full_name,
-    trainer_email,
-    trainer_phone,
+    new_user_id,
     trainer_specialty,
     trainer_photo_url,
     true
   ) RETURNING * INTO trainer_record;
+
+  -- Crear la relación trainer-club
+  INSERT INTO public.trainer_clubs (
+    trainer_profile_id,
+    club_id
+  ) VALUES (
+    new_user_id,
+    club_id
+  );
 
   -- Retornar información del usuario creado incluyendo la contraseña temporal
   RETURN json_build_object(
@@ -103,14 +106,3 @@ $$;
 
 -- Dar permisos para ejecutar la función
 GRANT EXECUTE ON FUNCTION public.create_trainer_user TO authenticated;
-
--- Política para permitir que los admins usen esta función
-CREATE POLICY "Admins can create trainer users"
-  ON public.profiles
-  FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
