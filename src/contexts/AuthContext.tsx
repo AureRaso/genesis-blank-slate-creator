@@ -29,8 +29,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('AuthProvider - Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('AuthProvider - Initial session:', session?.user?.email, 'error:', error);
+        console.log('AuthProvider - Initial session result:', { 
+          userEmail: session?.user?.email, 
+          error: error?.message 
+        });
         
         if (error) {
           console.error('Error getting session:', error);
@@ -39,10 +43,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
 
         if (session?.user) {
+          console.log('AuthProvider - Setting user from initial session');
           setUser(session.user);
           await fetchProfile(session.user.id);
         } else {
-          console.log('AuthProvider - No session found');
+          console.log('AuthProvider - No initial session found');
           setLoading(false);
         }
       } catch (error) {
@@ -74,21 +79,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
+      console.log('fetchProfile - Starting for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      console.log('Profile query result:', { data, error });
+      console.log('fetchProfile - Query completed:', { 
+        data: data ? { id: data.id, email: data.email, role: data.role } : null, 
+        error: error?.message,
+        errorCode: error?.code
+      });
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // If profile doesn't exist, we'll still allow the user to continue
-        // but we'll create a basic profile structure
+        
+        // If profile doesn't exist (PGRST116), create a basic one or continue without it
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, user can still continue');
+          console.log('Profile not found, continuing without profile');
+          setProfile(null);
+        } else {
+          console.error('Unexpected error fetching profile:', error);
           setProfile(null);
         }
         setLoading(false);
@@ -96,29 +109,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data) {
-        console.log('Profile fetched successfully:', data);
+        console.log('fetchProfile - Profile found, setting profile state');
         const profileData: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
         };
         setProfile(profileData);
+        console.log('fetchProfile - Profile state set:', profileData.role);
+      } else {
+        console.log('fetchProfile - No profile data returned');
+        setProfile(null);
       }
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
+      console.error('Exception in fetchProfile:', error);
+      setProfile(null);
     } finally {
+      console.log('fetchProfile - Setting loading to false');
       setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log('signIn - Attempting login for:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    console.log('signIn - Result:', error ? `Error: ${error.message}` : 'Success');
     return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    console.log('signUp - Attempting signup for:', email);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -128,20 +150,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       },
     });
+    console.log('signUp - Result:', error ? `Error: ${error.message}` : 'Success');
     return { error };
   };
 
   const signOut = async () => {
     try {
+      console.log('signOut - Attempting logout');
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
       } else {
+        console.log('signOut - Success');
         setUser(null);
         setProfile(null);
       }
     } catch (error) {
-      console.error('Error in signOut:', error);
+      console.error('Exception in signOut:', error);
     }
   };
 

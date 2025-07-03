@@ -7,11 +7,18 @@ export const usePlayers = () => {
   return useQuery({
     queryKey: ['players'],
     queryFn: async () => {
+      console.log('usePlayers - Starting query...');
+      
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, level, created_at')
+        .select('id, full_name, email, level, created_at, role')
         .eq('role', 'player')
         .order('created_at', { ascending: false });
+      
+      console.log('usePlayers - Query result:', { 
+        dataCount: data?.length || 0, 
+        error: error?.message 
+      });
       
       if (error) {
         console.error('Error fetching players:', error);
@@ -19,13 +26,16 @@ export const usePlayers = () => {
       }
       
       // Transform data to match Player interface
-      return (data || []).map(profile => ({
+      const players = (data || []).map(profile => ({
         id: profile.id,
-        name: profile.full_name,
-        email: profile.email,
+        name: profile.full_name || 'Sin nombre',
+        email: profile.email || '',
         level: profile.level || 3,
         created_at: profile.created_at
       })) as Player[];
+      
+      console.log('usePlayers - Transformed players:', players.length);
+      return players;
     },
   });
 };
