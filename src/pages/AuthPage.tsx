@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,21 +8,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to home if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      console.log('User is authenticated, redirecting to home...');
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signIn(email, password);
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({
+          title: "Error al iniciar sesión",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "¡Bienvenido!",
+          description: "Has iniciado sesión correctamente",
+        });
+        // Navigation will happen automatically via useEffect when user state updates
+      }
     } catch (error) {
       console.error("Error signing in:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -31,9 +60,27 @@ export const AuthPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signUp(email, password, fullName);
+      const { error } = await signUp(email, password, fullName);
+      if (error) {
+        toast({
+          title: "Error al registrarse",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "¡Registro exitoso!",
+          description: "Cuenta creada correctamente, redirigiendo...",
+        });
+        // Navigation will happen automatically via useEffect when user state updates
+      }
     } catch (error) {
       console.error("Error signing up:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -43,9 +90,18 @@ export const AuthPage = () => {
     try {
       localStorage.clear();
       await supabase.auth.signOut();
+      toast({
+        title: "Sesión limpiada",
+        description: "Cache y sesión eliminados",
+      });
       window.location.reload();
     } catch (error) {
       console.error("Error clearing session:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo limpiar la sesión",
+        variant: "destructive",
+      });
     }
   };
 
