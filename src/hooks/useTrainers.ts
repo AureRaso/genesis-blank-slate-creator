@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -56,20 +55,36 @@ export const useTrainers = () => {
             id,
             full_name,
             email
-          ),
-          trainer_clubs!trainer_clubs_trainer_profile_id_fkey (
-            club_id,
-            clubs:club_id (
-              id,
-              name
-            )
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
       
-      return data || [];
+      // Get trainer clubs separately to avoid complex joins
+      const trainersWithClubs = await Promise.all(
+        (data || []).map(async (trainer) => {
+          const { data: trainerClubs, error: clubError } = await supabase
+            .from('trainer_clubs')
+            .select(`
+              club_id,
+              clubs:club_id (
+                id,
+                name
+              )
+            `)
+            .eq('trainer_profile_id', trainer.profile_id);
+
+          if (clubError) {
+            console.error('Error fetching trainer clubs:', clubError);
+            return { ...trainer, trainer_clubs: [] };
+          }
+
+          return { ...trainer, trainer_clubs: trainerClubs || [] };
+        })
+      );
+      
+      return trainersWithClubs;
     },
   });
 };
@@ -91,13 +106,6 @@ export const useMyTrainerProfile = () => {
             id,
             full_name,
             email
-          ),
-          trainer_clubs!trainer_clubs_trainer_profile_id_fkey (
-            club_id,
-            clubs:club_id (
-              id,
-              name
-            )
           )
         `)
         .eq('profile_id', userData.user.id)
@@ -106,7 +114,26 @@ export const useMyTrainerProfile = () => {
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
       
-      return trainer;
+      if (!trainer) return null;
+
+      // Get trainer clubs separately
+      const { data: trainerClubs, error: clubError } = await supabase
+        .from('trainer_clubs')
+        .select(`
+          club_id,
+          clubs:club_id (
+            id,
+            name
+          )
+        `)
+        .eq('trainer_profile_id', trainer.profile_id);
+
+      if (clubError) {
+        console.error('Error fetching trainer clubs:', clubError);
+        return { ...trainer, trainer_clubs: [] };
+      }
+
+      return { ...trainer, trainer_clubs: trainerClubs || [] };
     },
   });
 };

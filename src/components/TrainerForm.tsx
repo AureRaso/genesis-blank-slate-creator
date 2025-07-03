@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -65,7 +64,18 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   });
 
   const onCreateSubmit = (data: CreateFormData) => {
-    createMutation.mutate(data, {
+    // Ensure all required fields are present
+    const submitData = {
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      club_id: data.club_id,
+      specialty: data.specialty,
+      photo_url: data.photo_url,
+      is_active: data.is_active,
+    };
+
+    createMutation.mutate(submitData, {
       onSuccess: () => onClose(),
     });
   };

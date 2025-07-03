@@ -22,7 +22,7 @@ const TrainerDashboard = () => {
     setShowClassForm(true);
   };
 
-  // Get club info from trainer profile
+  // Get club info from trainer profile - handle both array and potential null cases
   const trainerClub = trainerProfile?.trainer_clubs?.[0];
   const clubName = trainerClub?.clubs?.name || 'Club no asignado';
   const trainerName = trainerProfile?.profiles?.full_name || 'Profesor';
