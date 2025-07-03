@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContextType, Profile } from '@/types/auth';
@@ -21,9 +22,53 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const fetchingProfile = useRef(false);
+  const initializationTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     console.log('AuthProvider - Initializing...');
+
+    // Set a timeout to prevent infinite loading
+    initializationTimeout.current = setTimeout(() => {
+      if (isMounted) {
+        console.log('AuthProvider - Initialization timeout, setting loading to false');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // Listen for auth changes FIRST - using non-async callback to prevent loops
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email || 'no user');
+        
+        if (!isMounted) return;
+
+        // Clear initialization timeout since we have an auth state change
+        if (initializationTimeout.current) {
+          clearTimeout(initializationTimeout.current);
+          initializationTimeout.current = null;
+        }
+
+        if (session?.user) {
+          console.log('Setting user from auth state change');
+          setUser(session.user);
+          
+          // Defer profile fetching to avoid callback issues
+          setTimeout(() => {
+            if (isMounted && !fetchingProfile.current) {
+              fetchProfile(session.user.id);
+            }
+          }, 0);
+        } else {
+          console.log('No session, clearing user and profile');
+          setUser(null);
+          setProfile(null);
+          fetchingProfile.current = false;
+          setLoading(false);
+        }
+      }
+    );
 
     // Get initial session
     const getInitialSession = async () => {
@@ -31,6 +76,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('AuthProvider - Getting initial session...');
         
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
         console.log('AuthProvider - Initial session result:', { 
           userEmail: session?.user?.email, 
           error: error?.message 
@@ -45,40 +93,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           console.log('AuthProvider - Setting user from initial session');
           setUser(session.user);
-          await fetchProfile(session.user.id);
+          
+          // Only fetch profile if not already fetching
+          if (!fetchingProfile.current) {
+            await fetchProfile(session.user.id);
+          }
         } else {
           console.log('AuthProvider - No initial session found');
           setLoading(false);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
-        } else {
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+      if (initializationTimeout.current) {
+        clearTimeout(initializationTimeout.current);
       }
-    );
-
-    return () => subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    if (fetchingProfile.current) {
+      console.log('fetchProfile - Already fetching, skipping');
+      return;
+    }
+
     try {
+      fetchingProfile.current = true;
       console.log('fetchProfile - Starting for user:', userId);
       
       const { data, error } = await supabase
@@ -124,6 +174,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Exception in fetchProfile:', error);
       setProfile(null);
     } finally {
+      fetchingProfile.current = false;
       console.log('fetchProfile - Setting loading to false');
       setLoading(false);
     }
@@ -210,8 +261,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('signOut - Attempting logout');
       
-      // Clear localStorage to remove any cached data
-      localStorage.clear();
+      // Clear specific auth-related items instead of all localStorage
+      const authKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('supabase.auth.token') || 
+        key.startsWith('sb-') ||
+        key.includes('auth')
+      );
+      
+      authKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
       
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -220,6 +279,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('signOut - Success');
         setUser(null);
         setProfile(null);
+        fetchingProfile.current = false;
       }
     } catch (error) {
       console.error('Exception in signOut:', error);
