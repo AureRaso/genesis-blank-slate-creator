@@ -5,23 +5,24 @@ import { useToast } from "@/hooks/use-toast";
 
 export type Trainer = {
   id: string;
-  profile_id: string;
+  full_name: string;
+  email: string | null;
+  phone: string;
+  club_id: string;
   specialty: string | null;
   photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  // Datos del perfil asociado
-  email: string;
-  full_name: string;
-  // Datos de los clubs asignados
-  clubs?: { id: string; name: string; }[];
+  // Club information
+  clubs?: { id: string; name: string; };
 };
 
 export type CreateTrainerData = {
   full_name: string;
   email: string;
   club_id: string;
+  phone: string;
   specialty?: string;
   photo_url?: string;
   is_active: boolean;
@@ -29,20 +30,12 @@ export type CreateTrainerData = {
 
 export type UpdateTrainerData = {
   id: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
   specialty?: string;
   photo_url?: string;
   is_active?: boolean;
-};
-
-// Type for the database function response
-type CreateTrainerUserResponse = {
-  user_id?: string;
-  trainer_id?: string;
-  email?: string;
-  temporary_password?: string;
-  full_name?: string;
-  error?: string;
-  error_code?: string;
 };
 
 export const useTrainers = () => {
@@ -53,27 +46,18 @@ export const useTrainers = () => {
         .from('trainers')
         .select(`
           *,
-          profiles:profile_id (
-            email,
-            full_name
-          ),
-          trainer_clubs (
-            clubs (
-              id,
-              name
-            )
+          clubs:club_id (
+            id,
+            name
           )
         `)
         .eq('is_active', true);
 
       if (error) throw error;
       
-      // Transform the data to match our Trainer type
       return data?.map(trainer => ({
         ...trainer,
-        email: trainer.profiles?.email || '',
-        full_name: trainer.profiles?.full_name || '',
-        clubs: trainer.trainer_clubs?.map(tc => tc.clubs).filter(Boolean) || []
+        clubs: trainer.clubs
       })) || [];
     },
   });
@@ -98,19 +82,17 @@ export const useMyTrainerProfile = () => {
       if (profileError && profileError.code !== 'PGRST116') throw profileError;
       if (!profile) return null;
 
-      // Get trainer data
+      // Get trainer data using email match
       const { data: trainer, error: trainerError } = await supabase
         .from('trainers')
         .select(`
           *,
-          trainer_clubs (
-            clubs (
-              id,
-              name
-            )
+          clubs:club_id (
+            id,
+            name
           )
         `)
-        .eq('profile_id', profile.id)
+        .eq('email', profile.email)
         .eq('is_active', true)
         .single();
 
@@ -119,9 +101,7 @@ export const useMyTrainerProfile = () => {
       if (trainer) {
         return {
           ...trainer,
-          email: profile.email,
-          full_name: profile.full_name,
-          clubs: trainer.trainer_clubs?.map(tc => tc.clubs).filter(Boolean) || []
+          clubs: trainer.clubs
         };
       }
       
@@ -137,26 +117,23 @@ export const useTrainersByClub = (clubId: string) => {
       if (!clubId) return [];
       
       const { data, error } = await supabase
-        .from('trainer_clubs')
+        .from('trainers')
         .select(`
-          trainers (
-            *,
-            profiles:profile_id (
-              email,
-              full_name
-            )
+          *,
+          clubs:club_id (
+            id,
+            name
           )
         `)
         .eq('club_id', clubId)
-        .eq('trainers.is_active', true);
+        .eq('is_active', true);
 
       if (error) throw error;
       
-      return data?.map(tc => ({
-        ...tc.trainers,
-        email: tc.trainers.profiles?.email || '',
-        full_name: tc.trainers.profiles?.full_name || ''
-      })).filter(Boolean) || [];
+      return data?.map(trainer => ({
+        ...trainer,
+        clubs: trainer.clubs
+      })) || [];
     },
     enabled: !!clubId,
   });
@@ -168,44 +145,29 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
-      // Usar la función de base de datos para crear el usuario completo
-      const { data, error } = await supabase.rpc('create_trainer_user', {
-        trainer_email: trainerData.email,
-        trainer_full_name: trainerData.full_name,
-        club_id: trainerData.club_id,
-        trainer_phone: '', // Campo ya no necesario
-        trainer_specialty: trainerData.specialty || null,
-        trainer_photo_url: trainerData.photo_url || null
-      });
+      const { data, error } = await supabase
+        .from('trainers')
+        .insert({
+          full_name: trainerData.full_name,
+          email: trainerData.email,
+          phone: trainerData.phone,
+          club_id: trainerData.club_id,
+          specialty: trainerData.specialty,
+          photo_url: trainerData.photo_url,
+          is_active: trainerData.is_active,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-      
-      // Cast the response to our expected type
-      const response = data as CreateTrainerUserResponse;
-      
-      // Verificar si hay error en la respuesta de la función
-      if (response && response.error) {
-        throw new Error(response.error);
-      }
-
-      return response;
+      return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
-      
-      // Mostrar la contraseña temporal al administrador
-      if (data && data.temporary_password) {
-        toast({
-          title: "Profesor creado exitosamente",
-          description: `Contraseña temporal: ${data.temporary_password}. Comparte esta información con el profesor.`,
-          duration: 10000, // 10 segundos para que pueda leer y copiar
-        });
-      } else {
-        toast({
-          title: "Éxito",
-          description: "Profesor creado correctamente",
-        });
-      }
+      toast({
+        title: "Éxito",
+        description: "Profesor creado correctamente",
+      });
     },
     onError: (error) => {
       console.error('Error creating trainer:', error);
@@ -227,6 +189,9 @@ export const useUpdateTrainer = () => {
       const { data, error } = await supabase
         .from('trainers')
         .update({
+          full_name: trainerData.full_name,
+          email: trainerData.email,
+          phone: trainerData.phone,
           specialty: trainerData.specialty,
           photo_url: trainerData.photo_url,
           is_active: trainerData.is_active,

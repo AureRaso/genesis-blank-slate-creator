@@ -62,7 +62,7 @@ const TrainerDashboard = () => {
           </CardHeader>
           <CardContent>
             <Badge variant="outline">
-              Club ID: {trainerProfile.club_id}
+              {trainerProfile.clubs?.name || 'Club no asignado'}
             </Badge>
           </CardContent>
         </Card>

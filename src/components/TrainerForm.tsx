@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, UserCheck, Info } from "lucide-react";
+import { ArrowLeft, UserCheck } from "lucide-react";
 import { useClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
   email: z.string().email("Email inválido"),
+  phone: z.string().min(1, "Introduce el teléfono"),
   club_id: z.string().min(1, "Selecciona un club"),
   specialty: z.string().optional(),
   photo_url: z.string().url("URL inválida").optional().or(z.literal("")),
@@ -38,6 +38,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
     defaultValues: {
       full_name: trainer?.full_name || "",
       email: trainer?.email || "",
+      phone: trainer?.phone || "",
       club_id: trainer?.club_id || "",
       specialty: trainer?.specialty || "",
       photo_url: trainer?.photo_url || "",
@@ -49,9 +50,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
     if (trainer) {
       updateMutation.mutate({ 
         id: trainer.id,
-        specialty: data.specialty,
-        photo_url: data.photo_url || undefined,
-        is_active: data.is_active,
+        ...data,
       }, {
         onSuccess: () => onClose(),
       });
@@ -59,6 +58,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
       const createData = {
         full_name: data.full_name,
         email: data.email,
+        phone: data.phone,
         club_id: data.club_id,
         specialty: data.specialty,
         photo_url: data.photo_url,
@@ -82,16 +82,6 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         </h1>
       </div>
 
-      {!trainer && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <Info className="h-4 w-4 text-playtomic-orange" />
-          <AlertDescription className="text-playtomic-orange-dark">
-            <strong>Importante:</strong> Al crear un nuevo profesor se generará automáticamente una cuenta de usuario con contraseña temporal. 
-            La contraseña se mostrará una vez creado para que puedas compartirla con el profesor.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -113,7 +103,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                     <FormItem>
                       <FormLabel>Nombre Completo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Juan Pérez García" {...field} disabled={!!trainer} />
+                        <Input placeholder="Juan Pérez García" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -127,13 +117,22 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="juan@example.com" {...field} disabled={!!trainer} />
+                        <Input type="email" placeholder="juan@example.com" {...field} />
                       </FormControl>
-                      {!trainer && (
-                        <FormDescription>
-                          Se creará automáticamente una cuenta de usuario con este email
-                        </FormDescription>
-                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono</FormLabel>
+                      <FormControl>
+                        <Input placeholder="600 123 456" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -178,7 +177,6 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                       <select
                         {...field}
                         className="w-full p-2 border border-gray-300 rounded-md"
-                        disabled={!!trainer}
                       >
                         <option value="">Selecciona un club</option>
                         {clubs?.map((club) => (

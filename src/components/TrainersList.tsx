@@ -31,9 +31,9 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={trainer.photo_url} alt={trainer.full_name} />
+              <AvatarImage src={trainer.photo_url || undefined} alt={trainer.full_name} />
               <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white">
-                {getInitials(trainer.full_name || '')}
+                {getInitials(trainer.full_name)}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -88,20 +88,15 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         )}
 
         <div className="space-y-1">
-          <p className="text-sm font-medium">Clubs asignados:</p>
-          <div className="flex flex-wrap gap-1">
-            {trainer.clubs && trainer.clubs.length > 0 ? (
-              trainer.clubs.map((club) => (
-                <Badge key={club.id} variant="secondary" className="text-xs">
-                  {club.name}
-                </Badge>
-              ))
-            ) : (
-              <Badge variant="secondary" className="text-xs">
-                Sin clubs asignados
-              </Badge>
-            )}
-          </div>
+          <p className="text-sm font-medium">Club asignado:</p>
+          <Badge variant="secondary" className="text-xs">
+            {trainer.clubs?.name || 'Club no encontrado'}
+          </Badge>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Contacto:</p>
+          <p className="text-sm text-muted-foreground">{trainer.phone}</p>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">
