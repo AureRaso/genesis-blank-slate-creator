@@ -11,11 +11,22 @@ const PlayersList = () => {
   const { data: players, isLoading, error } = usePlayers();
   const deletePlayerMutation = useDeletePlayer();
 
+  console.log('PlayersList - isLoading:', isLoading, 'error:', error, 'players:', players);
+
   if (isLoading) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Jugadores Registrados
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">Cargando jugadores...</p>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange"></div>
+            <span className="ml-2 text-muted-foreground">Cargando jugadores...</span>
+          </div>
         </CardContent>
       </Card>
     );
@@ -24,8 +35,16 @@ const PlayersList = () => {
   if (error) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Jugadores Registrados
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
-          <p className="text-center text-red-600">Error al cargar los jugadores</p>
+          <p className="text-center text-red-600">
+            Error al cargar los jugadores: {error.message}
+          </p>
         </CardContent>
       </Card>
     );

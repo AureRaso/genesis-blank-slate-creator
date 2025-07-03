@@ -24,12 +24,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthProvider - Initializing...');
+    
     // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthProvider - Initial session:', session?.user?.email, 'error:', error);
+        
         if (error) {
           console.error('Error getting session:', error);
+          setLoading(false);
           return;
         }
 
@@ -67,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -79,7 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data) {
-        // Cast the role to ensure it matches our Profile type
+        console.log('Profile fetched:', data);
         const profileData: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
@@ -137,6 +143,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isCaptain,
     isTrainer,
   };
+
+  console.log('AuthProvider - Current state:', { user: user?.email, profile: profile?.role, loading, isAdmin });
 
   return (
     <AuthContext.Provider value={value}>

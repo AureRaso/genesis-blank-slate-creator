@@ -8,15 +8,24 @@ export const usePlayers = () => {
     queryKey: ['players'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('public_players')
-        .select('*')
+        .from('profiles')
+        .select('id, full_name, email, level, created_at')
+        .eq('role', 'player')
         .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching players:', error);
         throw error;
       }
-      return data as Player[];
+      
+      // Transform data to match Player interface
+      return (data || []).map(profile => ({
+        id: profile.id,
+        name: profile.full_name,
+        email: profile.email,
+        level: profile.level || 3,
+        created_at: profile.created_at
+      })) as Player[];
     },
   });
 };
