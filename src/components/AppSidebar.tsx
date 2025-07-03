@@ -4,11 +4,8 @@ import {
   Building2,
   Calendar,
   GraduationCap,
-  ListChecks,
-  Settings,
   SquareTerminal,
   Trophy,
-  User,
   UserCheck,
   Users,
   Zap,
@@ -89,16 +86,6 @@ const AppSidebar = () => {
         title: "Ligas",
         url: "/leagues",
         icon: Trophy,
-        items: [
-          {
-            title: "Ver Ligas",
-            url: "/leagues",
-          },
-          {
-            title: "Clasificación",
-            url: "/standings",
-          },
-        ],
       },
       {
         title: "Partidos",
@@ -126,13 +113,6 @@ const AppSidebar = () => {
         icon: Building2,
       },
     ],
-    navMisc: [
-      {
-        title: "Listados",
-        url: "/listings",
-        icon: ListChecks,
-      },
-    ],
   };
 
   return (
@@ -158,44 +138,7 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarMenu>
-            {data.navMain.map((item) => {
-              if (item.items) {
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenu>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuItem key={subItem.title}>
-                          <SidebarMenuButton asChild>
-                            <Link to={subItem.url}>{subItem.title}</Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarMenuItem>
-                );
-              }
-
-              return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Misc</SidebarGroupLabel>
-          <SidebarMenu>
-            {data.navMisc.map((item) => (
+            {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link to={item.url}>
