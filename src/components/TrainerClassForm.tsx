@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -52,7 +51,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
     const submitData = {
       club_id: data.club_id,
       court_number: data.court_number,
-      trainer_name: trainerProfile?.full_name || "Profesor",
+      trainer_name: trainerProfile?.profiles?.full_name || "Profesor",
       trainer_id: trainerProfile?.id,
       objective: data.objective,
       level: data.level,
@@ -108,9 +107,11 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           <SelectItem value={trainerProfile?.club_id || ""}>
-                             {trainerProfile?.clubs?.name}
-                           </SelectItem>
+                           {trainerProfile?.trainer_clubs?.map((tc) => (
+                             <SelectItem key={tc.clubs.id} value={tc.clubs.id}>
+                               {tc.clubs.name}
+                             </SelectItem>
+                           ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

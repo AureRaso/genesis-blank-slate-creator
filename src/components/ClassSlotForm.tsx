@@ -74,7 +74,7 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
       const createData: CreateClassSlotData = {
         club_id: data.club_id,
         court_number: data.court_number,
-        trainer_name: selectedTrainer?.full_name || "Entrenador", // Para compatibilidad
+        trainer_name: selectedTrainer?.profiles?.full_name || "Entrenador", // Usar profiles.full_name
         trainer_id: data.trainer_id,
         objective: data.objective,
         level: data.level,
@@ -189,7 +189,7 @@ const ClassSlotForm = ({ classSlot, onClose }: ClassSlotFormProps) => {
                         <SelectContent>
                            {trainers?.map((trainer) => (
                              <SelectItem key={trainer.id} value={trainer.id}>
-                               {trainer.full_name}
+                               {trainer.profiles?.full_name}
                              </SelectItem>
                            ))}
                         </SelectContent>
