@@ -96,15 +96,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (error) {
         console.error('Error fetching profile:', error);
         
-        // If profile doesn't exist (PGRST116), create a basic one or continue without it
+        // If profile doesn't exist (PGRST116), create one
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, continuing without profile');
-          setProfile(null);
+          console.log('Profile not found, creating basic profile...');
+          await createBasicProfile(userId);
         } else {
           console.error('Unexpected error fetching profile:', error);
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
         return;
       }
 
@@ -125,6 +125,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setProfile(null);
     } finally {
       console.log('fetchProfile - Setting loading to false');
+      setLoading(false);
+    }
+  };
+
+  const createBasicProfile = async (userId: string) => {
+    try {
+      console.log('createBasicProfile - Creating profile for user:', userId);
+      
+      // Get user info from auth
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error getting user for profile creation:', userError);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: user.email || 'usuario@example.com',
+          full_name: user.user_metadata?.full_name || 'Usuario',
+          role: 'player'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating basic profile:', error);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      console.log('createBasicProfile - Profile created successfully:', data);
+      const profileData: Profile = {
+        ...data,
+        role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
+      };
+      setProfile(profileData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Exception in createBasicProfile:', error);
+      setProfile(null);
       setLoading(false);
     }
   };
