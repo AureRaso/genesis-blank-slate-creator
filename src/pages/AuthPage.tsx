@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -35,6 +36,16 @@ export const AuthPage = () => {
       console.error("Error signing up:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleClearSession = async () => {
+    try {
+      localStorage.clear();
+      await supabase.auth.signOut();
+      window.location.reload();
+    } catch (error) {
+      console.error("Error clearing session:", error);
     }
   };
 
@@ -118,6 +129,16 @@ export const AuthPage = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          <div className="mt-4 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={handleClearSession}
+              className="w-full text-sm"
+            >
+              Limpiar Sesión y Caché
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
