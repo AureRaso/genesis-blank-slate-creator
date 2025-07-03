@@ -35,7 +35,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: trainerProfile?.clubs?.[0]?.id || "",
+      club_id: trainerProfile?.club_id || "",
       court_number: 1,
       objective: "",
       level: "iniciacion",
@@ -107,11 +107,11 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {trainerProfile?.clubs?.map((club) => (
-                             <SelectItem key={club.id} value={club.id}>
-                               {club.name}
-                             </SelectItem>
-                           ))}
+                          {trainerProfile?.clubs && (
+                            <SelectItem key={trainerProfile.clubs.id} value={trainerProfile.clubs.id}>
+                              {trainerProfile.clubs.name}
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
