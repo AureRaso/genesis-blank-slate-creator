@@ -8,8 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Calendar } from "lucide-react";
-import { useCreateClassSlot } from "@/hooks/useClassSlots";
+import { useCreateClassSlot, useUpdateClassSlot, ClassSlot } from "@/hooks/useClassSlots";
 import { Trainer } from "@/hooks/useTrainers";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   club_id: z.string().min(1, "Selecciona un club"),
@@ -28,10 +29,12 @@ type FormData = z.infer<typeof formSchema>;
 interface TrainerClassFormProps {
   onClose: () => void;
   trainerProfile?: Trainer;
+  editingClass?: ClassSlot;
 }
 
-const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) => {
+const TrainerClassForm = ({ onClose, trainerProfile, editingClass }: TrainerClassFormProps) => {
   const createMutation = useCreateClassSlot();
+  const updateMutation = useUpdateClassSlot();
 
   // Get club data from trainer profile
   const trainerClub = trainerProfile?.trainer_clubs?.[0];
@@ -54,6 +57,23 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
     },
   });
 
+  // Set form values when editing
+  useEffect(() => {
+    if (editingClass) {
+      form.reset({
+        club_id: editingClass.club_id,
+        court_number: editingClass.court_number,
+        objective: editingClass.objective,
+        level: editingClass.level,
+        day_of_week: editingClass.day_of_week,
+        start_time: editingClass.start_time,
+        duration_minutes: editingClass.duration_minutes,
+        price_per_player: editingClass.price_per_player,
+        max_players: editingClass.max_players,
+      });
+    }
+  }, [editingClass, form]);
+
   const onSubmit = (data: FormData) => {
     const submitData = {
       club_id: data.club_id,
@@ -71,9 +91,15 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
       is_active: true,
     };
 
-    createMutation.mutate(submitData, {
-      onSuccess: () => onClose(),
-    });
+    if (editingClass) {
+      updateMutation.mutate({ id: editingClass.id, ...submitData }, {
+        onSuccess: () => onClose(),
+      });
+    } else {
+      createMutation.mutate(submitData, {
+        onSuccess: () => onClose(),
+      });
+    }
   };
 
   return (
@@ -83,7 +109,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold text-playtomic-orange">
-          Nueva Clase
+          {editingClass ? 'Editar Clase' : 'Nueva Clase'}
         </h1>
       </div>
 
@@ -91,10 +117,10 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
-            <span>Programar Clase</span>
+            <span>{editingClass ? 'Modificar Clase' : 'Programar Clase'}</span>
           </CardTitle>
           <CardDescription>
-            Crea una nueva clase de pádel en tu club asignado
+            {editingClass ? 'Modifica los detalles de tu clase' : 'Crea una nueva clase de pádel en tu club asignado'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -150,7 +176,7 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                   control={form.control}
                   name="objective"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-2">
                       <FormLabel>Objetivo de la Clase</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej: Técnica de saque, Juego de red..." {...field} />
@@ -292,9 +318,9 @@ const TrainerClassForm = ({ onClose, trainerProfile }: TrainerClassFormProps) =>
                 <Button 
                   type="submit" 
                   className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
-                  disabled={createMutation.isPending}
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  Crear Clase
+                  {editingClass ? 'Actualizar Clase' : 'Crear Clase'}
                 </Button>
               </div>
             </form>
