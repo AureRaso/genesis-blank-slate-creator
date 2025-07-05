@@ -629,52 +629,33 @@ export type Database = {
       }
       trainers: {
         Row: {
-          club_id: string
           created_at: string
-          email: string | null
-          full_name: string
           id: string
           is_active: boolean
-          phone: string
           photo_url: string | null
           profile_id: string | null
           specialty: string | null
           updated_at: string
         }
         Insert: {
-          club_id: string
           created_at?: string
-          email?: string | null
-          full_name: string
           id?: string
           is_active?: boolean
-          phone: string
           photo_url?: string | null
           profile_id?: string | null
           specialty?: string | null
           updated_at?: string
         }
         Update: {
-          club_id?: string
           created_at?: string
-          email?: string | null
-          full_name?: string
           id?: string
           is_active?: boolean
-          phone?: string
           photo_url?: string | null
           profile_id?: string | null
           specialty?: string | null
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "trainers_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "trainers_profile_id_fkey"
             columns: ["profile_id"]
