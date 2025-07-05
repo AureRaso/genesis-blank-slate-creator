@@ -5,7 +5,7 @@ import QuickActions from "@/components/QuickActions";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, Calendar } from "lucide-react";
+import { Trophy, Users, Calendar, AlertTriangle } from "lucide-react";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -54,7 +54,41 @@ const Index = () => {
     );
   }
 
-  // Si es jugador, mostrar el dashboard de jugador
+  // Si es jugador sin club asignado, mostrar aviso
+  if (profile?.role === 'player' && !profile.club_id) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Bienvenido, {profile.full_name}</h1>
+          <p className="text-muted-foreground">
+            <Badge className="ml-2" variant="secondary">
+              Jugador
+            </Badge>
+          </p>
+        </div>
+        
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-amber-800">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Club no asignado
+            </CardTitle>
+            <CardDescription className="text-amber-700">
+              Necesitas estar asociado a un club para acceder a todas las funcionalidades
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-amber-800">
+              Contacta con el administrador del sistema para que te asigne a un club. 
+              Una vez asignado, podrás ver las ligas, clases y entrenadores de tu club.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Si es jugador con club, mostrar el dashboard de jugador
   if (!isAdmin) {
     return <PlayerDashboard />;
   }

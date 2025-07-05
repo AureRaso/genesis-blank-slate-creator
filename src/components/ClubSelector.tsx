@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useClubs } from "@/hooks/useClubs";
+import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -21,16 +21,13 @@ const ClubSelector = ({
   placeholder = "Selecciona un club",
   required = false 
 }: ClubSelectorProps) => {
-  const { data: clubs, isLoading } = useClubs();
+  const { data: clubs, isLoading } = useActiveClubs();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filtrar solo clubes activos
-  const activeClubs = clubs?.filter(club => club.status === 'active') || [];
-  
   // Filtrar clubes por término de búsqueda
-  const filteredClubs = activeClubs.filter(club =>
+  const filteredClubs = clubs?.filter(club =>
     club.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
 
   if (isLoading) {
     return (
@@ -52,7 +49,7 @@ const ClubSelector = ({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-white border shadow-lg z-50">
-          {activeClubs.length > 5 && (
+          {clubs && clubs.length > 5 && (
             <div className="p-2 border-b">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -67,7 +64,7 @@ const ClubSelector = ({
           )}
           {filteredClubs.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              {searchTerm ? "No se encontraron clubes" : "No hay clubes disponibles"}
+              {searchTerm ? "No se encontraron clubes" : "No hay clubes activos disponibles"}
             </div>
           ) : (
             filteredClubs.map((club) => (

@@ -20,7 +20,7 @@ export const usePlayers = () => {
           created_at, 
           role,
           club_id,
-          clubs(name)
+          clubs(name, status)
         `)
         .eq('role', 'player')
         .order('created_at', { ascending: false });
@@ -42,9 +42,14 @@ export const usePlayers = () => {
         email: profile.email || '',
         level: profile.level || 3,
         club_id: profile.club_id,
-        club_name: profile.clubs?.name || 'Sin club',
+        club_name: profile.clubs?.name || (profile.club_id ? 'Club desconocido' : 'Sin club'),
+        club_status: profile.clubs?.status || null,
         created_at: profile.created_at
-      })) as (Player & { club_id?: string; club_name?: string })[];
+      })) as (Player & { 
+        club_id?: string; 
+        club_name?: string; 
+        club_status?: string;
+      })[];
       
       console.log('usePlayers - Transformed players:', players.length);
       return players;
@@ -60,8 +65,8 @@ export const useUpdatePlayer = () => {
       const profileUpdates: any = {};
       if (updates.name) profileUpdates.full_name = updates.name;
       if (updates.email) profileUpdates.email = updates.email;
-      if (updates.level) profileUpdates.level = updates.level;
-      if (updates.club_id) profileUpdates.club_id = updates.club_id;
+      if (updates.level !== undefined) profileUpdates.level = updates.level;
+      if (updates.club_id !== undefined) profileUpdates.club_id = updates.club_id || null;
 
       const { data, error } = await supabase
         .from('profiles')
@@ -77,7 +82,7 @@ export const useUpdatePlayer = () => {
       queryClient.invalidateQueries({ queryKey: ['players'] });
       toast({
         title: "Jugador actualizado",
-        description: "Los datos del jugador han sido actualizados",
+        description: "Los datos del jugador han sido actualizados correctamente",
       });
     },
     onError: (error: any) => {
