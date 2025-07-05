@@ -1,6 +1,6 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import AuthPage from "./AuthPage";
+import AuthPage from "@/pages/AuthPage";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
