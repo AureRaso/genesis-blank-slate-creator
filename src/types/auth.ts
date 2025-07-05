@@ -4,6 +4,8 @@ export interface Profile {
   email: string;
   full_name: string;
   role: 'admin' | 'player' | 'captain' | 'trainer';
+  level?: number;
+  club_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -13,9 +15,9 @@ export interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, clubId?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
-  isCaptain: boolean;
+  isPlayer: boolean;
   isTrainer: boolean;
 }

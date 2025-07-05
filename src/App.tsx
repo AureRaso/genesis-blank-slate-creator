@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -43,9 +44,9 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 function App() {
-  const { isAdmin, isCaptain, isTrainer, loading, user } = useAuth();
+  const { isAdmin, isPlayer, isTrainer, loading, user } = useAuth();
 
-  console.log('App - Auth state:', { isAdmin, isCaptain, isTrainer, loading, user: user?.email });
+  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, loading, user: user?.email });
 
   if (loading) {
     return (
