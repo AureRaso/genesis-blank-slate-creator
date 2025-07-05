@@ -10,14 +10,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Zap, UserPlus, LogIn, Mail, Lock, User } from "lucide-react";
+import ClubSelector from "@/components/ClubSelector";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  console.log('AuthPage - Current selectedClubId:', selectedClubId);
 
   // Redirect to home if user is already authenticated
   useEffect(() => {
@@ -59,9 +63,34 @@ export const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('AuthPage - handleSignUp called with:', { 
+      email, 
+      fullName, 
+      selectedClubId,
+      passwordLength: password.length 
+    });
+    
+    if (!email || !password || !fullName) {
+      toast({
+        title: "Error",
+        description: "Todos los campos son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedClubId) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar un club para completar el registro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { error } = await signUp(email, password, fullName, selectedClubId);
       if (error) {
         toast({
           title: "Error al registrarse",
@@ -244,6 +273,18 @@ export const AuthPage = () => {
                       />
                     </div>
                   </div>
+
+                  <ClubSelector
+                    value={selectedClubId}
+                    onValueChange={(value) => {
+                      console.log('🔧 ClubSelector - Value changed to:', value);
+                      setSelectedClubId(value);
+                    }}
+                    label="Club"
+                    placeholder="Selecciona tu club"
+                    required
+                  />
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-gray-700 font-medium">
                       Contraseña
