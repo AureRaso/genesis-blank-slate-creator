@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +127,7 @@ export const useMyTrainerProfile = () => {
 
       console.log('Trainer found:', trainer);
 
-      // Get trainer clubs with club details
+      // Get trainer clubs with club details - FIXED: using correct profile_id
       const { data: trainerClubs, error: clubError } = await supabase
         .from('trainer_clubs')
         .select(`
@@ -138,7 +137,7 @@ export const useMyTrainerProfile = () => {
             name
           )
         `)
-        .eq('trainer_profile_id', trainer.profile_id);
+        .eq('trainer_profile_id', userData.user.id); // Using userData.user.id directly
 
       if (clubError) {
         console.error('Error fetching trainer clubs:', clubError);
