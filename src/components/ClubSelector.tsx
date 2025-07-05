@@ -21,8 +21,12 @@ const ClubSelector = ({
   placeholder = "Selecciona un club",
   required = false 
 }: ClubSelectorProps) => {
-  const { data: clubs, isLoading } = useActiveClubs();
+  const { data: clubs, isLoading, error } = useActiveClubs();
   const [searchTerm, setSearchTerm] = useState("");
+
+  console.log('ClubSelector - clubs data:', clubs);
+  console.log('ClubSelector - loading:', isLoading);
+  console.log('ClubSelector - error:', error);
 
   // Filtrar clubes por término de búsqueda
   const filteredClubs = clubs?.filter(club =>
@@ -34,6 +38,18 @@ const ClubSelector = ({
       <div className="space-y-2">
         <Label>{label}</Label>
         <div className="h-10 bg-gray-100 animate-pulse rounded-md"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('ClubSelector - Error loading clubs:', error);
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="h-10 bg-red-50 border border-red-200 rounded-md flex items-center px-3">
+          <span className="text-red-600 text-sm">Error al cargar clubes</span>
+        </div>
       </div>
     );
   }
