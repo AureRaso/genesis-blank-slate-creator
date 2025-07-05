@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Mail, Lock, User, Eye, EyeOff, Zap, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ClubSelector from "@/components/ClubSelector";
 
 const AuthPage = () => {
   const { signIn, signUp } = useAuth();
@@ -24,6 +26,7 @@ const AuthPage = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +52,14 @@ const AuthPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupEmail || !signupPassword || !signupFullName) return;
+    if (!signupEmail || !signupPassword || !signupFullName || !selectedClubId) {
+      toast({
+        title: "Error",
+        description: "Todos los campos son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (signupPassword !== confirmPassword) {
       toast({
@@ -70,7 +80,7 @@ const AuthPage = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
+    const { error } = await signUp(signupEmail, signupPassword, signupFullName, selectedClubId);
     
     if (error) {
       toast({
@@ -268,6 +278,14 @@ const AuthPage = () => {
                       />
                     </div>
                   </div>
+
+                  <ClubSelector
+                    value={selectedClubId}
+                    onValueChange={setSelectedClubId}
+                    label="Selecciona tu club"
+                    placeholder="Elige el club al que quieres unirte"
+                    required
+                  />
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-gray-700 font-medium">Contraseña</Label>

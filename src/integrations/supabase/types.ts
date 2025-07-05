@@ -161,6 +161,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -173,6 +174,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -185,6 +187,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          status?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -521,6 +524,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          club_id: string | null
           created_at: string
           email: string
           full_name: string
@@ -530,6 +534,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          club_id?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -539,6 +544,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          club_id?: string | null
           created_at?: string
           email?: string
           full_name?: string
@@ -547,7 +553,15 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teams: {
         Row: {

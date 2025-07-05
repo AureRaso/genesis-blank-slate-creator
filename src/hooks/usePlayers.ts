@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Player } from '@/types/padel';
@@ -11,7 +12,16 @@ export const usePlayers = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, level, created_at, role')
+        .select(`
+          id, 
+          full_name, 
+          email, 
+          level, 
+          created_at, 
+          role,
+          club_id,
+          clubs(name)
+        `)
         .eq('role', 'player')
         .order('created_at', { ascending: false });
       
@@ -31,97 +41,13 @@ export const usePlayers = () => {
         name: profile.full_name || 'Sin nombre',
         email: profile.email || '',
         level: profile.level || 3,
+        club_id: profile.club_id,
+        club_name: profile.clubs?.name || 'Sin club',
         created_at: profile.created_at
-      })) as Player[];
+      })) as (Player & { club_id?: string; club_name?: string })[];
       
       console.log('usePlayers - Transformed players:', players.length);
       return players;
-    },
-  });
-};
-
-export const useCreatePlayer = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (player: { name: string; email: string; level: number }) => {
-      // Generate a UUID for the new profile
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
-        email: player.email,
-        password: Math.random().toString(36).slice(-8), // Temporary password
-        options: {
-          data: {
-            full_name: player.name,
-          }
-        }
-      });
-
-      if (authError && authError.message !== 'User already registered') {
-        throw authError;
-      }
-
-      // If user already exists, insert directly into profiles
-      if (authError?.message === 'User already registered') {
-        // Use insert instead of upsert to match the database schema
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert({
-            id: crypto.randomUUID(), // Generate a UUID for the profile
-            email: player.email,
-            full_name: player.name,
-            level: player.level,
-            role: 'player'
-          })
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Error creating player profile:', error);
-          throw error;
-        }
-        return data;
-      }
-
-      // Update the profile with level if user was created
-      if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({
-            level: player.level,
-          })
-          .eq('id', user.id)
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Error updating player profile:', error);
-          throw error;
-        }
-        return data;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast({
-        title: "Jugador creado",
-        description: "El jugador ha sido registrado exitosamente",
-      });
-    },
-    onError: (error: any) => {
-      console.error('Error creating player:', error);
-      
-      let message = "No se pudo crear el jugador";
-      if (error.message?.includes('row-level security')) {
-        message = "No tienes permisos para crear jugadores";
-      } else if (error.message?.includes('duplicate key')) {
-        message = "Ya existe un jugador con ese email";
-      }
-      
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
     },
   });
 };
@@ -130,11 +56,12 @@ export const useUpdatePlayer = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; name?: string; email?: string; level?: number }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; email?: string; level?: number; club_id?: string }) => {
       const profileUpdates: any = {};
       if (updates.name) profileUpdates.full_name = updates.name;
       if (updates.email) profileUpdates.email = updates.email;
       if (updates.level) profileUpdates.level = updates.level;
+      if (updates.club_id) profileUpdates.club_id = updates.club_id;
 
       const { data, error } = await supabase
         .from('profiles')

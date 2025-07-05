@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,7 @@ export type Club = {
   court_count: number;
   court_types: string[];
   description?: string;
+  status?: string;
   created_by_profile_id: string;
   created_at: string;
   updated_at: string;
@@ -45,6 +47,28 @@ export const useClubs = () => {
   });
 };
 
+export const useActiveClubs = () => {
+  return useQuery({
+    queryKey: ['active-clubs'],
+    queryFn: async () => {
+      console.log('Fetching active clubs...');
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching active clubs:', error);
+        throw error;
+      }
+      
+      console.log('Active clubs fetched:', data);
+      return data as Club[];
+    },
+  });
+};
+
 export const useCreateClub = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -59,7 +83,8 @@ export const useCreateClub = () => {
         .from('clubs')
         .insert([{
           ...clubData,
-          created_by_profile_id: userData.user.id
+          created_by_profile_id: userData.user.id,
+          status: 'active'
         }])
         .select()
         .single();
@@ -69,6 +94,7 @@ export const useCreateClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",
         description: "Club creado correctamente",
@@ -103,6 +129,7 @@ export const useUpdateClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",
         description: "Club actualizado correctamente",
@@ -134,6 +161,7 @@ export const useDeleteClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",
         description: "Club eliminado correctamente",

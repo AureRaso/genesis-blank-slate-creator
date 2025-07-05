@@ -1,10 +1,42 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContextType, Profile } from '@/types/auth';
 
-const AuthContext = createContext<AuthContextType | null>(null);
+interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  level?: number;
+  club_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+  isAdmin: boolean;
+  isTrainer: boolean;
+  isPlayer: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, clubId?: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  profile: null,
+  loading: true,
+  isAdmin: false,
+  isTrainer: false,
+  isPlayer: false,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -14,305 +46,126 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const fetchingProfile = useRef(false);
-  const initializationTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    console.log('AuthProvider - Initializing...');
-
-    // Set a timeout to prevent infinite loading
-    initializationTimeout.current = setTimeout(() => {
-      if (isMounted) {
-        console.log('AuthProvider - Initialization timeout, setting loading to false');
-        setLoading(false);
-      }
-    }, 5000);
-
-    // Listen for auth changes FIRST - using non-async callback to prevent loops
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email || 'no user');
-        
-        if (!isMounted) return;
-
-        // Clear initialization timeout since we have an auth state change
-        if (initializationTimeout.current) {
-          clearTimeout(initializationTimeout.current);
-          initializationTimeout.current = null;
-        }
-
-        if (session?.user) {
-          console.log('Setting user from auth state change');
-          setUser(session.user);
-          
-          // Defer profile fetching to avoid callback issues
-          setTimeout(() => {
-            if (isMounted && !fetchingProfile.current) {
-              fetchProfile(session.user.id);
-            }
-          }, 0);
-        } else {
-          console.log('No session, clearing user and profile');
-          setUser(null);
-          setProfile(null);
-          fetchingProfile.current = false;
-          setLoading(false);
-        }
-      }
-    );
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        console.log('AuthProvider - Getting initial session...');
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (!isMounted) return;
-        
-        console.log('AuthProvider - Initial session result:', { 
-          userEmail: session?.user?.email, 
-          error: error?.message 
-        });
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setLoading(false);
-          return;
-        }
-
-        if (session?.user) {
-          console.log('AuthProvider - Setting user from initial session');
-          setUser(session.user);
-          
-          // Only fetch profile if not already fetching
-          if (!fetchingProfile.current) {
-            await fetchProfile(session.user.id);
-          }
-        } else {
-          console.log('AuthProvider - No initial session found');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error in getInitialSession:', error);
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    getInitialSession();
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-      if (initializationTimeout.current) {
-        clearTimeout(initializationTimeout.current);
-      }
-    };
-  }, []);
 
   const fetchProfile = async (userId: string) => {
-    if (fetchingProfile.current) {
-      console.log('fetchProfile - Already fetching, skipping');
-      return;
-    }
-
     try {
-      fetchingProfile.current = true;
-      console.log('fetchProfile - Starting for user:', userId);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      console.log('fetchProfile - Query completed:', { 
-        data: data ? { id: data.id, email: data.email, role: data.role } : null, 
-        error: error?.message,
-        errorCode: error?.code
-      });
-
       if (error) {
         console.error('Error fetching profile:', error);
-        
-        // If profile doesn't exist (PGRST116), create one
-        if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating basic profile...');
-          await createBasicProfile(userId);
-        } else {
-          console.error('Unexpected error fetching profile:', error);
-          setProfile(null);
-          setLoading(false);
-        }
-        return;
+        return null;
       }
 
-      if (data) {
-        console.log('fetchProfile - Profile found, setting profile state');
-        const profileData: Profile = {
-          ...data,
-          role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
-        };
+      return data;
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    // Get initial session
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
-        console.log('fetchProfile - Profile state set:', profileData.role);
-      } else {
-        console.log('fetchProfile - No profile data returned');
-        setProfile(null);
       }
-    } catch (error) {
-      console.error('Exception in fetchProfile:', error);
-      setProfile(null);
-    } finally {
-      fetchingProfile.current = false;
-      console.log('fetchProfile - Setting loading to false');
-      setLoading(false);
-    }
-  };
-
-  const createBasicProfile = async (userId: string) => {
-    try {
-      console.log('createBasicProfile - Creating profile for user:', userId);
       
-      // Get user info from auth
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        console.error('Error getting user for profile creation:', userError);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: user.email || 'usuario@example.com',
-          full_name: user.user_metadata?.full_name || 'Usuario',
-          role: 'player'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating basic profile:', error);
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
-      console.log('createBasicProfile - Profile created successfully:', data);
-      const profileData: Profile = {
-        ...data,
-        role: data.role as 'admin' | 'player' | 'captain' | 'trainer'
-      };
-      setProfile(profileData);
       setLoading(false);
-    } catch (error) {
-      console.error('Exception in createBasicProfile:', error);
-      setProfile(null);
-      setLoading(false);
-    }
-  };
+    };
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        } else {
+          setProfile(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log('signIn - Attempting login for:', email);
-    
-    // Block problematic user from signing in
-    if (email === 'sefaca24@gmail.com') {
-      console.log('Blocking login for problematic user sefaca24@gmail.com');
-      return { error: { message: 'Este usuario está temporalmente bloqueado' } };
-    }
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    console.log('signIn - Result:', error ? `Error: ${error.message}` : 'Success');
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    console.log('signUp - Attempting signup for:', email);
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, fullName: string, clubId?: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          club_id: clubId,
         },
       },
     });
-    console.log('signUp - Result:', error ? `Error: ${error.message}` : 'Success');
+
+    // If signup was successful and we have a user, update their profile with club_id
+    if (!error && data.user && clubId) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          club_id: clubId,
+          full_name: fullName 
+        })
+        .eq('id', data.user.id);
+
+      if (profileError) {
+        console.error('Error updating profile with club_id:', profileError);
+      }
+    }
+
     return { error };
   };
 
   const signOut = async () => {
-    try {
-      console.log('signOut - Attempting logout');
-      
-      // Clear specific auth-related items instead of all localStorage
-      const authKeys = Object.keys(localStorage).filter(key => 
-        key.startsWith('supabase.auth.token') || 
-        key.startsWith('sb-') ||
-        key.includes('auth')
-      );
-      
-      authKeys.forEach(key => {
-        localStorage.removeItem(key);
-      });
-      
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-      } else {
-        console.log('signOut - Success');
-        setUser(null);
-        setProfile(null);
-        fetchingProfile.current = false;
-      }
-    } catch (error) {
-      console.error('Exception in signOut:', error);
-    }
+    await supabase.auth.signOut();
   };
 
   const isAdmin = profile?.role === 'admin';
-  const isCaptain = profile?.role === 'captain';
   const isTrainer = profile?.role === 'trainer';
-
-  const value: AuthContextType = {
-    user,
-    profile,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    isAdmin,
-    isCaptain,
-    isTrainer,
-  };
-
-  console.log('AuthProvider - Current state:', { 
-    user: user?.email, 
-    profile: profile?.role, 
-    loading, 
-    isAdmin,
-    hasUser: !!user,
-    hasProfile: !!profile 
-  });
+  const isPlayer = profile?.role === 'player';
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        isAdmin,
+        isTrainer,
+        isPlayer,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
