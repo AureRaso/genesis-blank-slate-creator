@@ -80,22 +80,44 @@ serve(async (req) => {
       )
     }
 
-    // 3. Crear registro de trainer usando la función RPC
-    const { data: trainerResult, error: trainerError } = await supabaseAdmin
-      .rpc('create_trainer_record', {
-        user_profile_id: authUser.user.id,
-        club_id: club_id,
-        trainer_specialty: specialty || null,
-        trainer_photo_url: photo_url || null
+    // 3. Crear registro de trainer directamente
+    const { data: trainerData, error: trainerError } = await supabaseAdmin
+      .from('trainers')
+      .insert({
+        profile_id: authUser.user.id,
+        specialty: specialty || null,
+        photo_url: photo_url || null,
+        is_active: is_active !== undefined ? is_active : true
       })
+      .select()
+      .single()
 
-    if (trainerError || (trainerResult && trainerResult.error)) {
-      console.error('Trainer error:', trainerError || trainerResult.error)
+    if (trainerError) {
+      console.error('Trainer error:', trainerError)
       // Si falla el trainer, limpiar usuario y perfil
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
       
       return new Response(
-        JSON.stringify({ error: `Error creating trainer: ${trainerError?.message || trainerResult.error}` }),
+        JSON.stringify({ error: `Error creating trainer: ${trainerError.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 4. Crear relación trainer-club
+    const { error: trainerClubError } = await supabaseAdmin
+      .from('trainer_clubs')
+      .insert({
+        trainer_profile_id: authUser.user.id,
+        club_id: club_id
+      })
+
+    if (trainerClubError) {
+      console.error('Trainer club error:', trainerClubError)
+      // Si falla la relación trainer-club, limpiar todo
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+      
+      return new Response(
+        JSON.stringify({ error: `Error creating trainer-club relationship: ${trainerClubError.message}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -105,7 +127,7 @@ serve(async (req) => {
         message: 'Profesor creado correctamente',
         temporary_password: '123456',
         user_id: authUser.user.id,
-        trainer_data: trainerResult
+        trainer_data: trainerData
       }),
       { 
         status: 200, 
