@@ -720,6 +720,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_trainer_assigned_to_club: {
+        Args: { club_id: string }
+        Returns: boolean
+      }
       record_match_creation: {
         Args:
           | { _profile_id: string; _week_start: string }
