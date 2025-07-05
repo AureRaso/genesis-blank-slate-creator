@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -219,7 +220,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
             <span>Datos del Profesor</span>
           </CardTitle>
           <CardDescription>
-            Crea un nuevo profesor en el sistema
+            Crea un nuevo profesor en el sistema. Se creará automáticamente un usuario con contraseña temporal: 123456
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -249,6 +250,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                       <FormControl>
                         <Input type="email" placeholder="juan@example.com" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Este será el email de acceso al sistema
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -725,9 +725,9 @@ export type Database = {
           trainer_email: string
           trainer_full_name: string
           club_id: string
-          trainer_phone?: string
-          trainer_specialty?: string
-          trainer_photo_url?: string
+          trainer_phone: string
+          trainer_specialty: string
+          trainer_photo_url: string
         }
         Returns: Json
       }

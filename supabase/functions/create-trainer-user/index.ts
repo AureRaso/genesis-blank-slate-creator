@@ -1,0 +1,125 @@
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    const { full_name, email, club_id, phone, specialty, photo_url, is_active } = await req.json()
+
+    // Validar datos requeridos
+    if (!full_name || !email || !club_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: full_name, email, club_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 1. Crear usuario en Auth con contraseña fija
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: email,
+      password: '123456',
+      email_confirm: true,
+      user_metadata: {
+        full_name: full_name,
+        phone: phone || '',
+        role: 'trainer'
+      }
+    })
+
+    if (authError) {
+      console.error('Auth error:', authError)
+      return new Response(
+        JSON.stringify({ error: `Error creating auth user: ${authError.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!authUser.user) {
+      return new Response(
+        JSON.stringify({ error: 'No user returned from auth creation' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 2. Crear perfil en la tabla profiles
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: authUser.user.id,
+        email: email,
+        full_name: full_name,
+        role: 'trainer'
+      })
+
+    if (profileError) {
+      console.error('Profile error:', profileError)
+      // Si falla el perfil, eliminar el usuario de auth
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+      return new Response(
+        JSON.stringify({ error: `Error creating profile: ${profileError.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 3. Crear registro de trainer usando la función RPC
+    const { data: trainerResult, error: trainerError } = await supabaseAdmin
+      .rpc('create_trainer_record', {
+        user_profile_id: authUser.user.id,
+        club_id: club_id,
+        trainer_specialty: specialty || null,
+        trainer_photo_url: photo_url || null
+      })
+
+    if (trainerError || (trainerResult && trainerResult.error)) {
+      console.error('Trainer error:', trainerError || trainerResult.error)
+      // Si falla el trainer, limpiar usuario y perfil
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+      await supabaseAdmin.from('profiles').delete().eq('id', authUser.user.id)
+      
+      return new Response(
+        JSON.stringify({ error: `Error creating trainer: ${trainerError?.message || trainerResult.error}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    return new Response(
+      JSON.stringify({
+        message: 'Profesor creado correctamente',
+        temporary_password: '123456',
+        user_id: authUser.user.id,
+        trainer_data: trainerResult
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
+
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return new Response(
+      JSON.stringify({ error: `Unexpected error: ${error.message}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+})
