@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Mail, Lock, User, Eye, EyeOff, Zap, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ClubSelector from "@/components/ClubSelector";
+import SimpleClubSelector from "@/components/SimpleClubSelector";
 
 const AuthPage = () => {
   const { signIn, signUp } = useAuth();
@@ -296,16 +297,34 @@ const AuthPage = () => {
                     </div>
                   </div>
 
-                  <ClubSelector
-                    value={selectedClubId}
-                    onValueChange={(value) => {
-                      console.log('AuthPage - Club selected:', value);
-                      setSelectedClubId(value);
-                    }}
-                    label="Selecciona tu club"
-                    placeholder="Elige el club al que quieres unirte"
-                    required
-                  />
+                  {/* DEBUG: Mostrar ambos selectores para comparar */}
+                  <div className="space-y-4 border-4 border-purple-500 p-4 bg-purple-50">
+                    <div className="text-purple-800 font-bold text-sm">
+                      🔧 ÁREA DE DEBUG - Comparando selectores:
+                    </div>
+                    
+                    <SimpleClubSelector
+                      value={selectedClubId}
+                      onValueChange={(value) => {
+                        console.log('🟢 SimpleClubSelector - Value changed to:', value);
+                        setSelectedClubId(value);
+                      }}
+                      label="Selector Simple (Mock Data)"
+                      placeholder="Selector con datos de prueba"
+                      required
+                    />
+
+                    <ClubSelector
+                      value={selectedClubId}
+                      onValueChange={(value) => {
+                        console.log('🔧 ClubSelector - Value changed to:', value);
+                        setSelectedClubId(value);
+                      }}
+                      label="Selector Original (Base de Datos)"
+                      placeholder="Selector con datos reales"
+                      required
+                    />
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-gray-700 font-medium">Contraseña</Label>
