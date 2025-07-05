@@ -24,7 +24,9 @@ export type ClassSlot = {
     name: string;
   };
   trainers?: {
-    full_name: string;
+    profiles?: {
+      full_name: string;
+    };
   };
   class_reservations?: Array<{
     id: string;
@@ -62,7 +64,9 @@ export const useClassSlots = () => {
           *,
           clubs!inner(name),
           trainers(
-            full_name
+            profiles:profile_id(
+              full_name
+            )
           ),
           class_reservations(
             id,
@@ -93,7 +97,7 @@ export const useMyClassSlots = () => {
       const { data: trainerData, error: trainerError } = await supabase
         .from('trainers')
         .select('id')
-        .eq('email', userData.user.email)
+        .eq('profile_id', userData.user.id)
         .single();
 
       if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
@@ -119,7 +123,11 @@ export const useMyClassSlots = () => {
           created_at,
           updated_at,
           clubs!inner(name),
-          trainers(full_name),
+          trainers(
+            profiles:profile_id(
+              full_name
+            )
+          ),
           class_reservations(
             id,
             player_profile_id,
@@ -138,8 +146,7 @@ export const useMyClassSlots = () => {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Explicitly cast to avoid type inference issues
-      return (data || []) as unknown as ClassSlot[];
+      return (data || []) as ClassSlot[];
     },
   });
 };
