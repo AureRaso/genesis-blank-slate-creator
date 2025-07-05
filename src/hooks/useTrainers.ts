@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -127,7 +128,7 @@ export const useMyTrainerProfile = () => {
 
       console.log('Trainer found:', trainer);
 
-      // Get trainer clubs separately
+      // Get trainer clubs with club details
       const { data: trainerClubs, error: clubError } = await supabase
         .from('trainer_clubs')
         .select(`

@@ -44,10 +44,14 @@ const TrainerDashboard = () => {
     }
   };
 
-  // Get club info from trainer profile
+  // Get club info from trainer profile - Updated to handle the correct structure
   const trainerClub = trainerProfile?.trainer_clubs?.[0];
   const clubName = trainerClub?.clubs?.name || 'Club no asignado';
   const trainerName = trainerProfile?.profiles?.full_name || 'Profesor';
+
+  console.log('Trainer profile:', trainerProfile);
+  console.log('Trainer club:', trainerClub);
+  console.log('Club name:', clubName);
 
   if (profileLoading) {
     return (
@@ -102,6 +106,11 @@ const TrainerDashboard = () => {
             <Badge variant="outline" className="text-playtomic-orange border-playtomic-orange">
               {clubName}
             </Badge>
+            {trainerProfile.trainer_clubs && trainerProfile.trainer_clubs.length > 0 && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                Asignado al club: {trainerProfile.trainer_clubs[0]?.clubs?.name}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
