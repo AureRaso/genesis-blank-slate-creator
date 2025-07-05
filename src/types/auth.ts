@@ -3,7 +3,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'player' | 'captain' | 'trainer';
+  role: 'admin' | 'player' | 'trainer';
   level?: number;
   club_id?: string;
   created_at: string;

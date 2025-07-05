@@ -72,7 +72,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         console.log('AuthContext - Profile fetched:', data);
-        setProfile(data);
+        // Asegurar que el rol es válido según nuestros tipos
+        const validProfile: Profile = {
+          ...data,
+          role: data.role as 'admin' | 'player' | 'trainer'
+        };
+        setProfile(validProfile);
       }
     } catch (error) {
       console.error('AuthContext - Exception fetching profile:', error);

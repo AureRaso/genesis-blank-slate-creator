@@ -21,7 +21,7 @@ const UserMenu = () => {
     switch (role) {
       case 'admin':
         return 'bg-playtomic-orange text-white';
-      case 'captain':
+      case 'trainer':
         return 'bg-playtomic-green text-white';
       default:
         return 'bg-playtomic-gray-100 text-playtomic-gray-800';
@@ -32,8 +32,8 @@ const UserMenu = () => {
     switch (role) {
       case 'admin':
         return 'Administrador';
-      case 'captain':
-        return 'Capitán';
+      case 'trainer':
+        return 'Entrenador';
       default:
         return 'Jugador';
     }
