@@ -58,7 +58,21 @@ export const useClassSlots = () => {
   return useQuery({
     queryKey: ['class-slots'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Obtener el perfil del usuario actual para filtrar por su club
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // Obtener el club_id del usuario
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('club_id, role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      
+      let query = supabase
         .from('class_slots')
         .select(`
           *,
@@ -79,6 +93,12 @@ export const useClassSlots = () => {
         .order('day_of_week')
         .order('start_time');
 
+      // Si es jugador (no admin), filtrar solo las clases de su club
+      if (profileData.role === 'player' && profileData.club_id) {
+        query = query.eq('club_id', profileData.club_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as ClassSlot[];
     },
