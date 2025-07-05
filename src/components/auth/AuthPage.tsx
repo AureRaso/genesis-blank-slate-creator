@@ -60,10 +60,19 @@ const AuthPage = () => {
       passwordLength: signupPassword.length 
     });
     
-    if (!signupEmail || !signupPassword || !signupFullName || !selectedClubId) {
+    if (!signupEmail || !signupPassword || !signupFullName) {
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedClubId) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar un club para completar el registro.",
         variant: "destructive",
       });
       return;
