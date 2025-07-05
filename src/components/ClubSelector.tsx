@@ -55,75 +55,76 @@ const ClubSelector = ({
     value 
   });
 
-  // Forzar que siempre se renderice algo visible
-  return (
-    <div 
-      className="space-y-2 border-2 border-red-500 p-2 bg-yellow-100" 
-      style={{ 
-        minHeight: '80px',
-        display: 'block',
-        visibility: 'visible',
-        opacity: 1,
-        zIndex: 9999,
-        position: 'relative'
-      }}
-    >
-      <div className="text-red-600 font-bold text-xs">
-        🔧 DEBUG: ClubSelector renderizado - Loading: {isLoading ? 'SÍ' : 'NO'} | 
-        Clubs: {clubs?.length || 0} | 
-        Error: {error ? 'SÍ' : 'NO'}
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="club-selector" className="text-gray-700 font-medium">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+        <div className="h-12 bg-gray-100 animate-pulse rounded-xl flex items-center px-3">
+          <span className="text-gray-500 text-sm">Cargando clubes...</span>
+        </div>
       </div>
-      
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="club-selector" className="text-gray-700 font-medium">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+        <div className="h-12 bg-red-50 border border-red-200 rounded-xl flex items-center px-3">
+          <span className="text-red-600 text-sm">Error: {error.message}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!clubs || clubs.length === 0) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="club-selector" className="text-gray-700 font-medium">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+        <div className="h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center px-3">
+          <span className="text-yellow-600 text-sm">No hay clubes disponibles</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
       <Label htmlFor="club-selector" className="text-gray-700 font-medium">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
 
-      {isLoading && (
-        <div className="h-12 bg-blue-100 animate-pulse rounded-xl flex items-center px-3">
-          <span className="text-blue-600 text-sm">🔄 Cargando clubes...</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="h-12 bg-red-50 border border-red-200 rounded-xl flex items-center px-3">
-          <span className="text-red-600 text-sm">❌ Error: {error.message}</span>
-        </div>
-      )}
-
-      {!isLoading && !error && (!clubs || clubs.length === 0) && (
-        <div className="h-12 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center px-3">
-          <span className="text-yellow-600 text-sm">⚠️ No hay clubes disponibles</span>
-        </div>
-      )}
-
-      {!isLoading && !error && clubs && clubs.length > 0 && (
-        <Select value={value} onValueChange={onValueChange} required={required}>
-          <SelectTrigger 
-            id="club-selector" 
-            className="h-12 border-2 border-green-500 rounded-xl focus:border-blue-500 transition-all duration-300 bg-white"
-          >
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent className="bg-white border shadow-lg z-[10000] rounded-xl">
-            {clubs.map((club) => {
-              console.log('🔧 ClubSelector - Rendering club option:', club);
-              return (
-                <SelectItem key={club.id} value={club.id} className="cursor-pointer">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{club.name}</span>
-                    <span className="text-xs text-gray-500">{club.address}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      )}
-
-      <div className="text-xs text-gray-500 mt-1">
-        🔧 Valor actual: {value || 'ninguno'}
-      </div>
+      <Select value={value} onValueChange={onValueChange} required={required}>
+        <SelectTrigger 
+          id="club-selector" 
+          className="h-12 border-2 border-gray-200 rounded-xl focus:border-blue-500 transition-all duration-300 bg-white"
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent className="bg-white border shadow-lg z-[10000] rounded-xl">
+          {clubs.map((club) => {
+            console.log('🔧 ClubSelector - Rendering club option:', club);
+            return (
+              <SelectItem key={club.id} value={club.id} className="cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-medium">{club.name}</span>
+                  <span className="text-xs text-gray-500">{club.address}</span>
+                </div>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
