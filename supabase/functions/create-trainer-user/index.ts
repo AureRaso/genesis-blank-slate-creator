@@ -34,7 +34,7 @@ serve(async (req) => {
       )
     }
 
-    // 1. Crear usuario en Auth con contraseña fija
+    // 1. Crear usuario en Auth con la contraseña fija
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: '123456',
@@ -61,22 +61,21 @@ serve(async (req) => {
       )
     }
 
-    // 2. Crear perfil en la tabla profiles
+    // 2. Actualizar el perfil automáticamente creado por el trigger
+    // El trigger ya creó un perfil con role 'player', lo actualizamos a 'trainer'
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: authUser.user.id,
-        email: email,
-        full_name: full_name,
+      .update({
         role: 'trainer'
       })
+      .eq('id', authUser.user.id)
 
     if (profileError) {
-      console.error('Profile error:', profileError)
-      // Si falla el perfil, eliminar el usuario de auth
+      console.error('Profile update error:', profileError)
+      // Si falla la actualización del perfil, eliminar el usuario de auth
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
       return new Response(
-        JSON.stringify({ error: `Error creating profile: ${profileError.message}` }),
+        JSON.stringify({ error: `Error updating profile to trainer: ${profileError.message}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -94,7 +93,6 @@ serve(async (req) => {
       console.error('Trainer error:', trainerError || trainerResult.error)
       // Si falla el trainer, limpiar usuario y perfil
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      await supabaseAdmin.from('profiles').delete().eq('id', authUser.user.id)
       
       return new Response(
         JSON.stringify({ error: `Error creating trainer: ${trainerError?.message || trainerResult.error}` }),
