@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -94,9 +93,12 @@ export const useMyTrainerProfile = () => {
   return useQuery({
     queryKey: ['my-trainer-profile'],
     queryFn: async () => {
+      console.log('Fetching my trainer profile...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
+
+      console.log('Current user ID:', userData.user.id);
 
       // Get trainer data using profile_id
       const { data: trainer, error: trainerError } = await supabase
@@ -113,9 +115,17 @@ export const useMyTrainerProfile = () => {
         .eq('is_active', true)
         .single();
 
-      if (trainerError && trainerError.code !== 'PGRST116') throw trainerError;
+      if (trainerError && trainerError.code !== 'PGRST116') {
+        console.error('Trainer error:', trainerError);
+        throw trainerError;
+      }
       
-      if (!trainer) return null;
+      if (!trainer) {
+        console.log('No trainer found for current user');
+        return null;
+      }
+
+      console.log('Trainer found:', trainer);
 
       // Get trainer clubs separately
       const { data: trainerClubs, error: clubError } = await supabase
@@ -133,6 +143,8 @@ export const useMyTrainerProfile = () => {
         console.error('Error fetching trainer clubs:', clubError);
         return { ...trainer, trainer_clubs: [] };
       }
+
+      console.log('Trainer clubs found:', trainerClubs);
 
       return { ...trainer, trainer_clubs: trainerClubs || [] };
     },
