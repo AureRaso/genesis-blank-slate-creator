@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,8 @@ const AuthPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
 
+  console.log('AuthPage - Current selectedClubId:', selectedClubId);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) return;
@@ -52,6 +53,13 @@ const AuthPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('AuthPage - handleSignup called with:', { 
+      signupEmail, 
+      signupFullName, 
+      selectedClubId,
+      passwordLength: signupPassword.length 
+    });
+    
     if (!signupEmail || !signupPassword || !signupFullName || !selectedClubId) {
       toast({
         title: "Error",
@@ -281,7 +289,10 @@ const AuthPage = () => {
 
                   <ClubSelector
                     value={selectedClubId}
-                    onValueChange={setSelectedClubId}
+                    onValueChange={(value) => {
+                      console.log('AuthPage - Club selected:', value);
+                      setSelectedClubId(value);
+                    }}
                     label="Selecciona tu club"
                     placeholder="Elige el club al que quieres unirte"
                     required

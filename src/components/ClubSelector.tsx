@@ -3,8 +3,6 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useActiveClubs } from "@/hooks/useActiveClubs";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
 interface ClubSelectorProps {
   value?: string;
@@ -22,18 +20,15 @@ const ClubSelector = ({
   required = false 
 }: ClubSelectorProps) => {
   const { data: clubs, isLoading, error } = useActiveClubs();
-  const [searchTerm, setSearchTerm] = useState("");
 
+  console.log('ClubSelector - Rendering component');
   console.log('ClubSelector - clubs data:', clubs);
   console.log('ClubSelector - loading:', isLoading);
   console.log('ClubSelector - error:', error);
-
-  // Filtrar clubes por término de búsqueda
-  const filteredClubs = clubs?.filter(club =>
-    club.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  console.log('ClubSelector - value:', value);
 
   if (isLoading) {
+    console.log('ClubSelector - Showing loading state');
     return (
       <div className="space-y-2">
         <Label>{label}</Label>
@@ -54,6 +49,20 @@ const ClubSelector = ({
     );
   }
 
+  if (!clubs || clubs.length === 0) {
+    console.log('ClubSelector - No clubs found');
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="h-10 bg-yellow-50 border border-yellow-200 rounded-md flex items-center px-3">
+          <span className="text-yellow-600 text-sm">No hay clubes disponibles</span>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('ClubSelector - Rendering select with', clubs.length, 'clubs');
+
   return (
     <div className="space-y-2">
       <Label htmlFor="club-selector">
@@ -61,37 +70,18 @@ const ClubSelector = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </Label>
       <Select value={value} onValueChange={onValueChange} required={required}>
-        <SelectTrigger id="club-selector">
+        <SelectTrigger id="club-selector" className="bg-white">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-white border shadow-lg z-50">
-          {clubs && clubs.length > 5 && (
-            <div className="p-2 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar club..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 h-8 text-sm"
-                />
+          {clubs.map((club) => (
+            <SelectItem key={club.id} value={club.id}>
+              <div className="flex flex-col">
+                <span className="font-medium">{club.name}</span>
+                <span className="text-xs text-gray-500">{club.address}</span>
               </div>
-            </div>
-          )}
-          {filteredClubs.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              {searchTerm ? "No se encontraron clubes" : "No hay clubes activos disponibles"}
-            </div>
-          ) : (
-            filteredClubs.map((club) => (
-              <SelectItem key={club.id} value={club.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{club.name}</span>
-                  <span className="text-xs text-gray-500">{club.address}</span>
-                </div>
-              </SelectItem>
-            ))
-          )}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

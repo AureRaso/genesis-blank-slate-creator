@@ -95,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string, clubId?: string) => {
+    console.log('AuthContext - signUp called with:', { email, fullName, clubId });
+    
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -108,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     });
+    
+    console.log('AuthContext - signUp result:', { error });
     return { error };
   };
 
