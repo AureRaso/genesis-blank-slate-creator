@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LeagueForm from "@/components/LeagueForm";
 import LeaguesList from "@/components/LeaguesList";
+import PlayerLeaguesList from "@/components/PlayerLeaguesList";
 import { useAuth } from "@/contexts/AuthContext";
 import { League } from "@/types/padel";
 
@@ -61,26 +61,11 @@ const LeaguesPage = () => {
         )}
       </div>
 
-      {!isAdmin && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-orange-800">
-              {isPlayer ? "Información" : "Acceso de Solo Lectura"}
-            </CardTitle>
-            <CardDescription className="text-orange-700">
-              {isPlayer 
-                ? "Puedes ver e inscribirte en las ligas disponibles de tu club."
-                : "Solo los administradores pueden crear y editar ligas. Contacta a un administrador si necesitas crear una nueva liga."
-              }
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      {isPlayer ? (
+        <PlayerLeaguesList clubId={profile?.club_id} />
+      ) : (
+        <LeaguesList onEditLeague={handleEditLeague} />
       )}
-
-      <LeaguesList 
-        onEditLeague={handleEditLeague} 
-        clubId={isPlayer ? profile?.club_id : undefined}
-      />
     </div>
   );
 };

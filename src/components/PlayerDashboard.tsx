@@ -1,27 +1,26 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, Clock, User } from "lucide-react";
-import { usePlayerLeagues } from "@/hooks/usePlayerLeagues";
+import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, Clock, User, DollarSign } from "lucide-react";
+import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useMyReservations } from "@/hooks/useClassReservations";
 import { useClub } from "@/hooks/useClub";
-import { useLeagues } from "@/hooks/useLeagues";
-import { useLeagueRegistration } from "@/hooks/useLeagueRegistration";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import PlayerLeagueDetails from "./PlayerLeagueDetails";
+import LeagueRegistrationModal from "./LeagueRegistrationModal";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
-  const { data: playerLeagues, isLoading: loadingLeagues } = usePlayerLeagues(profile?.id);
+  const { data: leagueData, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const { data: myReservations, isLoading: loadingReservations } = useMyReservations();
   const { data: club, isLoading: loadingClub } = useClub(profile?.club_id);
-  const { data: availableLeagues, isLoading: loadingAvailableLeagues } = useLeagues(profile?.club_id);
-  const leagueRegistration = useLeagueRegistration();
   const navigate = useNavigate();
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
+  const [registrationLeague, setRegistrationLeague] = useState(null);
+
+  const { availableLeagues = [], enrolledLeagues = [] } = leagueData || {};
 
   const handleLeagueClick = (leagueId: string) => {
     setSelectedLeagueId(leagueId);
@@ -31,26 +30,12 @@ const PlayerDashboard = () => {
     setSelectedLeagueId(null);
   };
 
-  const handleRegisterInLeague = () => {
-    if (!profile?.id || !profile?.club_id) return;
+  const handleRegisterClick = (league) => {
+    setRegistrationLeague(league);
+  };
 
-    // Find available leagues (not already registered in)
-    const registeredLeagueIds = playerLeagues?.map(league => league.id) || [];
-    const unregisteredLeagues = availableLeagues?.filter(
-      league => !registeredLeagueIds.includes(league.id) && league.status !== 'completed'
-    );
-
-    if (unregisteredLeagues && unregisteredLeagues.length > 0) {
-      // For simplicity, register in the first available league
-      // In a real app, you might want to show a selection modal
-      const leagueToRegister = unregisteredLeagues[0];
-      leagueRegistration.mutate({
-        league_id: leagueToRegister.id,
-        profile_id: profile.id,
-      });
-    } else {
-      navigate('/leagues');
-    }
+  const handleCloseRegistrationModal = () => {
+    setRegistrationLeague(null);
   };
 
   if (selectedLeagueId) {
@@ -88,11 +73,31 @@ const PlayerDashboard = () => {
     }
   };
 
-  // Check if there are available leagues to register
-  const registeredLeagueIds = playerLeagues?.map(league => league.id) || [];
-  const hasAvailableLeagues = availableLeagues?.some(
-    league => !registeredLeagueIds.includes(league.id) && league.status !== 'completed'
-  );
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Activa';
+      case 'upcoming':
+        return 'Próximamente';
+      case 'completed':
+        return 'Finalizada';
+      default:
+        return status;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -232,7 +237,7 @@ const PlayerDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Sección de Mis Ligas */}
+        {/* Sección de Mis Ligas mejorada */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -259,72 +264,120 @@ const PlayerDashboard = () => {
                   </div>
                 ))}
               </div>
-            ) : playerLeagues && playerLeagues.length > 0 ? (
-              <div className="space-y-3">
-                {playerLeagues.slice(0, 3).map((league) => (
-                  <div key={league.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">{league.name}</div>
-                      <Badge 
-                        className={
-                          league.status === 'active' 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-blue-100 text-blue-800"
-                        }
-                      >
-                        {league.status === 'active' ? 'Activa' : 'Próximamente'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        {league.start_date} - {league.end_date}
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleLeagueClick(league.id)}
-                      >
-                        Ver Liga <ArrowRight className="h-3 w-3 ml-1" />
-                      </Button>
+            ) : (
+              <div className="space-y-4">
+                {/* Ligas Inscritas */}
+                {enrolledLeagues.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">LIGAS INSCRITAS</h4>
+                    <div className="space-y-3">
+                      {enrolledLeagues.slice(0, 2).map((league) => (
+                        <div key={league.id} className="p-3 border rounded-lg bg-green-50 border-green-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium">{league.name}</div>
+                            <Badge className={getStatusColor(league.status)}>
+                              {getStatusText(league.status)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                              {league.start_date} - {league.end_date}
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleLeagueClick(league.id)}
+                            >
+                              Ver Liga <ArrowRight className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-                {playerLeagues.length > 3 && (
+                )}
+
+                {/* Ligas Disponibles */}
+                {availableLeagues.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">LIGAS DISPONIBLES</h4>
+                    <div className="space-y-3">
+                      {availableLeagues.slice(0, 2).map((league) => (
+                        <div key={league.id} className="p-3 border rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium">{league.name}</div>
+                            <Badge className={getStatusColor(league.status)}>
+                              {getStatusText(league.status)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm text-muted-foreground">
+                              {league.start_date} - {league.end_date}
+                            </div>
+                            {league.registration_price > 0 && (
+                              <div className="flex items-center text-sm font-medium text-green-600">
+                                <DollarSign className="h-3 w-3 mr-1" />
+                                €{league.registration_price}
+                              </div>
+                            )}
+                          </div>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleRegisterClick(league)}
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                          >
+                            {league.registration_price > 0 
+                              ? `Inscribirse - €${league.registration_price}`
+                              : "Inscribirse Gratis"
+                            }
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Estado vacío */}
+                {enrolledLeagues.length === 0 && availableLeagues.length === 0 && (
+                  <div className="text-center py-6">
+                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <h3 className="text-sm font-medium mb-2">No hay ligas disponibles</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      No hay ligas creadas en tu club todavía.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/leagues')}
+                      variant="outline"
+                    >
+                      Ver Todas las Ligas
+                    </Button>
+                  </div>
+                )}
+
+                {/* Mostrar más enlace */}
+                {(enrolledLeagues.length > 2 || availableLeagues.length > 2) && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     className="w-full"
                     onClick={() => navigate('/leagues')}
                   >
-                    Ver {playerLeagues.length - 3} ligas más
+                    Ver todas las ligas de mi club
                   </Button>
                 )}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-sm font-medium mb-2">No participas en ninguna liga</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Únete a una liga para competir con otros jugadores.
-                </p>
-                <Button 
-                  onClick={handleRegisterInLeague}
-                  disabled={leagueRegistration.isPending || !hasAvailableLeagues}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {leagueRegistration.isPending 
-                    ? "Inscribiendo..." 
-                    : hasAvailableLeagues 
-                      ? "Inscribirse en Liga" 
-                      : "Ver Ligas Disponibles"
-                  }
-                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de confirmación de inscripción */}
+      <LeagueRegistrationModal
+        league={registrationLeague}
+        isOpen={!!registrationLeague}
+        onClose={handleCloseRegistrationModal}
+        profileId={profile?.id || ''}
+      />
     </div>
   );
 };
