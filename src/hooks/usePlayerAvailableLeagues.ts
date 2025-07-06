@@ -6,6 +6,7 @@ import { League } from '@/types/padel';
 interface PlayerLeagueStatus {
   availableLeagues: League[];
   enrolledLeagues: League[];
+  pendingLeagues: League[];
   isLoading: boolean;
 }
 
@@ -14,7 +15,7 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
     queryKey: ['player-available-leagues', profileId, clubId],
     queryFn: async () => {
       if (!profileId || !clubId) {
-        return { availableLeagues: [], enrolledLeagues: [] };
+        return { availableLeagues: [], enrolledLeagues: [], pendingLeagues: [] };
       }
 
       console.log('Fetching available and enrolled leagues for player:', profileId, 'club:', clubId);
@@ -39,33 +40,39 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
         throw clubLeaguesError;
       }
 
-      // Get player's enrolled leagues
+      // Get player's league registrations with all statuses
       const { data: playerRegistrations, error: registrationsError } = await supabase
         .from('league_players')
         .select('league_id, status')
-        .eq('profile_id', profileId)
-        .eq('status', 'approved');
+        .eq('profile_id', profileId);
 
       if (registrationsError) {
         console.error('Error fetching player registrations:', registrationsError);
         throw registrationsError;
       }
 
-      const enrolledLeagueIds = playerRegistrations?.map(reg => reg.league_id) || [];
-      
+      const registrationMap = new Map(
+        playerRegistrations?.map(reg => [reg.league_id, reg.status]) || []
+      );
+
       const enrolledLeagues = allClubLeagues?.filter(league => 
-        enrolledLeagueIds.includes(league.id)
+        registrationMap.get(league.id) === 'approved'
+      ) || [];
+
+      const pendingLeagues = allClubLeagues?.filter(league => 
+        registrationMap.get(league.id) === 'pending'
       ) || [];
 
       const availableLeagues = allClubLeagues?.filter(league => 
-        !enrolledLeagueIds.includes(league.id) && league.status !== 'completed'
+        !registrationMap.has(league.id) && league.status !== 'completed'
       ) || [];
 
-      console.log('Available leagues:', availableLeagues.length, 'Enrolled leagues:', enrolledLeagues.length);
+      console.log('Available leagues:', availableLeagues.length, 'Enrolled leagues:', enrolledLeagues.length, 'Pending leagues:', pendingLeagues.length);
 
       return {
         availableLeagues: availableLeagues as League[],
-        enrolledLeagues: enrolledLeagues as League[]
+        enrolledLeagues: enrolledLeagues as League[],
+        pendingLeagues: pendingLeagues as League[]
       };
     },
     enabled: !!profileId && !!clubId,
@@ -74,6 +81,7 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
   return {
     availableLeagues: data?.availableLeagues || [],
     enrolledLeagues: data?.enrolledLeagues || [],
+    pendingLeagues: data?.pendingLeagues || [],
     isLoading
   };
 };

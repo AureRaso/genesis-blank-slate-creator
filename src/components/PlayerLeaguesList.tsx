@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, DollarSign, TrendingUp, ArrowRight, MapPin } from "lucide-react";
+import { Trophy, Calendar, DollarSign, TrendingUp, ArrowRight, MapPin, CheckCircle, Clock } from "lucide-react";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useAuth } from "@/contexts/AuthContext";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
@@ -15,7 +14,7 @@ interface PlayerLeaguesListProps {
 
 const PlayerLeaguesList = ({ clubId }: PlayerLeaguesListProps) => {
   const { profile } = useAuth();
-  const { availableLeagues, enrolledLeagues, isLoading } = usePlayerAvailableLeagues(profile?.id, clubId);
+  const { availableLeagues, enrolledLeagues, pendingLeagues, isLoading } = usePlayerAvailableLeagues(profile?.id, clubId);
   const [registrationLeague, setRegistrationLeague] = useState(null);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
 
@@ -167,6 +166,84 @@ const PlayerLeaguesList = ({ clubId }: PlayerLeaguesListProps) => {
         </div>
       )}
 
+      {/* Ligas Pendientes de Aprobación */}
+      {pendingLeagues.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Clock className="h-5 w-5 mr-2 text-yellow-600" />
+            Inscripciones Pendientes
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pendingLeagues.map((league) => (
+              <Card key={league.id} className="hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-yellow-500">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg line-clamp-2 mb-2">{league.name}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getStatusColor(league.status)}>
+                          {getStatusText(league.status)}
+                        </Badge>
+                        <Badge variant="outline" className="text-yellow-700 bg-yellow-50">
+                          Pendiente
+                        </Badge>
+                        {league.clubs && (
+                          <Badge variant="outline" className="text-xs">
+                            {league.clubs.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-green-600" />
+                      <span className="text-muted-foreground">Inicio:</span>
+                    </div>
+                    <span className="font-medium">{league.start_date}</span>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-red-600" />
+                      <span className="text-muted-foreground">Fin:</span>
+                    </div>
+                    <span className="font-medium">{league.end_date}</span>
+                  </div>
+
+                  <div className="border-t pt-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <span>Victoria: {league.points_victory} pts</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-4 w-4 text-red-600" />
+                        <span>Derrota: {league.points_defeat} pts</span>
+                      </div>
+                    </div>
+                    {league.points_per_set && (
+                      <div className="mt-1 text-xs text-blue-600 flex items-center">
+                        <Trophy className="h-3 w-3 mr-1" />
+                        Puntos adicionales por sets ganados
+                      </div>
+                    )}
+                  </div>
+
+                  <Button 
+                    disabled
+                    className="w-full bg-yellow-100 text-yellow-800 hover:bg-yellow-100 cursor-not-allowed"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Inscripción Pendiente
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Ligas Disponibles */}
       {availableLeagues.length > 0 && (
         <div>
@@ -257,7 +334,7 @@ const PlayerLeaguesList = ({ clubId }: PlayerLeaguesListProps) => {
       )}
 
       {/* Estado vacío */}
-      {enrolledLeagues.length === 0 && availableLeagues.length === 0 && (
+      {enrolledLeagues.length === 0 && availableLeagues.length === 0 && pendingLeagues.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
