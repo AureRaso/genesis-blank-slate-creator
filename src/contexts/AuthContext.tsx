@@ -25,14 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       console.log('AuthContext - Initial session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
+        console.log('AuthContext - No initial session, setting loading to false');
         setLoading(false);
       }
     });
@@ -40,6 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('AuthContext - Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -47,41 +55,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
+          console.log('AuthContext - No session in state change, clearing profile');
           setProfile(null);
           setLoading(false);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    console.log('AuthContext - Starting fetchProfile for user:', userId);
+    
     try {
-      console.log('AuthContext - Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
+      console.log('AuthContext - Profile query result:', { data, error });
+
       if (error) {
         console.error('AuthContext - Error fetching profile:', error);
-        if (error.code !== 'PGRST116') { // Not found error
-          throw error;
+        if (error.code === 'PGRST116') {
+          console.log('AuthContext - Profile not found, but user exists');
+          // Profile doesn't exist yet, but user is authenticated
+          setProfile(null);
         }
-      } else {
-        console.log('AuthContext - Profile fetched:', data);
+      } else if (data) {
+        console.log('AuthContext - Profile fetched successfully:', data);
         // Asegurar que el rol es válido según nuestros tipos
         const validProfile: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'trainer'
         };
         setProfile(validProfile);
+        console.log('AuthContext - Profile set with role:', validProfile.role);
       }
     } catch (error) {
-      console.error('AuthContext - Exception fetching profile:', error);
+      console.error('AuthContext - Exception in fetchProfile:', error);
     } finally {
+      console.log('AuthContext - Setting loading to false');
       setLoading(false);
     }
   };
@@ -125,6 +144,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = profile?.role === 'admin';
   const isPlayer = profile?.role === 'player';
   const isTrainer = profile?.role === 'trainer';
+
+  console.log('AuthContext - Current state:', { 
+    loading, 
+    hasUser: !!user, 
+    hasProfile: !!profile, 
+    role: profile?.role,
+    isAdmin,
+    isPlayer,
+    isTrainer 
+  });
 
   const value = {
     user,
