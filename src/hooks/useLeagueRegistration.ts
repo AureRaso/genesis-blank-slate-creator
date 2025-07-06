@@ -48,6 +48,7 @@ export const useLeagueRegistration = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-leagues'] });
+      queryClient.invalidateQueries({ queryKey: ['player-available-leagues'] });
       queryClient.invalidateQueries({ queryKey: ['league-players'] });
       toast({
         title: "Inscripción exitosa",

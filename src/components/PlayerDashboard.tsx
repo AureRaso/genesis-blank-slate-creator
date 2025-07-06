@@ -13,14 +13,12 @@ import LeagueRegistrationModal from "./LeagueRegistrationModal";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
-  const { data: leagueData, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
+  const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const { data: myReservations, isLoading: loadingReservations } = useMyReservations();
   const { data: club, isLoading: loadingClub } = useClub(profile?.club_id);
   const navigate = useNavigate();
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
-
-  const { availableLeagues = [], enrolledLeagues = [] } = leagueData || {};
 
   const handleLeagueClick = (leagueId: string) => {
     setSelectedLeagueId(leagueId);

@@ -15,11 +15,9 @@ interface PlayerLeaguesListProps {
 
 const PlayerLeaguesList = ({ clubId }: PlayerLeaguesListProps) => {
   const { profile } = useAuth();
-  const { data: leagueData, isLoading } = usePlayerAvailableLeagues(profile?.id, clubId);
+  const { availableLeagues, enrolledLeagues, isLoading } = usePlayerAvailableLeagues(profile?.id, clubId);
   const [registrationLeague, setRegistrationLeague] = useState(null);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
-
-  const { availableLeagues = [], enrolledLeagues = [] } = leagueData || {};
 
   const handleRegisterClick = (league) => {
     setRegistrationLeague(league);

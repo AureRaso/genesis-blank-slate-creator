@@ -10,7 +10,7 @@ interface PlayerLeagueStatus {
 }
 
 export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): PlayerLeagueStatus => {
-  return useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['player-available-leagues', profileId, clubId],
     queryFn: async () => {
       if (!profileId || !clubId) {
@@ -70,4 +70,10 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
     },
     enabled: !!profileId && !!clubId,
   });
+
+  return {
+    availableLeagues: data?.availableLeagues || [],
+    enrolledLeagues: data?.enrolledLeagues || [],
+    isLoading
+  };
 };
