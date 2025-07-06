@@ -30,7 +30,7 @@ const AppSidebar = () => {
   const authContext = useAuth();
   
   // Provide safe defaults if auth context is not available
-  const { isAdmin = false, isTrainer = false } = authContext || {};
+  const { isAdmin = false, isTrainer = false, isPlayer = false } = authContext || {};
 
   // Si es trainer, mostrar solo el dashboard
   if (isTrainer) {
@@ -88,6 +88,99 @@ const AppSidebar = () => {
     );
   }
 
+  // Si es jugador, mostrar panel personalizado sin profesores
+  if (isPlayer) {
+    const playerNavItems = [
+      {
+        title: "Dashboard",
+        url: "/",
+        icon: SquareTerminal,
+        isActive: true,
+      },
+      {
+        title: "Ligas",
+        url: "/leagues",
+        icon: Trophy,
+      },
+      {
+        title: "Partidos",
+        url: "/matches",
+        icon: Zap,
+      },
+      {
+        title: "Clases",
+        url: "/classes",
+        icon: GraduationCap,
+      },
+      {
+        title: "Jugadores",
+        url: "/players",
+        icon: Users,
+      },
+      {
+        title: "Clubs",
+        url: "/clubs",
+        icon: Building2,
+      },
+    ];
+
+    return (
+      <Sidebar variant="inset">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link to="/">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <Users className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">Padel Pro</span>
+                    <span className="truncate text-xs">Panel Jugador</span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+            <SidebarMenu>
+              {playerNavItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link to={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Cuenta</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/logout">
+                    <LogOut />
+                    <span>Cerrar Sesión</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <UserMenu />
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
+
+  // Panel para administradores (mantener funcionalidad original)
   const data = {
     navMain: [
       {
