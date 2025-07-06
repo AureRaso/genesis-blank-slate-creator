@@ -2,8 +2,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Users, Plus, ArrowRight } from "lucide-react";
+import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, Clock, User } from "lucide-react";
 import { usePlayerLeagues } from "@/hooks/usePlayerLeagues";
+import { useMyReservations } from "@/hooks/useClassReservations";
+import { useClub } from "@/hooks/useClub";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -11,13 +13,11 @@ import PlayerLeagueDetails from "./PlayerLeagueDetails";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
-  const { data: playerLeagues, isLoading } = usePlayerLeagues(profile?.id);
+  const { data: playerLeagues, isLoading: loadingLeagues } = usePlayerLeagues(profile?.id);
+  const { data: myReservations, isLoading: loadingReservations } = useMyReservations();
+  const { data: club, isLoading: loadingClub } = useClub(profile?.club_id);
   const navigate = useNavigate();
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
-
-  const handleInscriptionClick = () => {
-    navigate('/league-players');
-  };
 
   const handleLeagueClick = (leagueId: string) => {
     setSelectedLeagueId(leagueId);
@@ -36,113 +36,256 @@ const PlayerDashboard = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-20 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const formatDayOfWeek = (day: string) => {
+    const days = {
+      'lunes': 'Lunes',
+      'martes': 'Martes', 
+      'miercoles': 'Miércoles',
+      'jueves': 'Jueves',
+      'viernes': 'Viernes',
+      'sabado': 'Sábado',
+      'domingo': 'Domingo'
+    };
+    return days[day as keyof typeof days] || day;
+  };
 
-  if (!playerLeagues || playerLeagues.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No participas en ninguna liga</h3>
-            <p className="text-muted-foreground mb-4">
-              Únete a una liga para comenzar a jugar y competir con otros jugadores.
-            </p>
-            <Button 
-              onClick={handleInscriptionClick}
-              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Inscribirse en Liga
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'iniciacion':
+        return 'bg-green-100 text-green-800';
+      case 'intermedio':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'avanzado':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Mis Ligas</h2>
-        <Button 
-          onClick={handleInscriptionClick}
-          className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Inscribirse en Liga
-        </Button>
+      {/* Encabezado con bienvenida */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">¡Hola, {profile?.full_name}!</h1>
+        <p className="text-muted-foreground">
+          Bienvenido a tu dashboard personal de pádel
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {playerLeagues.map((league) => (
-          <Card key={league.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{league.name}</CardTitle>
-                <Badge 
-                  className={
-                    league.status === 'active' 
-                      ? "bg-green-100 text-green-800" 
-                      : "bg-blue-100 text-blue-800"
-                  }
-                >
-                  {league.status === 'active' ? 'Activa' : 'Próximamente'}
+      {/* Información del Club */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Building2 className="h-5 w-5 mr-2 text-blue-600" />
+            Mi Club
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingClub ? (
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ) : club ? (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">{club.name}</h3>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <span className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {club.address}
+                </span>
+                <span className="flex items-center">
+                  <Phone className="h-4 w-4 mr-1" />
+                  {club.phone}
+                </span>
+              </div>
+              <div className="flex items-center space-x-4 text-sm">
+                <Badge variant="outline">
+                  {club.court_count} {club.court_count === 1 ? 'pista' : 'pistas'}
+                </Badge>
+                <Badge variant="outline">
+                  {club.court_types.join(', ')}
                 </Badge>
               </div>
-              <CardDescription className="flex items-center space-x-4">
-                <span className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {league.start_date} - {league.end_date}
-                </span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Puntos victoria:</span>
-                  <span className="font-medium">{league.points_victory}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Puntos derrota:</span>
-                  <span className="font-medium">{league.points_defeat}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Precio:</span>
-                  <span className="font-medium">
-                    {league.registration_price > 0 ? `€${league.registration_price}` : 'Gratis'}
-                  </span>
-                </div>
-              </div>
+              {club.description && (
+                <p className="text-sm text-muted-foreground mt-2">{club.description}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No estás asignado a ningún club todavía.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sección de Mis Clases */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-green-600" />
+                Mis Clases
+              </CardTitle>
               <Button 
-                onClick={() => handleLeagueClick(league.id)}
-                className="w-full"
-                variant="outline"
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/classes')}
               >
-                Ver Liga
-                <ArrowRight className="h-4 w-4 ml-2" />
+                Ver todas
               </Button>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingReservations ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="animate-pulse p-3 border rounded-lg">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : myReservations && myReservations.length > 0 ? (
+              <div className="space-y-3">
+                {myReservations.slice(0, 3).map((reservation) => (
+                  <div key={reservation.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium">
+                        {formatDayOfWeek(reservation.class_slots?.day_of_week || "")}
+                      </div>
+                      <Badge className={getLevelColor(reservation.class_slots?.level || "")}>
+                        {reservation.class_slots?.level === 'iniciacion' ? 'Iniciación' : 
+                         reservation.class_slots?.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {reservation.class_slots?.start_time}
+                      </div>
+                      <div className="flex items-center">
+                        <User className="h-3 w-3 mr-1" />
+                        {reservation.class_slots?.trainer_name}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {myReservations.length > 3 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate('/classes')}
+                  >
+                    Ver {myReservations.length - 3} clases más
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-sm font-medium mb-2">No tienes clases reservadas</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Explora las clases disponibles y reserva tu plaza.
+                </p>
+                <Button 
+                  onClick={() => navigate('/classes')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ver Clases Disponibles
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Sección de Mis Ligas */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+                Mis Ligas
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/leagues')}
+              >
+                Ver todas
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingLeagues ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="animate-pulse p-3 border rounded-lg">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : playerLeagues && playerLeagues.length > 0 ? (
+              <div className="space-y-3">
+                {playerLeagues.slice(0, 3).map((league) => (
+                  <div key={league.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium">{league.name}</div>
+                      <Badge 
+                        className={
+                          league.status === 'active' 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-blue-100 text-blue-800"
+                        }
+                      >
+                        {league.status === 'active' ? 'Activa' : 'Próximamente'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        {league.start_date} - {league.end_date}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleLeagueClick(league.id)}
+                      >
+                        Ver Liga <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {playerLeagues.length > 3 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate('/leagues')}
+                  >
+                    Ver {playerLeagues.length - 3} ligas más
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-sm font-medium mb-2">No participas en ninguna liga</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Únete a una liga para competir con otros jugadores.
+                </p>
+                <Button 
+                  onClick={() => navigate('/leagues')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Inscribirse en Liga
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
