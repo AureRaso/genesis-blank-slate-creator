@@ -1,15 +1,15 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { League } from '@/types/padel';
 import { useToast } from '@/hooks/use-toast';
 
-export const useLeagues = () => {
+export const useLeagues = (clubId?: string) => {
   return useQuery({
-    queryKey: ['leagues'],
+    queryKey: ['leagues', clubId],
     queryFn: async () => {
-      console.log('Fetching leagues...');
-      const { data, error } = await supabase
+      console.log('Fetching leagues with clubId:', clubId);
+      
+      let query = supabase
         .from('leagues')
         .select(`
           *,
@@ -21,6 +21,13 @@ export const useLeagues = () => {
           )
         `)
         .order('created_at', { ascending: false });
+
+      // Si se proporciona clubId, filtrar por ese club
+      if (clubId) {
+        query = query.eq('club_id', clubId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching leagues:', error);

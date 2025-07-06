@@ -11,7 +11,7 @@ import { League } from "@/types/padel";
 const LeaguesPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingLeague, setEditingLeague] = useState<League | undefined>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isPlayer, profile } = useAuth();
 
   const handleCloseForm = () => {
     setShowForm(false);
@@ -41,10 +41,13 @@ const LeaguesPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Gestión de Ligas
+            {isPlayer ? "Ligas de Mi Club" : "Gestión de Ligas"}
           </h1>
           <p className="text-muted-foreground">
-            Crea y administra ligas de pádel con diferentes configuraciones de puntuación
+            {isPlayer 
+              ? "Ligas disponibles en tu club para participar"
+              : "Crea y administra ligas de pádel con diferentes configuraciones de puntuación"
+            }
           </p>
         </div>
         {isAdmin && (
@@ -61,15 +64,23 @@ const LeaguesPage = () => {
       {!isAdmin && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle className="text-orange-800">Acceso de Solo Lectura</CardTitle>
+            <CardTitle className="text-orange-800">
+              {isPlayer ? "Información" : "Acceso de Solo Lectura"}
+            </CardTitle>
             <CardDescription className="text-orange-700">
-              Solo los administradores pueden crear y editar ligas. Contacta a un administrador si necesitas crear una nueva liga.
+              {isPlayer 
+                ? "Puedes ver e inscribirte en las ligas disponibles de tu club."
+                : "Solo los administradores pueden crear y editar ligas. Contacta a un administrador si necesitas crear una nueva liga."
+              }
             </CardDescription>
           </CardHeader>
         </Card>
       )}
 
-      <LeaguesList onEditLeague={handleEditLeague} />
+      <LeaguesList 
+        onEditLeague={handleEditLeague} 
+        clubId={isPlayer ? profile?.club_id : undefined}
+      />
     </div>
   );
 };

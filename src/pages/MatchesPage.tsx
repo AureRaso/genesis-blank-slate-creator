@@ -14,9 +14,10 @@ import CreateMatchForm from "@/components/CreateMatchForm";
 const MatchesPage = () => {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, isPlayer, profile } = useAuth();
 
-  const { data: leagues } = useLeagues();
+  // Filtrar ligas por club si es jugador
+  const { data: leagues } = useLeagues(isPlayer ? profile?.club_id : undefined);
   const { data: leagueTeams } = useLeagueTeams(selectedLeagueId);
   const { data: matches } = useMatches(selectedLeagueId);
   const createMatches = useCreateMatches();
@@ -71,11 +72,13 @@ const MatchesPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Gestión de Partidos
+            {isPlayer ? "Mis Partidos" : "Gestión de Partidos"}
           </h1>
           <p className="text-muted-foreground">
             {isAdmin 
               ? "Consulta partidos, genera enfrentamientos y gestiona resultados"
+              : isPlayer
+              ? "Crea partidos, sube resultados y consulta el estado de tus encuentros en tu club"
               : "Crea partidos, sube resultados y consulta el estado de tus encuentros"
             }
           </p>
@@ -97,10 +100,13 @@ const MatchesPage = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Trophy className="h-5 w-5 mr-2" />
-            Seleccionar Liga
+            {isPlayer ? "Seleccionar Liga de Mi Club" : "Seleccionar Liga"}
           </CardTitle>
           <CardDescription>
-            Elige una liga para ver sus partidos
+            {isPlayer 
+              ? "Elige una liga de tu club para ver sus partidos"
+              : "Elige una liga para ver sus partidos"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -166,7 +172,10 @@ const MatchesPage = () => {
               <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Selecciona una liga</h3>
               <p className="text-muted-foreground">
-                Elige una liga activa para ver sus partidos y gestionar encuentros
+                {isPlayer 
+                  ? "Elige una liga de tu club para ver sus partidos y gestionar encuentros"
+                  : "Elige una liga activa para ver sus partidos y gestionar encuentros"
+                }
               </p>
             </div>
           </CardContent>

@@ -11,7 +11,7 @@ import { Club } from "@/types/clubs";
 const ClubsPage = () => {
   const [showClubForm, setShowClubForm] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | undefined>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isPlayer } = useAuth();
 
   const handleCloseClubForm = () => {
     setShowClubForm(false);
@@ -40,19 +40,24 @@ const ClubsPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-          Gestión de Clubs
+          {isPlayer ? "Mi Club" : "Gestión de Clubs"}
         </h1>
         <p className="text-muted-foreground">
-          Administra los clubs de pádel
+          {isPlayer ? "Información de tu club de pádel" : "Administra los clubs de pádel"}
         </p>
       </div>
 
       {!isAdmin && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle className="text-playtomic-orange-dark">Acceso de Solo Lectura</CardTitle>
+            <CardTitle className="text-playtomic-orange-dark">
+              {isPlayer ? "Información de Solo Lectura" : "Acceso de Solo Lectura"}
+            </CardTitle>
             <CardDescription className="text-playtomic-orange">
-              Solo los administradores pueden crear y editar clubs.
+              {isPlayer 
+                ? "Aquí puedes ver la información de tu club."
+                : "Solo los administradores pueden crear y editar clubs."
+              }
             </CardDescription>
           </CardHeader>
         </Card>
@@ -60,8 +65,12 @@ const ClubsPage = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Clubs Registrados</h2>
-          <p className="text-muted-foreground">Gestiona tus clubs de pádel</p>
+          <h2 className="text-xl font-semibold">
+            {isPlayer ? "Tu Club" : "Clubs Registrados"}
+          </h2>
+          <p className="text-muted-foreground">
+            {isPlayer ? "Información de tu club de pádel" : "Gestiona tus clubs de pádel"}
+          </p>
         </div>
         {isAdmin && (
           <Button onClick={handleCreateNewClub} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">

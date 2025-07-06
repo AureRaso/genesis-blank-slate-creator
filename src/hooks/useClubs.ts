@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +43,31 @@ export const useClubs = () => {
       console.log('Clubs fetched:', data);
       return data as Club[];
     },
+  });
+};
+
+export const usePlayerClubs = (clubId?: string) => {
+  return useQuery({
+    queryKey: ['player-clubs', clubId],
+    queryFn: async () => {
+      if (!clubId) return [];
+      
+      console.log('Fetching player club:', clubId);
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('id', clubId)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching player club:', error);
+        throw error;
+      }
+      
+      console.log('Player club fetched:', data);
+      return data as Club[];
+    },
+    enabled: !!clubId,
   });
 };
 
