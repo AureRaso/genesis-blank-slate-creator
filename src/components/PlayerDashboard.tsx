@@ -6,6 +6,8 @@ import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, Cl
 import { usePlayerLeagues } from "@/hooks/usePlayerLeagues";
 import { useMyReservations } from "@/hooks/useClassReservations";
 import { useClub } from "@/hooks/useClub";
+import { useLeagues } from "@/hooks/useLeagues";
+import { useLeagueRegistration } from "@/hooks/useLeagueRegistration";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -16,6 +18,8 @@ const PlayerDashboard = () => {
   const { data: playerLeagues, isLoading: loadingLeagues } = usePlayerLeagues(profile?.id);
   const { data: myReservations, isLoading: loadingReservations } = useMyReservations();
   const { data: club, isLoading: loadingClub } = useClub(profile?.club_id);
+  const { data: availableLeagues, isLoading: loadingAvailableLeagues } = useLeagues(profile?.club_id);
+  const leagueRegistration = useLeagueRegistration();
   const navigate = useNavigate();
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
 
@@ -25,6 +29,28 @@ const PlayerDashboard = () => {
 
   const handleBackToLeagues = () => {
     setSelectedLeagueId(null);
+  };
+
+  const handleRegisterInLeague = () => {
+    if (!profile?.id || !profile?.club_id) return;
+
+    // Find available leagues (not already registered in)
+    const registeredLeagueIds = playerLeagues?.map(league => league.id) || [];
+    const unregisteredLeagues = availableLeagues?.filter(
+      league => !registeredLeagueIds.includes(league.id) && league.status !== 'completed'
+    );
+
+    if (unregisteredLeagues && unregisteredLeagues.length > 0) {
+      // For simplicity, register in the first available league
+      // In a real app, you might want to show a selection modal
+      const leagueToRegister = unregisteredLeagues[0];
+      leagueRegistration.mutate({
+        league_id: leagueToRegister.id,
+        profile_id: profile.id,
+      });
+    } else {
+      navigate('/leagues');
+    }
   };
 
   if (selectedLeagueId) {
@@ -61,6 +87,12 @@ const PlayerDashboard = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Check if there are available leagues to register
+  const registeredLeagueIds = playerLeagues?.map(league => league.id) || [];
+  const hasAvailableLeagues = availableLeagues?.some(
+    league => !registeredLeagueIds.includes(league.id) && league.status !== 'completed'
+  );
 
   return (
     <div className="space-y-6">
@@ -276,11 +308,17 @@ const PlayerDashboard = () => {
                   Únete a una liga para competir con otros jugadores.
                 </p>
                 <Button 
-                  onClick={() => navigate('/leagues')}
+                  onClick={handleRegisterInLeague}
+                  disabled={leagueRegistration.isPending || !hasAvailableLeagues}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Inscribirse en Liga
+                  {leagueRegistration.isPending 
+                    ? "Inscribiendo..." 
+                    : hasAvailableLeagues 
+                      ? "Inscribirse en Liga" 
+                      : "Ver Ligas Disponibles"
+                  }
                 </Button>
               </div>
             )}

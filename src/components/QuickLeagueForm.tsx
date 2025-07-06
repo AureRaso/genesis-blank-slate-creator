@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, X } from "lucide-react";
 import { useCreateLeague } from "@/hooks/useLeagues";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuickLeagueFormProps {
@@ -22,6 +23,7 @@ const QuickLeagueForm = ({ onClose }: QuickLeagueFormProps) => {
 
   const createLeague = useCreateLeague();
   const { toast } = useToast();
+  const { profile, isAdmin } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,18 @@ const QuickLeagueForm = ({ onClose }: QuickLeagueFormProps) => {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos obligatorios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For players, automatically assign their club_id
+    const club_id = !isAdmin && profile?.club_id ? profile.club_id : undefined;
+
+    if (!club_id && !isAdmin) {
+      toast({
+        title: "Error",
+        description: "No tienes un club asignado. Contacta con el administrador.",
         variant: "destructive",
       });
       return;
@@ -44,6 +58,7 @@ const QuickLeagueForm = ({ onClose }: QuickLeagueFormProps) => {
       points_defeat: 0,
       points_per_set: true,
       status: "upcoming" as const,
+      club_id: club_id || "", // For admins, they need to complete in full form
     }, {
       onSuccess: () => {
         onClose();
@@ -67,6 +82,7 @@ const QuickLeagueForm = ({ onClose }: QuickLeagueFormProps) => {
             </CardTitle>
             <CardDescription>
               Crea una nueva liga con configuración predeterminada
+              {!isAdmin && profile?.club_id && " para tu club"}
             </CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -132,6 +148,9 @@ const QuickLeagueForm = ({ onClose }: QuickLeagueFormProps) => {
                 <li>• Puntos victoria: 3</li>
                 <li>• Puntos derrota: 0</li>
                 <li>• Punto extra por set ganado: Sí</li>
+                {!isAdmin && profile?.club_id && (
+                  <li>• Club: Asignado automáticamente a tu club</li>
+                )}
               </ul>
             </div>
 

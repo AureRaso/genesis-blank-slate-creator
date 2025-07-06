@@ -27,6 +27,12 @@ export interface League {
   status: "upcoming" | "active" | "completed";
   club_id?: string; // referencia al club donde se juega la liga
   created_at: string;
+  clubs?: {
+    id: string;
+    name: string;
+    address: string;
+    phone: string;
+  }; // Optional joined club data
 }
 
 export interface Match {

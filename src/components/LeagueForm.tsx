@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateLeague, useUpdateLeague } from "@/hooks/useLeagues";
 import { useClubs } from "@/hooks/useClubs";
+import { useAuth } from "@/contexts/AuthContext";
 import { League } from "@/types/padel";
 import { X, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,6 +36,10 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
   const createLeague = useCreateLeague();
   const updateLeague = useUpdateLeague();
   const { data: clubs, isLoading: clubsLoading } = useClubs();
+  const { isAdmin, profile } = useAuth();
+
+  // For players, use their club_id; for admins, allow selection
+  const defaultClubId = !isAdmin && profile?.club_id ? profile.club_id : (league?.club_id || "");
 
   const {
     register,
@@ -53,7 +58,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_per_set: league.points_per_set,
           registration_price: league.registration_price,
           status: league.status,
-          club_id: league.club_id || "",
+          club_id: league.club_id || defaultClubId,
         }
       : {
           name: "",
@@ -64,7 +69,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           points_per_set: false,
           registration_price: 0,
           status: "upcoming",
-          club_id: "",
+          club_id: defaultClubId,
         },
   });
 
@@ -73,6 +78,11 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
 
   const onSubmit = async (data: LeagueFormData) => {
     try {
+      // For players, ensure they can only create leagues for their club
+      if (!isAdmin && profile?.club_id) {
+        data.club_id = profile.club_id;
+      }
+
       if (isEditing && league) {
         await updateLeague.mutateAsync({
           id: league.id,
@@ -89,6 +99,9 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
 
   const hasClubs = clubs && clubs.length > 0;
   const canCreateLeague = hasClubs && selectedClubId;
+
+  // Filter clubs based on user role
+  const availableClubs = isAdmin ? clubs : clubs?.filter(club => club.id === profile?.club_id);
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -255,30 +268,41 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="club_id">Club donde se juega la liga *</Label>
-            <Select
-              value={selectedClubId}
-              onValueChange={(value) => setValue("club_id", value)}
-              disabled={clubsLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  clubsLoading 
-                    ? "Cargando clubs..." 
-                    : hasClubs 
-                      ? "Selecciona un club" 
-                      : "No hay clubs disponibles"
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {clubs?.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.name} - {club.address.substring(0, 30)}...
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!selectedClubId && hasClubs && (
+            <Label htmlFor="club_id">
+              Club donde se juega la liga *
+              {!isAdmin && " (Asignado automáticamente)"}
+            </Label>
+            {isAdmin ? (
+              <Select
+                value={selectedClubId}
+                onValueChange={(value) => setValue("club_id", value)}
+                disabled={clubsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    clubsLoading 
+                      ? "Cargando clubs..." 
+                      : hasClubs 
+                        ? "Selecciona un club" 
+                        : "No hay clubs disponibles"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableClubs?.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name} - {club.address.substring(0, 30)}...
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={availableClubs?.[0]?.name || "Tu club"}
+                disabled
+                className="bg-gray-100"
+              />
+            )}
+            {!selectedClubId && hasClubs && isAdmin && (
               <p className="text-sm text-destructive">Debes seleccionar un club</p>
             )}
           </div>
