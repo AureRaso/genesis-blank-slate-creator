@@ -79,7 +79,7 @@ function App() {
                   // Rutas para otros roles
                   <>
                     <Route path="/" element={<Index />} />
-                    <Route path="/leagues" element={isAdmin ? <LeaguesPage /> : <Navigate to="/" replace />} />
+                    <Route path="/leagues" element={<LeaguesPage />} />
                     <Route path="/matches" element={<MatchesPage />} />
                     <Route path="/classes" element={<ClassesPage />} />
                     <Route path="/players" element={<PlayersPage />} />
