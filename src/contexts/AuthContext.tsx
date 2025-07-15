@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     let loadingTimeout: NodeJS.Timeout;
+    let currentUserId: string | null = null;
 
     // Safety timeout to prevent infinite loading
     const setupLoadingTimeout = () => {
@@ -52,9 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Setup loading timeout
-    setupLoadingTimeout();
-
     // Only use onAuthStateChange for all auth state management
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -65,16 +63,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Clear any existing error
         setAuthError(null);
         
-        // Reset loading timeout
-        setupLoadingTimeout();
-        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Only fetch profile if it's a different user or we don't have a profile yet
+          if (currentUserId !== session.user.id || !profile) {
+            currentUserId = session.user.id;
+            setLoading(true);
+            setupLoadingTimeout();
+            
+            try {
+              await fetchProfile(session.user.id);
+            } catch (error) {
+              console.error('AuthContext - Error in fetchProfile:', error);
+              setAuthError('Error al cargar el perfil. Por favor, intenta de nuevo.');
+            } finally {
+              clearLoadingTimeout();
+            }
+          }
         } else {
           console.log('AuthContext - No session, clearing profile');
+          currentUserId = null;
           setProfile(null);
           setLoading(false);
           clearLoadingTimeout();
@@ -87,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearLoadingTimeout();
       subscription.unsubscribe();
     };
-  }, []);
+  }, [profile]);
 
   const fetchProfile = async (userId: string) => {
     console.log('AuthContext - Starting fetchProfile for user:', userId);
@@ -103,18 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('AuthContext - Making profile query...');
       
-      // Simple timeout promise to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Query timeout')), 5000);
-      });
-      
-      const queryPromise = supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
       
       console.log('AuthContext - Profile query result:', { data, error });
 
@@ -143,11 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('AuthContext - Exception in fetchProfile:', error);
-      if (error.message === 'Query timeout') {
-        setAuthError('Timeout al cargar el perfil. Por favor, intenta de nuevo.');
-      } else {
-        setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
-      }
+      setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
     } finally {
       isCurrentlyFetching = false;
       console.log('AuthContext - Setting loading to false in finally block');
