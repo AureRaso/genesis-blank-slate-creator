@@ -136,17 +136,17 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="h-screen w-full bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4 overflow-hidden">
+      <div className="w-full max-w-md flex flex-col justify-center">
         {/* Header con logo y título */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <div className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark p-4 rounded-full shadow-lg">
               <Zap className="h-8 w-8 text-white" />
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-            Padel Pro
+            PadelLock
           </h1>
           <p className="text-gray-600 mt-2">
             Gestiona tu club de pádel profesionalmente
@@ -335,8 +335,8 @@ export const AuthPage = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6 text-sm text-gray-500">
-          <p>© 2024 Padel Pro. Todos los derechos reservados.</p>
+        <div className="text-center mt-4 text-sm text-gray-500">
+          <p>© 2024 PadelLock. Todos los derechos reservados.</p>
         </div>
       </div>
     </div>
