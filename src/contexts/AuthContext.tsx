@@ -8,9 +8,11 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string, clubId?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  retryAuth: () => void;
   isAdmin: boolean;
   isPlayer: boolean;
   isTrainer: boolean;
@@ -23,47 +25,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Cache and debounce for profile fetching
+  const profileCache = new Map<string, { profile: Profile | null; timestamp: number }>();
+  const fetchingProfiles = new Set<string>();
+  let profileAbortController: AbortController | null = null;
 
   useEffect(() => {
     let mounted = true;
-    
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      
-      console.log('AuthContext - Initial session:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        console.log('AuthContext - No initial session, setting loading to false');
-        setLoading(false);
-      }
-    });
+    let loadingTimeout: NodeJS.Timeout;
 
-    // Listen for auth changes
+    // Safety timeout to prevent infinite loading
+    const setupLoadingTimeout = () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      loadingTimeout = setTimeout(() => {
+        if (mounted) {
+          console.warn('AuthContext - Loading timeout reached, forcing loading to false');
+          setLoading(false);
+          setAuthError('Timeout al cargar la aplicación. Por favor, recarga la página.');
+        }
+      }, 10000);
+    };
+
+    const clearLoadingTimeout = () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+    };
+
+    // Setup loading timeout
+    setupLoadingTimeout();
+
+    // Only use onAuthStateChange for all auth state management
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
         console.log('AuthContext - Auth state change:', event, session?.user?.email);
+        
+        // Clear any existing error
+        setAuthError(null);
+        
+        // Reset loading timeout
+        setupLoadingTimeout();
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           await fetchProfile(session.user.id);
         } else {
-          console.log('AuthContext - No session in state change, clearing profile');
+          console.log('AuthContext - No session, clearing profile');
           setProfile(null);
           setLoading(false);
+          clearLoadingTimeout();
         }
       }
     );
 
     return () => {
       mounted = false;
+      clearLoadingTimeout();
+      if (profileAbortController) {
+        profileAbortController.abort();
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -71,21 +97,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     console.log('AuthContext - Starting fetchProfile for user:', userId);
     
+    // Prevent multiple concurrent requests for the same user
+    if (fetchingProfiles.has(userId)) {
+      console.log('AuthContext - Already fetching profile for user:', userId);
+      return;
+    }
+
+    // Check cache first (5 minute cache)
+    const cached = profileCache.get(userId);
+    if (cached && Date.now() - cached.timestamp < 300000) {
+      console.log('AuthContext - Using cached profile for user:', userId);
+      setProfile(cached.profile);
+      setLoading(false);
+      return;
+    }
+
+    fetchingProfiles.add(userId);
+    
+    // Cancel any existing request
+    if (profileAbortController) {
+      profileAbortController.abort();
+    }
+    
+    profileAbortController = new AbortController();
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
+        .abortSignal(profileAbortController.signal)
         .single();
 
       console.log('AuthContext - Profile query result:', { data, error });
 
       if (error) {
         console.error('AuthContext - Error fetching profile:', error);
+        
         if (error.code === 'PGRST116') {
           console.log('AuthContext - Profile not found, but user exists');
           // Profile doesn't exist yet, but user is authenticated
           setProfile(null);
+          profileCache.set(userId, { profile: null, timestamp: Date.now() });
+        } else if (error.code === 'PGRST301') {
+          console.log('AuthContext - RLS policy violation, user may not have access');
+          setProfile(null);
+          setAuthError('Error de permisos. Por favor, contacta al administrador.');
+        } else {
+          console.error('AuthContext - Unexpected error:', error);
+          setAuthError('Error al cargar el perfil. Por favor, intenta de nuevo.');
         }
       } else if (data) {
         console.log('AuthContext - Profile fetched successfully:', data);
@@ -95,14 +155,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: data.role as 'admin' | 'player' | 'trainer'
         };
         setProfile(validProfile);
+        profileCache.set(userId, { profile: validProfile, timestamp: Date.now() });
         console.log('AuthContext - Profile set with role:', validProfile.role);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('AuthContext - Profile fetch aborted');
+        return;
+      }
       console.error('AuthContext - Exception in fetchProfile:', error);
+      setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
     } finally {
+      fetchingProfiles.delete(userId);
       console.log('AuthContext - Setting loading to false');
       setLoading(false);
     }
+  };
+
+  const retryAuth = () => {
+    setAuthError(null);
+    setLoading(true);
+    // Clear cache and retry
+    profileCache.clear();
+    fetchingProfiles.clear();
+    
+    // Trigger auth state refresh
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
   };
 
   const signIn = async (email: string, password: string) => {
@@ -171,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hasUser: !!user, 
     hasProfile: !!profile, 
     role: profile?.role,
+    authError,
     isAdmin,
     isPlayer,
     isTrainer 
@@ -180,9 +265,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     profile,
     loading,
+    authError,
     signIn,
     signUp,
     signOut,
+    retryAuth,
     isAdmin,
     isPlayer,
     isTrainer,
