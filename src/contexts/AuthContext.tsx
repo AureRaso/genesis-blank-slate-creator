@@ -27,10 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Cache and debounce for profile fetching
-  const profileCache = new Map<string, { profile: Profile | null; timestamp: number }>();
-  const fetchingProfiles = new Set<string>();
-  let profileAbortController: AbortController | null = null;
+  // Simple profile fetching state
+  let isCurrentlyFetching = false;
 
   useEffect(() => {
     let mounted = true;
@@ -87,9 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
       clearLoadingTimeout();
-      if (profileAbortController) {
-        profileAbortController.abort();
-      }
       subscription.unsubscribe();
     };
   }, []);
@@ -97,38 +92,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     console.log('AuthContext - Starting fetchProfile for user:', userId);
     
-    // Prevent multiple concurrent requests for the same user
-    if (fetchingProfiles.has(userId)) {
-      console.log('AuthContext - Already fetching profile for user:', userId);
+    // Prevent multiple concurrent requests
+    if (isCurrentlyFetching) {
+      console.log('AuthContext - Already fetching profile, skipping');
       return;
     }
 
-    // Check cache first (5 minute cache)
-    const cached = profileCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < 300000) {
-      console.log('AuthContext - Using cached profile for user:', userId);
-      setProfile(cached.profile);
-      setLoading(false);
-      return;
-    }
-
-    fetchingProfiles.add(userId);
-    
-    // Cancel any existing request
-    if (profileAbortController) {
-      profileAbortController.abort();
-    }
-    
-    profileAbortController = new AbortController();
+    isCurrentlyFetching = true;
     
     try {
-      const { data, error } = await supabase
+      console.log('AuthContext - Making profile query...');
+      
+      // Simple timeout promise to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Query timeout')), 5000);
+      });
+      
+      const queryPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .abortSignal(profileAbortController.signal)
         .single();
-
+      
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+      
       console.log('AuthContext - Profile query result:', { data, error });
 
       if (error) {
@@ -136,9 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error.code === 'PGRST116') {
           console.log('AuthContext - Profile not found, but user exists');
-          // Profile doesn't exist yet, but user is authenticated
           setProfile(null);
-          profileCache.set(userId, { profile: null, timestamp: Date.now() });
         } else if (error.code === 'PGRST301') {
           console.log('AuthContext - RLS policy violation, user may not have access');
           setProfile(null);
@@ -149,25 +134,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (data) {
         console.log('AuthContext - Profile fetched successfully:', data);
-        // Asegurar que el rol es válido según nuestros tipos
         const validProfile: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'trainer'
         };
         setProfile(validProfile);
-        profileCache.set(userId, { profile: validProfile, timestamp: Date.now() });
         console.log('AuthContext - Profile set with role:', validProfile.role);
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('AuthContext - Profile fetch aborted');
-        return;
-      }
       console.error('AuthContext - Exception in fetchProfile:', error);
-      setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
+      if (error.message === 'Query timeout') {
+        setAuthError('Timeout al cargar el perfil. Por favor, intenta de nuevo.');
+      } else {
+        setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
+      }
     } finally {
-      fetchingProfiles.delete(userId);
-      console.log('AuthContext - Setting loading to false');
+      isCurrentlyFetching = false;
+      console.log('AuthContext - Setting loading to false in finally block');
       setLoading(false);
     }
   };
@@ -175,9 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const retryAuth = () => {
     setAuthError(null);
     setLoading(true);
-    // Clear cache and retry
-    profileCache.clear();
-    fetchingProfiles.clear();
+    isCurrentlyFetching = false;
     
     // Trigger auth state refresh
     supabase.auth.getSession().then(({ data: { session } }) => {
