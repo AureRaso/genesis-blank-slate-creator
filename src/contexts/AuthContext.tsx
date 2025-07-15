@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Profile } from '@/types/auth';
@@ -27,25 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Simple profile fetching state
-  let isCurrentlyFetching = false;
+  // Use refs to track state without causing re-renders
+  const currentUserIdRef = useRef<string | null>(null);
+  const isCurrentlyFetching = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
     let loadingTimeout: NodeJS.Timeout;
-    let currentUserId: string | null = null;
-
-    // Safety timeout to prevent infinite loading
-    const setupLoadingTimeout = () => {
-      if (loadingTimeout) clearTimeout(loadingTimeout);
-      loadingTimeout = setTimeout(() => {
-        if (mounted) {
-          console.warn('AuthContext - Loading timeout reached, forcing loading to false');
-          setLoading(false);
-          setAuthError('Timeout al cargar la aplicación. Por favor, recarga la página.');
-        }
-      }, 10000);
-    };
 
     const clearLoadingTimeout = () => {
       if (loadingTimeout) {
@@ -53,9 +42,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const setupLoadingTimeout = () => {
+      clearLoadingTimeout();
+      loadingTimeout = setTimeout(() => {
+        if (mounted) {
+          console.warn('AuthContext - Loading timeout reached');
+          setLoading(false);
+          setAuthError('Timeout al cargar la aplicación. Por favor, recarga la página.');
+        }
+      }, 10000);
+    };
+
     // Only use onAuthStateChange for all auth state management
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
         
         console.log('AuthContext - Auth state change:', event, session?.user?.email);
@@ -67,24 +67,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Only fetch profile if it's a different user or we don't have a profile yet
-          if (currentUserId !== session.user.id || !profile) {
-            currentUserId = session.user.id;
-            setLoading(true);
-            setupLoadingTimeout();
+          const userId = session.user.id;
+          
+          // Only fetch profile if it's a different user or we haven't fetched it yet
+          if (currentUserIdRef.current !== userId || !profile) {
+            currentUserIdRef.current = userId;
             
-            try {
-              await fetchProfile(session.user.id);
-            } catch (error) {
-              console.error('AuthContext - Error in fetchProfile:', error);
-              setAuthError('Error al cargar el perfil. Por favor, intenta de nuevo.');
-            } finally {
-              clearLoadingTimeout();
+            // Set loading and start timeout only if we're actually fetching
+            if (!isCurrentlyFetching.current) {
+              setLoading(true);
+              setupLoadingTimeout();
+              
+              fetchProfile(userId).finally(() => {
+                clearLoadingTimeout();
+              });
             }
           }
         } else {
           console.log('AuthContext - No session, clearing profile');
-          currentUserId = null;
+          currentUserIdRef.current = null;
           setProfile(null);
           setLoading(false);
           clearLoadingTimeout();
@@ -97,18 +98,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearLoadingTimeout();
       subscription.unsubscribe();
     };
-  }, [profile]);
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     console.log('AuthContext - Starting fetchProfile for user:', userId);
     
     // Prevent multiple concurrent requests
-    if (isCurrentlyFetching) {
+    if (isCurrentlyFetching.current) {
       console.log('AuthContext - Already fetching profile, skipping');
       return;
     }
 
-    isCurrentlyFetching = true;
+    isCurrentlyFetching.current = true;
     
     try {
       console.log('AuthContext - Making profile query...');
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('AuthContext - Exception in fetchProfile:', error);
       setAuthError('Error de conexión. Por favor, verifica tu conexión a internet.');
     } finally {
-      isCurrentlyFetching = false;
+      isCurrentlyFetching.current = false;
       console.log('AuthContext - Setting loading to false in finally block');
       setLoading(false);
     }
@@ -157,11 +158,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const retryAuth = () => {
     setAuthError(null);
     setLoading(true);
-    isCurrentlyFetching = false;
+    isCurrentlyFetching.current = false;
+    currentUserIdRef.current = null;
     
     // Trigger auth state refresh
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        currentUserIdRef.current = session.user.id;
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
