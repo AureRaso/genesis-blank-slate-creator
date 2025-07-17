@@ -45,7 +45,7 @@ const AppSidebar = () => {
                     <UserCheck className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">PadelLock</span>
+                    <span className="truncate font-semibold">PadeLock</span>
                     <span className="truncate text-xs">Panel Profesor</span>
                   </div>
                 </Link>
@@ -135,7 +135,7 @@ const AppSidebar = () => {
                     <Users className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">PadelLock</span>
+                    <span className="truncate font-semibold">PadeLock</span>
                     <span className="truncate text-xs">Panel Jugador</span>
                   </div>
                 </Link>
@@ -233,7 +233,7 @@ const AppSidebar = () => {
                   <SquareTerminal className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">PadelLock</span>
+                  <span className="truncate font-semibold">PadeLock</span>
                   <span className="truncate text-xs">Panel Administrador</span>
                 </div>
               </Link>

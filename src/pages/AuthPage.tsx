@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Zap, UserPlus, LogIn, Mail, Lock, User } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
@@ -116,25 +115,6 @@ export const AuthPage = () => {
     }
   };
 
-  const handleClearSession = async () => {
-    try {
-      localStorage.clear();
-      await supabase.auth.signOut();
-      toast({
-        title: "Sesión limpiada",
-        description: "Cache y sesión eliminados",
-      });
-      window.location.reload();
-    } catch (error) {
-      console.error("Error clearing session:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo limpiar la sesión",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="h-screen w-full bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4 overflow-hidden">
       <div className="w-full max-w-md flex flex-col justify-center">
@@ -146,7 +126,7 @@ export const AuthPage = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-            PadelLock
+            PadeLock
           </h1>
           <p className="text-gray-600 mt-2">
             Gestiona tu club de pádel profesionalmente
@@ -322,21 +302,11 @@ export const AuthPage = () => {
                 </form>
               </TabsContent>
             </Tabs>
-            
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button 
-                variant="outline" 
-                onClick={handleClearSession}
-                className="w-full text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-              >
-                Limpiar Sesión y Caché
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
         <div className="text-center mt-4 text-sm text-gray-500">
-          <p>© 2024 PadelLock. Todos los derechos reservados.</p>
+          <p>© 2024 PadeLock. Todos los derechos reservados.</p>
         </div>
       </div>
     </div>
