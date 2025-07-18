@@ -1,41 +1,21 @@
-
 import { Link } from "react-router-dom";
-import {
-  Building2,
-  Calendar,
-  GraduationCap,
-  LogOut,
-  SquareTerminal,
-  Trophy,
-  UserCheck,
-  Users,
-  Zap,
-} from "lucide-react";
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
-
 const AppSidebar = () => {
   const authContext = useAuth();
-  
+
   // Provide safe defaults if auth context is not available
-  const { isAdmin = false, isTrainer = false, isPlayer = false } = authContext || {};
+  const {
+    isAdmin = false,
+    isTrainer = false,
+    isPlayer = false
+  } = authContext || {};
 
   // Si es trainer, mostrar solo el dashboard
   if (isTrainer) {
-    return (
-      <Sidebar variant="inset">
+    return <Sidebar variant="inset">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -59,17 +39,15 @@ const AppSidebar = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/">
-                    <Calendar />
-                    <span>Mi Calendario</span>
-                  </Link>
+                  
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link to="/scheduled-classes">
                     <GraduationCap />
-                    <span>Clases Programadas</span>
+                    <span>Panel Profesor
+                  </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -92,48 +70,38 @@ const AppSidebar = () => {
         <SidebarFooter>
           <UserMenu />
         </SidebarFooter>
-      </Sidebar>
-    );
+      </Sidebar>;
   }
 
   // Si es jugador, mostrar panel personalizado sin profesores
   if (isPlayer) {
-    const playerNavItems = [
-      {
-        title: "Dashboard",
-        url: "/",
-        icon: SquareTerminal,
-        isActive: true,
-      },
-      {
-        title: "Ligas",
-        url: "/leagues",
-        icon: Trophy,
-      },
-      {
-        title: "Partidos",
-        url: "/matches",
-        icon: Zap,
-      },
-      {
-        title: "Clases",
-        url: "/classes",
-        icon: GraduationCap,
-      },
-      {
-        title: "Jugadores",
-        url: "/players",
-        icon: Users,
-      },
-      {
-        title: "Clubs",
-        url: "/clubs",
-        icon: Building2,
-      },
-    ];
-
-    return (
-      <Sidebar variant="inset">
+    const playerNavItems = [{
+      title: "Dashboard",
+      url: "/",
+      icon: SquareTerminal,
+      isActive: true
+    }, {
+      title: "Ligas",
+      url: "/leagues",
+      icon: Trophy
+    }, {
+      title: "Partidos",
+      url: "/matches",
+      icon: Zap
+    }, {
+      title: "Clases",
+      url: "/classes",
+      icon: GraduationCap
+    }, {
+      title: "Jugadores",
+      url: "/players",
+      icon: Users
+    }, {
+      title: "Clubs",
+      url: "/clubs",
+      icon: Building2
+    }];
+    return <Sidebar variant="inset">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -155,16 +123,14 @@ const AppSidebar = () => {
           <SidebarGroup>
             <SidebarGroupLabel>Navegación</SidebarGroupLabel>
             <SidebarMenu>
-              {playerNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {playerNavItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <Link to={item.url}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
@@ -184,59 +150,47 @@ const AppSidebar = () => {
         <SidebarFooter>
           <UserMenu />
         </SidebarFooter>
-      </Sidebar>
-    );
+      </Sidebar>;
   }
 
   // Panel para administradores (mantener funcionalidad original)
   const data = {
-    navMain: [
-      {
-        title: "Dashboard",
-        url: "/",
-        icon: SquareTerminal,
-        isActive: true,
-      },
-      {
-        title: "Ligas",
-        url: "/leagues",
-        icon: Trophy,
-      },
-      {
-        title: "Partidos",
-        url: "/matches",
-        icon: Zap,
-      },
-      {
-        title: "Clases",
-        url: "/classes",
-        icon: GraduationCap,
-      },
-      {
-        title: "Clases Programadas",
-        url: "/scheduled-classes",
-        icon: Calendar,
-      },
-      {
-        title: "Jugadores",
-        url: "/players",
-        icon: Users,
-      },
-      {
-        title: "Profesores",
-        url: "/trainers",
-        icon: UserCheck,
-      },
-      {
-        title: "Clubs",
-        url: "/clubs",
-        icon: Building2,
-      },
-    ],
+    navMain: [{
+      title: "Dashboard",
+      url: "/",
+      icon: SquareTerminal,
+      isActive: true
+    }, {
+      title: "Ligas",
+      url: "/leagues",
+      icon: Trophy
+    }, {
+      title: "Partidos",
+      url: "/matches",
+      icon: Zap
+    }, {
+      title: "Clases",
+      url: "/classes",
+      icon: GraduationCap
+    }, {
+      title: "Clases Programadas",
+      url: "/scheduled-classes",
+      icon: Calendar
+    }, {
+      title: "Jugadores",
+      url: "/players",
+      icon: Users
+    }, {
+      title: "Profesores",
+      url: "/trainers",
+      icon: UserCheck
+    }, {
+      title: "Clubs",
+      url: "/clubs",
+      icon: Building2
+    }]
   };
-
-  return (
-    <Sidebar variant="inset">
+  return <Sidebar variant="inset">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -258,16 +212,14 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarMenu>
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
+            {data.navMain.map(item => <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link to={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+              </SidebarMenuItem>)}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
@@ -287,8 +239,6 @@ const AppSidebar = () => {
       <SidebarFooter>
         <UserMenu />
       </SidebarFooter>
-    </Sidebar>
-  );
+    </Sidebar>;
 };
-
 export default AppSidebar;
