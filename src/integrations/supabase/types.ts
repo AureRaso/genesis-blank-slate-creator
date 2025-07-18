@@ -1306,7 +1306,19 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_club_admin_of_class: {
+        Args: { class_id: string }
+        Returns: boolean
+      }
       is_trainer_assigned_to_club: {
+        Args: { club_id: string }
+        Returns: boolean
+      }
+      is_trainer_of_class: {
+        Args: { class_id: string }
+        Returns: boolean
+      }
+      is_trainer_of_club: {
         Args: { club_id: string }
         Returns: boolean
       }
