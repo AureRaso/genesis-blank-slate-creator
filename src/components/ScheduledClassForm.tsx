@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
-import { useClassTemplates } from "@/hooks/useClassTemplates";
+import { useCreateClassTemplate } from "@/hooks/useClassTemplates";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
 import { useCreateClassSchedule } from "@/hooks/useScheduledClasses";
@@ -68,9 +67,9 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
 
-  const { data: templates } = useClassTemplates(clubId);
   const { data: groups } = useClassGroups(clubId);
   const { data: students } = useStudentEnrollments();
+  const createTemplateMutation = useCreateClassTemplate();
   const createScheduleMutation = useCreateClassSchedule();
   const { toast } = useToast();
 
@@ -137,21 +136,25 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
 
   const onSubmit = async (data: FormData) => {
     try {
-      // For now, we'll use the first available template or create a placeholder
-      // In a real implementation, you'd create the template first
-      const templateId = templates?.[0]?.id || "";
+      // First, create the class template
+      const templateData = {
+        name: data.name,
+        level: data.level,
+        trainer_profile_id: data.trainer_profile_id,
+        club_id: data.club_id,
+        duration_minutes: data.duration_minutes,
+        max_students: data.max_students,
+        price_per_student: data.price_per_student,
+        court_number: data.court_number,
+        objective: data.objective,
+        group_id: data.group_id,
+      };
 
-      if (!templateId) {
-        toast({
-          title: "Error",
-          description: "No hay plantillas disponibles. Crea una plantilla primero.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const template = await createTemplateMutation.mutateAsync(templateData);
 
+      // Then create the schedule using the new template
       const scheduleData = {
-        template_id: templateId,
+        template_id: template.id,
         day_of_week: data.day_of_week,
         start_time: data.start_time,
         start_date: format(data.start_date, 'yyyy-MM-dd'),
@@ -161,9 +164,20 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
       };
 
       await createScheduleMutation.mutateAsync(scheduleData);
+      
+      toast({
+        title: "Clases programadas",
+        description: "Se han creado las clases y la plantilla correctamente.",
+      });
+      
       onClose();
     } catch (error) {
       console.error("Error creating schedule:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron crear las clases programadas.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -653,9 +667,9 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
               ) : (
                 <Button 
                   type="submit" 
-                  disabled={createScheduleMutation.isPending}
+                  disabled={createTemplateMutation.isPending || createScheduleMutation.isPending}
                 >
-                  {createScheduleMutation.isPending ? "Creando..." : "Crear Clases"}
+                  {(createTemplateMutation.isPending || createScheduleMutation.isPending) ? "Creando..." : "Crear Clases"}
                 </Button>
               )}
             </div>
