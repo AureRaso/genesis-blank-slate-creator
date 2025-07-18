@@ -116,10 +116,11 @@ function App() {
             <AppLayout>
               <Routes>
                 {isTrainer ? (
-                  // Rutas específicas para trainers
+                  // Rutas específicas para trainers - ahora incluye clases programadas
                   <>
                     <Route path="/" element={<TrainerDashboard />} />
                     <Route path="/dashboard" element={<TrainerDashboard />} />
+                    <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (

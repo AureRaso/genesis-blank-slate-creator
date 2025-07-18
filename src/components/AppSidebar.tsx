@@ -13,7 +13,7 @@ const AppSidebar = () => {
     isPlayer = false
   } = authContext || {};
 
-  // Si es trainer, mostrar solo el dashboard
+  // Si es trainer, mostrar panel personalizado con clases programadas
   if (isTrainer) {
     return <Sidebar variant="inset">
         <SidebarHeader>
@@ -39,26 +39,18 @@ const AppSidebar = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  
+                  <Link to="/">
+                    <GraduationCap />
+                    <span>Dashboard</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link to="/scheduled-classes">
-                    <GraduationCap />
-                    <span>Panel Profesor
-                  </span>
+                    <Calendar />
+                    <span>Clases Programadas</span>
                   </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-          <SidebarGroup>
-            
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

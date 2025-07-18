@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Calendar, Plus, Clock, Users, Edit, Trash2, Eye, UserPlus } from "lucide-react";
+import { Calendar, Plus, Clock, Users, Edit, Trash2, Eye, UserPlus, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +12,7 @@ import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import StudentsList from "@/components/StudentsList";
 import { ClassSlot } from "@/hooks/useClassSlots";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { Link } from "react-router-dom";
 
 const TrainerDashboard = () => {
   const [showClassForm, setShowClassForm] = useState(false);
@@ -121,7 +121,7 @@ const TrainerDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Quick Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
@@ -130,6 +130,16 @@ const TrainerDashboard = () => {
           <p className="text-muted-foreground">
             Bienvenido, {trainerName}
           </p>
+        </div>
+        
+        {/* Quick Actions */}
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/scheduled-classes">
+              <CalendarCheck className="mr-2 h-4 w-4" />
+              Clases Programadas
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -199,14 +209,22 @@ const TrainerDashboard = () => {
                 <p className="text-muted-foreground mb-6">
                   Crea tu primera clase para comenzar a gestionar tu disponibilidad
                 </p>
-                <Button 
-                  onClick={handleCreateNewClass} 
-                  className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
-                  size="lg"
-                >
-                  <Plus className="mr-2 h-5 w-5" />
-                  Crear Primera Clase
-                </Button>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={handleCreateNewClass} 
+                    className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
+                    size="lg"
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    Crear Primera Clase
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/scheduled-classes">
+                      <CalendarCheck className="mr-2 h-5 w-5" />
+                      Ver Clases Programadas
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
