@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -10,13 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { cn } from "@/lib/utils";
 
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
+import type { ClassFiltersData } from "./ClassFilters";
 
 interface ClassCalendarViewProps {
   clubId?: string;
-  filters?: {
-    level?: string;
-    groupId?: string;
-  };
+  filters: ClassFiltersData;
 }
 
 export default function ClassCalendarView({ clubId, filters }: ClassCalendarViewProps) {
@@ -37,10 +36,28 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
   const goToToday = () => setCurrentWeek(new Date());
 
+  // Filter classes based on active filters
+  const filteredClasses = classes?.filter((cls) => {
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const matchesSearch = 
+        cls.template.name.toLowerCase().includes(searchLower) ||
+        cls.enrollments?.some(e => 
+          e.student_enrollment.full_name.toLowerCase().includes(searchLower)
+        ) ||
+        cls.template.group?.name.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+
+    if (filters.level && cls.template.level !== filters.level) return false;
+    if (filters.status && cls.status !== filters.status) return false;
+    if (filters.groupId && cls.template.group_id !== filters.groupId) return false;
+
+    return true;
+  }) || [];
+
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
-    if (!classes) return [];
-    
-    return classes.filter(cls => {
+    return filteredClasses.filter(cls => {
       const classDate = parseISO(cls.class_date);
       const classTime = cls.start_time.slice(0, 5); // Remove seconds
       return isSameDay(classDate, day) && classTime === timeSlot;
@@ -75,6 +92,11 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Calendario de Clases
+            {filteredClasses.length !== classes?.length && (
+              <Badge variant="secondary">
+                {filteredClasses.length} de {classes?.length || 0}
+              </Badge>
+            )}
           </CardTitle>
           
           <div className="flex items-center gap-2">
@@ -153,7 +175,6 @@ interface ClassCardProps {
 
 function ClassCard({ class: cls }: ClassCardProps) {
   const enrolledCount = cls.enrollments?.length || 0;
-  const availableSpots = cls.max_students - enrolledCount;
 
   return (
     <Dialog>

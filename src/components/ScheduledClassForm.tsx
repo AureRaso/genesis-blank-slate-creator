@@ -1,8 +1,9 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -16,12 +17,15 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 import { useClassTemplates } from "@/hooks/useClassTemplates";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
 import { useCreateClassSchedule } from "@/hooks/useScheduledClasses";
+import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
@@ -62,11 +66,13 @@ interface ScheduledClassFormProps {
 export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }: ScheduledClassFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [previewDates, setPreviewDates] = useState<string[]>([]);
+  const [conflicts, setConflicts] = useState<string[]>([]);
 
   const { data: templates } = useClassTemplates(clubId);
   const { data: groups } = useClassGroups(clubId);
   const { data: students } = useStudentEnrollments();
   const createScheduleMutation = useCreateClassSchedule();
+  const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -85,6 +91,18 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
   const watchedValues = form.watch();
 
   // Generate preview dates when recurrence settings change
+  useEffect(() => {
+    const dates = generatePreview();
+    setPreviewDates(dates);
+    
+    // Check for conflicts (simplified - you might want more sophisticated conflict detection)
+    const newConflicts = [];
+    if (watchedValues.court_number && dates.length > 10) {
+      newConflicts.push("Muchas clases programadas. Verifica disponibilidad de pista.");
+    }
+    setConflicts(newConflicts);
+  }, [watchedValues.day_of_week, watchedValues.start_date, watchedValues.end_date, watchedValues.recurrence_type, watchedValues.recurrence_interval, watchedValues.court_number]);
+
   const generatePreview = () => {
     const { day_of_week, start_date, end_date, recurrence_type, recurrence_interval } = watchedValues;
     
@@ -117,34 +135,19 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
     return dates;
   };
 
-  // Update preview when form values change
-  useState(() => {
-    const dates = generatePreview();
-    setPreviewDates(dates);
-  });
-
   const onSubmit = async (data: FormData) => {
     try {
-      // First create the template
-      const templateData = {
-        name: data.name,
-        group_id: data.group_id,
-        level: data.level,
-        trainer_profile_id: data.trainer_profile_id,
-        club_id: data.club_id,
-        duration_minutes: data.duration_minutes,
-        max_students: data.max_students,
-        price_per_student: data.price_per_student,
-        court_number: data.court_number,
-        objective: data.objective,
-      };
-
       // For now, we'll use the first available template or create a placeholder
       // In a real implementation, you'd create the template first
       const templateId = templates?.[0]?.id || "";
 
       if (!templateId) {
-        throw new Error("No hay plantillas disponibles. Crea una plantilla primero.");
+        toast({
+          title: "Error",
+          description: "No hay plantillas disponibles. Crea una plantilla primero.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const scheduleData = {
@@ -173,6 +176,15 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleStudentSelection = (studentId: string, checked: boolean) => {
+    const currentStudents = form.getValues().selected_students;
+    if (checked) {
+      form.setValue("selected_students", [...currentStudents, studentId]);
+    } else {
+      form.setValue("selected_students", currentStudents.filter(id => id !== studentId));
     }
   };
 
@@ -439,6 +451,17 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                         </div>
                       </div>
                     )}
+
+                    {conflicts.length > 0 && (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          {conflicts.map((conflict, index) => (
+                            <div key={index}>{conflict}</div>
+                          ))}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
                 </div>
               </div>
@@ -462,7 +485,7 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                         <SelectContent>
                           {groups?.map((group) => (
                             <SelectItem key={group.id} value={group.id}>
-                              {group.name} - {group.level} ({group.members?.length || 0} alumnos)
+                              {group.name} - {group.level}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -472,23 +495,47 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                   )}
                 />
 
-                {/* Student selection would go here */}
-                <div className="space-y-2">
-                  <FormLabel>Alumnos disponibles</FormLabel>
+                {/* Enhanced student selection */}
+                <div className="space-y-4">
+                  <FormLabel>Seleccionar alumnos</FormLabel>
                   <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                    {students?.map((student) => (
-                      <div key={student.id} className="flex items-center space-x-2 py-2">
-                        <input
-                          type="checkbox"
-                          id={`student-${student.id}`}
-                          className="rounded"
-                        />
-                        <label htmlFor={`student-${student.id}`} className="text-sm">
-                          {student.full_name} - Nivel {student.level}
-                        </label>
+                    {students && students.length > 0 ? (
+                      <div className="space-y-3">
+                        {students.map((student) => (
+                          <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
+                            <Checkbox
+                              id={`student-${student.id}`}
+                              checked={watchedValues.selected_students.includes(student.id)}
+                              onCheckedChange={(checked) => 
+                                handleStudentSelection(student.id, checked as boolean)
+                              }
+                            />
+                            <div className="flex-1">
+                              <label 
+                                htmlFor={`student-${student.id}`} 
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                {student.full_name}
+                              </label>
+                              <div className="text-xs text-muted-foreground">
+                                Nivel {student.level} • {student.email}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        No hay alumnos disponibles
+                      </div>
+                    )}
                   </div>
+                  
+                  {watchedValues.selected_students.length > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      {watchedValues.selected_students.length} alumno(s) seleccionado(s)
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -573,6 +620,17 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                     </FormItem>
                   )}
                 />
+
+                {/* Summary */}
+                <div className="bg-muted p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Resumen de clases a crear:</h4>
+                  <div className="text-sm space-y-1">
+                    <div>• {previewDates.length} clases programadas</div>
+                    <div>• Desde {watchedValues.start_date ? format(watchedValues.start_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
+                    <div>• Hasta {watchedValues.end_date ? format(watchedValues.end_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
+                    <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>
+                  </div>
+                </div>
               </div>
             )}
 

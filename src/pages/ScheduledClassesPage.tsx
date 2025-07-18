@@ -1,24 +1,31 @@
+
 import { useState } from "react";
-import { Plus, Filter, Calendar, List } from "lucide-react";
+import { Plus, Calendar, List } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import ScheduledClassForm from "@/components/ScheduledClassForm";
 import ClassCalendarView from "@/components/ClassCalendarView";
+import ClassListView from "@/components/ClassListView";
+import ClassFilters from "@/components/ClassFilters";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClubs } from "@/hooks/useActiveClubs";
+import { useClassGroups } from "@/hooks/useClassGroups";
+import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
 
-export default function ScheduledClassesPage() {
+function ScheduledClassesContent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   
   const { profile } = useAuth();
   const { data: clubs } = useActiveClubs();
+  const { filters, setFilters } = useClassFilters();
   
   const currentClub = profile?.club_id ? clubs?.find(c => c.id === profile.club_id) : clubs?.[0];
+  const { data: groups } = useClassGroups(currentClub?.id);
 
   const handleCloseForm = () => {
     setShowCreateForm(false);
@@ -87,30 +94,12 @@ export default function ScheduledClassesPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <Button variant="outline" size="sm">
-              Todos los niveles
-            </Button>
-            <Button variant="outline" size="sm">
-              Iniciación
-            </Button>
-            <Button variant="outline" size="sm">
-              Intermedio
-            </Button>
-            <Button variant="outline" size="sm">
-              Avanzado
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ClassFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        groups={groups}
+        trainers={[]} // TODO: Add trainers data when available
+      />
 
       {/* Main content */}
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'calendar' | 'list')}>
@@ -120,22 +109,21 @@ export default function ScheduledClassesPage() {
         </TabsList>
 
         <TabsContent value="calendar" className="mt-0">
-          <ClassCalendarView clubId={currentClub.id} />
+          <ClassCalendarView clubId={currentClub.id} filters={filters} />
         </TabsContent>
 
         <TabsContent value="list" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vista de Lista</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Vista de lista próximamente...
-              </div>
-            </CardContent>
-          </Card>
+          <ClassListView clubId={currentClub.id} filters={filters} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function ScheduledClassesPage() {
+  return (
+    <ClassFiltersProvider>
+      <ScheduledClassesContent />
+    </ClassFiltersProvider>
   );
 }
