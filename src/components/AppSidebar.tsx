@@ -54,14 +54,11 @@ const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
-            <SidebarGroupLabel>Cuenta</SidebarGroupLabel>
+            
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/logout">
-                    <LogOut />
-                    <span>Cerrar Sesión</span>
-                  </Link>
+                  
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
