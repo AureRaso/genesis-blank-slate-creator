@@ -19,6 +19,7 @@ import NotFound from "@/pages/NotFound";
 import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
 import LogoutPage from "@/pages/LogoutPage";
+import StudentEnrollmentLink from "@/pages/StudentEnrollmentLink";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -105,9 +106,10 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/logout" element={<LogoutPage />} />
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/logout" element={<LogoutPage />} />
+              <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout>

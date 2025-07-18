@@ -212,6 +212,67 @@ export type Database = {
           },
         ]
       }
+      enrollment_forms: {
+        Row: {
+          club_id: string
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          status: string
+          student_data: Json | null
+          token: string
+          trainer_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          student_data?: Json | null
+          token?: string
+          trainer_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          student_data?: Json | null
+          token?: string
+          trainer_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_forms_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_forms_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_forms_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_players: {
         Row: {
           created_at: string
@@ -564,6 +625,117 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_enrollments: {
+        Row: {
+          club_id: string
+          course: string | null
+          created_at: string
+          created_by_profile_id: string
+          discount_1: number | null
+          discount_2: number | null
+          email: string
+          enrollment_date: string | null
+          enrollment_period: string
+          expected_end_date: string | null
+          first_payment: number | null
+          full_name: string
+          id: string
+          level: number
+          observations: string | null
+          payment_method: string | null
+          phone: string
+          preferred_times: string[]
+          status: string
+          trainer_profile_id: string
+          updated_at: string
+          weekly_days: string[]
+        }
+        Insert: {
+          club_id: string
+          course?: string | null
+          created_at?: string
+          created_by_profile_id: string
+          discount_1?: number | null
+          discount_2?: number | null
+          email: string
+          enrollment_date?: string | null
+          enrollment_period: string
+          expected_end_date?: string | null
+          first_payment?: number | null
+          full_name: string
+          id?: string
+          level: number
+          observations?: string | null
+          payment_method?: string | null
+          phone: string
+          preferred_times: string[]
+          status?: string
+          trainer_profile_id: string
+          updated_at?: string
+          weekly_days: string[]
+        }
+        Update: {
+          club_id?: string
+          course?: string | null
+          created_at?: string
+          created_by_profile_id?: string
+          discount_1?: number | null
+          discount_2?: number | null
+          email?: string
+          enrollment_date?: string | null
+          enrollment_period?: string
+          expected_end_date?: string | null
+          first_payment?: number | null
+          full_name?: string
+          id?: string
+          level?: number
+          observations?: string | null
+          payment_method?: string | null
+          phone?: string
+          preferred_times?: string[]
+          status?: string
+          trainer_profile_id?: string
+          updated_at?: string
+          weekly_days?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_enrollments_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_enrollments_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_enrollments_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_enrollments_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_enrollments_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]
