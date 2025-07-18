@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +41,7 @@ export type CreateClassScheduleData = {
   recurrence_interval?: number;
 };
 
-// Hook to fetch scheduled classes - con mejor manejo de errores
+// Hook to fetch scheduled classes
 export const useScheduledClasses = (filters?: {
   startDate?: string;
   endDate?: string;
@@ -52,55 +51,43 @@ export const useScheduledClasses = (filters?: {
   return useQuery({
     queryKey: ["scheduled-classes", filters],
     queryFn: async () => {
-      try {
-        let query = supabase
-          .from("scheduled_classes")
-          .select(`
+      let query = supabase
+        .from("scheduled_classes")
+        .select(`
+          *,
+          template:class_templates!inner(
             *,
-            template:class_templates!inner(
-              *,
-              group:class_groups(*)
-            ),
-            enrollments:class_enrollments(
-              *,
-              student_enrollment:student_enrollments(
-                full_name,
-                email
-              )
+            group:class_groups(*)
+          ),
+          enrollments:class_enrollments(
+            *,
+            student_enrollment:student_enrollments(
+              full_name,
+              email
             )
-          `)
-          .order("class_date", { ascending: true })
-          .order("start_time", { ascending: true });
+          )
+        `)
+        .order("class_date", { ascending: true })
+        .order("start_time", { ascending: true });
 
-        if (filters?.startDate) {
-          query = query.gte("class_date", filters.startDate);
-        }
-        if (filters?.endDate) {
-          query = query.lte("class_date", filters.endDate);
-        }
-        if (filters?.templateId) {
-          query = query.eq("template_id", filters.templateId);
-        }
-        if (filters?.status) {
-          query = query.eq("status", filters.status);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error("Error fetching scheduled classes:", error);
-          throw error;
-        }
-        
-        console.log("Scheduled classes fetched successfully:", data?.length || 0);
-        return data as ScheduledClassWithTemplate[];
-      } catch (error) {
-        console.error("Error in useScheduledClasses:", error);
-        return []; // Retornar array vacío en caso de error
+      if (filters?.startDate) {
+        query = query.gte("class_date", filters.startDate);
       }
+      if (filters?.endDate) {
+        query = query.lte("class_date", filters.endDate);
+      }
+      if (filters?.templateId) {
+        query = query.eq("template_id", filters.templateId);
+      }
+      if (filters?.status) {
+        query = query.eq("status", filters.status);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data as ScheduledClassWithTemplate[];
     },
-    retry: false, // No reintentar automáticamente
-    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };
 
@@ -112,13 +99,11 @@ export const useCreateScheduledClass = () => {
   return useMutation({
     mutationFn: async (data: CreateScheduledClassData) => {
       const user = await supabase.auth.getUser();
-      if (!user.data.user) throw new Error("Usuario no autenticado");
-
       const { data: result, error } = await supabase
         .from("scheduled_classes")
         .insert([{
           ...data,
-          created_by_profile_id: user.data.user.id
+          created_by_profile_id: user.data.user?.id!
         }])
         .select()
         .single();
@@ -134,7 +119,6 @@ export const useCreateScheduledClass = () => {
       });
     },
     onError: (error: any) => {
-      console.error("Error creating scheduled class:", error);
       toast({
         title: "Error",
         description: "No se pudo crear la clase: " + error.message,
@@ -152,9 +136,7 @@ export const useCreateClassSchedule = () => {
   return useMutation({
     mutationFn: async (data: CreateClassScheduleData) => {
       const user = await supabase.auth.getUser();
-      if (!user.data.user) throw new Error("Usuario no autenticado");
-      
-      const userId = user.data.user.id;
+      const userId = user.data.user?.id!;
       
       // First create the schedule
       const { data: schedule, error: scheduleError } = await supabase
@@ -166,29 +148,10 @@ export const useCreateClassSchedule = () => {
         .select()
         .single();
 
-      if (scheduleError) {
-        console.error("Error creating schedule:", scheduleError);
-        throw scheduleError;
-      }
+      if (scheduleError) throw scheduleError;
 
       // Generate individual class instances
       const classInstances = generateClassInstances(data);
-      
-      if (classInstances.length === 0) {
-        throw new Error("No se pudieron generar instancias de clase");
-      }
-
-      // Get template info for max_students and duration
-      const { data: template, error: templateError } = await supabase
-        .from("class_templates")
-        .select("max_students, duration_minutes")
-        .eq("id", data.template_id)
-        .single();
-
-      if (templateError) {
-        console.error("Error fetching template:", templateError);
-        throw templateError;
-      }
       
       // Create all class instances
       const { data: classes, error: classesError } = await supabase
@@ -199,17 +162,14 @@ export const useCreateClassSchedule = () => {
             template_id: data.template_id,
             class_date: instance.date,
             start_time: data.start_time,
-            end_time: calculateEndTime(data.start_time, template.duration_minutes),
-            max_students: template.max_students,
+            end_time: calculateEndTime(data.start_time, 60), // Default 60 minutes
+            max_students: 8, // Default value, should come from template
             created_by_profile_id: userId
           }))
         )
         .select();
 
-      if (classesError) {
-        console.error("Error creating classes:", classesError);
-        throw classesError;
-      }
+      if (classesError) throw classesError;
 
       return { schedule, classes };
     },
@@ -218,11 +178,10 @@ export const useCreateClassSchedule = () => {
       queryClient.invalidateQueries({ queryKey: ["class-schedules"] });
       toast({
         title: "Clases programadas",
-        description: `Se han creado ${result.classes?.length || 0} clases correctamente.`,
+        description: `Se han creado ${result.classes?.length} clases correctamente.`,
       });
     },
     onError: (error: any) => {
-      console.error("Error creating class schedule:", error);
       toast({
         title: "Error",
         description: "No se pudieron programar las clases: " + error.message,
@@ -316,11 +275,6 @@ function generateClassInstances(scheduleData: CreateClassScheduleData): { date: 
   };
   
   const targetDay = dayMap[scheduleData.day_of_week];
-  if (targetDay === undefined) {
-    console.error("Invalid day of week:", scheduleData.day_of_week);
-    return [];
-  }
-  
   let currentDate = new Date(startDate);
   
   // Find the first occurrence of the target day
