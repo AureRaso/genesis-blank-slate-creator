@@ -14,6 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      class_enrollments: {
+        Row: {
+          created_at: string
+          enrollment_date: string
+          id: string
+          notes: string | null
+          scheduled_class_id: string
+          status: Database["public"]["Enums"]["reservation_status"]
+          student_enrollment_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          notes?: string | null
+          scheduled_class_id: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          student_enrollment_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          notes?: string | null
+          scheduled_class_id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+          student_enrollment_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_scheduled_class_id_fkey"
+            columns: ["scheduled_class_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_student_enrollment_id_fkey"
+            columns: ["student_enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_groups: {
+        Row: {
+          club_id: string
+          created_at: string
+          created_by_profile_id: string
+          description: string | null
+          id: string
+          is_active: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          created_at?: string
+          created_by_profile_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          created_at?: string
+          created_by_profile_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          level?: Database["public"]["Enums"]["class_level"]
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_groups_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_groups_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_groups_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_reservations: {
         Row: {
           created_at: string
@@ -62,6 +168,73 @@ export type Database = {
             columns: ["slot_id"]
             isOneToOne: false
             referencedRelation: "class_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_schedules: {
+        Row: {
+          created_at: string
+          created_by_profile_id: string
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
+          end_date: string
+          id: string
+          is_active: boolean
+          recurrence_interval: number
+          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
+          start_date: string
+          start_time: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_profile_id: string
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
+          end_date: string
+          id?: string
+          is_active?: boolean
+          recurrence_interval?: number
+          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
+          start_date: string
+          start_time: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_profile_id?: string
+          day_of_week?: Database["public"]["Enums"]["day_of_week"]
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          recurrence_interval?: number
+          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
+          start_date?: string
+          start_time?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_schedules_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_schedules_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "class_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -151,6 +324,103 @@ export type Database = {
             columns: ["trainer_id"]
             isOneToOne: false
             referencedRelation: "trainers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_templates: {
+        Row: {
+          club_id: string
+          court_number: number | null
+          created_at: string
+          created_by_profile_id: string
+          duration_minutes: number
+          group_id: string | null
+          id: string
+          is_active: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          max_students: number
+          name: string
+          objective: string | null
+          price_per_student: number
+          trainer_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          club_id: string
+          court_number?: number | null
+          created_at?: string
+          created_by_profile_id: string
+          duration_minutes?: number
+          group_id?: string | null
+          id?: string
+          is_active?: boolean
+          level: Database["public"]["Enums"]["class_level"]
+          max_students?: number
+          name: string
+          objective?: string | null
+          price_per_student?: number
+          trainer_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          club_id?: string
+          court_number?: number | null
+          created_at?: string
+          created_by_profile_id?: string
+          duration_minutes?: number
+          group_id?: string | null
+          id?: string
+          is_active?: boolean
+          level?: Database["public"]["Enums"]["class_level"]
+          max_students?: number
+          name?: string
+          objective?: string | null
+          price_per_student?: number
+          trainer_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_templates_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_templates_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_templates_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_templates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_templates_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_templates_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]
@@ -269,6 +539,51 @@ export type Database = {
             columns: ["trainer_profile_id"]
             isOneToOne: false
             referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          is_active: boolean
+          joined_date: string
+          student_enrollment_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          is_active?: boolean
+          joined_date?: string
+          student_enrollment_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_active?: boolean
+          joined_date?: string
+          student_enrollment_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_student_enrollment_id_fkey"
+            columns: ["student_enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "student_enrollments"
             referencedColumns: ["id"]
           },
         ]
@@ -629,6 +944,86 @@ export type Database = {
           },
         ]
       }
+      scheduled_classes: {
+        Row: {
+          class_date: string
+          court_number: number | null
+          created_at: string
+          created_by_profile_id: string
+          current_students: number
+          end_time: string
+          id: string
+          max_students: number
+          notes: string | null
+          schedule_id: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["class_status"]
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_date: string
+          court_number?: number | null
+          created_at?: string
+          created_by_profile_id: string
+          current_students?: number
+          end_time: string
+          id?: string
+          max_students: number
+          notes?: string | null
+          schedule_id?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["class_status"]
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_date?: string
+          court_number?: number | null
+          created_at?: string
+          created_by_profile_id?: string
+          current_students?: number
+          end_time?: string
+          id?: string
+          max_students?: number
+          notes?: string | null
+          schedule_id?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["class_status"]
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_classes_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_classes_created_by_profile_id_fkey"
+            columns: ["created_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_classes_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "class_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_classes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "class_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_enrollments: {
         Row: {
           club_id: string
@@ -925,6 +1320,7 @@ export type Database = {
     }
     Enums: {
       class_level: "iniciacion" | "intermedio" | "avanzado"
+      class_status: "scheduled" | "completed" | "cancelled"
       day_of_week:
         | "lunes"
         | "martes"
@@ -933,6 +1329,7 @@ export type Database = {
         | "viernes"
         | "sabado"
         | "domingo"
+      recurrence_type: "weekly" | "biweekly" | "monthly"
       reservation_status: "reservado" | "cancelado"
     }
     CompositeTypes: {
@@ -1062,6 +1459,7 @@ export const Constants = {
   public: {
     Enums: {
       class_level: ["iniciacion", "intermedio", "avanzado"],
+      class_status: ["scheduled", "completed", "cancelled"],
       day_of_week: [
         "lunes",
         "martes",
@@ -1071,6 +1469,7 @@ export const Constants = {
         "sabado",
         "domingo",
       ],
+      recurrence_type: ["weekly", "biweekly", "monthly"],
       reservation_status: ["reservado", "cancelado"],
     },
   },

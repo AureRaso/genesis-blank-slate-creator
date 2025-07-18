@@ -65,6 +65,14 @@ const AppSidebar = () => {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/scheduled-classes">
+                    <GraduationCap />
+                    <span>Clases Programadas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup>
@@ -203,6 +211,11 @@ const AppSidebar = () => {
         title: "Clases",
         url: "/classes",
         icon: GraduationCap,
+      },
+      {
+        title: "Clases Programadas",
+        url: "/scheduled-classes",
+        icon: Calendar,
       },
       {
         title: "Jugadores",

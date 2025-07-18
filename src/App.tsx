@@ -20,6 +20,7 @@ import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
 import LogoutPage from "@/pages/LogoutPage";
 import StudentEnrollmentLink from "@/pages/StudentEnrollmentLink";
+import ScheduledClassesPage from "@/pages/ScheduledClassesPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -129,9 +130,10 @@ function App() {
                     <Route path="/matches" element={<MatchesPage />} />
                     <Route path="/classes" element={<ClassesPage />} />
                     <Route path="/players" element={<PlayersPage />} />
-                    <Route path="/clubs" element={<ClubsPage />} />
-                    <Route path="/trainers" element={<TrainersPage />} />
-                    <Route path="*" element={<NotFound />} />
+                     <Route path="/clubs" element={<ClubsPage />} />
+                     <Route path="/trainers" element={<TrainersPage />} />
+                     <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
+                     <Route path="*" element={<NotFound />} />
                   </>
                 )}
               </Routes>
