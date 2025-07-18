@@ -148,6 +148,7 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
         court_number: data.court_number,
         objective: data.objective,
         group_id: data.group_id,
+        created_by_profile_id: data.trainer_profile_id,
       };
 
       const template = await createTemplateMutation.mutateAsync(templateData);
