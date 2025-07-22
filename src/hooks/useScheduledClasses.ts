@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { format, parseISO, isWithinInterval } from "date-fns";
 
 // Updated to work with the new programmed_classes structure
 type ProgrammedClass = Database["public"]["Tables"]["programmed_classes"]["Row"];
@@ -42,6 +43,8 @@ export const useScheduledClasses = (filters?: {
   return useQuery({
     queryKey: ["scheduled-classes", filters],
     queryFn: async () => {
+      console.log("Fetching classes with filters:", filters);
+      
       let query = supabase
         .from("programmed_classes")
         .select(`
@@ -57,20 +60,43 @@ export const useScheduledClasses = (filters?: {
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (filters?.startDate) {
-        query = query.gte("start_date", filters.startDate);
-      }
-      if (filters?.endDate) {
-        query = query.lte("end_date", filters.endDate);
-      }
+      // Filter by club if provided
       if (filters?.clubId) {
         query = query.eq("club_id", filters.clubId);
       }
 
       const { data, error } = await query;
 
-      if (error) throw error;
-      return data as ScheduledClassWithTemplate[];
+      if (error) {
+        console.error("Error fetching classes:", error);
+        throw error;
+      }
+
+      console.log("Raw classes data:", data);
+
+      // Filter classes that are active during the requested date range
+      let filteredClasses = data as ScheduledClassWithTemplate[];
+      
+      if (filters?.startDate && filters?.endDate) {
+        const weekStart = parseISO(filters.startDate);
+        const weekEnd = parseISO(filters.endDate);
+        
+        filteredClasses = data.filter(cls => {
+          const classStart = parseISO(cls.start_date);
+          const classEnd = parseISO(cls.end_date);
+          
+          // Check if class period overlaps with the requested week
+          const overlaps = 
+            (classStart <= weekEnd && classEnd >= weekStart) ||
+            isWithinInterval(weekStart, { start: classStart, end: classEnd }) ||
+            isWithinInterval(weekEnd, { start: classStart, end: classEnd });
+          
+          return overlaps;
+        });
+      }
+
+      console.log("Filtered classes for date range:", filteredClasses);
+      return filteredClasses;
     },
   });
 };

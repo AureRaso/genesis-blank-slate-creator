@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarGrid } from "./calendar/CalendarGrid";
 import { useScheduledClasses } from "@/hooks/useScheduledClasses";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ClassFiltersData } from "./ClassFilters";
 
 interface ClassCalendarViewProps {
@@ -14,14 +15,24 @@ interface ClassCalendarViewProps {
 
 export default function ClassCalendarView({ clubId, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const { profile } = useAuth();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
   
-  const { data: classes, isLoading } = useScheduledClasses({
+  console.log("ClassCalendarView - Current user profile:", profile);
+  console.log("ClassCalendarView - Week range:", {
+    weekStart: format(weekStart, 'yyyy-MM-dd'),
+    weekEnd: format(weekEnd, 'yyyy-MM-dd')
+  });
+  
+  const { data: classes, isLoading, error } = useScheduledClasses({
     startDate: format(weekStart, 'yyyy-MM-dd'),
     endDate: format(weekEnd, 'yyyy-MM-dd'),
+    clubId: clubId,
   });
+
+  console.log("ClassCalendarView - useScheduledClasses result:", { classes, isLoading, error });
 
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
@@ -42,12 +53,27 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
     return true;
   }) || [];
 
+  console.log("ClassCalendarView - Filtered classes:", filteredClasses);
+
   if (isLoading) {
     return (
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    console.error("Error loading classes:", error);
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center text-red-600">
+            Error al cargar las clases: {error.message}
           </div>
         </CardContent>
       </Card>

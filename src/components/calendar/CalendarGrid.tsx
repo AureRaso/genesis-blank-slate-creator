@@ -18,18 +18,63 @@ const TIME_SLOTS = [
   "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
+// Mapping of Spanish day names to lowercase
+const DAY_MAPPING: { [key: string]: string } = {
+  'domingo': 'domingo',
+  'lunes': 'lunes',
+  'martes': 'martes',
+  'miércoles': 'miércoles',
+  'miercoles': 'miércoles', // Handle both with and without accent
+  'jueves': 'jueves',
+  'viernes': 'viernes',
+  'sábado': 'sábado',
+  'sabado': 'sábado' // Handle both with and without accent
+};
+
 export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  console.log("CalendarGrid received classes:", classes);
+  console.log("Week range:", { weekStart, weekEnd });
+
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
     const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
+    console.log("Checking day:", dayName, "timeSlot:", timeSlot);
     
-    return classes.filter(cls => {
-      const classDays = cls.days_of_week.map(d => d.toLowerCase());
-      const classTime = cls.start_time.slice(0, 5);
+    const matchingClasses = classes.filter(cls => {
+      // Normalize the class days to handle accents and case
+      const classDays = cls.days_of_week.map(d => {
+        const normalized = d.toLowerCase().trim();
+        return DAY_MAPPING[normalized] || normalized;
+      });
       
-      return classDays.includes(dayName) && classTime === timeSlot;
+      // Extract time from start_time (remove seconds if present)
+      const classTime = cls.start_time.slice(0, 5); // "HH:mm"
+      
+      // Normalize the current day name
+      const normalizedDayName = DAY_MAPPING[dayName] || dayName;
+      
+      const dayMatches = classDays.includes(normalizedDayName);
+      const timeMatches = classTime === timeSlot;
+      
+      console.log(`Class "${cls.name}":`, {
+        classDays,
+        classTime,
+        normalizedDayName,
+        timeSlot,
+        dayMatches,
+        timeMatches,
+        result: dayMatches && timeMatches
+      });
+      
+      return dayMatches && timeMatches;
     });
+
+    if (matchingClasses.length > 0) {
+      console.log("Found matching classes for", dayName, timeSlot, ":", matchingClasses);
+    }
+    
+    return matchingClasses;
   };
 
   return (
@@ -57,7 +102,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
       {/* Calendar grid */}
       <div className="divide-y">
         {TIME_SLOTS.map((timeSlot) => (
-          <div key={timeSlot} className="grid grid-cols-8 min-h-[60px]">
+          <div key={timeSlot} className="grid grid-cols-8 min-h-[50px]">
             <div className="p-2 text-sm text-muted-foreground border-r bg-muted/20 flex items-center justify-center">
               {timeSlot}
             </div>
@@ -68,7 +113,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
               return (
                 <div 
                   key={`${day.toISOString()}-${timeSlot}`} 
-                  className="p-1 border-r last:border-r-0 relative min-h-[60px]"
+                  className="p-1 border-r last:border-r-0 relative min-h-[50px]"
                 >
                   {dayClasses.map((cls) => (
                     <ClassCard key={cls.id} class={cls} />
