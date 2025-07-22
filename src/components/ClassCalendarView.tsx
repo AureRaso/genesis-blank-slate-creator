@@ -6,7 +6,7 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarGrid } from "./calendar/CalendarGrid";
 import { useScheduledClasses } from "@/hooks/useScheduledClasses";
 import { useAuth } from "@/contexts/AuthContext";
-import type { ClassFiltersData } from "./ClassFilters";
+import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassCalendarViewProps {
   clubId?: string;
