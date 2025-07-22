@@ -1,15 +1,10 @@
+
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, Eye } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-
-import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
+import { startOfWeek, endOfWeek, addWeeks, subWeeks, format } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { CalendarHeader } from "./calendar/CalendarHeader";
+import { CalendarGrid } from "./calendar/CalendarGrid";
+import { useScheduledClasses } from "@/hooks/useScheduledClasses";
 import type { ClassFiltersData } from "./ClassFilters";
 
 interface ClassCalendarViewProps {
@@ -28,9 +23,6 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
     endDate: format(weekEnd, 'yyyy-MM-dd'),
   });
 
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
-  const timeSlots = generateTimeSlots();
-
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
   const goToToday = () => setCurrentWeek(new Date());
@@ -47,292 +39,39 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
       if (!matchesSearch) return false;
     }
 
-    // Note: We'll need to adapt level and group filtering to the new structure
-    // For now, these filters are disabled until we implement proper level matching
-    // if (filters.level && cls.level !== filters.level) return false;
-    // if (filters.groupId && cls.group_id !== filters.groupId) return false;
-
     return true;
   }) || [];
-
-  const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
-    const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
-    
-    return filteredClasses.filter(cls => {
-      // Check if the class runs on this day of the week
-      const classDays = cls.days_of_week.map(d => d.toLowerCase());
-      const classTime = cls.start_time.slice(0, 5); // Remove seconds
-      
-      return classDays.includes(dayName) && classTime === timeSlot;
-    });
-  };
-
-  const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
-    if (cls.custom_level) {
-      return cls.custom_level.replace('_', ' ');
-    }
-    if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `Nivel ${cls.level_from}` : 
-        `Nivel ${cls.level_from}-${cls.level_to}`;
-    }
-    return 'Sin nivel';
-  };
-
-  const getLevelColor = (cls: ScheduledClassWithTemplate) => {
-    if (cls.custom_level) {
-      if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
-      if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
-    }
-    
-    if (cls.level_from) {
-      if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
-      if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      return 'bg-red-100 text-red-800 border-red-200';
-    }
-    
-    return 'bg-gray-100 text-gray-800 border-gray-200';
-  };
 
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-center py-8">
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        </CardHeader>
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Calendario de Clases
-            {filteredClasses.length !== classes?.length && (
-              <Badge variant="secondary">
-                {filteredClasses.length} de {classes?.length || 0}
-              </Badge>
-            )}
-          </CardTitle>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Hoy
-            </Button>
-            
-            <Button variant="outline" size="sm" onClick={goToNextWeek}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            
-            <div className="text-sm font-medium ml-4">
-              {format(weekStart, "dd MMM", { locale: es })} - {format(weekEnd, "dd MMM yyyy", { locale: es })}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            {/* Header with days */}
-            <div className="grid grid-cols-8 gap-1 mb-2">
-              <div className="p-2 text-sm font-medium text-muted-foreground">Hora</div>
-              {weekDays.map((day) => (
-                <div key={day.toISOString()} className="p-2 text-center">
-                  <div className="text-sm font-medium">
-                    {format(day, "EEE", { locale: es })}
-                  </div>
-                  <div className={cn(
-                    "text-lg font-semibold",
-                    isSameDay(day, new Date()) && "text-primary"
-                  )}>
-                    {format(day, "dd")}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar grid */}
-            <div className="space-y-1">
-              {timeSlots.map((timeSlot) => (
-                <div key={timeSlot} className="grid grid-cols-8 gap-1">
-                  <div className="p-2 text-sm text-muted-foreground border-r">
-                    {timeSlot}
-                  </div>
-                  
-                  {weekDays.map((day) => {
-                    const dayClasses = getClassesForDayAndTime(day, timeSlot);
-                    
-                    return (
-                      <div key={`${day.toISOString()}-${timeSlot}`} className="p-1 min-h-[60px] border border-border/50">
-                        {dayClasses.map((cls) => (
-                          <ClassCard key={cls.id} class={cls} />
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <CalendarHeader
+        currentWeek={currentWeek}
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+        totalClasses={classes?.length || 0}
+        filteredClassesCount={filteredClasses.length}
+        onPreviousWeek={goToPreviousWeek}
+        onNextWeek={goToNextWeek}
+        onToday={goToToday}
+      />
+      
+      <CalendarGrid
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+        classes={filteredClasses}
+      />
+    </div>
   );
-}
-
-interface ClassCardProps {
-  class: ScheduledClassWithTemplate;
-}
-
-function ClassCard({ class: cls }: ClassCardProps) {
-  const enrolledCount = cls.participants?.length || 0;
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <div className={cn(
-          "p-2 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity",
-          "border",
-          getLevelColor(cls)
-        )}>
-          <div className="font-medium truncate">
-            {cls.name}
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            <Users className="h-3 w-3" />
-            <span>{enrolledCount}</span>
-          </div>
-        </div>
-      </DialogTrigger>
-
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Detalles de la Clase
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-lg">{cls.name}</h3>
-            <Badge className={getLevelColor(cls)}>
-              {getLevelDisplay(cls)}
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div className="text-muted-foreground">Horario</div>
-              <div className="font-medium flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {cls.start_time.slice(0, 5)}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-muted-foreground">Duración</div>
-              <div className="font-medium">
-                {cls.duration_minutes} min
-              </div>
-            </div>
-
-            <div>
-              <div className="text-muted-foreground">Días</div>
-              <div className="font-medium">
-                {cls.days_of_week.join(', ')}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-muted-foreground">Alumnos</div>
-              <div className="font-medium flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {enrolledCount}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-muted-foreground text-sm">Periodo</div>
-            <div className="font-medium">
-              {format(parseISO(cls.start_date), "dd/MM/yyyy")} - {format(parseISO(cls.end_date), "dd/MM/yyyy")}
-            </div>
-          </div>
-
-          {cls.participants && cls.participants.length > 0 && (
-            <div>
-              <div className="text-muted-foreground text-sm mb-2">Alumnos inscritos</div>
-              <div className="space-y-1">
-                {cls.participants.map((participant) => (
-                  <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                    {participant.student_enrollment.full_name}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" size="sm" className="flex-1">
-              Editar
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1">
-              Gestionar alumnos
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function generateTimeSlots() {
-  const slots = [];
-  for (let hour = 8; hour <= 22; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 22) {
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
-  return slots;
-}
-
-function getLevelColor(cls: ScheduledClassWithTemplate) {
-  if (cls.custom_level) {
-    if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
-    if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
-  }
-  
-  if (cls.level_from) {
-    if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
-    if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-red-100 text-red-800 border-red-200';
-  }
-  
-  return 'bg-gray-100 text-gray-800 border-gray-200';
-}
-
-function getLevelDisplay(cls: ScheduledClassWithTemplate) {
-  if (cls.custom_level) {
-    return cls.custom_level.replace('_', ' ');
-  }
-  if (cls.level_from && cls.level_to) {
-    return cls.level_from === cls.level_to ? 
-      `Nivel ${cls.level_from}` : 
-      `Nivel ${cls.level_from}-${cls.level_to}`;
-  }
-  return 'Sin nivel';
 }
