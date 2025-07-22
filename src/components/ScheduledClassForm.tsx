@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 import { useCreateClassTemplate } from "@/hooks/useClassTemplates";
@@ -30,12 +31,19 @@ import type { Database } from "@/integrations/supabase/types";
 const formSchema = z.object({
   // Step 1: Basic Info
   name: z.string().min(1, "El nombre es obligatorio"),
-  level: z.enum(["iniciacion", "intermedio", "avanzado"]),
+  
+  // Modified level fields
+  level_format: z.enum(["numeric", "levante"]).default("numeric"),
+  level_from: z.number().min(1.0).max(10.0).optional(),
+  level_to: z.number().min(1.0).max(10.0).optional(),
+  levante_level: z.enum(["primera_alta", "primera_media", "primera_baja", "segunda_alta", "segunda_media", "segunda_baja", "tercera_alta", "tercera_media", "tercera_baja"]).optional(),
+  
   start_time: z.string().min(1, "La hora de inicio es obligatoria"),
   duration_minutes: z.number().min(30).max(180),
   
-  // Recurrence
-  day_of_week: z.enum(["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]),
+  // Modified days of week - now multiple selection
+  selected_days: z.array(z.enum(["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"])).min(1, "Selecciona al menos un día"),
+  
   start_date: z.date({ required_error: "La fecha de inicio es obligatoria" }),
   end_date: z.date({ required_error: "La fecha de fin es obligatoria" }),
   recurrence_type: z.enum(["weekly", "biweekly", "monthly"]),
@@ -52,6 +60,15 @@ const formSchema = z.object({
   court_number: z.number().optional(),
   objective: z.string().optional(),
   price_per_student: z.number().min(0).default(0),
+}).refine((data) => {
+  if (data.level_format === "numeric") {
+    return data.level_from && data.level_to && data.level_from <= data.level_to;
+  } else {
+    return !!data.levante_level;
+  }
+}, {
+  message: "Configure correctamente el nivel",
+  path: ["level_from"]
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -62,10 +79,33 @@ interface ScheduledClassFormProps {
   trainerProfileId: string;
 }
 
+const LEVANTE_LEVELS = [
+  { value: "primera_alta", label: "Primera Alta" },
+  { value: "primera_media", label: "Primera Media" },
+  { value: "primera_baja", label: "Primera Baja" },
+  { value: "segunda_alta", label: "Segunda Alta" },
+  { value: "segunda_media", label: "Segunda Media" },
+  { value: "segunda_baja", label: "Segunda Baja" },
+  { value: "tercera_alta", label: "Tercera Alta" },
+  { value: "tercera_media", label: "Tercera Media" },
+  { value: "tercera_baja", label: "Tercera Baja" },
+];
+
+const DAYS_OF_WEEK = [
+  { value: "lunes", label: "Lunes" },
+  { value: "martes", label: "Martes" },
+  { value: "miercoles", label: "Miércoles" },
+  { value: "jueves", label: "Jueves" },
+  { value: "viernes", label: "Viernes" },
+  { value: "sabado", label: "Sábado" },
+  { value: "domingo", label: "Domingo" },
+];
+
 export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }: ScheduledClassFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
+  const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
 
   const { data: groups } = useClassGroups(clubId);
   const { data: students } = useStudentEnrollments();
@@ -84,6 +124,10 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
       recurrence_interval: 1,
       price_per_student: 0,
       selected_students: [],
+      level_format: "numeric",
+      level_from: 1.0,
+      level_to: 10.0,
+      selected_days: [],
     },
   });
 
@@ -100,75 +144,91 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
       newConflicts.push("Muchas clases programadas. Verifica disponibilidad de pista.");
     }
     setConflicts(newConflicts);
-  }, [watchedValues.day_of_week, watchedValues.start_date, watchedValues.end_date, watchedValues.recurrence_type, watchedValues.recurrence_interval, watchedValues.court_number]);
+  }, [watchedValues.selected_days, watchedValues.start_date, watchedValues.end_date, watchedValues.recurrence_type, watchedValues.recurrence_interval, watchedValues.court_number]);
 
   const generatePreview = () => {
-    const { day_of_week, start_date, end_date, recurrence_type, recurrence_interval } = watchedValues;
+    const { selected_days, start_date, end_date, recurrence_type, recurrence_interval } = watchedValues;
     
-    if (!day_of_week || !start_date || !end_date) return [];
+    if (!selected_days?.length || !start_date || !end_date) return [];
 
     const dayMap: Record<string, number> = {
       'domingo': 0, 'lunes': 1, 'martes': 2, 'miercoles': 3,
       'jueves': 4, 'viernes': 5, 'sabado': 6
     };
 
-    const targetDay = dayMap[day_of_week];
-    let currentDate = new Date(start_date);
     const endDateObj = new Date(end_date);
     const dates: string[] = [];
 
-    // Find first occurrence of target day
-    while (currentDate.getDay() !== targetDay && currentDate <= endDateObj) {
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    // Generate dates for each selected day
+    selected_days.forEach(day => {
+      const targetDay = dayMap[day];
+      let currentDate = new Date(start_date);
 
-    // Generate dates based on recurrence
-    const intervalDays = recurrence_type === 'weekly' ? 7 :
-                        recurrence_type === 'biweekly' ? 14 : 30;
+      // Find first occurrence of target day
+      while (currentDate.getDay() !== targetDay && currentDate <= endDateObj) {
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
-    while (currentDate <= endDateObj && dates.length < 20) { // Limit preview to 20 dates
-      dates.push(format(currentDate, 'dd/MM/yyyy', { locale: es }));
-      currentDate.setDate(currentDate.getDate() + intervalDays * (recurrence_interval || 1));
-    }
+      // Generate dates based on recurrence
+      const intervalDays = recurrence_type === 'weekly' ? 7 :
+                          recurrence_type === 'biweekly' ? 14 : 30;
 
-    return dates;
+      let dayCount = 0;
+      while (currentDate <= endDateObj && dayCount < 10) { // Limit preview per day
+        dates.push(`${format(currentDate, 'dd/MM/yyyy', { locale: es })} (${day})`);
+        currentDate.setDate(currentDate.getDate() + intervalDays * (recurrence_interval || 1));
+        dayCount++;
+      }
+    });
+
+    return dates.sort();
   };
 
   const onSubmit = async (data: FormData) => {
     try {
-      // First, create the class template
-      const templateData = {
-        name: data.name,
-        level: data.level,
-        trainer_profile_id: data.trainer_profile_id,
-        club_id: data.club_id,
-        duration_minutes: data.duration_minutes,
-        max_students: data.max_students,
-        price_per_student: data.price_per_student,
-        court_number: data.court_number,
-        objective: data.objective,
-        group_id: data.group_id,
-        created_by_profile_id: data.trainer_profile_id,
-      };
+      // Convert level format for backend compatibility
+      let level: "iniciacion" | "intermedio" | "avanzado" = "intermedio";
+      if (data.level_format === "numeric" && data.level_from && data.level_to) {
+        const avgLevel = (data.level_from + data.level_to) / 2;
+        level = avgLevel <= 3.5 ? "iniciacion" : avgLevel <= 7 ? "intermedio" : "avanzado";
+      }
 
-      const template = await createTemplateMutation.mutateAsync(templateData);
+      // Create template for each selected day
+      for (const day of data.selected_days) {
+        // First, create the class template
+        const templateData = {
+          name: `${data.name} - ${day}`,
+          level: level,
+          trainer_profile_id: data.trainer_profile_id,
+          club_id: data.club_id,
+          duration_minutes: data.duration_minutes,
+          max_students: data.max_students,
+          price_per_student: data.price_per_student,
+          court_number: data.court_number,
+          objective: data.objective,
+          group_id: data.group_id,
+          created_by_profile_id: data.trainer_profile_id,
+        };
 
-      // Then create the schedule using the new template
-      const scheduleData = {
-        template_id: template.id,
-        day_of_week: data.day_of_week,
-        start_time: data.start_time,
-        start_date: format(data.start_date, 'yyyy-MM-dd'),
-        end_date: format(data.end_date, 'yyyy-MM-dd'),
-        recurrence_type: data.recurrence_type,
-        recurrence_interval: data.recurrence_interval,
-      };
+        const template = await createTemplateMutation.mutateAsync(templateData);
 
-      await createScheduleMutation.mutateAsync(scheduleData);
+        // Then create the schedule using the new template
+        const scheduleData = {
+          template_id: template.id,
+          day_of_week: day,
+          start_time: data.start_time,
+          start_date: format(data.start_date, 'yyyy-MM-dd'),
+          end_date: format(data.end_date, 'yyyy-MM-dd'),
+          recurrence_type: data.recurrence_type,
+          recurrence_interval: data.recurrence_interval,
+        };
+
+        await createScheduleMutation.mutateAsync(scheduleData);
+      }
       
       toast({
         title: "Clases programadas",
-        description: "Se han creado las clases y la plantilla correctamente.",
+        description: `Se han creado las clases para ${data.selected_days.length} día(s) de la semana.`,
       });
       
       onClose();
@@ -200,6 +260,15 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
       form.setValue("selected_students", [...currentStudents, studentId]);
     } else {
       form.setValue("selected_students", currentStudents.filter(id => id !== studentId));
+    }
+  };
+
+  const handleDaySelection = (day: string, checked: boolean) => {
+    const currentDays = form.getValues().selected_days;
+    if (checked) {
+      form.setValue("selected_days", [...currentDays, day as any]);
+    } else {
+      form.setValue("selected_days", currentDays.filter(d => d !== day));
     }
   };
 
@@ -256,60 +325,113 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="level"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nivel</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un nivel" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="iniciacion">Iniciación</SelectItem>
-                            <SelectItem value="intermedio">Intermedio</SelectItem>
-                            <SelectItem value="avanzado">Avanzado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                  {/* Modified Level Selection */}
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="level_format"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Formato de nivel</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="numeric">Numérico (Playtomic)</SelectItem>
+                              <SelectItem value="levante">Formato Levante</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {watchedValues.level_format === "numeric" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="level_from"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nivel desde</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="1.0" 
+                                  max="10.0" 
+                                  step="0.1"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="level_to"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nivel hasta</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="1.0" 
+                                  max="10.0" 
+                                  step="0.1"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     )}
-                  />
+
+                    {watchedValues.level_format === "levante" && (
+                      <FormField
+                        control={form.control}
+                        name="levante_level"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nivel Levante</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona nivel" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {LEVANTE_LEVELS.map((level) => (
+                                  <SelectItem key={level.value} value={level.value}>
+                                    {level.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {watchedValues.level_format === "numeric" && (
+                      <p className="text-sm text-muted-foreground">
+                        Selecciona el rango de nivel de juego para esta clase (formato Playtomic).
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="day_of_week"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Día de la semana</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona día" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="lunes">Lunes</SelectItem>
-                            <SelectItem value="martes">Martes</SelectItem>
-                            <SelectItem value="miercoles">Miércoles</SelectItem>
-                            <SelectItem value="jueves">Jueves</SelectItem>
-                            <SelectItem value="viernes">Viernes</SelectItem>
-                            <SelectItem value="sabado">Sábado</SelectItem>
-                            <SelectItem value="domingo">Domingo</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="start_time"
@@ -347,6 +469,37 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                 </div>
 
                 <Separator />
+
+                {/* Modified Days Selection */}
+                <FormField
+                  control={form.control}
+                  name="selected_days"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Días de la semana</FormLabel>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {DAYS_OF_WEEK.map((day) => (
+                          <div key={day.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`day-${day.value}`}
+                              checked={watchedValues.selected_days?.includes(day.value as any)}
+                              onCheckedChange={(checked) => 
+                                handleDaySelection(day.value, checked as boolean)
+                              }
+                            />
+                            <label 
+                              htmlFor={`day-${day.value}`} 
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {day.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
@@ -644,6 +797,7 @@ export default function ScheduledClassForm({ onClose, clubId, trainerProfileId }
                     <div>• Desde {watchedValues.start_date ? format(watchedValues.start_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
                     <div>• Hasta {watchedValues.end_date ? format(watchedValues.end_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
                     <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>
+                    <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
                   </div>
                 </div>
               </div>
