@@ -26,7 +26,7 @@ export interface ProgrammedClass {
 export interface ClassParticipant {
   id: string;
   class_id: string;
-  student_profile_id: string;
+  student_enrollment_id: string;
   status: string;
   discount_1?: number;
   discount_2?: number;
@@ -93,7 +93,7 @@ export const useCreateProgrammedClass = () => {
       if (selected_students && selected_students.length > 0) {
         const participantsData = selected_students.map(studentId => ({
           class_id: createdClass.id,
-          student_profile_id: studentId,
+          student_enrollment_id: studentId,
           status: 'active'
         }));
 
@@ -132,7 +132,7 @@ export const useClassParticipants = (classId: string) => {
         .from("class_participants")
         .select(`
           *,
-          student:student_enrollments!student_profile_id(
+          student:student_enrollments!student_enrollment_id(
             full_name,
             email
           )
