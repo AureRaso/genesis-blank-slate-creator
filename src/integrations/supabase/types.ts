@@ -47,13 +47,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "class_enrollments_scheduled_class_id_fkey"
-            columns: ["scheduled_class_id"]
-            isOneToOne: false
-            referencedRelation: "scheduled_classes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "class_enrollments_student_enrollment_id_fkey"
             columns: ["student_enrollment_id"]
             isOneToOne: false
@@ -120,6 +113,61 @@ export type Database = {
           },
         ]
       }
+      class_participants: {
+        Row: {
+          class_id: string
+          created_at: string
+          discount_1: number | null
+          discount_2: number | null
+          id: string
+          status: string
+          student_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          discount_1?: number | null
+          discount_2?: number | null
+          id?: string
+          status?: string
+          student_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          discount_1?: number | null
+          discount_2?: number | null
+          id?: string
+          status?: string
+          student_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_participants_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "programmed_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_participants_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_participants_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_reservations: {
         Row: {
           created_at: string
@@ -168,73 +216,6 @@ export type Database = {
             columns: ["slot_id"]
             isOneToOne: false
             referencedRelation: "class_slots"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      class_schedules: {
-        Row: {
-          created_at: string
-          created_by_profile_id: string
-          day_of_week: Database["public"]["Enums"]["day_of_week"]
-          end_date: string
-          id: string
-          is_active: boolean
-          recurrence_interval: number
-          recurrence_type: Database["public"]["Enums"]["recurrence_type"]
-          start_date: string
-          start_time: string
-          template_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by_profile_id: string
-          day_of_week: Database["public"]["Enums"]["day_of_week"]
-          end_date: string
-          id?: string
-          is_active?: boolean
-          recurrence_interval?: number
-          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
-          start_date: string
-          start_time: string
-          template_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by_profile_id?: string
-          day_of_week?: Database["public"]["Enums"]["day_of_week"]
-          end_date?: string
-          id?: string
-          is_active?: boolean
-          recurrence_interval?: number
-          recurrence_type?: Database["public"]["Enums"]["recurrence_type"]
-          start_date?: string
-          start_time?: string
-          template_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_schedules_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_schedules_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_schedules_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "class_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -324,103 +305,6 @@ export type Database = {
             columns: ["trainer_id"]
             isOneToOne: false
             referencedRelation: "trainers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      class_templates: {
-        Row: {
-          club_id: string
-          court_number: number | null
-          created_at: string
-          created_by_profile_id: string
-          duration_minutes: number
-          group_id: string | null
-          id: string
-          is_active: boolean
-          level: Database["public"]["Enums"]["class_level"]
-          max_students: number
-          name: string
-          objective: string | null
-          price_per_student: number
-          trainer_profile_id: string
-          updated_at: string
-        }
-        Insert: {
-          club_id: string
-          court_number?: number | null
-          created_at?: string
-          created_by_profile_id: string
-          duration_minutes?: number
-          group_id?: string | null
-          id?: string
-          is_active?: boolean
-          level: Database["public"]["Enums"]["class_level"]
-          max_students?: number
-          name: string
-          objective?: string | null
-          price_per_student?: number
-          trainer_profile_id: string
-          updated_at?: string
-        }
-        Update: {
-          club_id?: string
-          court_number?: number | null
-          created_at?: string
-          created_by_profile_id?: string
-          duration_minutes?: number
-          group_id?: string | null
-          id?: string
-          is_active?: boolean
-          level?: Database["public"]["Enums"]["class_level"]
-          max_students?: number
-          name?: string
-          objective?: string | null
-          price_per_student?: number
-          trainer_profile_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_templates_club_id_fkey"
-            columns: ["club_id"]
-            isOneToOne: false
-            referencedRelation: "clubs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_templates_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_templates_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_templates_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "class_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_templates_trainer_profile_id_fkey"
-            columns: ["trainer_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_templates_trainer_profile_id_fkey"
-            columns: ["trainer_profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_players"
             referencedColumns: ["id"]
           },
         ]
@@ -944,82 +828,84 @@ export type Database = {
           },
         ]
       }
-      scheduled_classes: {
+      programmed_classes: {
         Row: {
-          class_date: string
-          court_number: number | null
+          club_id: string
           created_at: string
-          created_by_profile_id: string
-          current_students: number
-          end_time: string
+          created_by: string
+          custom_level: string | null
+          days_of_week: string[]
+          duration_minutes: number
+          end_date: string
           id: string
-          max_students: number
-          notes: string | null
-          schedule_id: string | null
+          is_active: boolean
+          level_from: number | null
+          level_to: number | null
+          name: string
+          recurrence_type: string
+          start_date: string
           start_time: string
-          status: Database["public"]["Enums"]["class_status"]
-          template_id: string
+          trainer_profile_id: string
           updated_at: string
         }
         Insert: {
-          class_date: string
-          court_number?: number | null
+          club_id: string
           created_at?: string
-          created_by_profile_id: string
-          current_students?: number
-          end_time: string
+          created_by?: string
+          custom_level?: string | null
+          days_of_week?: string[]
+          duration_minutes?: number
+          end_date: string
           id?: string
-          max_students: number
-          notes?: string | null
-          schedule_id?: string | null
+          is_active?: boolean
+          level_from?: number | null
+          level_to?: number | null
+          name: string
+          recurrence_type?: string
+          start_date: string
           start_time: string
-          status?: Database["public"]["Enums"]["class_status"]
-          template_id: string
+          trainer_profile_id: string
           updated_at?: string
         }
         Update: {
-          class_date?: string
-          court_number?: number | null
+          club_id?: string
           created_at?: string
-          created_by_profile_id?: string
-          current_students?: number
-          end_time?: string
+          created_by?: string
+          custom_level?: string | null
+          days_of_week?: string[]
+          duration_minutes?: number
+          end_date?: string
           id?: string
-          max_students?: number
-          notes?: string | null
-          schedule_id?: string | null
+          is_active?: boolean
+          level_from?: number | null
+          level_to?: number | null
+          name?: string
+          recurrence_type?: string
+          start_date?: string
           start_time?: string
-          status?: Database["public"]["Enums"]["class_status"]
-          template_id?: string
+          trainer_profile_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "scheduled_classes_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
+            foreignKeyName: "programmed_classes_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programmed_classes_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "scheduled_classes_created_by_profile_id_fkey"
-            columns: ["created_by_profile_id"]
+            foreignKeyName: "programmed_classes_trainer_profile_id_fkey"
+            columns: ["trainer_profile_id"]
             isOneToOne: false
             referencedRelation: "public_players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scheduled_classes_schedule_id_fkey"
-            columns: ["schedule_id"]
-            isOneToOne: false
-            referencedRelation: "class_schedules"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scheduled_classes_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "class_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1306,7 +1192,23 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_club_admin_of_class: {
+        Args: { class_id: string }
+        Returns: boolean
+      }
       is_trainer_assigned_to_club: {
+        Args: { club_id: string }
+        Returns: boolean
+      }
+      is_trainer_of_class: {
+        Args: { class_id: string }
+        Returns: boolean
+      }
+      is_trainer_of_club: {
+        Args: { club_id: string }
+        Returns: boolean
+      }
+      is_trainer_of_club_safe: {
         Args: { club_id: string }
         Returns: boolean
       }

@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Plus, Calendar, List } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import ScheduledClassForm from "@/components/ScheduledClassForm";
 import ClassCalendarView from "@/components/ClassCalendarView";
@@ -83,6 +82,12 @@ function ScheduledClassesContent() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Crear Nueva Clase Programada</DialogTitle>
+                <DialogDescription>
+                  Formulario para crear una nueva clase programada con horarios recurrentes y asignación de alumnos.
+                </DialogDescription>
+              </DialogHeader>
               <ScheduledClassForm
                 onClose={handleCloseForm}
                 clubId={currentClub.id}
