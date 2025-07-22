@@ -189,12 +189,15 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
               <div>
                 <label className="text-sm font-medium mb-2 block">Estado</label>
-                <Select value={filters.status} onValueChange={(value) => updateFilter("status", value)}>
+                <Select 
+                  value={filters.status || "all"} 
+                  onValueChange={(value) => updateFilter("status", value === "all" ? "" : value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Todos los estados" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos los estados</SelectItem>
+                    <SelectItem value="all">Todos los estados</SelectItem>
                     <SelectItem value="scheduled">Programada</SelectItem>
                     <SelectItem value="completed">Completada</SelectItem>
                     <SelectItem value="cancelled">Cancelada</SelectItem>
@@ -205,12 +208,15 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
               {groups && groups.length > 0 && (
                 <div>
                   <label className="text-sm font-medium mb-2 block">Grupo</label>
-                  <Select value={filters.groupId} onValueChange={(value) => updateFilter("groupId", value)}>
+                  <Select 
+                    value={filters.groupId || "all"} 
+                    onValueChange={(value) => updateFilter("groupId", value === "all" ? "" : value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Todos los grupos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los grupos</SelectItem>
+                      <SelectItem value="all">Todos los grupos</SelectItem>
                       {groups.map((group) => (
                         <SelectItem key={group.id} value={group.id}>
                           {group.name} - {group.level}
@@ -224,12 +230,15 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
               {trainers && trainers.length > 0 && (
                 <div>
                   <label className="text-sm font-medium mb-2 block">Entrenador</label>
-                  <Select value={filters.trainerName} onValueChange={(value) => updateFilter("trainerName", value)}>
+                  <Select 
+                    value={filters.trainerName || "all"} 
+                    onValueChange={(value) => updateFilter("trainerName", value === "all" ? "" : value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Todos los entrenadores" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los entrenadores</SelectItem>
+                      <SelectItem value="all">Todos los entrenadores</SelectItem>
                       {trainers.map((trainer, index) => (
                         <SelectItem key={index} value={trainer.name}>
                           {trainer.name}
