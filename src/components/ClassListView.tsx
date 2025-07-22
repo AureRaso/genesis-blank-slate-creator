@@ -56,46 +56,47 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = 
-        cls.template.name.toLowerCase().includes(searchLower) ||
-        cls.enrollments?.some(e => 
-          e.student_enrollment.full_name.toLowerCase().includes(searchLower)
-        ) ||
-        cls.template.group?.name.toLowerCase().includes(searchLower);
+        cls.name.toLowerCase().includes(searchLower) ||
+        cls.participants?.some(p => 
+          p.student_enrollment.full_name.toLowerCase().includes(searchLower)
+        );
       if (!matchesSearch) return false;
     }
 
-    if (filters.level && cls.template.level !== filters.level) return false;
-    if (filters.status && cls.status !== filters.status) return false;
-    if (filters.groupId && cls.template.group_id !== filters.groupId) return false;
+    // Note: We'll need to adapt level and group filtering to the new structure
+    // For now, these filters are disabled until we implement proper level matching
+    // if (filters.level && cls.level !== filters.level) return false;
+    // if (filters.groupId && cls.group_id !== filters.groupId) return false;
 
     return true;
   }) || [];
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'iniciacion': return 'bg-green-100 text-green-800 border-green-200';
-      case 'intermedio': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'avanzado': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      return cls.custom_level.replace('_', ' ');
     }
+    if (cls.level_from && cls.level_to) {
+      return cls.level_from === cls.level_to ? 
+        `Nivel ${cls.level_from}` : 
+        `Nivel ${cls.level_from}-${cls.level_to}`;
+    }
+    return 'Sin nivel';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getLevelColor = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'Programada';
-      case 'completed': return 'Completada';
-      case 'cancelled': return 'Cancelada';
-      default: return status;
+    
+    if (cls.level_from) {
+      if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-red-100 text-red-800 border-red-200';
     }
+    
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   if (isLoading) {
@@ -128,32 +129,26 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Clase</TableHead>
-                  <TableHead>Fecha y Hora</TableHead>
+                  <TableHead>Horario</TableHead>
                   <TableHead>Alumnos</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Pista</TableHead>
+                  <TableHead>Periodo</TableHead>
+                  <TableHead>Días</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClasses.map((cls) => {
-                  const enrolledCount = cls.enrollments?.length || 0;
-                  const availableSpots = cls.max_students - enrolledCount;
+                  const enrolledCount = cls.participants?.length || 0;
 
                   return (
                     <TableRow key={cls.id}>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium">{cls.template.name}</div>
+                          <div className="font-medium">{cls.name}</div>
                           <div className="flex items-center gap-2">
-                            <Badge className={getLevelColor(cls.template.level)}>
-                              {cls.template.level}
+                            <Badge className={getLevelColor(cls)}>
+                              {getLevelDisplay(cls)}
                             </Badge>
-                            {cls.template.group && (
-                              <Badge variant="outline">
-                                {cls.template.group.name}
-                              </Badge>
-                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -161,12 +156,11 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-sm">
-                            <Calendar className="h-3 w-3" />
-                            {format(parseISO(cls.class_date), "dd/MM/yyyy", { locale: es })}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            {cls.start_time.slice(0, 5)} - {cls.end_time.slice(0, 5)}
+                            {cls.start_time.slice(0, 5)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {cls.duration_minutes} min
                           </div>
                         </div>
                       </TableCell>
@@ -174,30 +168,20 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          <span className={enrolledCount >= cls.max_students ? "text-red-600 font-medium" : ""}>
-                            {enrolledCount}/{cls.max_students}
-                          </span>
-                          {availableSpots > 0 && (
-                            <Badge variant="outline" className="ml-2">
-                              {availableSpots} disponibles
-                            </Badge>
-                          )}
+                          <span>{enrolledCount}</span>
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <Badge className={getStatusColor(cls.status)}>
-                          {getStatusLabel(cls.status)}
-                        </Badge>
+                        <div className="text-sm">
+                          {format(parseISO(cls.start_date), "dd/MM/yy")} - {format(parseISO(cls.end_date), "dd/MM/yy")}
+                        </div>
                       </TableCell>
 
                       <TableCell>
-                        {cls.court_number && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <MapPin className="h-3 w-3" />
-                            Pista {cls.court_number}
-                          </div>
-                        )}
+                        <div className="text-sm">
+                          {cls.days_of_week.join(', ')}
+                        </div>
                       </TableCell>
 
                       <TableCell>
@@ -249,25 +233,25 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
             {selectedClass && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg">{selectedClass.template.name}</h3>
-                  <Badge className={getLevelColor(selectedClass.template.level)}>
-                    {selectedClass.template.level}
+                  <h3 className="font-semibold text-lg">{selectedClass.name}</h3>
+                  <Badge className={getLevelColor(selectedClass)}>
+                    {getLevelDisplay(selectedClass)}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Fecha</div>
-                    <div className="font-medium">
-                      {format(parseISO(selectedClass.class_date), "dd/MM/yyyy", { locale: es })}
+                    <div className="text-muted-foreground">Horario</div>
+                    <div className="font-medium flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {selectedClass.start_time.slice(0, 5)}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-muted-foreground">Hora</div>
-                    <div className="font-medium flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {selectedClass.start_time.slice(0, 5)} - {selectedClass.end_time.slice(0, 5)}
+                    <div className="text-muted-foreground">Duración</div>
+                    <div className="font-medium">
+                      {selectedClass.duration_minutes} min
                     </div>
                   </div>
 
@@ -275,42 +259,32 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                     <div className="text-muted-foreground">Alumnos</div>
                     <div className="font-medium flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      {selectedClass.enrollments?.length || 0}/{selectedClass.max_students}
+                      {selectedClass.participants?.length || 0}
                     </div>
                   </div>
 
-                  {selectedClass.court_number && (
-                    <div>
-                      <div className="text-muted-foreground">Pista</div>
-                      <div className="font-medium flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        Pista {selectedClass.court_number}
-                      </div>
+                  <div>
+                    <div className="text-muted-foreground">Días</div>
+                    <div className="font-medium">
+                      {selectedClass.days_of_week.join(', ')}
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {selectedClass.template.group && (
-                  <div>
-                    <div className="text-muted-foreground text-sm">Grupo</div>
-                    <div className="font-medium">{selectedClass.template.group.name}</div>
+                <div>
+                  <div className="text-muted-foreground text-sm">Periodo</div>
+                  <div className="font-medium">
+                    {format(parseISO(selectedClass.start_date), "dd/MM/yyyy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yyyy")}
                   </div>
-                )}
+                </div>
 
-                {selectedClass.template.objective && (
-                  <div>
-                    <div className="text-muted-foreground text-sm">Objetivo</div>
-                    <div className="text-sm">{selectedClass.template.objective}</div>
-                  </div>
-                )}
-
-                {selectedClass.enrollments && selectedClass.enrollments.length > 0 && (
+                {selectedClass.participants && selectedClass.participants.length > 0 && (
                   <div>
                     <div className="text-muted-foreground text-sm mb-2">Alumnos inscritos</div>
                     <div className="space-y-1">
-                      {selectedClass.enrollments.map((enrollment) => (
-                        <div key={enrollment.id} className="text-sm p-2 bg-muted rounded">
-                          {enrollment.student_enrollment.full_name}
+                      {selectedClass.participants.map((participant) => (
+                        <div key={participant.id} className="text-sm p-2 bg-muted rounded">
+                          {participant.student_enrollment.full_name}
                         </div>
                       ))}
                     </div>

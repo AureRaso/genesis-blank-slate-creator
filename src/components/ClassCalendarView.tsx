@@ -41,36 +41,59 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = 
-        cls.template.name.toLowerCase().includes(searchLower) ||
-        cls.enrollments?.some(e => 
-          e.student_enrollment.full_name.toLowerCase().includes(searchLower)
-        ) ||
-        cls.template.group?.name.toLowerCase().includes(searchLower);
+        cls.name.toLowerCase().includes(searchLower) ||
+        cls.participants?.some(p => 
+          p.student_enrollment.full_name.toLowerCase().includes(searchLower)
+        );
       if (!matchesSearch) return false;
     }
 
-    if (filters.level && cls.template.level !== filters.level) return false;
-    if (filters.status && cls.status !== filters.status) return false;
-    if (filters.groupId && cls.template.group_id !== filters.groupId) return false;
+    // Note: We'll need to adapt level and group filtering to the new structure
+    // For now, these filters are disabled until we implement proper level matching
+    // if (filters.level && cls.level !== filters.level) return false;
+    // if (filters.groupId && cls.group_id !== filters.groupId) return false;
 
     return true;
   }) || [];
 
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
+    const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
+    
     return filteredClasses.filter(cls => {
-      const classDate = parseISO(cls.class_date);
+      // Check if the class runs on this day of the week
+      const classDays = cls.days_of_week.map(d => d.toLowerCase());
       const classTime = cls.start_time.slice(0, 5); // Remove seconds
-      return isSameDay(classDate, day) && classTime === timeSlot;
+      
+      return classDays.includes(dayName) && classTime === timeSlot;
     });
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'iniciacion': return 'bg-green-100 text-green-800 border-green-200';
-      case 'intermedio': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'avanzado': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      return cls.custom_level.replace('_', ' ');
     }
+    if (cls.level_from && cls.level_to) {
+      return cls.level_from === cls.level_to ? 
+        `Nivel ${cls.level_from}` : 
+        `Nivel ${cls.level_from}-${cls.level_to}`;
+    }
+    return 'Sin nivel';
+  };
+
+  const getLevelColor = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    if (cls.level_from) {
+      if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   if (isLoading) {
@@ -174,7 +197,7 @@ interface ClassCardProps {
 }
 
 function ClassCard({ class: cls }: ClassCardProps) {
-  const enrolledCount = cls.enrollments?.length || 0;
+  const enrolledCount = cls.participants?.length || 0;
 
   return (
     <Dialog>
@@ -182,21 +205,15 @@ function ClassCard({ class: cls }: ClassCardProps) {
         <div className={cn(
           "p-2 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity",
           "border",
-          getLevelColor(cls.template.level)
+          getLevelColor(cls)
         )}>
           <div className="font-medium truncate">
-            {cls.template.name}
+            {cls.name}
           </div>
           <div className="flex items-center gap-1 mt-1">
             <Users className="h-3 w-3" />
-            <span>{enrolledCount}/{cls.max_students}</span>
+            <span>{enrolledCount}</span>
           </div>
-          {cls.court_number && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span>P{cls.court_number}</span>
-            </div>
-          )}
         </div>
       </DialogTrigger>
 
@@ -210,25 +227,32 @@ function ClassCard({ class: cls }: ClassCardProps) {
 
         <div className="space-y-4">
           <div>
-            <h3 className="font-semibold text-lg">{cls.template.name}</h3>
-            <Badge className={getLevelColor(cls.template.level)}>
-              {cls.template.level}
+            <h3 className="font-semibold text-lg">{cls.name}</h3>
+            <Badge className={getLevelColor(cls)}>
+              {getLevelDisplay(cls)}
             </Badge>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-muted-foreground">Fecha</div>
-              <div className="font-medium">
-                {format(parseISO(cls.class_date), "dd/MM/yyyy", { locale: es })}
+              <div className="text-muted-foreground">Horario</div>
+              <div className="font-medium flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {cls.start_time.slice(0, 5)}
               </div>
             </div>
 
             <div>
-              <div className="text-muted-foreground">Hora</div>
-              <div className="font-medium flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {cls.start_time.slice(0, 5)} - {cls.end_time.slice(0, 5)}
+              <div className="text-muted-foreground">Duración</div>
+              <div className="font-medium">
+                {cls.duration_minutes} min
+              </div>
+            </div>
+
+            <div>
+              <div className="text-muted-foreground">Días</div>
+              <div className="font-medium">
+                {cls.days_of_week.join(', ')}
               </div>
             </div>
 
@@ -236,42 +260,25 @@ function ClassCard({ class: cls }: ClassCardProps) {
               <div className="text-muted-foreground">Alumnos</div>
               <div className="font-medium flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {enrolledCount}/{cls.max_students}
+                {enrolledCount}
               </div>
             </div>
-
-            {cls.court_number && (
-              <div>
-                <div className="text-muted-foreground">Pista</div>
-                <div className="font-medium flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Pista {cls.court_number}
-                </div>
-              </div>
-            )}
           </div>
 
-          {cls.template.group && (
-            <div>
-              <div className="text-muted-foreground text-sm">Grupo</div>
-              <div className="font-medium">{cls.template.group.name}</div>
+          <div>
+            <div className="text-muted-foreground text-sm">Periodo</div>
+            <div className="font-medium">
+              {format(parseISO(cls.start_date), "dd/MM/yyyy")} - {format(parseISO(cls.end_date), "dd/MM/yyyy")}
             </div>
-          )}
+          </div>
 
-          {cls.template.objective && (
-            <div>
-              <div className="text-muted-foreground text-sm">Objetivo</div>
-              <div className="text-sm">{cls.template.objective}</div>
-            </div>
-          )}
-
-          {cls.enrollments && cls.enrollments.length > 0 && (
+          {cls.participants && cls.participants.length > 0 && (
             <div>
               <div className="text-muted-foreground text-sm mb-2">Alumnos inscritos</div>
               <div className="space-y-1">
-                {cls.enrollments.map((enrollment) => (
-                  <div key={enrollment.id} className="text-sm p-2 bg-muted rounded">
-                    {enrollment.student_enrollment.full_name}
+                {cls.participants.map((participant) => (
+                  <div key={participant.id} className="text-sm p-2 bg-muted rounded">
+                    {participant.student_enrollment.full_name}
                   </div>
                 ))}
               </div>
@@ -303,11 +310,30 @@ function generateTimeSlots() {
   return slots;
 }
 
-function getLevelColor(level: string) {
-  switch (level) {
-    case 'iniciacion': return 'bg-green-100 text-green-800 border-green-200';
-    case 'intermedio': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'avanzado': return 'bg-red-100 text-red-800 border-red-200';
-    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+function getLevelColor(cls: ScheduledClassWithTemplate) {
+  if (cls.custom_level) {
+    if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
+    if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
   }
+  
+  if (cls.level_from) {
+    if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
+    if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-red-100 text-red-800 border-red-200';
+  }
+  
+  return 'bg-gray-100 text-gray-800 border-gray-200';
+}
+
+function getLevelDisplay(cls: ScheduledClassWithTemplate) {
+  if (cls.custom_level) {
+    return cls.custom_level.replace('_', ' ');
+  }
+  if (cls.level_from && cls.level_to) {
+    return cls.level_from === cls.level_to ? 
+      `Nivel ${cls.level_from}` : 
+      `Nivel ${cls.level_from}-${cls.level_to}`;
+  }
+  return 'Sin nivel';
 }
