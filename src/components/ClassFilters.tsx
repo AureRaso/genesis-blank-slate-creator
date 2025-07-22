@@ -12,23 +12,7 @@ import { LevelFilter } from "./filters/LevelFilter";
 import { WeekDaysFilter } from "./filters/WeekDaysFilter";
 import { StudentNameFilter } from "./filters/StudentNameFilter";
 import { DiscountFilter } from "./filters/DiscountFilter";
-
-export interface ClassFiltersData {
-  search: string;
-  level: string;
-  dayOfWeek: string;
-  groupId: string;
-  trainerName: string;
-  status: string;
-  minGroupSize: number | undefined;
-  maxGroupSize: number | undefined;
-  levelFrom: number | undefined;
-  levelTo: number | undefined;
-  customLevels: string[];
-  weekDays: string[];
-  studentName: string;
-  withDiscountOnly: boolean;
-}
+import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassFiltersProps {
   filters: ClassFiltersData;
@@ -167,7 +151,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
         {/* Collapsible advanced filters */}
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleContent className="space-y-4">
-            {/* Grid de filtros nuevos */}
+            {/* Nuevos filtros avanzados */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <GroupSizeFilter
                 minSize={filters.minGroupSize}

@@ -35,7 +35,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
-import type { ClassFiltersData } from "./ClassFilters";
+import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassListViewProps {
   clubId?: string;
@@ -46,13 +46,12 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   
   const { data: classes, isLoading } = useScheduledClasses({
-    // Apply date range filter if needed
-    startDate: undefined,
-    endDate: undefined,
+    clubId: clubId,
   });
 
-  // Filter classes based on active filters
+  // Aplicar todos los filtros
   const filteredClasses = classes?.filter((cls) => {
+    // Filtro de búsqueda existente
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = 
@@ -63,10 +62,46 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
       if (!matchesSearch) return false;
     }
 
-    // Note: We'll need to adapt level and group filtering to the new structure
-    // For now, these filters are disabled until we implement proper level matching
-    // if (filters.level && cls.level !== filters.level) return false;
-    // if (filters.groupId && cls.group_id !== filters.groupId) return false;
+    // Filtro por tamaño de grupo
+    const participantCount = cls.participants?.length || 0;
+    if (filters.minGroupSize !== undefined && participantCount < filters.minGroupSize) return false;
+    if (filters.maxGroupSize !== undefined && participantCount > filters.maxGroupSize) return false;
+
+    // Filtro por nivel numérico
+    if (filters.levelFrom !== undefined && cls.level_from !== undefined && cls.level_from < filters.levelFrom) return false;
+    if (filters.levelTo !== undefined && cls.level_to !== undefined && cls.level_to > filters.levelTo) return false;
+
+    // Filtro por niveles personalizados
+    if (filters.customLevels.length > 0 && cls.custom_level) {
+      if (!filters.customLevels.includes(cls.custom_level)) return false;
+    }
+
+    // Filtro por días de la semana
+    if (filters.weekDays.length > 0) {
+      const hasMatchingDay = cls.days_of_week.some(day => 
+        filters.weekDays.includes(day.toLowerCase())
+      );
+      if (!hasMatchingDay) return false;
+    }
+
+    // Filtro por nombre/email de alumno
+    if (filters.studentName) {
+      const studentNameLower = filters.studentName.toLowerCase();
+      const hasMatchingStudent = cls.participants?.some(p => 
+        p.student_enrollment.full_name.toLowerCase().includes(studentNameLower) ||
+        p.student_enrollment.email.toLowerCase().includes(studentNameLower)
+      );
+      if (!hasMatchingStudent) return false;
+    }
+
+    // Filtro por descuentos
+    if (filters.withDiscountOnly) {
+      const hasDiscount = cls.participants?.some(p => 
+        (p.discount_1 !== null && p.discount_1 > 0) ||
+        (p.discount_2 !== null && p.discount_2 > 0)
+      );
+      if (!hasDiscount) return false;
+    }
 
     return true;
   }) || [];
