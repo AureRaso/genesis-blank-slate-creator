@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -43,7 +42,7 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
       const matchesSearch = 
         cls.name.toLowerCase().includes(searchLower) ||
         cls.participants?.some(p => 
-          p.student_enrollment.full_name.toLowerCase().includes(searchLower)
+          p.student_profile.full_name.toLowerCase().includes(searchLower)
         );
       if (!matchesSearch) return false;
     }
@@ -278,7 +277,7 @@ function ClassCard({ class: cls }: ClassCardProps) {
               <div className="space-y-1">
                 {cls.participants.map((participant) => (
                   <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                    {participant.student_enrollment.full_name}
+                    {participant.student_profile.full_name}
                   </div>
                 ))}
               </div>

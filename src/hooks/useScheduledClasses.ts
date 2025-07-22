@@ -10,7 +10,7 @@ type ClassParticipant = Database["public"]["Tables"]["class_participants"]["Row"
 
 export type ScheduledClassWithTemplate = ProgrammedClass & {
   participants: (ClassParticipant & {
-    student_enrollment: {
+    student_profile: {
       full_name: string;
       email: string;
     };
@@ -49,7 +49,7 @@ export const useScheduledClasses = (filters?: {
           *,
           participants:class_participants(
             *,
-            student_enrollment:student_enrollments!student_profile_id(
+            student_profile:profiles!student_profile_id(
               full_name,
               email
             )
