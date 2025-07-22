@@ -7,6 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { GroupSizeFilter } from "./filters/GroupSizeFilter";
+import { LevelFilter } from "./filters/LevelFilter";
+import { WeekDaysFilter } from "./filters/WeekDaysFilter";
+import { StudentNameFilter } from "./filters/StudentNameFilter";
+import { DiscountFilter } from "./filters/DiscountFilter";
 
 export interface ClassFiltersData {
   search: string;
@@ -15,6 +20,14 @@ export interface ClassFiltersData {
   groupId: string;
   trainerName: string;
   status: string;
+  minGroupSize: number | undefined;
+  maxGroupSize: number | undefined;
+  levelFrom: number | undefined;
+  levelTo: number | undefined;
+  customLevels: string[];
+  weekDays: string[];
+  studentName: string;
+  withDiscountOnly: boolean;
 }
 
 interface ClassFiltersProps {
@@ -27,12 +40,17 @@ interface ClassFiltersProps {
 export default function ClassFilters({ filters, onFiltersChange, groups, trainers }: ClassFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const updateFilter = (key: keyof ClassFiltersData, value: string) => {
+  const updateFilter = (key: keyof ClassFiltersData, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
   const clearFilter = (key: keyof ClassFiltersData) => {
-    onFiltersChange({ ...filters, [key]: "" });
+    let defaultValue: any = "";
+    if (key === 'customLevels' || key === 'weekDays') defaultValue = [];
+    if (key === 'withDiscountOnly') defaultValue = false;
+    if (key === 'minGroupSize' || key === 'maxGroupSize' || key === 'levelFrom' || key === 'levelTo') defaultValue = undefined;
+    
+    onFiltersChange({ ...filters, [key]: defaultValue });
   };
 
   const clearAllFilters = () => {
@@ -42,11 +60,36 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
       dayOfWeek: "",
       groupId: "",
       trainerName: "",
-      status: ""
+      status: "",
+      minGroupSize: undefined,
+      maxGroupSize: undefined,
+      levelFrom: undefined,
+      levelTo: undefined,
+      customLevels: [],
+      weekDays: [],
+      studentName: "",
+      withDiscountOnly: false
     });
   };
 
-  const activeFiltersCount = Object.values(filters).filter(value => value !== "").length;
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.search) count++;
+    if (filters.level) count++;
+    if (filters.dayOfWeek) count++;
+    if (filters.groupId) count++;
+    if (filters.trainerName) count++;
+    if (filters.status) count++;
+    if (filters.minGroupSize !== undefined) count++;
+    if (filters.maxGroupSize !== undefined) count++;
+    if (filters.levelFrom !== undefined) count++;
+    if (filters.levelTo !== undefined) count++;
+    if (filters.customLevels.length > 0) count++;
+    if (filters.weekDays.length > 0) count++;
+    if (filters.studentName) count++;
+    if (filters.withDiscountOnly) count++;
+    return count;
+  };
 
   const getActiveFilters = () => {
     const active = [];
@@ -59,9 +102,18 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
     }
     if (filters.trainerName) active.push({ key: "trainerName", label: `Entrenador: ${filters.trainerName}` });
     if (filters.status) active.push({ key: "status", label: `Estado: ${filters.status}` });
+    if (filters.minGroupSize !== undefined) active.push({ key: "minGroupSize", label: `Min. alumnos: ${filters.minGroupSize}` });
+    if (filters.maxGroupSize !== undefined) active.push({ key: "maxGroupSize", label: `Max. alumnos: ${filters.maxGroupSize}` });
+    if (filters.levelFrom !== undefined) active.push({ key: "levelFrom", label: `Nivel desde: ${filters.levelFrom}` });
+    if (filters.levelTo !== undefined) active.push({ key: "levelTo", label: `Nivel hasta: ${filters.levelTo}` });
+    if (filters.customLevels.length > 0) active.push({ key: "customLevels", label: `Niveles: ${filters.customLevels.length}` });
+    if (filters.weekDays.length > 0) active.push({ key: "weekDays", label: `Días: ${filters.weekDays.length}` });
+    if (filters.studentName) active.push({ key: "studentName", label: `Alumno: ${filters.studentName}` });
+    if (filters.withDiscountOnly) active.push({ key: "withDiscountOnly", label: "Con descuento" });
     return active;
   };
 
+  const activeFiltersCount = getActiveFiltersCount();
   const activeFilters = getActiveFilters();
 
   return (
@@ -115,41 +167,42 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
         {/* Collapsible advanced filters */}
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleContent className="space-y-4">
+            {/* Grid de filtros nuevos */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Nivel</label>
-                <Select value={filters.level} onValueChange={(value) => updateFilter("level", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los niveles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todos los niveles</SelectItem>
-                    <SelectItem value="iniciacion">Iniciación</SelectItem>
-                    <SelectItem value="intermedio">Intermedio</SelectItem>
-                    <SelectItem value="avanzado">Avanzado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <GroupSizeFilter
+                minSize={filters.minGroupSize}
+                maxSize={filters.maxGroupSize}
+                onMinChange={(value) => updateFilter("minGroupSize", value)}
+                onMaxChange={(value) => updateFilter("maxGroupSize", value)}
+              />
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Día de la semana</label>
-                <Select value={filters.dayOfWeek} onValueChange={(value) => updateFilter("dayOfWeek", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los días" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Todos los días</SelectItem>
-                    <SelectItem value="lunes">Lunes</SelectItem>
-                    <SelectItem value="martes">Martes</SelectItem>
-                    <SelectItem value="miercoles">Miércoles</SelectItem>
-                    <SelectItem value="jueves">Jueves</SelectItem>
-                    <SelectItem value="viernes">Viernes</SelectItem>
-                    <SelectItem value="sabado">Sábado</SelectItem>
-                    <SelectItem value="domingo">Domingo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LevelFilter
+                levelFrom={filters.levelFrom}
+                levelTo={filters.levelTo}
+                customLevels={filters.customLevels}
+                onLevelFromChange={(value) => updateFilter("levelFrom", value)}
+                onLevelToChange={(value) => updateFilter("levelTo", value)}
+                onCustomLevelsChange={(levels) => updateFilter("customLevels", levels)}
+              />
 
+              <WeekDaysFilter
+                selectedDays={filters.weekDays}
+                onDaysChange={(days) => updateFilter("weekDays", days)}
+              />
+
+              <StudentNameFilter
+                value={filters.studentName}
+                onChange={(value) => updateFilter("studentName", value)}
+              />
+
+              <DiscountFilter
+                withDiscountOnly={filters.withDiscountOnly}
+                onChange={(value) => updateFilter("withDiscountOnly", value)}
+              />
+            </div>
+
+            {/* Filtros originales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
               <div>
                 <label className="text-sm font-medium mb-2 block">Estado</label>
                 <Select value={filters.status} onValueChange={(value) => updateFilter("status", value)}>
