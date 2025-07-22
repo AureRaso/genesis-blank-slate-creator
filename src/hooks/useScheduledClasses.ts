@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +9,7 @@ type ClassParticipant = Database["public"]["Tables"]["class_participants"]["Row"
 
 export type ScheduledClassWithTemplate = ProgrammedClass & {
   participants: (ClassParticipant & {
-    student_profile: {
+    student_enrollment: {
       full_name: string;
       email: string;
     };
@@ -49,7 +48,7 @@ export const useScheduledClasses = (filters?: {
           *,
           participants:class_participants(
             *,
-            student_profile:profiles!student_profile_id(
+            student_enrollment:student_enrollments!student_enrollment_id(
               full_name,
               email
             )
@@ -98,7 +97,7 @@ export const useCreateScheduledClass = () => {
       if (selected_students && selected_students.length > 0) {
         const participantsData = selected_students.map(studentId => ({
           class_id: result.id,
-          student_profile_id: studentId,
+          student_enrollment_id: studentId,
           status: 'active'
         }));
 
@@ -193,6 +192,3 @@ export const useDeleteScheduledClass = () => {
     },
   });
 };
-
-// Remove the utility functions that are no longer needed
-// since we're using a simpler structure with programmed_classes

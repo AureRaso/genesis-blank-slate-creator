@@ -121,7 +121,7 @@ export type Database = {
           discount_2: number | null
           id: string
           status: string
-          student_profile_id: string
+          student_enrollment_id: string
           updated_at: string
         }
         Insert: {
@@ -131,7 +131,7 @@ export type Database = {
           discount_2?: number | null
           id?: string
           status?: string
-          student_profile_id: string
+          student_enrollment_id: string
           updated_at?: string
         }
         Update: {
@@ -141,7 +141,7 @@ export type Database = {
           discount_2?: number | null
           id?: string
           status?: string
-          student_profile_id?: string
+          student_enrollment_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -153,17 +153,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "class_participants_student_profile_id_fkey"
-            columns: ["student_profile_id"]
+            foreignKeyName: "class_participants_student_enrollment_id_fkey"
+            columns: ["student_enrollment_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_participants_student_profile_id_fkey"
-            columns: ["student_profile_id"]
-            isOneToOne: false
-            referencedRelation: "public_players"
+            referencedRelation: "student_enrollments"
             referencedColumns: ["id"]
           },
         ]

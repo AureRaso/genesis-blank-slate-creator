@@ -58,7 +58,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
       const matchesSearch = 
         cls.name.toLowerCase().includes(searchLower) ||
         cls.participants?.some(p => 
-          p.student_profile.full_name.toLowerCase().includes(searchLower)
+          p.student_enrollment.full_name.toLowerCase().includes(searchLower)
         );
       if (!matchesSearch) return false;
     }
@@ -284,7 +284,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                     <div className="space-y-1">
                       {selectedClass.participants.map((participant) => (
                         <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                          {participant.student_profile.full_name}
+                          {participant.student_enrollment.full_name}
                         </div>
                       ))}
                     </div>
