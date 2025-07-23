@@ -1,10 +1,13 @@
 
-import { Users, Clock, Edit, X } from "lucide-react";
-import { format } from "date-fns";
+import { useState } from "react";
+import { Users, Clock, Edit, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { EditClassModal } from "./EditClassModal";
+import { ManageStudentsModal } from "./ManageStudentsModal";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface ClassCardProps {
@@ -12,6 +15,10 @@ interface ClassCardProps {
 }
 
 export function ClassCard({ class: cls }: ClassCardProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showManageStudents, setShowManageStudents] = useState(false);
+  
   const enrolledCount = cls.participants?.length || 0;
 
   const getLevelDisplay = () => {
@@ -42,42 +49,97 @@ export function ClassCard({ class: cls }: ClassCardProps) {
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <div className={cn(
-          "w-full p-2 rounded-md text-xs cursor-pointer hover:opacity-80 transition-all border shadow-sm mb-1",
-          getLevelColor()
-        )}>
-          <div className="font-medium truncate mb-1">
-            {cls.name}
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              <span className="text-xs">{enrolledCount}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span className="text-xs">{cls.duration_minutes}min</span>
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1 truncate">
-            {getLevelDisplay()}
-          </div>
-        </div>
-      </DialogTrigger>
+  const getEndTime = () => {
+    const [hours, minutes] = cls.start_time.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endMinutes = startMinutes + cls.duration_minutes;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  };
 
-      <ClassDetailsModal class={cls} />
-    </Dialog>
+  return (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Dialog open={showDetails} onOpenChange={setShowDetails}>
+              <DialogTrigger asChild>
+                <div className={cn(
+                  "w-full h-full p-2 rounded-md text-xs cursor-pointer hover:opacity-90 transition-all border shadow-sm",
+                  "flex flex-col justify-between",
+                  getLevelColor()
+                )}>
+                  <div className="space-y-1">
+                    <div className="font-medium truncate text-sm leading-tight">
+                      {cls.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {getLevelDisplay()}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      <span className="text-xs">{enrolledCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span className="text-xs">{cls.duration_minutes}min</span>
+                    </div>
+                  </div>
+                </div>
+              </DialogTrigger>
+
+              <ClassDetailsModal 
+                class={cls} 
+                onEditClass={() => {
+                  setShowDetails(false);
+                  setShowEditModal(true);
+                }}
+                onManageStudents={() => {
+                  setShowDetails(false);
+                  setShowManageStudents(true);
+                }}
+              />
+            </Dialog>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="space-y-1">
+              <div className="font-medium">{cls.name}</div>
+              <div className="text-xs">
+                {cls.start_time.slice(0, 5)} - {getEndTime()} ({cls.duration_minutes} min)
+              </div>
+              <div className="text-xs">{enrolledCount} alumnos inscritos</div>
+              <div className="text-xs">{getLevelDisplay()}</div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <EditClassModal 
+        class={cls}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      />
+
+      <ManageStudentsModal 
+        class={cls}
+        isOpen={showManageStudents}
+        onClose={() => setShowManageStudents(false)}
+      />
+    </>
   );
 }
 
 interface ClassDetailsModalProps {
   class: ScheduledClassWithTemplate;
+  onEditClass: () => void;
+  onManageStudents: () => void;
 }
 
-function ClassDetailsModal({ class: cls }: ClassDetailsModalProps) {
+function ClassDetailsModal({ class: cls, onEditClass, onManageStudents }: ClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
 
   const getLevelDisplay = () => {
@@ -106,6 +168,15 @@ function ClassDetailsModal({ class: cls }: ClassDetailsModalProps) {
     }
     
     return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getEndTime = () => {
+    const [hours, minutes] = cls.start_time.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endMinutes = startMinutes + cls.duration_minutes;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -130,7 +201,7 @@ function ClassDetailsModal({ class: cls }: ClassDetailsModalProps) {
               <div className="text-sm text-muted-foreground mb-1">Horario</div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{cls.start_time.slice(0, 5)}</span>
+                <span className="font-medium">{cls.start_time.slice(0, 5)} - {getEndTime()}</span>
                 <span className="text-muted-foreground">({cls.duration_minutes} min)</span>
               </div>
             </div>
@@ -149,7 +220,7 @@ function ClassDetailsModal({ class: cls }: ClassDetailsModalProps) {
             <div>
               <div className="text-sm text-muted-foreground mb-1">Periodo</div>
               <div className="text-sm">
-                {format(new Date(cls.start_date), "dd/MM/yyyy")} - {format(new Date(cls.end_date), "dd/MM/yyyy")}
+                {new Date(cls.start_date).toLocaleDateString('es-ES')} - {new Date(cls.end_date).toLocaleDateString('es-ES')}
               </div>
             </div>
           </div>
@@ -185,17 +256,13 @@ function ClassDetailsModal({ class: cls }: ClassDetailsModalProps) {
         )}
 
         <div className="flex gap-3 pt-4 border-t">
-          <Button className="flex-1 gap-2">
+          <Button onClick={onEditClass} className="flex-1 gap-2">
             <Edit className="h-4 w-4" />
             Editar Clase
           </Button>
-          <Button variant="outline" className="flex-1 gap-2">
-            <Users className="h-4 w-4" />
+          <Button onClick={onManageStudents} variant="outline" className="flex-1 gap-2">
+            <Settings className="h-4 w-4" />
             Gestionar Alumnos
-          </Button>
-          <Button variant="destructive" size="sm" className="gap-2">
-            <X className="h-4 w-4" />
-            Cancelar
           </Button>
         </div>
       </div>

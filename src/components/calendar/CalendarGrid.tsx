@@ -18,17 +18,19 @@ const TIME_SLOTS = [
   "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
+const SLOT_HEIGHT = 50; // Height in pixels for each 30-minute slot
+
 // Mapping of Spanish day names to lowercase
 const DAY_MAPPING: { [key: string]: string } = {
   'domingo': 'domingo',
   'lunes': 'lunes',
   'martes': 'martes',
   'miércoles': 'miércoles',
-  'miercoles': 'miércoles', // Handle both with and without accent
+  'miercoles': 'miércoles',
   'jueves': 'jueves',
   'viernes': 'viernes',
   'sábado': 'sábado',
-  'sabado': 'sábado' // Handle both with and without accent
+  'sabado': 'sábado'
 };
 
 export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
@@ -42,16 +44,12 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     console.log("Checking day:", dayName, "timeSlot:", timeSlot);
     
     const matchingClasses = classes.filter(cls => {
-      // Normalize the class days to handle accents and case
       const classDays = cls.days_of_week.map(d => {
         const normalized = d.toLowerCase().trim();
         return DAY_MAPPING[normalized] || normalized;
       });
       
-      // Extract time from start_time (remove seconds if present)
-      const classTime = cls.start_time.slice(0, 5); // "HH:mm"
-      
-      // Normalize the current day name
+      const classTime = cls.start_time.slice(0, 5);
       const normalizedDayName = DAY_MAPPING[dayName] || dayName;
       
       const dayMatches = classDays.includes(normalizedDayName);
@@ -77,6 +75,35 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     return matchingClasses;
   };
 
+  const getClassHeight = (durationMinutes: number) => {
+    // Each slot is 30 minutes, so height = (duration / 30) * SLOT_HEIGHT
+    const slotsNeeded = durationMinutes / 30;
+    return slotsNeeded * SLOT_HEIGHT;
+  };
+
+  const isClassContinuation = (day: Date, timeSlot: string, cls: ScheduledClassWithTemplate) => {
+    const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
+    const normalizedDayName = DAY_MAPPING[dayName] || dayName;
+    
+    const classDays = cls.days_of_week.map(d => {
+      const normalized = d.toLowerCase().trim();
+      return DAY_MAPPING[normalized] || normalized;
+    });
+    
+    if (!classDays.includes(normalizedDayName)) return false;
+    
+    const classStartTime = cls.start_time.slice(0, 5);
+    const classStartIndex = TIME_SLOTS.indexOf(classStartTime);
+    const currentSlotIndex = TIME_SLOTS.indexOf(timeSlot);
+    
+    if (classStartIndex === -1 || currentSlotIndex === -1) return false;
+    
+    const slotsNeeded = Math.ceil(cls.duration_minutes / 30);
+    const classEndIndex = classStartIndex + slotsNeeded;
+    
+    return currentSlotIndex > classStartIndex && currentSlotIndex < classEndIndex;
+  };
+
   return (
     <div className="border rounded-lg overflow-hidden bg-card max-h-[75vh] overflow-y-auto">
       {/* Header with days */}
@@ -100,23 +127,37 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
       </div>
 
       {/* Calendar grid */}
-      <div className="divide-y">
-        {TIME_SLOTS.map((timeSlot) => (
-          <div key={timeSlot} className="grid grid-cols-8 min-h-[50px]">
+      <div className="relative">
+        {TIME_SLOTS.map((timeSlot, index) => (
+          <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
             <div className="p-2 text-sm text-muted-foreground border-r bg-muted/20 flex items-center justify-center">
               {timeSlot}
             </div>
             
             {weekDays.map((day) => {
               const dayClasses = getClassesForDayAndTime(day, timeSlot);
+              const hasContinuationClasses = classes.some(cls => isClassContinuation(day, timeSlot, cls));
               
               return (
                 <div 
                   key={`${day.toISOString()}-${timeSlot}`} 
-                  className="p-1 border-r last:border-r-0 relative min-h-[50px]"
+                  className={cn(
+                    "border-r last:border-r-0 relative",
+                    hasContinuationClasses && "bg-muted/10"
+                  )}
+                  style={{ minHeight: `${SLOT_HEIGHT}px` }}
                 >
                   {dayClasses.map((cls) => (
-                    <ClassCard key={cls.id} class={cls} />
+                    <div
+                      key={cls.id}
+                      className="absolute inset-x-0 top-0 p-1"
+                      style={{
+                        height: `${getClassHeight(cls.duration_minutes)}px`,
+                        zIndex: 10
+                      }}
+                    >
+                      <ClassCard class={cls} />
+                    </div>
                   ))}
                 </div>
               );
