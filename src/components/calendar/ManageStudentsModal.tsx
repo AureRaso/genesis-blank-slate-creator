@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, UserPlus, UserMinus, Mail, User } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, UserPlus, UserMinus, Mail, User, Loader2 } from "lucide-react";
 import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
+import { useClassParticipants, useBulkUpdateClassParticipants } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
@@ -20,51 +22,75 @@ interface ManageStudentsModalProps {
 export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStudentsModalProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   
-  // Get all available students
-  const { data: allStudents, isLoading } = useStudentEnrollments({
-    clubId: cls.club_id
-  });
+  // Get all available students and current participants
+  const { data: allStudents, isLoading: studentsLoading } = useStudentEnrollments();
+  const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
+  const bulkUpdateMutation = useBulkUpdateClassParticipants();
 
-  const currentStudents = cls.participants || [];
-  const currentStudentIds = currentStudents.map(p => p.student_enrollment_id);
-
+  // Filter students by club and search term
   const availableStudents = allStudents?.filter(student => 
-    !currentStudentIds.includes(student.id) &&
+    student.club_id === cls.club_id &&
+    !currentParticipants?.some(p => p.student_enrollment_id === student.id) &&
     student.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const handleAddStudent = async (studentId: string) => {
+  const handleStudentToggle = (studentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedStudents);
+    if (checked) {
+      newSelected.add(studentId);
+    } else {
+      newSelected.delete(studentId);
+    }
+    setSelectedStudents(newSelected);
+  };
+
+  const handleParticipantToggle = (participantId: string, checked: boolean) => {
+    const newSelected = new Set(selectedParticipants);
+    if (checked) {
+      newSelected.add(participantId);
+    } else {
+      newSelected.delete(participantId);
+    }
+    setSelectedParticipants(newSelected);
+  };
+
+  const handleSaveChanges = async () => {
+    const studentsToAdd = Array.from(selectedStudents);
+    const participantsToRemove = Array.from(selectedParticipants);
+
+    if (studentsToAdd.length === 0 && participantsToRemove.length === 0) {
+      toast({
+        title: "Sin cambios",
+        description: "No hay cambios que guardar."
+      });
+      return;
+    }
+
     try {
-      // TODO: Implement add student to class
-      toast({
-        title: "Alumno añadido",
-        description: "El alumno ha sido añadido a la clase correctamente."
+      await bulkUpdateMutation.mutateAsync({
+        classId: cls.id,
+        studentsToAdd,
+        participantsToRemove
       });
+      
+      // Reset selections
+      setSelectedStudents(new Set());
+      setSelectedParticipants(new Set());
+      
+      // Close modal after successful update
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo añadir el alumno a la clase.",
-        variant: "destructive"
-      });
+      // Error handling is done in the mutation
     }
   };
 
-  const handleRemoveStudent = async (participantId: string) => {
-    try {
-      // TODO: Implement remove student from class
-      toast({
-        title: "Alumno eliminado",
-        description: "El alumno ha sido eliminado de la clase correctamente."
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el alumno de la clase.",
-        variant: "destructive"
-      });
-    }
-  };
+  const isLoading = studentsLoading || participantsLoading;
+  const isSaving = bulkUpdateMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -79,19 +105,28 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Alumnos inscritos</h3>
               <Badge variant="outline">
-                {currentStudents.length} alumnos
+                {currentParticipants?.length || 0} alumnos
               </Badge>
             </div>
             
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {currentStudents.length === 0 ? (
+              {isLoading ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Cargando alumnos...
+                </p>
+              ) : !currentParticipants || currentParticipants.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
                   No hay alumnos inscritos en esta clase
                 </p>
               ) : (
-                currentStudents.map((participant) => (
+                currentParticipants.map((participant) => (
                   <div key={participant.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center space-x-3">
+                      <Checkbox
+                        checked={selectedParticipants.has(participant.id)}
+                        onCheckedChange={(checked) => handleParticipantToggle(participant.id, !!checked)}
+                        disabled={isSaving}
+                      />
                       <Avatar className="h-10 w-10">
                         <AvatarFallback>
                           <User className="h-5 w-5" />
@@ -105,14 +140,9 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveStudent(participant.id)}
-                      className="text-destructive hover:text-destructive/90"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
+                    {selectedParticipants.has(participant.id) && (
+                      <UserMinus className="h-4 w-4 text-destructive" />
+                    )}
                   </div>
                 ))
               )}
@@ -135,6 +165,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
+                disabled={isSaving}
               />
             </div>
 
@@ -151,6 +182,11 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                 availableStudents.map((student) => (
                   <div key={student.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center space-x-3">
+                      <Checkbox
+                        checked={selectedStudents.has(student.id)}
+                        onCheckedChange={(checked) => handleStudentToggle(student.id, !!checked)}
+                        disabled={isSaving}
+                      />
                       <Avatar className="h-10 w-10">
                         <AvatarFallback>
                           <User className="h-5 w-5" />
@@ -164,14 +200,9 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAddStudent(student.id)}
-                      className="text-primary hover:text-primary/90"
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
+                    {selectedStudents.has(student.id) && (
+                      <UserPlus className="h-4 w-4 text-primary" />
+                    )}
                   </div>
                 ))
               )}
@@ -179,9 +210,16 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t">
-          <Button onClick={onClose}>
-            Cerrar
+        <div className="flex justify-between pt-4 border-t">
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSaveChanges} 
+            disabled={isSaving || (selectedStudents.size === 0 && selectedParticipants.size === 0)}
+          >
+            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Guardar cambios
           </Button>
         </div>
       </DialogContent>
