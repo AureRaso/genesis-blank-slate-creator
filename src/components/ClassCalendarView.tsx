@@ -4,6 +4,7 @@ import { startOfWeek, endOfWeek, addWeeks, subWeeks, format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarGrid } from "./calendar/CalendarGrid";
+import { TrainerLegend } from "./calendar/TrainerLegend";
 import { useScheduledClasses } from "@/hooks/useScheduledClasses";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
@@ -15,7 +16,7 @@ interface ClassCalendarViewProps {
 
 export default function ClassCalendarView({ clubId, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -134,6 +135,9 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
         onNextWeek={goToNextWeek}
         onToday={goToToday}
       />
+      
+      {/* Show trainer legend for admins when there are multiple trainers */}
+      {isAdmin && <TrainerLegend classes={filteredClasses} />}
       
       <CalendarGrid
         weekStart={weekStart}

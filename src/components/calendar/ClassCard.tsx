@@ -8,6 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { EditClassModal } from "./EditClassModal";
 import { ManageStudentsModal } from "./ManageStudentsModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { getTrainerColor } from "@/utils/trainerColors";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface ClassCardProps {
@@ -18,6 +20,7 @@ export function ClassCard({ class: cls }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
+  const { isAdmin } = useAuth();
   
   const enrolledCount = cls.participants?.length || 0;
 
@@ -34,6 +37,12 @@ export function ClassCard({ class: cls }: ClassCardProps) {
   };
 
   const getLevelColor = () => {
+    // For admins, use trainer colors instead of level colors
+    if (isAdmin && cls.trainer_profile_id) {
+      return getTrainerColor(cls.trainer_profile_id);
+    }
+    
+    // For trainers, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -113,6 +122,9 @@ export function ClassCard({ class: cls }: ClassCardProps) {
               </div>
               <div className="text-xs">{enrolledCount} alumnos inscritos</div>
               <div className="text-xs">{getLevelDisplay()}</div>
+              {isAdmin && cls.trainer && (
+                <div className="text-xs">Profesor: {cls.trainer.full_name}</div>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>
@@ -141,6 +153,7 @@ interface ClassDetailsModalProps {
 
 function ClassDetailsModal({ class: cls, onEditClass, onManageStudents }: ClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
+  const { isAdmin } = useAuth();
 
   const getLevelDisplay = () => {
     if (cls.custom_level) {
@@ -155,6 +168,12 @@ function ClassDetailsModal({ class: cls, onEditClass, onManageStudents }: ClassD
   };
 
   const getLevelColor = () => {
+    // For admins, use trainer colors instead of level colors
+    if (isAdmin && cls.trainer_profile_id) {
+      return getTrainerColor(cls.trainer_profile_id);
+    }
+    
+    // For trainers, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -238,6 +257,13 @@ function ClassDetailsModal({ class: cls, onEditClass, onManageStudents }: ClassD
               <div className="text-sm text-muted-foreground mb-1">Tipo de recurrencia</div>
               <div className="text-sm font-medium">{cls.recurrence_type}</div>
             </div>
+
+            {isAdmin && cls.trainer && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Profesor</div>
+                <div className="text-sm font-medium">{cls.trainer.full_name}</div>
+              </div>
+            )}
           </div>
         </div>
 

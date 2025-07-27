@@ -15,6 +15,9 @@ export type ScheduledClassWithTemplate = ProgrammedClass & {
       email: string;
     };
   })[];
+  trainer: {
+    full_name: string;
+  } | null;
 };
 
 export type CreateScheduledClassData = {
@@ -55,6 +58,9 @@ export const useScheduledClasses = (filters?: {
               full_name,
               email
             )
+          ),
+          trainer:profiles!trainer_profile_id(
+            full_name
           )
         `)
         .eq("is_active", true)
