@@ -831,6 +831,7 @@ export type Database = {
           days_of_week: string[]
           duration_minutes: number
           end_date: string
+          group_id: string | null
           id: string
           is_active: boolean
           level_from: number | null
@@ -851,6 +852,7 @@ export type Database = {
           days_of_week?: string[]
           duration_minutes?: number
           end_date: string
+          group_id?: string | null
           id?: string
           is_active?: boolean
           level_from?: number | null
@@ -871,6 +873,7 @@ export type Database = {
           days_of_week?: string[]
           duration_minutes?: number
           end_date?: string
+          group_id?: string | null
           id?: string
           is_active?: boolean
           level_from?: number | null
@@ -888,6 +891,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programmed_classes_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "class_groups"
             referencedColumns: ["id"]
           },
           {

@@ -17,6 +17,8 @@ export interface ProgrammedClass {
   recurrence_type: string;
   trainer_profile_id: string;
   club_id: string;
+  court_number?: number;
+  group_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -48,6 +50,7 @@ export interface CreateProgrammedClassData {
   trainer_profile_id: string;
   club_id: string;
   court_number?: number;
+  group_id?: string;
   selected_students?: string[];
 }
 
@@ -79,25 +82,46 @@ export const useCreateProgrammedClass = () => {
 
   return useMutation({
     mutationFn: async (data: CreateProgrammedClassData) => {
-      const { selected_students, ...classData } = data;
+      const { selected_students, group_id, ...classData } = data;
 
       // Create the programmed class
       const { data: createdClass, error: classError } = await supabase
         .from("programmed_classes")
-        .insert([classData])
+        .insert([{ ...classData, group_id }])
         .select()
         .single();
 
       if (classError) throw classError;
 
-      // Create class participants for selected students
-      if (selected_students && selected_students.length > 0) {
-        const participantsData = selected_students.map(studentId => ({
+      // Handle participants based on whether a group or individual students were selected
+      let participantsData: any[] = [];
+
+      if (group_id) {
+        // If a group was selected, get all group members
+        const { data: groupMembers, error: groupError } = await supabase
+          .from("group_members")
+          .select("student_enrollment_id")
+          .eq("group_id", group_id)
+          .eq("is_active", true);
+
+        if (groupError) throw groupError;
+
+        participantsData = groupMembers.map(member => ({
+          class_id: createdClass.id,
+          student_enrollment_id: member.student_enrollment_id,
+          status: 'active'
+        }));
+      } else if (selected_students && selected_students.length > 0) {
+        // If individual students were selected
+        participantsData = selected_students.map(studentId => ({
           class_id: createdClass.id,
           student_enrollment_id: studentId,
           status: 'active'
         }));
+      }
 
+      // Create class participants if there are any
+      if (participantsData.length > 0) {
         const { error: participantsError } = await supabase
           .from("class_participants")
           .insert(participantsData);
