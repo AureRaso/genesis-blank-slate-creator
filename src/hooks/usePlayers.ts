@@ -10,7 +10,18 @@ export const usePlayers = () => {
     queryFn: async () => {
       console.log('usePlayers - Starting query...');
       
-      const { data, error } = await supabase
+      // Get current user to check if they're an admin
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) throw new Error('No authenticated user');
+
+      // Get user profile to check role and clubs
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, id')
+        .eq('id', currentUser.user.id)
+        .single();
+
+      let query = supabase
         .from('profiles')
         .select(`
           id, 
@@ -24,6 +35,24 @@ export const usePlayers = () => {
         `)
         .eq('role', 'player')
         .order('created_at', { ascending: false });
+
+      // If user is admin, filter players by their clubs only
+      if (profile?.role === 'admin') {
+        const { data: adminClubs } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', profile.id);
+
+        if (adminClubs && adminClubs.length > 0) {
+          const clubIds = adminClubs.map(club => club.id);
+          query = query.in('club_id', clubIds);
+        } else {
+          // Admin has no clubs, return empty array
+          return [];
+        }
+      }
+
+      const { data, error } = await query;
       
       console.log('usePlayers - Query result:', { 
         dataCount: data?.length || 0, 

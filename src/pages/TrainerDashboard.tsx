@@ -10,6 +10,7 @@ import TrainerClassForm from "@/components/TrainerClassForm";
 import ClassDetailsModal from "@/components/ClassDetailsModal";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import StudentsList from "@/components/StudentsList";
+import ClassGroupsManager from "@/components/ClassGroupsManager";
 import { ClassSlot } from "@/hooks/useClassSlots";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
@@ -138,9 +139,10 @@ const TrainerDashboard = () => {
 
       {/* Tabs Section */}
       <Tabs defaultValue="classes" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="classes">Clases</TabsTrigger>
           <TabsTrigger value="students">Alumnos</TabsTrigger>
+          <TabsTrigger value="groups">Grupos</TabsTrigger>
         </TabsList>
 
         {/* Classes Tab */}
@@ -255,6 +257,11 @@ const TrainerDashboard = () => {
           </div>
 
           <StudentsList onViewStudent={handleViewStudent} onEditStudent={handleEditStudent} onDeleteStudent={handleDeleteStudent} />
+        </TabsContent>
+
+        {/* Groups Tab */}
+        <TabsContent value="groups" className="space-y-6">
+          <ClassGroupsManager />
         </TabsContent>
       </Tabs>
 
