@@ -824,6 +824,7 @@ export type Database = {
       programmed_classes: {
         Row: {
           club_id: string
+          court_number: number | null
           created_at: string
           created_by: string
           custom_level: string | null
@@ -843,6 +844,7 @@ export type Database = {
         }
         Insert: {
           club_id: string
+          court_number?: number | null
           created_at?: string
           created_by?: string
           custom_level?: string | null
@@ -862,6 +864,7 @@ export type Database = {
         }
         Update: {
           club_id?: string
+          court_number?: number | null
           created_at?: string
           created_by?: string
           custom_level?: string | null

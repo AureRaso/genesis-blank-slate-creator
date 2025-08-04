@@ -52,6 +52,7 @@ const formSchema = z.object({
   trainer_profile_id: z.string().min(1, "El profesor es obligatorio"),
   club_id: z.string().min(1, "El club es obligatorio"),
   objective: z.string().optional(),
+  court_number: z.number().min(1).max(7, "Selecciona una pista del 1 al 7"),
 }).refine(data => {
   if (data.level_format === "numeric") {
     return data.level_from && data.level_to && data.level_from <= data.level_to;
@@ -188,6 +189,7 @@ export default function ScheduledClassForm({
         recurrence_type: data.recurrence_type,
         trainer_profile_id: data.trainer_profile_id,
         club_id: data.club_id,
+        court_number: data.court_number,
         selected_students: data.selected_students
       };
 
@@ -300,10 +302,10 @@ export default function ScheduledClassForm({
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="numeric">Numérico (Playtomic)</SelectItem>
-                              <SelectItem value="levante">Formato Levante</SelectItem>
-                            </SelectContent>
+                             <SelectContent>
+                               <SelectItem value="numeric">Numérico</SelectItem>
+                               <SelectItem value="levante">Nivel por categorías</SelectItem>
+                             </SelectContent>
                           </Select>
                           <FormMessage />
                         </FormItem>
@@ -668,19 +670,46 @@ export default function ScheduledClassForm({
             {/* Step 3: Final Configuration */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="objective"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Objetivo de la clase (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="court_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pista</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una pista" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {[1, 2, 3, 4, 5, 6, 7].map((court) => (
+                              <SelectItem key={court} value={court.toString()}>
+                                Pista {court}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="objective"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Objetivo de la clase (opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Summary */}
                 <div className="bg-muted p-4 rounded-lg">
@@ -690,7 +719,8 @@ export default function ScheduledClassForm({
                     <div>• Desde {watchedValues.start_date ? format(watchedValues.start_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
                     <div>• Hasta {watchedValues.end_date ? format(watchedValues.end_date, "dd/MM/yyyy", { locale: es }) : "N/A"}</div>
                     <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>
-                    <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
+                     <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
+                     <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
                   </div>
                 </div>
               </div>

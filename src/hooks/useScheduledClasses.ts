@@ -33,6 +33,7 @@ export type CreateScheduledClassData = {
   recurrence_type: string;
   trainer_profile_id: string;
   club_id: string;
+  court_number?: number;
   selected_students?: string[];
 };
 
