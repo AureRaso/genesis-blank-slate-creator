@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useCreateProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
+import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   // Step 1: Basic Info
@@ -127,9 +128,14 @@ export default function ScheduledClassForm({
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
+  
+  // Get trainer profile to get the correct club
+  const { data: trainerProfile } = useMyTrainerProfile();
+  const trainerClubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
+  
   const {
     data: groups
-  } = useClassGroups(clubId);
+  } = useClassGroups(trainerClubId); // Use trainer's club instead of passed clubId
   const {
     data: students
   } = useStudentEnrollments();
