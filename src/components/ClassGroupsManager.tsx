@@ -29,22 +29,48 @@ interface ClassGroupFormProps {
 }
 
 const ClassGroupForm = ({ group, onClose, clubId }: ClassGroupFormProps) => {
+  const [selectedStudents, setSelectedStudents] = useState<string[]>(
+    group?.members.map(m => m.student_enrollment_id) || []
+  );
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateClassGroupData>();
   const { toast } = useToast();
+  const { data: students } = useStudentEnrollments();
   const createMutation = useCreateClassGroup();
   const updateMutation = useUpdateClassGroup();
+  const addMemberMutation = useAddGroupMember();
+
+  const availableStudents = students?.filter(s => s.status === 'active') || [];
 
   const onSubmit = async (data: CreateClassGroupData) => {
     try {
       if (group) {
         await updateMutation.mutateAsync({ id: group.id, data });
       } else {
-        await createMutation.mutateAsync({ ...data, club_id: clubId });
+        // Create group and add selected students
+        const newGroup = await createMutation.mutateAsync({ ...data, club_id: clubId });
+        
+        // Add selected students to the group
+        if (selectedStudents.length > 0) {
+          for (const studentId of selectedStudents) {
+            await addMemberMutation.mutateAsync({
+              group_id: newGroup.id,
+              student_enrollment_id: studentId
+            });
+          }
+        }
       }
       onClose();
     } catch (error) {
       console.error('Error saving group:', error);
     }
+  };
+
+  const handleStudentToggle = (studentId: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    );
   };
 
   return (
@@ -86,13 +112,45 @@ const ClassGroupForm = ({ group, onClose, clubId }: ClassGroupFormProps) => {
         />
       </div>
 
+      {!group && (
+        <div>
+          <Label>Seleccionar Estudiantes</Label>
+          <div className="max-h-60 overflow-y-auto border rounded-md p-3 space-y-2">
+            {availableStudents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay estudiantes disponibles</p>
+            ) : (
+              availableStudents.map((student) => (
+                <div key={student.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`student-${student.id}`}
+                    checked={selectedStudents.includes(student.id)}
+                    onChange={() => handleStudentToggle(student.id)}
+                    className="rounded border-gray-300"
+                  />
+                  <Label 
+                    htmlFor={`student-${student.id}`} 
+                    className="flex-1 cursor-pointer text-sm"
+                  >
+                    {student.full_name} (Nivel {student.level})
+                  </Label>
+                </div>
+              ))
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Seleccionados: {selectedStudents.length} estudiantes
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
         <Button 
           type="submit" 
-          disabled={createMutation.isPending || updateMutation.isPending}
+          disabled={createMutation.isPending || updateMutation.isPending || (!group && selectedStudents.length === 0)}
           className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
         >
           {group ? "Actualizar" : "Crear"} Grupo
@@ -242,7 +300,7 @@ export const ClassGroupsManager = () => {
               Nuevo Grupo
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Grupo</DialogTitle>
             </DialogHeader>
@@ -262,7 +320,7 @@ export const ClassGroupsManager = () => {
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">No tienes grupos creados</h3>
             <p className="text-muted-foreground mb-6">
-              Crea grupos para organizar mejor tus alumnos
+              Crea grupos para organizar mejor tus alumnos y facilitar la asignación a clases
             </p>
             <Button 
               onClick={() => setShowCreateDialog(true)}
