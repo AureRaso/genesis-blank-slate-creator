@@ -85,9 +85,9 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Mis Clases Programadas</h2>
+          <h2 className="text-2xl font-bold">Clases Disponibles</h2>
           <p className="text-muted-foreground">
-            Clases en las que estás inscrito o disponibles en tu club
+            Todas las clases programadas en tu club - Apúntate o únete a lista de espera
           </p>
         </div>
         <Button
@@ -187,7 +187,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
             <p className="text-muted-foreground">
               {searchTerm || levelFilter || dayFilter || trainerFilter
                 ? "No se encontraron clases que coincidan con los filtros aplicados."
-                : "No tienes clases programadas en este momento."}
+                : "No hay clases programadas disponibles en este momento."}
             </p>
           </CardContent>
         </Card>
