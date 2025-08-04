@@ -35,15 +35,15 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
     const matchesSearch = programmedClass.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (programmedClass.custom_level && programmedClass.custom_level.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesLevel = !levelFilter || 
+    const matchesLevel = !levelFilter || levelFilter === "all" || 
                         (programmedClass.level_from && programmedClass.level_to && 
                          levelFilter >= programmedClass.level_from.toString() && 
                          levelFilter <= programmedClass.level_to.toString()) ||
                         (programmedClass.custom_level && programmedClass.custom_level.toLowerCase().includes(levelFilter.toLowerCase()));
     
-    const matchesDay = !dayFilter || programmedClass.days_of_week.includes(dayFilter);
+    const matchesDay = !dayFilter || dayFilter === "all" || programmedClass.days_of_week.includes(dayFilter);
     
-    const matchesTrainer = !trainerFilter || programmedClass.trainer_profile_id === trainerFilter;
+    const matchesTrainer = !trainerFilter || trainerFilter === "all" || programmedClass.trainer_profile_id === trainerFilter;
 
     return matchesSearch && matchesLevel && matchesDay && matchesTrainer;
   });
@@ -127,7 +127,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                       <SelectValue placeholder="Todos los niveles" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los niveles</SelectItem>
+                      <SelectItem value="all">Todos los niveles</SelectItem>
                       <SelectItem value="1">Nivel 1</SelectItem>
                       <SelectItem value="2">Nivel 2</SelectItem>
                       <SelectItem value="3">Nivel 3</SelectItem>
@@ -147,7 +147,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                       <SelectValue placeholder="Todos los días" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los días</SelectItem>
+                      <SelectItem value="all">Todos los días</SelectItem>
                       <SelectItem value="lunes">Lunes</SelectItem>
                       <SelectItem value="martes">Martes</SelectItem>
                       <SelectItem value="miercoles">Miércoles</SelectItem>
@@ -164,9 +164,9 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                     variant="outline"
                     onClick={() => {
                       setSearchTerm("");
-                      setLevelFilter("");
-                      setDayFilter("");
-                      setTrainerFilter("");
+                      setLevelFilter("all");
+                      setDayFilter("all");
+                      setTrainerFilter("all");
                     }}
                     className="w-full"
                   >
