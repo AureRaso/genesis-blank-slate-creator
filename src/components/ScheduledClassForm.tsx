@@ -44,6 +44,7 @@ const formSchema = z.object({
   }),
   recurrence_type: z.enum(["weekly", "biweekly", "monthly"]),
   // Step 2: Group and Students
+  selection_type: z.enum(["group", "individual"]).default("individual"),
   group_id: z.string().optional(),
   selected_students: z.array(z.string()).default([]),
   // Step 3: Configuration
@@ -143,6 +144,7 @@ export default function ScheduledClassForm({
       trainer_profile_id: trainerProfileId,
       duration_minutes: 60,
       recurrence_type: "weekly",
+      selection_type: "individual",
       selected_students: [],
       level_format: "numeric",
       level_from: 1.0,
@@ -224,7 +226,9 @@ export default function ScheduledClassForm({
         trainer_profile_id: data.trainer_profile_id,
         club_id: data.club_id,
         court_number: data.court_number,
-        selected_students: data.selected_students
+        // Only include the appropriate field based on selection type
+        group_id: data.selection_type === "group" ? data.group_id : undefined,
+        selected_students: data.selection_type === "individual" ? data.selected_students : []
       };
       await createMutation.mutateAsync(submitData);
       onClose();
@@ -497,10 +501,30 @@ export default function ScheduledClassForm({
 
             {/* Step 2: Group and Students */}
             {currentStep === 2 && <div className="space-y-6">
-                <FormField control={form.control} name="group_id" render={({
+                {/* Selection Type */}
+                <FormField control={form.control} name="selection_type" render={({
               field
             }) => <FormItem>
-                      <FormLabel>Grupo (opcional)</FormLabel>
+                      <FormLabel>Tipo de asignación</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="individual">Selección individual de alumnos</SelectItem>
+                          <SelectItem value="group">Usar grupo existente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>} />
+
+                {/* Group Selection - Only when selection_type is "group" */}
+                {watchedValues.selection_type === "group" && <FormField control={form.control} name="group_id" render={({
+              field
+            }) => <FormItem>
+                      <FormLabel>Seleccionar grupo</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -508,16 +532,18 @@ export default function ScheduledClassForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {groups?.map(group => <SelectItem key={group.id} value={group.id}>
-                              {group.name} - {group.level}
-                            </SelectItem>)}
+                          {groups && groups.length > 0 ? groups.map(group => <SelectItem key={group.id} value={group.id}>
+                              {group.name} - {group.level} ({group.members.length} miembros)
+                            </SelectItem>) : <div className="p-2 text-sm text-muted-foreground">
+                              No hay grupos disponibles
+                            </div>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
-                    </FormItem>} />
+                    </FormItem>} />}
 
-                {/* Enhanced student selection */}
-                <div className="space-y-4">
+                {/* Student Selection - Only when selection_type is "individual" */}
+                {watchedValues.selection_type === "individual" && <div className="space-y-4">
                   <FormLabel>Seleccionar alumnos</FormLabel>
                   <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                     {students && students.length > 0 ? <div className="space-y-3">
@@ -540,7 +566,29 @@ export default function ScheduledClassForm({
                   {watchedValues.selected_students.length > 0 && <div className="text-sm text-muted-foreground">
                       {watchedValues.selected_students.length} alumno(s) seleccionado(s)
                     </div>}
-                </div>
+                </div>}
+
+                {/* Show group preview when group is selected */}
+                {watchedValues.selection_type === "group" && watchedValues.group_id && groups && <div className="bg-muted p-4 rounded-lg">
+                    {(() => {
+                  const selectedGroup = groups.find(g => g.id === watchedValues.group_id);
+                  return selectedGroup ? <div>
+                        <h4 className="font-medium mb-2">Grupo seleccionado: {selectedGroup.name}</h4>
+                        <div className="text-sm space-y-1">
+                          <div>• Nivel: {selectedGroup.level}</div>
+                          <div>• {selectedGroup.members.length} miembros</div>
+                          <div className="mt-2">
+                            <strong>Miembros:</strong>
+                            <div className="grid grid-cols-2 gap-1 mt-1">
+                              {selectedGroup.members.map(member => <div key={member.id} className="text-xs">
+                                  • {member.student_enrollment.full_name}
+                                </div>)}
+                            </div>
+                          </div>
+                        </div>
+                      </div> : null;
+                })()}
+                  </div>}
               </div>}
 
             {/* Step 3: Final Configuration */}
@@ -587,7 +635,11 @@ export default function ScheduledClassForm({
                     <div>• Hasta {watchedValues.end_date ? format(watchedValues.end_date, "dd/MM/yyyy", {
                     locale: es
                   }) : "N/A"}</div>
-                    <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>
+                    {watchedValues.selection_type === "individual" && <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>}
+                    {watchedValues.selection_type === "group" && watchedValues.group_id && (() => {
+                      const selectedGroup = groups?.find(g => g.id === watchedValues.group_id);
+                      return selectedGroup ? <div>• Grupo: {selectedGroup.name} ({selectedGroup.members.length} miembros)</div> : null;
+                    })()}
                      <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
                      <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
                   </div>
