@@ -74,17 +74,9 @@ const AppSidebar = () => {
       url: "/leagues",
       icon: Trophy
     }, {
-      title: "Partidos",
-      url: "/matches",
-      icon: Zap
-    }, {
-      title: "Clases",
-      url: "/classes",
-      icon: GraduationCap
-    }, {
-      title: "Jugadores",
-      url: "/players",
-      icon: Users
+      title: "Clases Programadas",
+      url: "/scheduled-classes",
+      icon: Calendar
     }, {
       title: "Clubs",
       url: "/clubs",
