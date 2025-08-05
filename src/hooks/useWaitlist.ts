@@ -197,23 +197,20 @@ export const useClassCapacity = (classId: string) => {
   return useQuery({
     queryKey: ["class-capacity", classId],
     queryFn: async () => {
-      // Obtener información de la clase
+      // Obtener información de la clase con participantes
       const { data: classData, error: classError } = await supabase
         .from("programmed_classes")
-        .select("max_participants")
+        .select(`
+          max_participants,
+          participants:class_participants(
+            id,
+            status
+          )
+        `)
         .eq("id", classId)
         .single();
 
       if (classError) throw classError;
-
-      // Obtener participantes actuales
-      const { data: participants, error: participantsError } = await supabase
-        .from("class_participants")
-        .select("id")
-        .eq("class_id", classId)
-        .eq("status", "active");
-
-      if (participantsError) throw participantsError;
 
       // Obtener lista de espera
       const { data: waitlist, error: waitlistError } = await supabase
@@ -225,7 +222,7 @@ export const useClassCapacity = (classId: string) => {
       if (waitlistError) throw waitlistError;
 
       const maxParticipants = classData.max_participants || 8;
-      const currentParticipants = participants?.length || 0;
+      const currentParticipants = classData.participants?.filter(p => p.status === 'active').length || 0;
       const waitlistCount = waitlist?.length || 0;
       const availableSpots = Math.max(0, maxParticipants - currentParticipants);
       const isFull = currentParticipants >= maxParticipants;

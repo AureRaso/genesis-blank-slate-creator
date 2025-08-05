@@ -60,7 +60,21 @@ export const useProgrammedClasses = (clubId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from("programmed_classes")
-        .select("*")
+        .select(`
+          *,
+          participants:class_participants(
+            id,
+            status,
+            student_enrollment:student_enrollments(
+              id,
+              full_name,
+              email
+            )
+          ),
+          trainer:profiles!trainer_profile_id(
+            full_name
+          )
+        `)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -71,7 +85,10 @@ export const useProgrammedClasses = (clubId?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as ProgrammedClass[];
+      return data as (ProgrammedClass & {
+        participants?: any[];
+        trainer?: { full_name: string };
+      })[];
     },
   });
 };
