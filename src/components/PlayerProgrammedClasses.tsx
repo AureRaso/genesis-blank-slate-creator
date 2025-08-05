@@ -16,15 +16,7 @@ interface PlayerProgrammedClassesProps {
 
 const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
   const { profile } = useAuth();
-  
-  console.log("PlayerProgrammedClasses - clubId:", clubId);
-  console.log("PlayerProgrammedClasses - profile:", profile);
-  
   const { data: programmedClasses, isLoading, error } = useProgrammedClasses(clubId);
-  
-  console.log("PlayerProgrammedClasses - data:", programmedClasses);
-  console.log("PlayerProgrammedClasses - isLoading:", isLoading);
-  console.log("PlayerProgrammedClasses - error:", error);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("");
