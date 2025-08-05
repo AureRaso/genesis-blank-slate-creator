@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
-import { useClassParticipants } from "@/hooks/useProgrammedClasses";
+import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,13 +15,16 @@ interface PlayerProgrammedClassesProps {
 }
 
 const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { data: programmedClasses, isLoading } = useProgrammedClasses(clubId);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("");
   const [trainerFilter, setTrainerFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  
+  const joinWaitlist = useJoinWaitlist();
+  const leaveWaitlist = useLeaveWaitlist();
 
   // Get user's student enrollment to filter classes where they are participants
   const userClasses = programmedClasses?.filter(programmedClass => {
@@ -71,6 +74,72 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
         : `Niveles ${programmedClass.level_from}-${programmedClass.level_to}`;
     }
     return 'Sin nivel definido';
+  };
+
+  // Componente para mostrar información de capacidad y botones de lista de espera
+  const ClassCapacityInfo = ({ classId }: { classId: string }) => {
+    const { data: capacity } = useClassCapacity(classId);
+    const { data: waitlistPosition } = useUserWaitlistPosition(classId, profile?.id);
+
+    const handleJoinWaitlist = () => {
+      if (profile?.id) {
+        joinWaitlist.mutate({ classId, userId: profile.id });
+      }
+    };
+
+    const handleLeaveWaitlist = () => {
+      if (profile?.id) {
+        leaveWaitlist.mutate({ classId, userId: profile.id });
+      }
+    };
+
+    if (!capacity) return null;
+
+    return (
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="h-4 w-4" />
+          <span>
+            {capacity.currentParticipants}/{capacity.maxParticipants} plazas ocupadas
+          </span>
+          {capacity.waitlistCount > 0 && (
+            <>
+              <Clock className="h-4 w-4 ml-2" />
+              <span>{capacity.waitlistCount} en lista de espera</span>
+            </>
+          )}
+        </div>
+
+        {waitlistPosition ? (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Posición {waitlistPosition.position} en lista de espera
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleLeaveWaitlist}
+              disabled={leaveWaitlist.isPending}
+            >
+              Salir de lista
+            </Button>
+          </div>
+        ) : capacity.isFull ? (
+          <Button
+            size="sm"
+            onClick={handleJoinWaitlist}
+            disabled={joinWaitlist.isPending}
+          >
+            {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
+          </Button>
+        ) : (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            Plazas disponibles
+          </Badge>
+        )}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -236,6 +305,8 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                     <span>Clase grupal</span>
                   </div>
                 )}
+
+                <ClassCapacityInfo classId={programmedClass.id} />
               </CardContent>
             </Card>
           ))}

@@ -836,6 +836,7 @@ export type Database = {
           is_active: boolean
           level_from: number | null
           level_to: number | null
+          max_participants: number | null
           name: string
           recurrence_type: string
           start_date: string
@@ -857,6 +858,7 @@ export type Database = {
           is_active?: boolean
           level_from?: number | null
           level_to?: number | null
+          max_participants?: number | null
           name: string
           recurrence_type?: string
           start_date: string
@@ -878,6 +880,7 @@ export type Database = {
           is_active?: boolean
           level_from?: number | null
           level_to?: number | null
+          max_participants?: number | null
           name?: string
           recurrence_type?: string
           start_date?: string
@@ -1146,6 +1149,53 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "public_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlists: {
+        Row: {
+          class_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          joined_at: string
+          notified_at: string | null
+          position: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          joined_at?: string
+          notified_at?: string | null
+          position: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          joined_at?: string
+          notified_at?: string | null
+          position?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlists_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "programmed_classes"
             referencedColumns: ["id"]
           },
         ]
