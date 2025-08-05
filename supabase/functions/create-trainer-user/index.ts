@@ -62,11 +62,12 @@ serve(async (req) => {
     }
 
     // 2. Actualizar el perfil automáticamente creado por el trigger
-    // El trigger ya creó un perfil con role 'player', lo actualizamos a 'trainer'
+    // El trigger ya creó un perfil con role 'player', lo actualizamos a 'trainer' y asignamos el club
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
-        role: 'trainer'
+        role: 'trainer',
+        club_id: club_id
       })
       .eq('id', authUser.user.id)
 
