@@ -58,8 +58,6 @@ export const useProgrammedClasses = (clubId?: string) => {
   return useQuery({
     queryKey: ["programmed-classes", clubId],
     queryFn: async () => {
-      console.log("useProgrammedClasses - Fetching classes for clubId:", clubId);
-      
       let query = supabase
         .from("programmed_classes")
         .select("*")
@@ -68,15 +66,9 @@ export const useProgrammedClasses = (clubId?: string) => {
 
       if (clubId) {
         query = query.eq("club_id", clubId);
-        console.log("useProgrammedClasses - Adding club filter for:", clubId);
       }
 
       const { data, error } = await query;
-      
-      console.log("useProgrammedClasses - Query result:", { data: data?.length, error });
-      if (data) {
-        console.log("useProgrammedClasses - Classes found:", data.map(c => ({ id: c.id, name: c.name, club_id: c.club_id })));
-      }
 
       if (error) throw error;
       return data as ProgrammedClass[];
