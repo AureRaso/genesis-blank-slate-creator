@@ -16,6 +16,8 @@ const WaitlistDebugger = () => {
     
     setDebugging(true);
     try {
+      console.log("Current user profile ID:", profile.id);
+      
       // 1. Verificar clases del trainer
       const { data: trainerClasses, error: classesError } = await supabase
         .from("programmed_classes")
@@ -25,30 +27,48 @@ const WaitlistDebugger = () => {
 
       console.log("Trainer classes:", trainerClasses);
 
-      // 2. Verificar waitlists
+      // 2. Verificar TODAS las clases del club para comparar
+      const { data: allClubClasses, error: clubClassesError } = await supabase
+        .from("programmed_classes")
+        .select("*, creator:profiles!created_by(full_name)")
+        .eq("club_id", profile.club_id)
+        .eq("is_active", true);
+
+      console.log("All club classes:", allClubClasses);
+
+      // 3. Verificar waitlists
       const { data: allWaitlists, error: waitlistError } = await supabase
         .from("waitlists")
         .select(`
           *,
-          programmed_classes(name),
+          programmed_classes(name, created_by),
           profiles(full_name, email)
         `);
 
       console.log("All waitlists:", allWaitlists);
 
-      // 3. Verificar waitlists específicas del trainer
+      // 4. Verificar waitlists específicas del trainer
       const classIds = trainerClasses?.map(c => c.id) || [];
       const trainerWaitlists = allWaitlists?.filter(w => classIds.includes(w.class_id)) || [];
 
+      // 5. Verificar waitlists del club
+      const clubClassIds = allClubClasses?.map(c => c.id) || [];
+      const clubWaitlists = allWaitlists?.filter(w => clubClassIds.includes(w.class_id)) || [];
+
       console.log("Trainer waitlists:", trainerWaitlists);
+      console.log("Club waitlists:", clubWaitlists);
 
       setDebugInfo({
+        currentUserId: profile.id,
         trainerClasses: trainerClasses || [],
+        allClubClasses: allClubClasses || [],
         allWaitlists: allWaitlists || [],
         trainerWaitlists,
+        clubWaitlists,
         classIds,
         errors: {
           classesError,
+          clubClassesError,
           waitlistError
         }
       });
@@ -86,7 +106,11 @@ const WaitlistDebugger = () => {
 
         {debugInfo && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="text-xs bg-blue-50 p-2 rounded">
+              <strong>Tu ID:</strong> {debugInfo.currentUserId}
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <Badge variant="outline">
                   Mis clases: {debugInfo.trainerClasses?.length || 0}
@@ -94,30 +118,43 @@ const WaitlistDebugger = () => {
               </div>
               <div>
                 <Badge variant="outline">
-                  En mi lista de espera: {debugInfo.trainerWaitlists?.length || 0}
+                  Clases del club: {debugInfo.allClubClasses?.length || 0}
+                </Badge>
+              </div>
+              <div>
+                <Badge variant="outline">
+                  En lista de espera: {debugInfo.clubWaitlists?.length || 0}
                 </Badge>
               </div>
             </div>
 
-            {debugInfo.trainerClasses?.length > 0 && (
+            {debugInfo.allClubClasses?.length > 0 && (
               <div className="space-y-2">
-                <p className="font-medium text-sm">Mis clases:</p>
-                {debugInfo.trainerClasses.map((cls: any) => (
+                <p className="font-medium text-sm">Todas las clases del club:</p>
+                {debugInfo.allClubClasses.map((cls: any) => (
                   <div key={cls.id} className="text-xs bg-muted p-2 rounded">
-                    {cls.name} (ID: {cls.id})
+                    <strong>{cls.name}</strong> - Creado por: {cls.creator?.full_name || 'N/A'}
+                    <br />
+                    <span className="text-muted-foreground">ID: {cls.id}</span>
+                    {cls.created_by === debugInfo.currentUserId && (
+                      <Badge variant="default" className="ml-2 text-xs">Tuya</Badge>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {debugInfo.trainerWaitlists?.length > 0 && (
+            {debugInfo.clubWaitlists?.length > 0 && (
               <div className="space-y-2">
-                <p className="font-medium text-sm">Lista de espera:</p>
-                {debugInfo.trainerWaitlists.map((waitlist: any) => (
+                <p className="font-medium text-sm">Lista de espera del club:</p>
+                {debugInfo.clubWaitlists.map((waitlist: any) => (
                   <div key={waitlist.id} className="text-xs bg-orange-50 p-2 rounded">
                     <strong>{waitlist.profiles?.full_name}</strong> - {waitlist.programmed_classes?.name}
                     <br />
                     Posición: {waitlist.position}, Estado: {waitlist.status}
+                    {waitlist.programmed_classes?.created_by === debugInfo.currentUserId && (
+                      <Badge variant="default" className="ml-2 text-xs">Tu clase</Badge>
+                    )}
                   </div>
                 ))}
               </div>
