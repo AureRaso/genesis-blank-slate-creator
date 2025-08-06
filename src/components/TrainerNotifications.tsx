@@ -40,7 +40,7 @@ const TrainerNotifications = () => {
       // Primero, obtener las clases del trainer
       const { data: trainerClasses, error: classesError } = await supabase
         .from("programmed_classes")
-        .select("id")
+        .select("*")
         .eq("created_by", profile.id)
         .eq("is_active", true);
 
@@ -80,10 +80,25 @@ const TrainerNotifications = () => {
         const classInfo = trainerClasses.find(c => c.id === waitlist.class_id);
         const userProfile = profiles?.find(p => p.id === waitlist.user_id);
         
+        console.log("Enriching waitlist entry:", {
+          waitlist_id: waitlist.id,
+          class_id: waitlist.class_id,
+          classInfo: classInfo,
+          userProfile: userProfile
+        });
+        
         return {
           ...waitlist,
-          programmed_classes: classInfo,
-          profiles: userProfile
+          programmed_classes: classInfo ? {
+            name: classInfo.name,
+            start_time: classInfo.start_time,
+            days_of_week: classInfo.days_of_week || [],
+            max_participants: classInfo.max_participants
+          } : null,
+          profiles: userProfile ? {
+            full_name: userProfile.full_name,
+            email: userProfile.email
+          } : null
         };
       });
 
@@ -157,7 +172,12 @@ const TrainerNotifications = () => {
     const classId = notification.class_id;
     if (!acc[classId]) {
       acc[classId] = {
-        classInfo: notification.programmed_classes,
+        classInfo: notification.programmed_classes || {
+          name: 'Clase sin nombre',
+          start_time: '00:00',
+          days_of_week: [],
+          max_participants: 0
+        },
         students: []
       };
     }
@@ -225,7 +245,7 @@ const TrainerNotifications = () => {
               <div>
                 <h4 className="font-medium">{classInfo.name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {classInfo.days_of_week.join(", ")} - {classInfo.start_time}
+                  {classInfo.days_of_week?.join(", ") || 'Días no especificados'} - {classInfo.start_time}
                 </p>
               </div>
               <Badge variant="secondary">
