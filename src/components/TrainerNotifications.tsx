@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, Check, Users, Clock, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifyWaitlist } from "@/hooks/useWaitlist";
+import { useMyTrainerProfile } from "@/hooks/useTrainers";
 
 interface WaitlistNotification {
   id: string;
@@ -19,11 +20,12 @@ interface WaitlistNotification {
     start_time: string;
     days_of_week: string[];
     max_participants: number;
-  };
+    club_id: string;
+  } | null;
   profiles: {
     full_name: string;
     email: string;
-  };
+  } | null;
 }
 
 const TrainerNotifications = () => {
@@ -32,6 +34,7 @@ const TrainerNotifications = () => {
   const [notifications, setNotifications] = useState<WaitlistNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const notifyWaitlist = useNotifyWaitlist();
+  const { data: trainerProfile } = useMyTrainerProfile();
 
   const fetchWaitlistNotifications = async () => {
     if (!profile?.id) return;
@@ -93,7 +96,8 @@ const TrainerNotifications = () => {
             name: classInfo.name,
             start_time: classInfo.start_time,
             days_of_week: classInfo.days_of_week || [],
-            max_participants: classInfo.max_participants
+            max_participants: classInfo.max_participants,
+            club_id: classInfo.club_id
           } : null,
           profiles: userProfile ? {
             full_name: userProfile.full_name,
@@ -138,7 +142,6 @@ const TrainerNotifications = () => {
 
   const handleNotifyStudent = async (classId: string, studentName: string, waitlistId: string) => {
     try {
-      // Primero añadir al estudiante a la clase
       const waitlistEntry = notifications.find(n => n.id === waitlistId);
       if (!waitlistEntry) {
         toast({
@@ -149,12 +152,76 @@ const TrainerNotifications = () => {
         return;
       }
 
+      // Verificar si hay plazas disponibles
+      const classInfo = notifications.find(n => n.class_id === classId)?.programmed_classes;
+      const maxParticipants = classInfo?.max_participants || 8;
+      
+      const { count: currentParticipants } = await supabase
+        .from("class_participants")
+        .select("*", { count: 'exact' })
+        .eq("class_id", classId)
+        .eq("status", "active");
+
+      if (currentParticipants && currentParticipants >= maxParticipants) {
+        toast({
+          title: "Clase llena",
+          description: "No hay plazas disponibles en esta clase",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Obtener datos del usuario para crear la inscripción
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", waitlistEntry.user_id)
+        .single();
+
+      if (!userProfile) {
+        toast({
+          title: "Error",
+          description: "No se encontró el perfil del usuario",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Crear una inscripción de estudiante primero
+      const { data: studentEnrollment, error: enrollmentError } = await supabase
+        .from("student_enrollments")
+        .insert({
+          trainer_profile_id: profile?.id,
+          club_id: classInfo?.club_id || trainerProfile?.trainer_clubs?.[0]?.club_id,
+          created_by_profile_id: profile?.id,
+          full_name: userProfile.full_name,
+          email: userProfile.email,
+          phone: '', // Campo requerido, valor por defecto
+          level: userProfile.level || 3,
+          weekly_days: ['lunes'], // Default, puede ajustarse
+          preferred_times: ['09:00'], // Default, puede ajustarse
+          enrollment_period: '1 mes',
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (enrollmentError) {
+        console.error("Error creating student enrollment:", enrollmentError);
+        toast({
+          title: "Error",
+          description: "No se pudo crear la inscripción del estudiante",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Añadir al estudiante como participante de la clase
       const { error: participantError } = await supabase
         .from("class_participants")
         .insert({
           class_id: classId,
-          student_enrollment_id: waitlistEntry.user_id, // Asumiendo que user_id es el enrollment_id
+          student_enrollment_id: studentEnrollment.id,
           status: 'active'
         });
 
@@ -168,7 +235,7 @@ const TrainerNotifications = () => {
         return;
       }
 
-      // Luego actualizar el estado de la lista de espera
+      // Actualizar el estado de la lista de espera
       const { error: waitlistError } = await supabase
         .from("waitlists")
         .update({ status: "accepted" })
@@ -176,12 +243,6 @@ const TrainerNotifications = () => {
 
       if (waitlistError) {
         console.error("Error updating waitlist:", waitlistError);
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar la lista de espera",
-          variant: "destructive"
-        });
-        return;
       }
 
       toast({
@@ -226,7 +287,8 @@ const TrainerNotifications = () => {
           name: 'Clase sin nombre',
           start_time: '00:00',
           days_of_week: [],
-          max_participants: 0
+          max_participants: 0,
+          club_id: ''
         },
         students: []
       };
@@ -311,7 +373,7 @@ const TrainerNotifications = () => {
                       {student.position}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{student.profiles.full_name}</p>
+                      <p className="font-medium text-sm">{student.profiles?.full_name || 'Estudiante'}</p>
                       <p className="text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 inline mr-1" />
                         {new Date(student.joined_at).toLocaleDateString()}

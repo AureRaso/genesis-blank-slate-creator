@@ -59,15 +59,13 @@ const AppSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link to="/waitlist-notifications">
-                    <div className="flex items-center">
-                      <Bell />
-                      <span>Lista de Espera</span>
-                      {waitlistCount > 0 && (
-                        <Badge variant="destructive" className="ml-2 text-xs">
-                          {waitlistCount}
-                        </Badge>
-                      )}
-                    </div>
+                    <Bell className="h-4 w-4" />
+                    <span>Lista de Espera</span>
+                    {waitlistCount > 0 && (
+                      <Badge variant="destructive" className="ml-2 text-xs">
+                        {waitlistCount}
+                      </Badge>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
