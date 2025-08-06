@@ -37,7 +37,23 @@ const TrainerNotifications = () => {
     if (!profile?.id) return;
 
     try {
-      // Obtener clases del trainer con lista de espera
+      // Primero, obtener las clases del trainer
+      const { data: trainerClasses, error: classesError } = await supabase
+        .from("programmed_classes")
+        .select("id")
+        .eq("created_by", profile.id)
+        .eq("is_active", true);
+
+      if (classesError) throw classesError;
+
+      if (!trainerClasses || trainerClasses.length === 0) {
+        setNotifications([]);
+        return;
+      }
+
+      const classIds = trainerClasses.map(c => c.id);
+
+      // Luego, obtener las listas de espera para esas clases
       const { data: classesWithWaitlist, error } = await supabase
         .from("waitlists")
         .select(`
@@ -46,12 +62,11 @@ const TrainerNotifications = () => {
           user_id,
           position,
           joined_at,
-          programmed_classes!inner(
+          programmed_classes(
             name,
             start_time,
             days_of_week,
-            max_participants,
-            created_by
+            max_participants
           ),
           profiles(
             full_name,
@@ -59,11 +74,12 @@ const TrainerNotifications = () => {
           )
         `)
         .eq("status", "waiting")
-        .eq("programmed_classes.created_by", profile.id)
+        .in("class_id", classIds)
         .order("joined_at", { ascending: true });
 
       if (error) throw error;
 
+      console.log("Waitlist notifications found:", classesWithWaitlist);
       setNotifications(classesWithWaitlist as any);
     } catch (error) {
       console.error("Error fetching waitlist notifications:", error);
@@ -85,7 +101,8 @@ const TrainerNotifications = () => {
           schema: 'public',
           table: 'waitlists'
         },
-        () => {
+        (payload) => {
+          console.log("Waitlist change detected:", payload);
           fetchWaitlistNotifications();
         }
       )
@@ -172,7 +189,7 @@ const TrainerNotifications = () => {
           <div className="text-center py-6">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground">
-              No hay estudiantes en lista de espera
+              No hay estudiantes en lista de espera para tus clases
             </p>
           </div>
         </CardContent>

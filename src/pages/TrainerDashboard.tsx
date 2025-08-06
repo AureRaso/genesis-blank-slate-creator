@@ -11,6 +11,7 @@ import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import StudentsList from "@/components/StudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
 import TrainerNotifications from "@/components/TrainerNotifications";
+import WaitlistDebugger from "@/components/WaitlistDebugger";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
@@ -147,6 +148,9 @@ const TrainerDashboard = () => {
 
       {/* Notifications Section */}
       <TrainerNotifications />
+
+      {/* Debug Section - Remove in production */}
+      <WaitlistDebugger />
 
       {/* Tabs Section */}
       <Tabs defaultValue="classes" className="space-y-6">

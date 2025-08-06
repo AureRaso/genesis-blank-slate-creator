@@ -32,7 +32,7 @@ serve(async (req) => {
       .select(`
         *,
         programmed_classes!inner(name, start_time, days_of_week),
-        auth.users!user_id(email)
+        profiles!user_id(full_name, email)
       `)
       .eq('class_id', classId)
       .eq('status', 'waiting')
@@ -77,9 +77,9 @@ serve(async (req) => {
       
       // Aquí iría la integración con WHAPI
       // Por ahora simulamos el envío de WhatsApp
-      console.log(`Sending WhatsApp to user ${entry.user_id} for class ${entry.programmed_classes.name}`);
+      console.log(`Sending notification to user ${entry.user_id} (${entry.profiles?.full_name}) for class ${entry.programmed_classes.name}`);
       
-      const whatsappMessage = `¡Hola! 🎾
+      const whatsappMessage = `¡Hola ${entry.profiles?.full_name || 'Estudiante'}! 🎾
       
 Hay una plaza disponible en la clase "${entry.programmed_classes.name}".
 
