@@ -200,7 +200,7 @@ const TrainerNotifications = () => {
           level: userProfile.level || 3,
           weekly_days: ['lunes'], // Default, puede ajustarse
           preferred_times: ['09:00'], // Default, puede ajustarse
-          enrollment_period: '1 mes',
+          enrollment_period: 'mensual',
           status: 'active'
         })
         .select()
