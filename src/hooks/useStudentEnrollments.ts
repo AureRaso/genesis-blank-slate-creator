@@ -63,10 +63,41 @@ export const useStudentEnrollments = () => {
   return useQuery({
     queryKey: ["student-enrollments"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("student_enrollments")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) throw new Error("No authenticated user");
+
+      // Get the user's profile to check if they're a trainer
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", profile.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      let query = supabase.from("student_enrollments").select("*");
+
+      // If user is a trainer, get all students from their assigned clubs
+      if (userProfile.role === 'trainer') {
+        // Get trainer's club assignments
+        const { data: trainerClubs, error: clubsError } = await supabase
+          .from("trainer_clubs")
+          .select("club_id")
+          .eq("trainer_profile_id", profile.user.id);
+
+        if (clubsError) throw clubsError;
+
+        const clubIds = trainerClubs.map(tc => tc.club_id);
+        
+        if (clubIds.length > 0) {
+          query = query.in("club_id", clubIds);
+        } else {
+          // If trainer has no assigned clubs, return empty array
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as StudentEnrollment[];
