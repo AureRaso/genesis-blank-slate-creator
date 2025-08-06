@@ -299,10 +299,32 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                   <span>{new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}</span>
                 </div>
 
-                {programmedClass.group_id && (
+                {programmedClass.trainer?.full_name && (
                   <div className="flex items-center gap-2 text-sm">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Clase grupal</span>
+                    <span>Profesor: {programmedClass.trainer.full_name}</span>
+                  </div>
+                )}
+
+                {/* Show enrolled students if any */}
+                {programmedClass.participants && programmedClass.participants.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
+                    <div className="space-y-1">
+                      {programmedClass.participants
+                        .filter((p: any) => p.status === 'active')
+                        .slice(0, 3)
+                        .map((participant: any) => (
+                          <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
+                            {participant.student_enrollment?.full_name}
+                          </div>
+                        ))}
+                      {programmedClass.participants.filter((p: any) => p.status === 'active').length > 3 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{programmedClass.participants.filter((p: any) => p.status === 'active').length - 3} más...
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

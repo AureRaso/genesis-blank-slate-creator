@@ -221,7 +221,7 @@ export const useClassCapacity = (classId: string) => {
 
       if (waitlistError) throw waitlistError;
 
-      const maxParticipants = classData.max_participants || 8;
+      const maxParticipants = classData.max_participants || 4;
       const currentParticipants = classData.participants?.filter(p => p.status === 'active').length || 0;
       const waitlistCount = waitlist?.length || 0;
       const availableSpots = Math.max(0, maxParticipants - currentParticipants);

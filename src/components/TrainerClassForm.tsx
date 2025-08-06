@@ -21,7 +21,7 @@ const formSchema = z.object({
   start_time: z.string().min(1, "Introduce la hora de inicio"),
   duration_minutes: z.number().min(30, "Duración mínima 30 minutos"),
   price_per_player: z.number().min(1, "Introduce el precio por jugador"),
-  max_players: z.number().min(1, "Mínimo 1 jugador").max(8, "Máximo 8 jugadores"),
+  max_players: z.number().min(1, "Mínimo 1 jugador").max(4, "Máximo 4 jugadores"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -300,7 +300,7 @@ const TrainerClassForm = ({ onClose, trainerProfile, editingClass }: TrainerClas
                         <Input 
                           type="number" 
                           min="1" 
-                          max="8"
+                          max="4"
                           {...field} 
                           onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />

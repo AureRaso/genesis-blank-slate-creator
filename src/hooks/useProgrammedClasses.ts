@@ -52,6 +52,7 @@ export interface CreateProgrammedClassData {
   court_number?: number;
   group_id?: string;
   selected_students?: string[];
+  max_participants?: number;
 }
 
 export const useProgrammedClasses = (clubId?: string) => {
@@ -101,10 +102,10 @@ export const useCreateProgrammedClass = () => {
     mutationFn: async (data: CreateProgrammedClassData) => {
       const { selected_students, group_id, ...classData } = data;
 
-      // Create the programmed class
+      // Create the programmed class with default max_participants of 4
       const { data: createdClass, error: classError } = await supabase
         .from("programmed_classes")
-        .insert([{ ...classData, group_id }])
+        .insert([{ ...classData, group_id, max_participants: data.max_participants || 4 }])
         .select()
         .single();
 
