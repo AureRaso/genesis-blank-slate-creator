@@ -53,34 +53,42 @@ const TrainerNotifications = () => {
 
       const classIds = trainerClasses.map(c => c.id);
 
-      // Luego, obtener las listas de espera para esas clases
+      // Luego, obtener las listas de espera para esas clases con datos básicos
       const { data: classesWithWaitlist, error } = await supabase
         .from("waitlists")
-        .select(`
-          id,
-          class_id,
-          user_id,
-          position,
-          joined_at,
-          programmed_classes(
-            name,
-            start_time,
-            days_of_week,
-            max_participants
-          ),
-          profiles(
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .eq("status", "waiting")
         .in("class_id", classIds)
         .order("joined_at", { ascending: true });
 
       if (error) throw error;
 
-      console.log("Waitlist notifications found:", classesWithWaitlist);
-      setNotifications(classesWithWaitlist as any);
+      if (!classesWithWaitlist || classesWithWaitlist.length === 0) {
+        setNotifications([]);
+        return;
+      }
+
+      // Obtener datos adicionales por separado
+      const userIds = classesWithWaitlist.map(w => w.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+
+      // Combinar datos manualmente
+      const enrichedWaitlist = classesWithWaitlist.map(waitlist => {
+        const classInfo = trainerClasses.find(c => c.id === waitlist.class_id);
+        const userProfile = profiles?.find(p => p.id === waitlist.user_id);
+        
+        return {
+          ...waitlist,
+          programmed_classes: classInfo,
+          profiles: userProfile
+        };
+      });
+
+      console.log("Waitlist notifications found:", enrichedWaitlist);
+      setNotifications(enrichedWaitlist as any);
     } catch (error) {
       console.error("Error fetching waitlist notifications:", error);
     } finally {

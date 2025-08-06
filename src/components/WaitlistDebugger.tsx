@@ -30,20 +30,17 @@ const WaitlistDebugger = () => {
       // 2. Verificar TODAS las clases del club para comparar
       const { data: allClubClasses, error: clubClassesError } = await supabase
         .from("programmed_classes")
-        .select("*, creator:profiles!created_by(full_name)")
+        .select("*")
         .eq("club_id", profile.club_id)
         .eq("is_active", true);
 
       console.log("All club classes:", allClubClasses);
 
-      // 3. Verificar waitlists
+      // 3. Verificar waitlists básicas
       const { data: allWaitlists, error: waitlistError } = await supabase
         .from("waitlists")
-        .select(`
-          *,
-          programmed_classes(name, created_by),
-          profiles(full_name, email)
-        `);
+        .select("*")
+        .eq("status", "waiting");
 
       console.log("All waitlists:", allWaitlists);
 
@@ -133,7 +130,7 @@ const WaitlistDebugger = () => {
                 <p className="font-medium text-sm">Todas las clases del club:</p>
                 {debugInfo.allClubClasses.map((cls: any) => (
                   <div key={cls.id} className="text-xs bg-muted p-2 rounded">
-                    <strong>{cls.name}</strong> - Creado por: {cls.creator?.full_name || 'N/A'}
+                    <strong>{cls.name}</strong>
                     <br />
                     <span className="text-muted-foreground">ID: {cls.id}</span>
                     {cls.created_by === debugInfo.currentUserId && (
@@ -149,10 +146,12 @@ const WaitlistDebugger = () => {
                 <p className="font-medium text-sm">Lista de espera del club:</p>
                 {debugInfo.clubWaitlists.map((waitlist: any) => (
                   <div key={waitlist.id} className="text-xs bg-orange-50 p-2 rounded">
-                    <strong>{waitlist.profiles?.full_name}</strong> - {waitlist.programmed_classes?.name}
+                    <strong>Usuario: {waitlist.user_id}</strong>
+                    <br />
+                    Clase ID: {waitlist.class_id}
                     <br />
                     Posición: {waitlist.position}, Estado: {waitlist.status}
-                    {waitlist.programmed_classes?.created_by === debugInfo.currentUserId && (
+                    {debugInfo.allClubClasses?.find((c: any) => c.id === waitlist.class_id)?.created_by === debugInfo.currentUserId && (
                       <Badge variant="default" className="ml-2 text-xs">Tu clase</Badge>
                     )}
                   </div>
