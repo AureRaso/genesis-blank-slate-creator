@@ -269,28 +269,6 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             </div>
           )}
 
-          {/* Show enrolled students if any */}
-          {programmedClass.participants && programmedClass.participants.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
-              <div className="space-y-1">
-                {programmedClass.participants
-                  .filter((p: any) => p.status === 'active')
-                  .slice(0, 3)
-                  .map((participant: any) => (
-                    <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
-                      {participant.student_enrollment?.full_name}
-                    </div>
-                  ))}
-                {programmedClass.participants.filter((p: any) => p.status === 'active').length > 3 && (
-                  <div className="text-xs text-muted-foreground">
-                    +{programmedClass.participants.filter((p: any) => p.status === 'active').length - 3} más...
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           <ClassCapacityInfo 
             classId={programmedClass.id}
             capacity={capacity}
@@ -299,6 +277,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             onLeaveWaitlist={handleLeaveWaitlist}
             joinPending={joinWaitlist.isPending}
             leavePending={leaveWaitlist.isPending}
+            showParticipants={true}
           />
         </CardContent>
       </Card>
@@ -384,7 +363,8 @@ const ClassCapacityInfo = ({
   onLeaveWaitlist, 
   joinPending, 
   leavePending,
-  isModal = false 
+  isModal = false,
+  showParticipants = false 
 }: {
   classId: string;
   capacity?: any;
@@ -394,15 +374,25 @@ const ClassCapacityInfo = ({
   joinPending: boolean;
   leavePending: boolean;
   isModal?: boolean;
+  showParticipants?: boolean;
 }) => {
   // Si no tenemos la capacidad desde props, la obtenemos aquí
   const { data: fetchedCapacity } = useClassCapacity(classId);
   const actualCapacity = capacity || fetchedCapacity;
 
-  if (!actualCapacity) return null;
+  if (!actualCapacity) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="h-4 w-4" />
+          <span>Cargando información...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm">
         <Users className="h-4 w-4" />
         <span>
@@ -415,6 +405,27 @@ const ClassCapacityInfo = ({
           </>
         )}
       </div>
+
+      {/* Mostrar participantes si showParticipants es true */}
+      {showParticipants && actualCapacity.participants && actualCapacity.participants.length > 0 && (
+        <div className="mt-3">
+          <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
+          <div className="space-y-1">
+            {actualCapacity.participants
+              .slice(0, 3)
+              .map((participant: any) => (
+                <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
+                  {participant.student_enrollment?.full_name || 'Alumno sin nombre'}
+                </div>
+              ))}
+            {actualCapacity.participants.length > 3 && (
+              <div className="text-xs text-muted-foreground">
+                +{actualCapacity.participants.length - 3} más...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {waitlistPosition ? (
         <div className={`flex ${isModal ? 'flex-col' : 'items-center'} gap-2`}>
@@ -429,7 +440,7 @@ const ClassCapacityInfo = ({
             disabled={leavePending}
             className={isModal ? 'w-full' : ''}
           >
-            Salir de lista
+            {leavePending ? "Saliendo..." : "Salir de lista"}
           </Button>
         </div>
       ) : actualCapacity.isFull ? (
@@ -438,12 +449,13 @@ const ClassCapacityInfo = ({
           onClick={onJoinWaitlist}
           disabled={joinPending}
           className={isModal ? 'w-full' : ''}
+          variant="outline"
         >
           {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
         </Button>
       ) : (
-        <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
-          Plazas disponibles
+        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+          {actualCapacity.availableSpots} plaza{actualCapacity.availableSpots !== 1 ? 's' : ''} disponible{actualCapacity.availableSpots !== 1 ? 's' : ''}
         </Badge>
       )}
     </div>

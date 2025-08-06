@@ -10,6 +10,7 @@ import ScheduledClassForm from "@/components/ScheduledClassForm";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import StudentsList from "@/components/StudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
+import TrainerNotifications from "@/components/TrainerNotifications";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
@@ -143,6 +144,9 @@ const TrainerDashboard = () => {
               </div>}
           </CardContent>
         </Card>}
+
+      {/* Notifications Section */}
+      <TrainerNotifications />
 
       {/* Tabs Section */}
       <Tabs defaultValue="classes" className="space-y-6">

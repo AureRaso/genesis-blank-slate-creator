@@ -197,20 +197,29 @@ export const useClassCapacity = (classId: string) => {
   return useQuery({
     queryKey: ["class-capacity", classId],
     queryFn: async () => {
-      // Obtener información de la clase con participantes
+      // Obtener información de la clase con participantes activos
       const { data: classData, error: classError } = await supabase
         .from("programmed_classes")
         .select(`
           max_participants,
-          participants:class_participants(
+          participants:class_participants!inner(
             id,
-            status
+            status,
+            student_enrollment:student_enrollments(
+              id,
+              full_name,
+              status
+            )
           )
         `)
         .eq("id", classId)
+        .eq("participants.status", "active")
         .single();
 
-      if (classError) throw classError;
+      if (classError) {
+        console.error("Error fetching class data:", classError);
+        throw classError;
+      }
 
       // Obtener lista de espera
       const { data: waitlist, error: waitlistError } = await supabase
@@ -219,10 +228,16 @@ export const useClassCapacity = (classId: string) => {
         .eq("class_id", classId)
         .in("status", ["waiting", "notified"]);
 
-      if (waitlistError) throw waitlistError;
+      if (waitlistError) {
+        console.error("Error fetching waitlist:", waitlistError);
+        throw waitlistError;
+      }
 
-      const maxParticipants = classData.max_participants || 4;
-      const currentParticipants = classData.participants?.filter(p => p.status === 'active').length || 0;
+      const maxParticipants = classData.max_participants || 8;
+      const activeParticipants = classData.participants?.filter(
+        p => p.status === 'active' && p.student_enrollment?.status === 'active'
+      ) || [];
+      const currentParticipants = activeParticipants.length;
       const waitlistCount = waitlist?.length || 0;
       const availableSpots = Math.max(0, maxParticipants - currentParticipants);
       const isFull = currentParticipants >= maxParticipants;
@@ -232,7 +247,8 @@ export const useClassCapacity = (classId: string) => {
         currentParticipants,
         availableSpots,
         waitlistCount,
-        isFull
+        isFull,
+        participants: activeParticipants
       };
     },
     enabled: !!classId,
