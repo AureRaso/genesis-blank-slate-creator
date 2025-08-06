@@ -113,10 +113,26 @@ export const useCreateStudentEnrollment = () => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
+      // Get trainer's club assignment if not provided in enrollmentData
+      let clubId = enrollmentData.club_id;
+      
+      if (!clubId) {
+        const { data: trainerClubs, error: clubsError } = await supabase
+          .from("trainer_clubs")
+          .select("club_id")
+          .eq("trainer_profile_id", profile.user.id)
+          .limit(1)
+          .single();
+
+        if (clubsError) throw clubsError;
+        clubId = trainerClubs.club_id;
+      }
+
       const { data, error } = await supabase
         .from("student_enrollments")
         .insert({
           ...enrollmentData,
+          club_id: clubId,
           trainer_profile_id: profile.user.id,
           created_by_profile_id: profile.user.id,
         })
