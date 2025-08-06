@@ -5,19 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useMyTrainerProfile } from "@/hooks/useTrainers";
-import { useMyClassSlots, useDeleteClassSlot } from "@/hooks/useClassSlots";
-import TrainerClassForm from "@/components/TrainerClassForm";
-import ClassDetailsModal from "@/components/ClassDetailsModal";
+import { useProgrammedClasses, useDeleteProgrammedClass } from "@/hooks/useProgrammedClasses";
+import ScheduledClassForm from "@/components/ScheduledClassForm";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import StudentsList from "@/components/StudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
-import { ClassSlot } from "@/hooks/useClassSlots";
+import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
 const TrainerDashboard = () => {
   const [showClassForm, setShowClassForm] = useState(false);
-  const [editingClass, setEditingClass] = useState<ClassSlot | undefined>();
-  const [viewingClass, setViewingClass] = useState<ClassSlot | undefined>();
+  const [editingClass, setEditingClass] = useState<ProgrammedClass | undefined>();
+  const [viewingClass, setViewingClass] = useState<ProgrammedClass | undefined>();
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
   const [viewingStudent, setViewingStudent] = useState<StudentEnrollment | undefined>();
@@ -25,11 +24,15 @@ const TrainerDashboard = () => {
     data: trainerProfile,
     isLoading: profileLoading
   } = useMyTrainerProfile();
+  
+  // Get trainer's club ID
+  const trainerClubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
+  
   const {
     data: myClasses,
     isLoading: classesLoading
-  } = useMyClassSlots();
-  const deleteMutation = useDeleteClassSlot();
+  } = useProgrammedClasses(trainerClubId);
+  const deleteMutation = useDeleteProgrammedClass();
   const handleCloseClassForm = () => {
     setShowClassForm(false);
     setEditingClass(undefined);
@@ -38,12 +41,12 @@ const TrainerDashboard = () => {
     setEditingClass(undefined);
     setShowClassForm(true);
   };
-  const handleEditClass = (classSlot: ClassSlot) => {
-    setEditingClass(classSlot);
+  const handleEditClass = (programmedClass: ProgrammedClass) => {
+    setEditingClass(programmedClass);
     setShowClassForm(true);
   };
-  const handleViewClass = (classSlot: ClassSlot) => {
-    setViewingClass(classSlot);
+  const handleViewClass = (programmedClass: ProgrammedClass) => {
+    setViewingClass(programmedClass);
   };
   const handleDeleteClass = (classId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta clase?')) {
@@ -89,7 +92,11 @@ const TrainerDashboard = () => {
   }
   if (showClassForm) {
     return <div className="space-y-6">
-        <TrainerClassForm onClose={handleCloseClassForm} trainerProfile={trainerProfile} editingClass={editingClass} />
+        <ScheduledClassForm 
+          onClose={handleCloseClassForm} 
+          clubId={trainerClubId || ""} 
+          trainerProfileId={trainerProfile?.id || ""} 
+        />
       </div>;
   }
   if (showStudentForm) {
@@ -191,23 +198,23 @@ const TrainerDashboard = () => {
                 </div>
               </CardContent>
             </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {myClasses.map(classSlot => <Card key={classSlot.id} className="hover:shadow-lg transition-all duration-300 group">
+              {myClasses.map(programmedClass => <Card key={programmedClass.id} className="hover:shadow-lg transition-all duration-300 group">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2">{classSlot.objective}</CardTitle>
+                        <CardTitle className="text-lg line-clamp-2">{programmedClass.name}</CardTitle>
                         <CardDescription>
-                          {classSlot.clubs?.name} - Pista {classSlot.court_number}
+                          {programmedClass.trainer?.full_name} - Pista {programmedClass.court_number || "No asignada"}
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewClass(classSlot)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleViewClass(programmedClass)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClass(classSlot)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClass(programmedClass)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(classSlot.id)} className="text-red-600 hover:text-red-700">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(programmedClass.id)} className="text-red-600 hover:text-red-700">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -217,25 +224,25 @@ const TrainerDashboard = () => {
                   <CardContent className="space-y-3">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-2" />
-                      {classSlot.day_of_week}
+                      {programmedClass.days_of_week.join(", ")}
                     </div>
                     
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-2" />
-                      {classSlot.start_time} ({classSlot.duration_minutes} min)
+                      {programmedClass.start_time} ({programmedClass.duration_minutes} min)
                     </div>
 
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Users className="h-4 w-4 mr-2" />
-                      {classSlot.class_reservations?.length || 0} / {classSlot.max_players} alumnos
+                      {programmedClass.participants?.length || 0} / 4 alumnos
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t">
                       <Badge variant="outline" className="text-xs">
-                        {classSlot.level}
+                        {programmedClass.custom_level || `${programmedClass.level_from || 1}-${programmedClass.level_to || 10}`}
                       </Badge>
                       <span className="text-sm font-medium text-playtomic-orange">
-                        {classSlot.price_per_player}€/persona
+                        {programmedClass.start_date} - {programmedClass.end_date}
                       </span>
                     </div>
                   </CardContent>
@@ -265,8 +272,12 @@ const TrainerDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Class Details Modal */}
-      {viewingClass && <ClassDetailsModal classSlot={viewingClass} onClose={() => setViewingClass(undefined)} />}
+      {/* Class Details Modal - TODO: Create ProgrammedClassDetailsModal */}
+      {viewingClass && (
+        <div>
+          {/* Placeholder for programmed class details modal */}
+        </div>
+      )}
     </div>;
 };
 export default TrainerDashboard;

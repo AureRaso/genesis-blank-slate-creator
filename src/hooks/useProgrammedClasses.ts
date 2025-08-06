@@ -175,7 +175,8 @@ export const useClassParticipants = (classId: string) => {
         .from("class_participants")
         .select(`
           *,
-          student:student_enrollments!student_enrollment_id(
+          student_enrollment:student_enrollments(
+            id,
             full_name,
             email
           )
