@@ -377,16 +377,38 @@ const ClassCapacityInfo = ({
   showParticipants?: boolean;
 }) => {
   // Si no tenemos la capacidad desde props, la obtenemos aquí
-  const { data: fetchedCapacity } = useClassCapacity(classId);
+  const { data: fetchedCapacity, isLoading: capacityLoading } = useClassCapacity(classId);
   const actualCapacity = capacity || fetchedCapacity;
 
-  if (!actualCapacity) {
+  if (capacityLoading) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm">
           <Users className="h-4 w-4" />
           <span>Cargando información...</span>
         </div>
+      </div>
+    );
+  }
+
+  // Si aún no tenemos datos, mostrar estado por defecto con botones activos
+  if (!actualCapacity) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm">
+          <Users className="h-4 w-4" />
+          <span>0/8 plazas ocupadas</span>
+        </div>
+        
+        <Button
+          size="sm"
+          onClick={onJoinWaitlist}
+          disabled={joinPending}
+          className={isModal ? 'w-full' : ''}
+          variant="outline"
+        >
+          {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
+        </Button>
       </div>
     );
   }

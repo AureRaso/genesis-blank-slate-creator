@@ -214,11 +214,49 @@ export const useClassCapacity = (classId: string) => {
         `)
         .eq("id", classId)
         .eq("participants.status", "active")
-        .single();
+        .maybeSingle();
 
       if (classError) {
         console.error("Error fetching class data:", classError);
         throw classError;
+      }
+
+      // Si no hay datos de la clase, obtener solo la info básica
+      if (!classData) {
+        const { data: basicClassData, error: basicError } = await supabase
+          .from("programmed_classes")
+          .select("max_participants")
+          .eq("id", classId)
+          .single();
+        
+        if (basicError) throw basicError;
+        
+        // Obtener lista de espera
+        const { data: waitlist, error: waitlistError } = await supabase
+          .from("waitlists")
+          .select("id")
+          .eq("class_id", classId)
+          .in("status", ["waiting", "notified"]);
+
+        if (waitlistError) {
+          console.error("Error fetching waitlist:", waitlistError);
+          throw waitlistError;
+        }
+
+        const maxParticipants = basicClassData.max_participants || 8;
+        const currentParticipants = 0;
+        const waitlistCount = waitlist?.length || 0;
+        const availableSpots = Math.max(0, maxParticipants - currentParticipants);
+        const isFull = currentParticipants >= maxParticipants;
+
+        return {
+          maxParticipants,
+          currentParticipants,
+          availableSpots,
+          waitlistCount,
+          isFull,
+          participants: []
+        };
       }
 
       // Obtener lista de espera
