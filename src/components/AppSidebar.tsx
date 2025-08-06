@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWaitlistCount } from "@/hooks/useWaitlistCount";
 const AppSidebar = () => {
   const authContext = useAuth();
+  const { data: waitlistCount = 0 } = useWaitlistCount();
 
   // Provide safe defaults if auth context is not available
   const {
@@ -50,6 +53,21 @@ const AppSidebar = () => {
                   <Link to="/scheduled-classes">
                     <Calendar />
                     <span>Clases Programadas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/waitlist-notifications">
+                    <div className="flex items-center">
+                      <Bell />
+                      <span>Lista de Espera</span>
+                      {waitlistCount > 0 && (
+                        <Badge variant="destructive" className="ml-2 text-xs">
+                          {waitlistCount}
+                        </Badge>
+                      )}
+                    </div>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

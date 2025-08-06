@@ -146,9 +146,6 @@ const TrainerDashboard = () => {
           </CardContent>
         </Card>}
 
-      {/* Notifications Section */}
-      <TrainerNotifications />
-
       {/* Debug Section - Remove in production */}
       <WaitlistDebugger />
 

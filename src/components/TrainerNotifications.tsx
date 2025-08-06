@@ -136,16 +136,66 @@ const TrainerNotifications = () => {
     };
   }, [profile?.id]);
 
-  const handleNotifyStudent = async (classId: string, studentName: string) => {
+  const handleNotifyStudent = async (classId: string, studentName: string, waitlistId: string) => {
     try {
-      await notifyWaitlist.mutateAsync({ classId, availableSpots: 1 });
+      // Primero añadir al estudiante a la clase
+      const waitlistEntry = notifications.find(n => n.id === waitlistId);
+      if (!waitlistEntry) {
+        toast({
+          title: "Error",
+          description: "No se encontró la entrada en lista de espera",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Añadir al estudiante como participante de la clase
+      const { error: participantError } = await supabase
+        .from("class_participants")
+        .insert({
+          class_id: classId,
+          student_enrollment_id: waitlistEntry.user_id, // Asumiendo que user_id es el enrollment_id
+          status: 'active'
+        });
+
+      if (participantError) {
+        console.error("Error adding participant:", participantError);
+        toast({
+          title: "Error",
+          description: "No se pudo añadir al estudiante a la clase",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Luego actualizar el estado de la lista de espera
+      const { error: waitlistError } = await supabase
+        .from("waitlists")
+        .update({ status: "accepted" })
+        .eq("id", waitlistId);
+
+      if (waitlistError) {
+        console.error("Error updating waitlist:", waitlistError);
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar la lista de espera",
+          variant: "destructive"
+        });
+        return;
+      }
+
       toast({
-        title: "Estudiante notificado",
-        description: `Se ha enviado una notificación a ${studentName}`,
+        title: "Estudiante aceptado",
+        description: `${studentName} ha sido añadido a la clase`,
       });
       fetchWaitlistNotifications();
     } catch (error) {
-      console.error("Error notifying student:", error);
+      console.error("Error accepting student:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al procesar la solicitud",
+        variant: "destructive"
+      });
     }
   };
 
@@ -272,7 +322,7 @@ const TrainerNotifications = () => {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => handleNotifyStudent(classId, student.profiles.full_name)}
+                      onClick={() => handleNotifyStudent(classId, student.profiles?.full_name || 'Estudiante', student.id)}
                       disabled={notifyWaitlist.isPending}
                     >
                       <Check className="h-4 w-4" />

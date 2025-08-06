@@ -22,6 +22,7 @@ import LogoutPage from "@/pages/LogoutPage";
 import StudentEnrollmentLink from "@/pages/StudentEnrollmentLink";
 import ScheduledClassesPage from "@/pages/ScheduledClassesPage";
 import PlayerScheduledClassesPage from "@/pages/PlayerScheduledClassesPage";
+import WaitlistNotifications from "@/pages/WaitlistNotifications";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -122,6 +123,7 @@ function App() {
                     <Route path="/" element={<TrainerDashboard />} />
                     <Route path="/dashboard" element={<TrainerDashboard />} />
                     <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
+                    <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (
