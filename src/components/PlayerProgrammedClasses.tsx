@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PlayerProgrammedClassesProps {
   clubId?: string;
@@ -22,9 +23,6 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
   const [dayFilter, setDayFilter] = useState("");
   const [trainerFilter, setTrainerFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
-  const joinWaitlist = useJoinWaitlist();
-  const leaveWaitlist = useLeaveWaitlist();
 
   // Get user's student enrollment to filter classes where they are participants
   const userClasses = programmedClasses?.filter(programmedClass => {
@@ -50,97 +48,6 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
 
     return matchesSearch && matchesLevel && matchesDay && matchesTrainer;
   });
-
-  const formatDaysOfWeek = (days: string[]) => {
-    const dayMapping: { [key: string]: string } = {
-      'lunes': 'L',
-      'martes': 'M',
-      'miercoles': 'X',
-      'jueves': 'J',
-      'viernes': 'V',
-      'sabado': 'S',
-      'domingo': 'D'
-    };
-    return days.map(day => dayMapping[day] || day.charAt(0).toUpperCase()).join(', ');
-  };
-
-  const getLevelDisplay = (programmedClass: any) => {
-    if (programmedClass.custom_level) {
-      return programmedClass.custom_level;
-    }
-    if (programmedClass.level_from && programmedClass.level_to) {
-      return programmedClass.level_from === programmedClass.level_to 
-        ? `Nivel ${programmedClass.level_from}`
-        : `Niveles ${programmedClass.level_from}-${programmedClass.level_to}`;
-    }
-    return 'Sin nivel definido';
-  };
-
-  // Componente para mostrar información de capacidad y botones de lista de espera
-  const ClassCapacityInfo = ({ classId }: { classId: string }) => {
-    const { data: capacity } = useClassCapacity(classId);
-    const { data: waitlistPosition } = useUserWaitlistPosition(classId, profile?.id);
-
-    const handleJoinWaitlist = () => {
-      if (profile?.id) {
-        joinWaitlist.mutate({ classId, userId: profile.id });
-      }
-    };
-
-    const handleLeaveWaitlist = () => {
-      if (profile?.id) {
-        leaveWaitlist.mutate({ classId, userId: profile.id });
-      }
-    };
-
-    if (!capacity) return null;
-
-    return (
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center gap-2 text-sm">
-          <Users className="h-4 w-4" />
-          <span>
-            {capacity.currentParticipants}/{capacity.maxParticipants} plazas ocupadas
-          </span>
-          {capacity.waitlistCount > 0 && (
-            <>
-              <Clock className="h-4 w-4 ml-2" />
-              <span>{capacity.waitlistCount} en lista de espera</span>
-            </>
-          )}
-        </div>
-
-        {waitlistPosition ? (
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Posición {waitlistPosition.position} en lista de espera
-            </Badge>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleLeaveWaitlist}
-              disabled={leaveWaitlist.isPending}
-            >
-              Salir de lista
-            </Button>
-          </div>
-        ) : capacity.isFull ? (
-          <Button
-            size="sm"
-            onClick={handleJoinWaitlist}
-            disabled={joinWaitlist.isPending}
-          >
-            {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
-          </Button>
-        ) : (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Plazas disponibles
-          </Badge>
-        )}
-      </div>
-    );
-  };
 
   if (isLoading) {
     return (
@@ -263,76 +170,281 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClasses.map((programmedClass) => (
-            <Card key={programmedClass.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="truncate">{programmedClass.name}</span>
-                  <Badge variant="secondary">
-                    {getLevelDisplay(programmedClass)}
-                  </Badge>
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {programmedClass.duration_minutes} minutos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{formatDaysOfWeek(programmedClass.days_of_week)}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{programmedClass.start_time}</span>
-                </div>
-
-                {programmedClass.court_number && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>Pista {programmedClass.court_number}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Periodo:</span>
-                  <span>{new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}</span>
-                </div>
-
-                {programmedClass.trainer?.full_name && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Profesor: {programmedClass.trainer.full_name}</span>
-                  </div>
-                )}
-
-                {/* Show enrolled students if any */}
-                {programmedClass.participants && programmedClass.participants.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
-                    <div className="space-y-1">
-                      {programmedClass.participants
-                        .filter((p: any) => p.status === 'active')
-                        .slice(0, 3)
-                        .map((participant: any) => (
-                          <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
-                            {participant.student_enrollment?.full_name}
-                          </div>
-                        ))}
-                      {programmedClass.participants.filter((p: any) => p.status === 'active').length > 3 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{programmedClass.participants.filter((p: any) => p.status === 'active').length - 3} más...
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <ClassCapacityInfo classId={programmedClass.id} />
-              </CardContent>
-            </Card>
+            <ProgrammedClassCard key={programmedClass.id} programmedClass={programmedClass} />
           ))}
         </div>
+      )}
+    </div>
+  );
+};
+
+// Componente separado para cada tarjeta de clase con modal
+const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
+  const { profile } = useAuth();
+  const { data: capacity } = useClassCapacity(programmedClass.id);
+  const { data: waitlistPosition } = useUserWaitlistPosition(programmedClass.id, profile?.id);
+  const joinWaitlist = useJoinWaitlist();
+  const leaveWaitlist = useLeaveWaitlist();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleJoinWaitlist = () => {
+    if (profile?.id) {
+      joinWaitlist.mutate({ classId: programmedClass.id, userId: profile.id });
+    }
+  };
+
+  const handleLeaveWaitlist = () => {
+    if (profile?.id) {
+      leaveWaitlist.mutate({ classId: programmedClass.id, userId: profile.id });
+    }
+  };
+
+  const formatDaysOfWeek = (days: string[]) => {
+    const dayMapping: { [key: string]: string } = {
+      'lunes': 'L',
+      'martes': 'M',
+      'miercoles': 'X',
+      'jueves': 'J',
+      'viernes': 'V',
+      'sabado': 'S',
+      'domingo': 'D'
+    };
+    return days.map(day => dayMapping[day] || day.charAt(0).toUpperCase()).join(', ');
+  };
+
+  const getLevelDisplay = (programmedClass: any) => {
+    if (programmedClass.custom_level) {
+      return programmedClass.custom_level;
+    }
+    if (programmedClass.level_from && programmedClass.level_to) {
+      return programmedClass.level_from === programmedClass.level_to 
+        ? `Nivel ${programmedClass.level_from}`
+        : `Niveles ${programmedClass.level_from}-${programmedClass.level_to}`;
+    }
+    return 'Sin nivel definido';
+  };
+
+  return (
+    <>
+      <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setIsModalOpen(true)}>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="truncate">{programmedClass.name}</span>
+            <Badge variant="secondary">
+              {getLevelDisplay(programmedClass)}
+            </Badge>
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            {programmedClass.duration_minutes} minutos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{formatDaysOfWeek(programmedClass.days_of_week)}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>{programmedClass.start_time}</span>
+          </div>
+
+          {programmedClass.court_number && (
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span>Pista {programmedClass.court_number}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Periodo:</span>
+            <span>{new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}</span>
+          </div>
+
+          {programmedClass.trainer?.full_name && (
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span>Profesor: {programmedClass.trainer.full_name}</span>
+            </div>
+          )}
+
+          {/* Show enrolled students if any */}
+          {programmedClass.participants && programmedClass.participants.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
+              <div className="space-y-1">
+                {programmedClass.participants
+                  .filter((p: any) => p.status === 'active')
+                  .slice(0, 3)
+                  .map((participant: any) => (
+                    <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
+                      {participant.student_enrollment?.full_name}
+                    </div>
+                  ))}
+                {programmedClass.participants.filter((p: any) => p.status === 'active').length > 3 && (
+                  <div className="text-xs text-muted-foreground">
+                    +{programmedClass.participants.filter((p: any) => p.status === 'active').length - 3} más...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <ClassCapacityInfo 
+            classId={programmedClass.id}
+            capacity={capacity}
+            waitlistPosition={waitlistPosition}
+            onJoinWaitlist={handleJoinWaitlist}
+            onLeaveWaitlist={handleLeaveWaitlist}
+            joinPending={joinWaitlist.isPending}
+            leavePending={leaveWaitlist.isPending}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Modal de detalles */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{programmedClass.name}</DialogTitle>
+            <DialogDescription>
+              Detalles de la clase y opciones de inscripción
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="font-medium">Nivel</div>
+                <div className="text-muted-foreground">{getLevelDisplay(programmedClass)}</div>
+              </div>
+              <div>
+                <div className="font-medium">Duración</div>
+                <div className="text-muted-foreground">{programmedClass.duration_minutes} minutos</div>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span>{formatDaysOfWeek(programmedClass.days_of_week)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>{programmedClass.start_time}</span>
+              </div>
+              {programmedClass.court_number && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>Pista {programmedClass.court_number}</span>
+                </div>
+              )}
+              {programmedClass.trainer?.full_name && (
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span>Profesor: {programmedClass.trainer.full_name}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="font-medium">Periodo</div>
+              <div className="text-muted-foreground">
+                {new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}
+              </div>
+            </div>
+
+            {/* Información de capacidad y botones de lista de espera */}
+            <div className="space-y-3 pt-2 border-t">
+              <ClassCapacityInfo 
+                classId={programmedClass.id}
+                capacity={capacity}
+                waitlistPosition={waitlistPosition}
+                onJoinWaitlist={handleJoinWaitlist}
+                onLeaveWaitlist={handleLeaveWaitlist}
+                joinPending={joinWaitlist.isPending}
+                leavePending={leaveWaitlist.isPending}
+                isModal={true}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+// Componente para mostrar información de capacidad y botones de lista de espera
+const ClassCapacityInfo = ({ 
+  classId, 
+  capacity, 
+  waitlistPosition, 
+  onJoinWaitlist, 
+  onLeaveWaitlist, 
+  joinPending, 
+  leavePending,
+  isModal = false 
+}: {
+  classId: string;
+  capacity?: any;
+  waitlistPosition?: any;
+  onJoinWaitlist: () => void;
+  onLeaveWaitlist: () => void;
+  joinPending: boolean;
+  leavePending: boolean;
+  isModal?: boolean;
+}) => {
+  // Si no tenemos la capacidad desde props, la obtenemos aquí
+  const { data: fetchedCapacity } = useClassCapacity(classId);
+  const actualCapacity = capacity || fetchedCapacity;
+
+  if (!actualCapacity) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm">
+        <Users className="h-4 w-4" />
+        <span>
+          {actualCapacity.currentParticipants}/{actualCapacity.maxParticipants} plazas ocupadas
+        </span>
+        {actualCapacity.waitlistCount > 0 && (
+          <>
+            <Clock className="h-4 w-4 ml-2" />
+            <span>{actualCapacity.waitlistCount} en lista de espera</span>
+          </>
+        )}
+      </div>
+
+      {waitlistPosition ? (
+        <div className={`flex ${isModal ? 'flex-col' : 'items-center'} gap-2`}>
+          <Badge variant="outline" className="flex items-center gap-1 w-fit">
+            <Clock className="h-3 w-3" />
+            Posición {waitlistPosition.position} en lista de espera
+          </Badge>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onLeaveWaitlist}
+            disabled={leavePending}
+            className={isModal ? 'w-full' : ''}
+          >
+            Salir de lista
+          </Button>
+        </div>
+      ) : actualCapacity.isFull ? (
+        <Button
+          size="sm"
+          onClick={onJoinWaitlist}
+          disabled={joinPending}
+          className={isModal ? 'w-full' : ''}
+        >
+          {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
+        </Button>
+      ) : (
+        <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
+          Plazas disponibles
+        </Badge>
       )}
     </div>
   );

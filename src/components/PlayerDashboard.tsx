@@ -1,20 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, Clock, User, DollarSign } from "lucide-react";
+import { Trophy, Calendar, Users, Plus, ArrowRight, MapPin, Phone, Building2, DollarSign } from "lucide-react";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
-import { useMyReservations } from "@/hooks/useClassReservations";
 import { useClub } from "@/hooks/useClub";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import PlayerLeagueDetails from "./PlayerLeagueDetails";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
+import PlayerClassesWidget from "./PlayerClassesWidget";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
   const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
-  const { data: myReservations, isLoading: loadingReservations } = useMyReservations();
   const { data: club, isLoading: loadingClub } = useClub(profile?.club_id);
   const navigate = useNavigate();
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
@@ -44,32 +43,6 @@ const PlayerDashboard = () => {
       />
     );
   }
-
-  const formatDayOfWeek = (day: string) => {
-    const days = {
-      'lunes': 'Lunes',
-      'martes': 'Martes', 
-      'miercoles': 'Miércoles',
-      'jueves': 'Jueves',
-      'viernes': 'Viernes',
-      'sabado': 'Sábado',
-      'domingo': 'Domingo'
-    };
-    return days[day as keyof typeof days] || day;
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'iniciacion':
-        return 'bg-green-100 text-green-800';
-      case 'intermedio':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'avanzado':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -153,85 +126,32 @@ const PlayerDashboard = () => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sección de Mis Clases */}
+        {/* Sección de Clases Programadas */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                Mis Clases
+                Clases Programadas
               </CardTitle>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate('/classes')}
+                onClick={() => navigate('/scheduled-classes')}
               >
                 Ver todas
               </Button>
             </div>
+            <CardDescription>
+              Clases disponibles en tu club - Apúntate o únete a lista de espera
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingReservations ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="animate-pulse p-3 border rounded-lg">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : myReservations && myReservations.length > 0 ? (
-              <div className="space-y-3">
-                {myReservations.slice(0, 3).map((reservation) => (
-                  <div key={reservation.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">
-                        {formatDayOfWeek(reservation.class_slots?.day_of_week || "")}
-                      </div>
-                      <Badge className={getLevelColor(reservation.class_slots?.level || "")}>
-                        {reservation.class_slots?.level === 'iniciacion' ? 'Iniciación' : 
-                         reservation.class_slots?.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {reservation.class_slots?.start_time}
-                      </div>
-                      <div className="flex items-center">
-                        <User className="h-3 w-3 mr-1" />
-                        {reservation.class_slots?.trainer_name}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {myReservations.length > 3 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate('/classes')}
-                  >
-                    Ver {myReservations.length - 3} clases más
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <h3 className="text-sm font-medium mb-2">No tienes clases reservadas</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Explora las clases disponibles y reserva tu plaza.
-                </p>
-                <Button 
-                  onClick={() => navigate('/classes')}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ver Clases Disponibles
-                </Button>
-              </div>
-            )}
+            <PlayerClassesWidget 
+              limit={3}
+              showViewAll={true}
+              onViewAll={() => navigate('/scheduled-classes')}
+            />
           </CardContent>
         </Card>
 
