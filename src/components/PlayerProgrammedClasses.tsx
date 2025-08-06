@@ -271,6 +271,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
 
           <ClassCapacityInfo 
             classId={programmedClass.id}
+            programmedClass={programmedClass}
             capacity={capacity}
             waitlistPosition={waitlistPosition}
             onJoinWaitlist={handleJoinWaitlist}
@@ -338,6 +339,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             <div className="space-y-3 pt-2 border-t">
               <ClassCapacityInfo 
                 classId={programmedClass.id}
+                programmedClass={programmedClass}
                 capacity={capacity}
                 waitlistPosition={waitlistPosition}
                 onJoinWaitlist={handleJoinWaitlist}
@@ -357,6 +359,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
 // Componente para mostrar información de capacidad y botones de lista de espera
 const ClassCapacityInfo = ({ 
   classId, 
+  programmedClass,
   capacity, 
   waitlistPosition, 
   onJoinWaitlist, 
@@ -367,6 +370,7 @@ const ClassCapacityInfo = ({
   showParticipants = false 
 }: {
   classId: string;
+  programmedClass?: any;
   capacity?: any;
   waitlistPosition?: any;
   onJoinWaitlist: () => void;
@@ -376,41 +380,27 @@ const ClassCapacityInfo = ({
   isModal?: boolean;
   showParticipants?: boolean;
 }) => {
-  // Si no tenemos la capacidad desde props, la obtenemos aquí
+  // Usar los datos de la clase programada si están disponibles
+  const maxParticipants = programmedClass?.max_participants || 8;
+  const activeParticipants = programmedClass?.participants?.filter(
+    (p: any) => p.status === 'active'
+  ) || [];
+  const currentParticipants = activeParticipants.length;
+  
+  // Si tenemos capacity data, usarla; si no, usar los datos de programmedClass
+  const actualCapacity = capacity || {
+    maxParticipants,
+    currentParticipants,
+    availableSpots: Math.max(0, maxParticipants - currentParticipants),
+    waitlistCount: 0, // Se actualizará con datos reales si están disponibles
+    isFull: currentParticipants >= maxParticipants,
+    participants: activeParticipants
+  };
+
+  // Intentar obtener datos de capacidad si no los tenemos
   const { data: fetchedCapacity, isLoading: capacityLoading } = useClassCapacity(classId);
-  const actualCapacity = capacity || fetchedCapacity;
-
-  if (capacityLoading) {
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm">
-          <Users className="h-4 w-4" />
-          <span>Cargando información...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Si aún no tenemos datos, mostrar estado por defecto con botones activos
-  if (!actualCapacity) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Users className="h-4 w-4" />
-          <span>0/8 plazas ocupadas</span>
-        </div>
-        
-        <Button
-          size="sm"
-          onClick={onJoinWaitlist}
-          disabled={joinPending}
-          className={isModal ? 'w-full' : ''}
-          variant="outline"
-        >
-          {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
-        </Button>
-      </div>
-    );
+  if (fetchedCapacity && !capacity) {
+    actualCapacity.waitlistCount = fetchedCapacity.waitlistCount;
   }
 
   return (
@@ -449,37 +439,51 @@ const ClassCapacityInfo = ({
         </div>
       )}
 
-      {waitlistPosition ? (
-        <div className={`flex ${isModal ? 'flex-col' : 'items-center'} gap-2`}>
-          <Badge variant="outline" className="flex items-center gap-1 w-fit">
-            <Clock className="h-3 w-3" />
-            Posición {waitlistPosition.position} en lista de espera
-          </Badge>
+      {/* Botones de acción para lista de espera */}
+      <div className="pt-2">
+        {waitlistPosition ? (
+          <div className={`flex ${isModal ? 'flex-col' : 'items-center'} gap-2`}>
+            <Badge variant="outline" className="flex items-center gap-1 w-fit">
+              <Clock className="h-3 w-3" />
+              Posición {waitlistPosition.position} en lista de espera
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onLeaveWaitlist}
+              disabled={leavePending}
+              className={isModal ? 'w-full' : ''}
+            >
+              {leavePending ? "Saliendo..." : "Salir de lista"}
+            </Button>
+          </div>
+        ) : actualCapacity.isFull ? (
           <Button
             size="sm"
-            variant="outline"
-            onClick={onLeaveWaitlist}
-            disabled={leavePending}
+            onClick={onJoinWaitlist}
+            disabled={joinPending}
             className={isModal ? 'w-full' : ''}
+            variant="outline"
           >
-            {leavePending ? "Saliendo..." : "Salir de lista"}
+            {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
           </Button>
-        </div>
-      ) : actualCapacity.isFull ? (
-        <Button
-          size="sm"
-          onClick={onJoinWaitlist}
-          disabled={joinPending}
-          className={isModal ? 'w-full' : ''}
-          variant="outline"
-        >
-          {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
-        </Button>
-      ) : (
-        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-          {actualCapacity.availableSpots} plaza{actualCapacity.availableSpots !== 1 ? 's' : ''} disponible{actualCapacity.availableSpots !== 1 ? 's' : ''}
-        </Badge>
-      )}
+        ) : (
+          <div className="flex gap-2">
+            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+              {actualCapacity.availableSpots} plaza{actualCapacity.availableSpots !== 1 ? 's' : ''} disponible{actualCapacity.availableSpots !== 1 ? 's' : ''}
+            </Badge>
+            <Button
+              size="sm"
+              onClick={onJoinWaitlist}
+              disabled={joinPending}
+              className="text-xs"
+              variant="outline"
+            >
+              {joinPending ? "Uniéndose..." : "Lista de espera"}
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
