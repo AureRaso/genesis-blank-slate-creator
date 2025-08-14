@@ -56,28 +56,46 @@ serve(async (req) => {
     
     console.log(`Processing waitlist notifications for class ${classId}, ${availableSpots} spot(s) available`);
 
-    // Obtener información de la clase
+    // Primero verificar que la clase existe - con más logging
+    console.log('Querying programmed_classes table for class:', classId);
+    
     const { data: classInfo, error: classError } = await supabase
       .from('programmed_classes')
       .select(`
+        id,
         name,
         start_time,
         days_of_week,
         max_participants,
+        club_id,
         clubs!inner(name)
       `)
       .eq('id', classId)
       .maybeSingle();
 
+    console.log('Query result:', { classInfo, classError });
+
     if (classError) {
-      console.error('Error fetching class info:', classError);
+      console.error('Database error fetching class info:', classError);
       throw new Error(`Database error: ${classError.message}`);
     }
 
     if (!classInfo) {
-      console.error('Class not found:', classId);
+      console.error('Class not found with ID:', classId);
+      
+      // Intentar buscar la clase sin el join para debugging
+      const { data: classOnly, error: classOnlyError } = await supabase
+        .from('programmed_classes')
+        .select('*')
+        .eq('id', classId)
+        .maybeSingle();
+      
+      console.log('Class without join:', { classOnly, classOnlyError });
+      
       throw new Error(`Class with ID ${classId} not found`);
     }
+
+    console.log('Class found successfully:', classInfo.name);
 
     if (classError || !classInfo) {
       console.error('Error fetching class info:', classError);
