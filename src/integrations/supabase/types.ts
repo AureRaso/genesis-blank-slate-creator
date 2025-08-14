@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -419,6 +419,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      enrollment_tokens: {
+        Row: {
+          available_spots: number
+          class_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          token: string
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          available_spots?: number
+          class_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          available_spots?: number
+          class_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: []
       }
       group_members: {
         Row: {
@@ -1231,17 +1267,17 @@ export type Database = {
       }
       create_trainer_user: {
         Args: {
+          club_id: string
           trainer_email: string
           trainer_full_name: string
-          club_id: string
           trainer_phone: string
-          trainer_specialty: string
           trainer_photo_url: string
+          trainer_specialty: string
         }
         Returns: Json
       }
       has_role: {
-        Args: { profile_id: string; expected_role: string }
+        Args: { expected_role: string; profile_id: string }
         Returns: boolean
       }
       is_admin: {
@@ -1271,8 +1307,8 @@ export type Database = {
       record_match_creation: {
         Args:
           | { _profile_id: string; _week_start: string }
+          | { match_id: string; profile_id: string }
           | { profile_id: string }
-          | { profile_id: string; match_id: string }
         Returns: undefined
       }
     }
