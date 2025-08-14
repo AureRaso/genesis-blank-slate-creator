@@ -13,8 +13,38 @@ interface NotifyWaitlistRequest {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const whapiApiKey = Deno.env.get('WHAPI_API_KEY')!;
+const whapiBaseUrl = Deno.env.get('WHAPI_BASE_URL')!;
+const groupId = Deno.env.get('WHATSAPP_GROUP_ID')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+async function sendWhatsAppMessage(message: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${whapiBaseUrl}/messages/text`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${whapiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: groupId,
+        body: message
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('WHAPI Error:', await response.text());
+      return false;
+    }
+
+    console.log('WhatsApp message sent successfully');
+    return true;
+  } catch (error) {
+    console.error('Error sending WhatsApp message:', error);
+    return false;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,85 +56,74 @@ serve(async (req) => {
     
     console.log(`Processing waitlist notifications for class ${classId}, ${availableSpots} spot(s) available`);
 
-    // Obtener los próximos en la lista de espera
-    const { data: waitlistEntries, error: waitlistError } = await supabase
-      .from('waitlists')
+    // Obtener información de la clase
+    const { data: classInfo, error: classError } = await supabase
+      .from('programmed_classes')
       .select(`
-        *,
-        programmed_classes!inner(name, start_time, days_of_week),
-        profiles!user_id(full_name, email)
+        name,
+        start_time,
+        days_of_week,
+        max_participants,
+        clubs!inner(name)
       `)
-      .eq('class_id', classId)
-      .eq('status', 'waiting')
-      .order('position', { ascending: true })
-      .limit(availableSpots);
+      .eq('id', classId)
+      .single();
 
-    if (waitlistError) {
-      console.error('Error fetching waitlist:', waitlistError);
-      throw waitlistError;
+    if (classError || !classInfo) {
+      console.error('Error fetching class info:', classError);
+      throw classError;
     }
 
-    if (!waitlistEntries || waitlistEntries.length === 0) {
-      console.log('No users in waitlist for this class');
-      return new Response(JSON.stringify({ message: 'No users in waitlist' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Crear token único para inscripción
+    const enrollmentToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+
+    // Guardar token de inscripción
+    const { error: tokenError } = await supabase
+      .from('enrollment_tokens')
+      .insert({
+        token: enrollmentToken,
+        class_id: classId,
+        expires_at: expiresAt.toISOString(),
+        available_spots: availableSpots
       });
+
+    if (tokenError) {
+      console.error('Error creating enrollment token:', tokenError);
+      throw tokenError;
     }
 
-    // Procesar cada entrada de lista de espera
-    const results = [];
-    
-    for (const entry of waitlistEntries) {
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+    // Construir mensaje de WhatsApp
+    const daysText = classInfo.days_of_week.join(', ');
+    const timeText = classInfo.start_time.substring(0, 5);
+    const enrollmentUrl = `${supabaseUrl.replace('supabase.co', 'supabase.app')}/enroll/${enrollmentToken}`;
 
-      // Actualizar estado a 'notified'
-      const { error: updateError } = await supabase
-        .from('waitlists')
-        .update({
-          status: 'notified',
-          notified_at: new Date().toISOString(),
-          expires_at: expiresAt.toISOString()
-        })
-        .eq('id', entry.id);
+    const message = `🎾 ¡PLAZA DISPONIBLE!
 
-      if (updateError) {
-        console.error('Error updating waitlist entry:', updateError);
-        continue;
-      }
+📋 Clase: ${classInfo.name}
+🏟️ Club: ${classInfo.clubs.name}
+📅 Días: ${daysText}
+⏰ Hora: ${timeText}
+👥 Plazas disponibles: ${availableSpots}
 
-      // Crear token de confirmación único
-      const confirmationToken = crypto.randomUUID();
-      
-      // Aquí iría la integración con WHAPI
-      // Por ahora simulamos el envío de WhatsApp
-      console.log(`Sending notification to user ${entry.user_id} (${entry.profiles?.full_name}) for class ${entry.programmed_classes.name}`);
-      
-      const whatsappMessage = `¡Hola ${entry.profiles?.full_name || 'Estudiante'}! 🎾
-      
-Hay una plaza disponible en la clase "${entry.programmed_classes.name}".
+💻 Inscríbete aquí (enlace válido 24h):
+${enrollmentUrl}
 
-⏰ Tienes 15 minutos para confirmar tu inscripción.
+¡No pierdas tu oportunidad! 🚀`;
 
-👆 Confirma aquí: ${supabaseUrl}/confirm-waitlist?token=${confirmationToken}&entry=${entry.id}
+    // Enviar mensaje a WhatsApp
+    const messageSent = await sendWhatsAppMessage(message);
 
-Si no confirmas en 15 minutos, la plaza pasará al siguiente en la lista.`;
-
-      // TODO: Integrar con WHAPI aquí
-      // await sendWhatsAppMessage(phoneNumber, whatsappMessage);
-
-      results.push({
-        userId: entry.user_id,
-        position: entry.position,
-        expiresAt: expiresAt.toISOString(),
-        confirmationToken
-      });
+    if (!messageSent) {
+      throw new Error('Failed to send WhatsApp message');
     }
 
-    console.log(`Successfully notified ${results.length} users`);
+    console.log(`Successfully notified group about ${availableSpots} available spot(s) in class ${classInfo.name}`);
 
     return new Response(JSON.stringify({ 
-      message: `Notified ${results.length} users`,
-      results 
+      message: `Successfully notified group about ${availableSpots} available spot(s)`,
+      enrollmentUrl,
+      expiresAt: expiresAt.toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
