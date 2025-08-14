@@ -1304,6 +1304,10 @@ export type Database = {
         Args: { club_id: string }
         Returns: boolean
       }
+      process_new_class_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       record_match_creation: {
         Args:
           | { _profile_id: string; _week_start: string }
