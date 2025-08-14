@@ -67,7 +67,17 @@ serve(async (req) => {
         clubs!inner(name)
       `)
       .eq('id', classId)
-      .single();
+      .maybeSingle();
+
+    if (classError) {
+      console.error('Error fetching class info:', classError);
+      throw new Error(`Database error: ${classError.message}`);
+    }
+
+    if (!classInfo) {
+      console.error('Class not found:', classId);
+      throw new Error(`Class with ID ${classId} not found`);
+    }
 
     if (classError || !classInfo) {
       console.error('Error fetching class info:', classError);
