@@ -71,7 +71,7 @@ serve(async (req) => {
 
     if (classError || !classInfo) {
       console.error('Error fetching class info:', classError);
-      throw classError;
+      throw new Error(classError?.message || `Class with ID ${classId} not found`);
     }
 
     // Crear token único para inscripción
