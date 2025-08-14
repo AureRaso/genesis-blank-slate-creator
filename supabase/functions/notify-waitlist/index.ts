@@ -21,6 +21,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function sendWhatsAppMessage(message: string): Promise<boolean> {
   try {
+    console.log('Sending WhatsApp message with config:', {
+      baseUrl: whapiBaseUrl,
+      groupId: groupId,
+      messageLength: message.length
+    });
+
     const response = await fetch(`${whapiBaseUrl}/messages/text`, {
       method: 'POST',
       headers: {
@@ -33,8 +39,15 @@ async function sendWhatsAppMessage(message: string): Promise<boolean> {
       }),
     });
 
+    const responseText = await response.text();
+    console.log('WHAPI Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText
+    });
+
     if (!response.ok) {
-      console.error('WHAPI Error:', await response.text());
+      console.error('WHAPI Error Response:', responseText);
       return false;
     }
 
@@ -96,11 +109,6 @@ serve(async (req) => {
     }
 
     console.log('Class found successfully:', classInfo.name);
-
-    if (classError || !classInfo) {
-      console.error('Error fetching class info:', classError);
-      throw new Error(classError?.message || `Class with ID ${classId} not found`);
-    }
 
     // Crear token único para inscripción
     const enrollmentToken = crypto.randomUUID();
