@@ -1,1 +1,7 @@
 project_id = "hwwvtxyezhgmhyxjpnvl"
+
+[functions.notify-waitlist]
+verify_jwt = false
+
+[functions.detect-available-spots]
+verify_jwt = false
