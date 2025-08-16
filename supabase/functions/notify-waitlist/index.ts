@@ -17,6 +17,23 @@ const ultramsgToken = Deno.env.get('ULTRAMSG_TOKEN')!;
 const ultramsgInstanceId = Deno.env.get('ULTRAMSG_INSTANCE_ID')!;
 const groupId = Deno.env.get('WHATSAPP_GROUP_ID')!;
 
+console.log('Environment variables loaded:', {
+  supabaseUrl: supabaseUrl ? 'SET' : 'MISSING',
+  supabaseServiceKey: supabaseServiceKey ? 'SET' : 'MISSING',
+  ultramsgToken: ultramsgToken ? `SET (${ultramsgToken.substring(0, 4)}...)` : 'MISSING',
+  ultramsgInstanceId: ultramsgInstanceId || 'MISSING',
+  groupId: groupId || 'MISSING'
+});
+
+// Validar que todas las variables requeridas estén configuradas
+if (!ultramsgToken || !ultramsgInstanceId || !groupId) {
+  console.error('Missing required environment variables:', {
+    ultramsgToken: !ultramsgToken,
+    ultramsgInstanceId: !ultramsgInstanceId,
+    groupId: !groupId
+  });
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function sendWhatsAppMessage(message: string): Promise<boolean> {
