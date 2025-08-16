@@ -25,8 +25,14 @@ export const AuthPage = () => {
   // Redirect to home if user is already authenticated
   useEffect(() => {
     if (user) {
-      console.log('User is authenticated, redirecting to home...');
-      navigate("/", { replace: true });
+      console.log('User is authenticated, redirecting...');
+      const redirectUrl = localStorage.getItem('redirectAfterLogin');
+      if (redirectUrl) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     }
   }, [user, navigate]);
 
