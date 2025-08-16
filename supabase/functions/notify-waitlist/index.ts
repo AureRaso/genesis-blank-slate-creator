@@ -13,8 +13,8 @@ interface NotifyWaitlistRequest {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const whapiApiKey = Deno.env.get('WHAPI_API_KEY')!;
-const whapiBaseUrl = Deno.env.get('WHAPI_BASE_URL')!;
+const ultramsgToken = Deno.env.get('ULTRAMSG_TOKEN')!;
+const ultramsgInstanceId = Deno.env.get('ULTRAMSG_INSTANCE_ID')!;
 const groupId = Deno.env.get('WHATSAPP_GROUP_ID')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -22,36 +22,36 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function sendWhatsAppMessage(message: string): Promise<boolean> {
   try {
     console.log('Sending WhatsApp message with config:', {
-      baseUrl: whapiBaseUrl,
+      instanceId: ultramsgInstanceId,
       groupId: groupId,
       messageLength: message.length
     });
 
-    const response = await fetch(`${whapiBaseUrl}/messages/text`, {
+    const response = await fetch(`https://api.ultramsg.com/${ultramsgInstanceId}/messages/chat`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${whapiApiKey}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
+        token: ultramsgToken,
         to: groupId,
         body: message
       }),
     });
 
     const responseText = await response.text();
-    console.log('WHAPI Response:', {
+    console.log('UltraMsg Response:', {
       status: response.status,
       statusText: response.statusText,
       body: responseText
     });
 
     if (!response.ok) {
-      console.error('WHAPI Error Response:', responseText);
+      console.error('UltraMsg Error Response:', responseText);
       return false;
     }
 
-    console.log('WhatsApp message sent successfully');
+    console.log('WhatsApp message sent successfully via UltraMsg');
     return true;
   } catch (error) {
     console.error('Error sending WhatsApp message:', error);
