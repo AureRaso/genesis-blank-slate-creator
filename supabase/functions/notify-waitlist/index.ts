@@ -27,13 +27,12 @@ async function sendWhatsAppMessage(message: string): Promise<boolean> {
       messageLength: message.length
     });
 
-    const response = await fetch(`https://api.ultramsg.com/${ultramsgInstanceId}/messages/chat`, {
+    const response = await fetch(`https://api.ultramsg.com/${ultramsgInstanceId}/messages/chat?token=${ultramsgToken}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        token: ultramsgToken,
         to: groupId,
         body: message
       }),
