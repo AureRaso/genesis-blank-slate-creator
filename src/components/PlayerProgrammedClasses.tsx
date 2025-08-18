@@ -10,6 +10,7 @@ import { Calendar, Clock, Users, MapPin, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface PlayerProgrammedClassesProps {
   clubId?: string;
@@ -17,6 +18,7 @@ interface PlayerProgrammedClassesProps {
 
 const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const { data: programmedClasses, isLoading, error } = useProgrammedClasses(clubId);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
@@ -61,9 +63,9 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Clases Disponibles</h2>
+          <h2 className="text-2xl font-bold">{t('classes.availableClasses')}</h2>
           <p className="text-muted-foreground">
-            Todas las clases programadas en tu club - Apúntate o únete a lista de espera
+            {t('classes.availableClassesDescription')}
           </p>
         </div>
         <Button
@@ -72,7 +74,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
           className="flex items-center gap-2"
         >
           <Filter className="h-4 w-4" />
-          Filtros
+          {t('classes.filters')}
         </Button>
       </div>
 
@@ -82,55 +84,55 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5" />
-                Búsqueda y Filtros
+                {t('classes.searchAndFilters')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Buscar</label>
+                  <label className="text-sm font-medium mb-2 block">{t('classes.search')}</label>
                   <Input
-                    placeholder="Nombre de clase o nivel..."
+                    placeholder={t('classes.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Nivel</label>
+                  <label className="text-sm font-medium mb-2 block">{t('classes.level')}</label>
                   <Select value={levelFilter} onValueChange={setLevelFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Todos los niveles" />
+                      <SelectValue placeholder={t('classes.allLevels')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los niveles</SelectItem>
-                      <SelectItem value="1">Nivel 1</SelectItem>
-                      <SelectItem value="2">Nivel 2</SelectItem>
-                      <SelectItem value="3">Nivel 3</SelectItem>
-                      <SelectItem value="4">Nivel 4</SelectItem>
-                      <SelectItem value="5">Nivel 5</SelectItem>
-                      <SelectItem value="principiante">Principiante</SelectItem>
-                      <SelectItem value="intermedio">Intermedio</SelectItem>
-                      <SelectItem value="avanzado">Avanzado</SelectItem>
+                      <SelectItem value="all">{t('classes.allLevels')}</SelectItem>
+                      <SelectItem value="1">{t('classes.level1')}</SelectItem>
+                      <SelectItem value="2">{t('classes.level2')}</SelectItem>
+                      <SelectItem value="3">{t('classes.level3')}</SelectItem>
+                      <SelectItem value="4">{t('classes.level4')}</SelectItem>
+                      <SelectItem value="5">{t('classes.level5')}</SelectItem>
+                      <SelectItem value="principiante">{t('classes.beginner')}</SelectItem>
+                      <SelectItem value="intermedio">{t('classes.intermediate')}</SelectItem>
+                      <SelectItem value="avanzado">{t('classes.advanced')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Día de la semana</label>
+                  <label className="text-sm font-medium mb-2 block">{t('classes.dayOfWeek')}</label>
                   <Select value={dayFilter} onValueChange={setDayFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Todos los días" />
+                      <SelectValue placeholder={t('classes.allDays')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los días</SelectItem>
-                      <SelectItem value="lunes">Lunes</SelectItem>
-                      <SelectItem value="martes">Martes</SelectItem>
-                      <SelectItem value="miercoles">Miércoles</SelectItem>
-                      <SelectItem value="jueves">Jueves</SelectItem>
-                      <SelectItem value="viernes">Viernes</SelectItem>
-                      <SelectItem value="sabado">Sábado</SelectItem>
-                      <SelectItem value="domingo">Domingo</SelectItem>
+                      <SelectItem value="all">{t('classes.allDays')}</SelectItem>
+                      <SelectItem value="lunes">{t('classes.monday')}</SelectItem>
+                      <SelectItem value="martes">{t('classes.tuesday')}</SelectItem>
+                      <SelectItem value="miercoles">{t('classes.wednesday')}</SelectItem>
+                      <SelectItem value="jueves">{t('classes.thursday')}</SelectItem>
+                      <SelectItem value="viernes">{t('classes.friday')}</SelectItem>
+                      <SelectItem value="sabado">{t('classes.saturday')}</SelectItem>
+                      <SelectItem value="domingo">{t('classes.sunday')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -146,7 +148,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
                     }}
                     className="w-full"
                   >
-                    Limpiar filtros
+                    {t('classes.clearFilters')}
                   </Button>
                 </div>
               </div>
@@ -159,11 +161,11 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay clases disponibles</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('classes.noClassesAvailable')}</h3>
             <p className="text-muted-foreground">
               {searchTerm || levelFilter || dayFilter || trainerFilter
-                ? "No se encontraron clases que coincidan con los filtros aplicados."
-                : "No hay clases programadas disponibles en este momento."}
+                ? t('classes.noClassesFiltered')
+                : t('classes.noClassesScheduled')}
             </p>
           </CardContent>
         </Card>
@@ -181,6 +183,7 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
 // Componente separado para cada tarjeta de clase con modal
 const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const { data: capacity } = useClassCapacity(programmedClass.id);
   const { data: waitlistPosition } = useUserWaitlistPosition(programmedClass.id, profile?.id);
   const joinWaitlist = useJoinWaitlist();
@@ -201,13 +204,13 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
 
   const formatDaysOfWeek = (days: string[]) => {
     const dayMapping: { [key: string]: string } = {
-      'lunes': 'L',
-      'martes': 'M',
-      'miercoles': 'X',
-      'jueves': 'J',
-      'viernes': 'V',
-      'sabado': 'S',
-      'domingo': 'D'
+      'lunes': t('classes.mondayShort'),
+      'martes': t('classes.tuesdayShort'),
+      'miercoles': t('classes.wednesdayShort'),
+      'jueves': t('classes.thursdayShort'),
+      'viernes': t('classes.fridayShort'),
+      'sabado': t('classes.saturdayShort'),
+      'domingo': t('classes.sundayShort')
     };
     return days.map(day => dayMapping[day] || day.charAt(0).toUpperCase()).join(', ');
   };
@@ -236,7 +239,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            {programmedClass.duration_minutes} minutos
+            {programmedClass.duration_minutes} {t('classes.minutes')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -253,19 +256,19 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
           {programmedClass.court_number && (
             <div className="flex items-center gap-2 text-sm">
               <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>Pista {programmedClass.court_number}</span>
+              <span>{t('classes.court')} {programmedClass.court_number}</span>
             </div>
           )}
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Periodo:</span>
+            <span className="text-muted-foreground">{t('classes.period')}:</span>
             <span>{new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}</span>
           </div>
 
           {programmedClass.trainer?.full_name && (
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span>Profesor: {programmedClass.trainer.full_name}</span>
+              <span>{t('classes.teacher')}: {programmedClass.trainer.full_name}</span>
             </div>
           )}
 
@@ -289,19 +292,19 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
           <DialogHeader>
             <DialogTitle>{programmedClass.name}</DialogTitle>
             <DialogDescription>
-              Detalles de la clase y opciones de inscripción
+              {t('classes.classDetails')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <div className="font-medium">Nivel</div>
+                <div className="font-medium">{t('classes.level')}</div>
                 <div className="text-muted-foreground">{getLevelDisplay(programmedClass)}</div>
               </div>
               <div>
-                <div className="font-medium">Duración</div>
-                <div className="text-muted-foreground">{programmedClass.duration_minutes} minutos</div>
+                <div className="font-medium">{t('classes.duration')}</div>
+                <div className="text-muted-foreground">{programmedClass.duration_minutes} {t('classes.minutes')}</div>
               </div>
             </div>
 
@@ -317,19 +320,19 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
               {programmedClass.court_number && (
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>Pista {programmedClass.court_number}</span>
+                  <span>{t('classes.court')} {programmedClass.court_number}</span>
                 </div>
               )}
               {programmedClass.trainer?.full_name && (
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>Profesor: {programmedClass.trainer.full_name}</span>
+                  <span>{t('classes.teacher')}: {programmedClass.trainer.full_name}</span>
                 </div>
               )}
             </div>
 
             <div className="space-y-2 text-sm">
-              <div className="font-medium">Periodo</div>
+              <div className="font-medium">{t('classes.period')}</div>
               <div className="text-muted-foreground">
                 {new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}
               </div>
@@ -380,6 +383,8 @@ const ClassCapacityInfo = ({
   isModal?: boolean;
   showParticipants?: boolean;
 }) => {
+  const { t } = useTranslation();
+  
   // Usar los datos de la clase programada si están disponibles
   const maxParticipants = programmedClass?.max_participants || 8;
   const activeParticipants = programmedClass?.participants?.filter(
@@ -408,12 +413,12 @@ const ClassCapacityInfo = ({
       <div className="flex items-center gap-2 text-sm">
         <Users className="h-4 w-4" />
         <span>
-          {actualCapacity.currentParticipants}/{actualCapacity.maxParticipants} plazas ocupadas
+          {actualCapacity.currentParticipants}/{actualCapacity.maxParticipants} {t('classes.spots')}
         </span>
         {actualCapacity.waitlistCount > 0 && (
           <>
             <Clock className="h-4 w-4 ml-2" />
-            <span>{actualCapacity.waitlistCount} en lista de espera</span>
+            <span>{actualCapacity.waitlistCount} {t('classes.waitlist')}</span>
           </>
         )}
       </div>
@@ -421,13 +426,13 @@ const ClassCapacityInfo = ({
       {/* Mostrar participantes si showParticipants es true */}
       {showParticipants && actualCapacity.participants && actualCapacity.participants.length > 0 && (
         <div className="mt-3">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Alumnos inscritos:</p>
+          <p className="text-sm font-medium text-muted-foreground mb-2">{t('classes.enrolledStudents')}:</p>
           <div className="space-y-1">
             {actualCapacity.participants
               .slice(0, 3)
               .map((participant: any) => (
                 <div key={participant.id} className="text-xs bg-muted px-2 py-1 rounded">
-                  {participant.student_enrollment?.full_name || 'Alumno sin nombre'}
+                  {participant.student_enrollment?.full_name || t('classes.studentWithoutName')}
                 </div>
               ))}
             {actualCapacity.participants.length > 3 && (
@@ -445,7 +450,7 @@ const ClassCapacityInfo = ({
           <div className={`flex ${isModal ? 'flex-col' : 'items-center'} gap-2`}>
             <Badge variant="outline" className="flex items-center gap-1 w-fit">
               <Clock className="h-3 w-3" />
-              Posición {waitlistPosition.position} en lista de espera
+              {t('classes.positionInWaitlist')} {waitlistPosition.position}
             </Badge>
             <Button
               size="sm"
@@ -454,7 +459,7 @@ const ClassCapacityInfo = ({
               disabled={leavePending}
               className={isModal ? 'w-full' : ''}
             >
-              {leavePending ? "Saliendo..." : "Salir de lista"}
+              {leavePending ? t('common.loading') : t('classes.leaveWaitlist')}
             </Button>
           </div>
         ) : actualCapacity.isFull ? (
@@ -465,7 +470,7 @@ const ClassCapacityInfo = ({
             className={isModal ? 'w-full' : ''}
             variant="outline"
           >
-            {joinPending ? "Uniéndose..." : "Unirse a lista de espera"}
+            {joinPending ? t('common.loading') : t('classes.joinWaitlist')}
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -479,7 +484,7 @@ const ClassCapacityInfo = ({
               className="text-xs"
               variant="outline"
             >
-              {joinPending ? "Uniéndose..." : "Lista de espera"}
+              {joinPending ? t('common.loading') : t('classes.joinWaitlist')}
             </Button>
           </div>
         )}
