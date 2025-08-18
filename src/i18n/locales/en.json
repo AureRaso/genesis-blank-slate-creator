@@ -1,0 +1,64 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "loginError": "Login error",
+    "signupError": "Registration error"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "leagues": "Leagues",
+    "matches": "Matches",
+    "scheduledClasses": "Scheduled Classes",
+    "classes": "Classes",
+    "players": "Players",
+    "trainers": "Trainers",
+    "clubs": "Clubs",
+    "standings": "Standings",
+    "waitlistNotifications": "Waitlist"
+  },
+  "userMenu": {
+    "admin": "Administrator",
+    "trainer": "Trainer",
+    "player": "Player",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Summary of your activity"
+    },
+    "scheduledClasses": {
+      "title": "Scheduled Classes",
+      "description": "Manage scheduled classes"
+    },
+    "waitlistNotifications": {
+      "title": "Waitlist",
+      "description": "Manage student waitlist notifications"
+    }
+  },
+  "language": {
+    "selectLanguage": "Select language",
+    "spanish": "Spanish",
+    "english": "English"
+  }
+}

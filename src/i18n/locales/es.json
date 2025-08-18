@@ -1,0 +1,64 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión",
+    "email": "Email",
+    "password": "Contraseña",
+    "fullName": "Nombre Completo",
+    "loginError": "Error al iniciar sesión",
+    "signupError": "Error al registrarse"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "leagues": "Ligas",
+    "matches": "Partidos",
+    "scheduledClasses": "Clases Programadas",
+    "classes": "Clases",
+    "players": "Jugadores",
+    "trainers": "Entrenadores",
+    "clubs": "Clubes",
+    "standings": "Clasificación",
+    "waitlistNotifications": "Lista de Espera"
+  },
+  "userMenu": {
+    "admin": "Administrador",
+    "trainer": "Entrenador",
+    "player": "Jugador",
+    "settings": "Configuración",
+    "signOut": "Cerrar Sesión"
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Resumen de tu actividad"
+    },
+    "scheduledClasses": {
+      "title": "Clases Programadas",
+      "description": "Gestiona las clases programadas"
+    },
+    "waitlistNotifications": {
+      "title": "Lista de Espera",
+      "description": "Gestiona las notificaciones de estudiantes en lista de espera"
+    }
+  },
+  "language": {
+    "selectLanguage": "Seleccionar idioma",
+    "spanish": "Español",
+    "english": "Inglés"
+  }
+}

@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWaitlistCount } from "@/hooks/useWaitlistCount";
+import { useTranslation } from "react-i18next";
 const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
+  const { t } = useTranslation();
 
   // Provide safe defaults if auth context is not available
   const {
@@ -44,7 +46,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild>
                   <Link to="/">
                     <GraduationCap />
-                    <span>Dashboard</span>
+                    <span>{t('sidebar.dashboard')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -52,7 +54,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild>
                   <Link to="/scheduled-classes">
                     <Calendar />
-                    <span>Clases Programadas</span>
+                    <span>{t('sidebar.scheduledClasses')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -60,7 +62,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild>
                   <Link to="/waitlist-notifications">
                     <Bell className="h-4 w-4" />
-                    <span>Lista de Espera</span>
+                    <span>{t('sidebar.waitlistNotifications')}</span>
                     {waitlistCount > 0 && (
                       <Badge variant="destructive" className="ml-2 text-xs">
                         {waitlistCount}
@@ -81,20 +83,20 @@ const AppSidebar = () => {
   // Si es jugador, mostrar panel personalizado sin profesores
   if (isPlayer) {
     const playerNavItems = [{
-      title: "Dashboard",
+      title: t('sidebar.dashboard'),
       url: "/",
       icon: SquareTerminal,
       isActive: true
     }, {
-      title: "Ligas",
+      title: t('sidebar.leagues'),
       url: "/leagues",
       icon: Trophy
     }, {
-      title: "Clases Programadas",
+      title: t('sidebar.scheduledClasses'),
       url: "/scheduled-classes",
       icon: Calendar
     }, {
-      title: "Clubs",
+      title: t('sidebar.clubs'),
       url: "/clubs",
       icon: Building2
     }];
@@ -137,7 +139,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild>
                   <Link to="/logout">
                     <LogOut />
-                    <span>Cerrar Sesión</span>
+                     <span>{t('auth.signOut')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -153,36 +155,36 @@ const AppSidebar = () => {
   // Panel para administradores (mantener funcionalidad original)
   const data = {
     navMain: [{
-      title: "Dashboard",
+      title: t('sidebar.dashboard'),
       url: "/",
       icon: SquareTerminal,
       isActive: true
     }, {
-      title: "Ligas",
+      title: t('sidebar.leagues'),
       url: "/leagues",
       icon: Trophy
     }, {
-      title: "Partidos",
+      title: t('sidebar.matches'),
       url: "/matches",
       icon: Zap
     }, {
-      title: "Clases",
+      title: t('sidebar.classes'),
       url: "/classes",
       icon: GraduationCap
     }, {
-      title: "Clases Programadas",
+      title: t('sidebar.scheduledClasses'),
       url: "/scheduled-classes",
       icon: Calendar
     }, {
-      title: "Jugadores",
+      title: t('sidebar.players'),
       url: "/players",
       icon: Users
     }, {
-      title: "Profesores",
+      title: t('sidebar.trainers'),
       url: "/trainers",
       icon: UserCheck
     }, {
-      title: "Clubs",
+      title: t('sidebar.clubs'),
       url: "/clubs",
       icon: Building2
     }]
@@ -226,7 +228,7 @@ const AppSidebar = () => {
               <SidebarMenuButton asChild>
                 <Link to="/logout">
                   <LogOut />
-                  <span>Cerrar Sesión</span>
+                  <span>{t('auth.signOut')}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

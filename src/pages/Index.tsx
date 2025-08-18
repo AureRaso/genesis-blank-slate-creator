@@ -6,9 +6,11 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Calendar, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
+  const { t } = useTranslation();
 
   console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
 
@@ -17,7 +19,7 @@ const Index = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -96,15 +98,15 @@ const Index = () => {
   // Dashboard de administrador
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Panel de Administración</h1>
-        <p className="text-muted-foreground">
-          Bienvenido de vuelta, {user?.email}
-          <Badge className="ml-2" variant="default">
-            Administrador
-          </Badge>
-        </p>
-      </div>
+        <div>
+          <h1 className="text-3xl font-bold">{t('pages.dashboard.title')}</h1>
+          <p className="text-muted-foreground">
+            {t('pages.dashboard.description')}, {user?.email}
+            <Badge className="ml-2" variant="default">
+              {t('userMenu.admin')}
+            </Badge>
+          </p>
+        </div>
 
       <DashboardStats />
 

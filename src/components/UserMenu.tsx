@@ -11,9 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const UserMenu = () => {
   const { profile, signOut } = useAuth();
+  const { t } = useTranslation();
 
   if (!profile) return null;
 
@@ -31,11 +34,11 @@ const UserMenu = () => {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'Administrador';
+        return t('userMenu.admin');
       case 'trainer':
-        return 'Entrenador';
+        return t('userMenu.trainer');
       default:
-        return 'Jugador';
+        return t('userMenu.player');
     }
   };
 
@@ -62,12 +65,16 @@ const UserMenu = () => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
+          <LanguageSelector />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
           <Settings className="mr-2 h-4 w-4" />
-          <span>Configuración</span>
+          <span>{t('userMenu.settings')}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Cerrar Sesión</span>
+          <span>{t('userMenu.signOut')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
