@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -27,21 +29,21 @@ import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   // Step 1: Basic Info
-  name: z.string().min(1, "El nombre es obligatorio"),
+  name: z.string().min(1, "Name is required"),
   // Modified level fields
   level_format: z.enum(["numeric", "levante"]).default("numeric"),
   level_from: z.number().min(1.0).max(10.0).optional(),
   level_to: z.number().min(1.0).max(10.0).optional(),
   custom_level: z.enum(["primera_alta", "primera_media", "primera_baja", "segunda_alta", "segunda_media", "segunda_baja", "tercera_alta", "tercera_media", "tercera_baja"]).optional(),
-  start_time: z.string().min(1, "La hora de inicio es obligatoria"),
+  start_time: z.string().min(1, "Start time is required"),
   duration_minutes: z.number().min(30).max(180),
   // Modified days of week - now multiple selection
-  selected_days: z.array(z.string()).min(1, "Selecciona al menos un día"),
+  selected_days: z.array(z.string()).min(1, "Select at least one day"),
   start_date: z.date({
-    required_error: "La fecha de inicio es obligatoria"
+    required_error: "Start date is required"
   }),
   end_date: z.date({
-    required_error: "La fecha de fin es obligatoria"
+    required_error: "End date is required"
   }),
   recurrence_type: z.enum(["weekly", "biweekly", "monthly"]),
   // Step 2: Group and Students
@@ -49,10 +51,10 @@ const formSchema = z.object({
   group_id: z.string().optional(),
   selected_students: z.array(z.string()).default([]),
   // Step 3: Configuration
-  trainer_profile_id: z.string().min(1, "El profesor es obligatorio"),
-  club_id: z.string().min(1, "El club es obligatorio"),
+  trainer_profile_id: z.string().min(1, "Trainer is required"),
+  club_id: z.string().min(1, "Club is required"),
   objective: z.string().optional(),
-  court_number: z.number().min(1).max(7, "Selecciona una pista del 1 al 7")
+  court_number: z.number().min(1).max(7, "Select a court from 1 to 7")
 }).refine(data => {
   if (data.level_format === "numeric") {
     return data.level_from && data.level_to && data.level_from <= data.level_to;
@@ -60,7 +62,7 @@ const formSchema = z.object({
     return !!data.custom_level;
   }
 }, {
-  message: "Configure correctamente el nivel",
+  message: "Configure the level correctly",
   path: ["level_from"]
 });
 type FormData = z.infer<typeof formSchema>;
@@ -69,61 +71,13 @@ interface ScheduledClassFormProps {
   clubId: string;
   trainerProfileId: string;
 }
-const LEVANTE_LEVELS = [{
-  value: "primera_alta",
-  label: "Primera Alta"
-}, {
-  value: "primera_media",
-  label: "Primera Media"
-}, {
-  value: "primera_baja",
-  label: "Primera Baja"
-}, {
-  value: "segunda_alta",
-  label: "Segunda Alta"
-}, {
-  value: "segunda_media",
-  label: "Segunda Media"
-}, {
-  value: "segunda_baja",
-  label: "Segunda Baja"
-}, {
-  value: "tercera_alta",
-  label: "Tercera Alta"
-}, {
-  value: "tercera_media",
-  label: "Tercera Media"
-}, {
-  value: "tercera_baja",
-  label: "Tercera Baja"
-}];
-const DAYS_OF_WEEK = [{
-  value: "lunes",
-  label: "Lunes"
-}, {
-  value: "martes",
-  label: "Martes"
-}, {
-  value: "miercoles",
-  label: "Miércoles"
-}, {
-  value: "jueves",
-  label: "Jueves"
-}, {
-  value: "viernes",
-  label: "Viernes"
-}, {
-  value: "sabado",
-  label: "Sábado"
-}, {
-  value: "domingo",
-  label: "Domingo"
-}];
 export default function ScheduledClassForm({
   onClose,
   clubId,
   trainerProfileId
 }: ScheduledClassFormProps) {
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
@@ -132,6 +86,29 @@ export default function ScheduledClassForm({
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
   const trainerClubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
+
+  // Dynamic translation arrays
+  const LEVANTE_LEVELS = [
+    { value: "primera_alta", label: t('classes.primeraAlta') },
+    { value: "primera_media", label: t('classes.primeraMedia') },
+    { value: "primera_baja", label: t('classes.primeraBaja') },
+    { value: "segunda_alta", label: t('classes.segundaAlta') },
+    { value: "segunda_media", label: t('classes.segundaMedia') },
+    { value: "segunda_baja", label: t('classes.segundaBaja') },
+    { value: "tercera_alta", label: t('classes.terceraAlta') },
+    { value: "tercera_media", label: t('classes.terceraMedia') },
+    { value: "tercera_baja", label: t('classes.terceraBaja') }
+  ];
+
+  const DAYS_OF_WEEK = [
+    { value: "lunes", label: t('classes.monday') },
+    { value: "martes", label: t('classes.tuesday') },
+    { value: "miercoles", label: t('classes.wednesday') },
+    { value: "jueves", label: t('classes.thursday') },
+    { value: "viernes", label: t('classes.friday') },
+    { value: "sabado", label: t('classes.saturday') },
+    { value: "domingo", label: t('classes.sunday') }
+  ];
   
   const {
     data: groups
@@ -208,7 +185,7 @@ export default function ScheduledClassForm({
       while (currentDate <= endDateObj && dayCount < 10) {
         // Limit preview per day
         dates.push(`${format(currentDate, 'dd/MM/yyyy', {
-          locale: es
+          locale: getDateFnsLocale()
         })} (${day})`);
         currentDate.setDate(currentDate.getDate() + intervalDays);
         dayCount++;
@@ -272,7 +249,7 @@ export default function ScheduledClassForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Crear Clases Programadas
+          {t('classes.createScheduledClasses')}
         </CardTitle>
         
         {/* Step indicator */}
@@ -286,9 +263,9 @@ export default function ScheduledClassForm({
         </div>
         
         <div className="text-sm text-muted-foreground mt-2">
-          {currentStep === 1 && "Información básica y recurrencia"}
-          {currentStep === 2 && "Grupo y alumnos"}
-          {currentStep === 3 && "Configuración final"}
+          {currentStep === 1 && t('classes.basicInfoAndRecurrence')}
+          {currentStep === 2 && t('classes.groupAndStudents')}
+          {currentStep === 3 && t('classes.finalConfiguration')}
         </div>
       </CardHeader>
 
@@ -302,9 +279,9 @@ export default function ScheduledClassForm({
                   <FormField control={form.control} name="name" render={({
                 field
               }) => <FormItem>
-                        <FormLabel>Nombre de la clase</FormLabel>
+                        <FormLabel>{t('classes.className')}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ej: Pádel Intermedio" {...field} />
+                          <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
@@ -314,7 +291,7 @@ export default function ScheduledClassForm({
                     <FormField control={form.control} name="level_format" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>Formato de nivel</FormLabel>
+                          <FormLabel>{t('classes.levelFormat')}</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -322,8 +299,8 @@ export default function ScheduledClassForm({
                               </SelectTrigger>
                             </FormControl>
                              <SelectContent>
-                               <SelectItem value="numeric">Numérico</SelectItem>
-                               <SelectItem value="levante">Nivel por categorías</SelectItem>
+                                <SelectItem value="numeric">{t('classes.numeric')}</SelectItem>
+                                <SelectItem value="levante">{t('classes.levelCategories')}</SelectItem>
                              </SelectContent>
                           </Select>
                           <FormMessage />
@@ -333,7 +310,7 @@ export default function ScheduledClassForm({
                         <FormField control={form.control} name="level_from" render={({
                     field
                   }) => <FormItem>
-                              <FormLabel>Nivel desde</FormLabel>
+                              <FormLabel>{t('classes.levelFrom')}</FormLabel>
                               <FormControl>
                                 <Input type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                               </FormControl>
@@ -342,7 +319,7 @@ export default function ScheduledClassForm({
                         <FormField control={form.control} name="level_to" render={({
                     field
                   }) => <FormItem>
-                              <FormLabel>Nivel hasta</FormLabel>
+                              <FormLabel>{t('classes.levelTo')}</FormLabel>
                               <FormControl>
                                 <Input type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                               </FormControl>
@@ -353,12 +330,11 @@ export default function ScheduledClassForm({
                     {watchedValues.level_format === "levante" && <FormField control={form.control} name="custom_level" render={({
                   field
                 }) => <FormItem>
-                            <FormLabel>Nivel Categoría
-                  </FormLabel>
+                            <FormLabel>{t('classes.categoryLevel')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecciona nivel" />
+                                  <SelectValue placeholder={t('classes.selectLevel')} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -371,7 +347,7 @@ export default function ScheduledClassForm({
                           </FormItem>} />}
 
                     {watchedValues.level_format === "numeric" && <p className="text-sm text-muted-foreground">
-                        Selecciona el rango de nivel de juego para esta clase (formato Playtomic).
+                        {t('classes.selectLevelRange')}
                       </p>}
                   </div>
                 </div>
@@ -382,7 +358,7 @@ export default function ScheduledClassForm({
                   <FormField control={form.control} name="start_time" render={({
                 field
               }) => <FormItem>
-                        <FormLabel>Hora de inicio</FormLabel>
+                        <FormLabel>{t('classes.startTime')}</FormLabel>
                         <FormControl>
                           <Input type="time" {...field} />
                         </FormControl>
@@ -392,7 +368,7 @@ export default function ScheduledClassForm({
                   <FormField control={form.control} name="duration_minutes" render={({
                 field
               }) => <FormItem>
-                        <FormLabel>Duración (minutos)</FormLabel>
+                        <FormLabel>{t('classes.duration')} ({t('classes.minutes')})</FormLabel>
                         <FormControl>
                           <Input type="number" min="30" max="180" step="15" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
                         </FormControl>
@@ -404,7 +380,7 @@ export default function ScheduledClassForm({
 
                 {/* Modified Days Selection */}
                 <FormField control={form.control} name="selected_days" render={() => <FormItem>
-                      <FormLabel>Días de la semana</FormLabel>
+                      <FormLabel>{t('classes.daysOfWeek')}</FormLabel>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {DAYS_OF_WEEK.map(day => <div key={day.value} className="flex items-center space-x-2">
                             <Checkbox id={`day-${day.value}`} checked={watchedValues.selected_days?.includes(day.value)} onCheckedChange={checked => handleDaySelection(day.value, checked as boolean)} />
@@ -421,15 +397,15 @@ export default function ScheduledClassForm({
                     <FormField control={form.control} name="start_date" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>Fecha de inicio</FormLabel>
+                          <FormLabel>{t('classes.startDate')}</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
                                   <Calendar className="mr-2 h-4 w-4" />
                                   {field.value ? format(field.value, "dd/MM/yyyy", {
-                            locale: es
-                          }) : "Selecciona fecha"}
+                            locale: getDateFnsLocale()
+                          }) : t('common.selectDate')}
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -443,15 +419,15 @@ export default function ScheduledClassForm({
                     <FormField control={form.control} name="end_date" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>Fecha de fin</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
-                                  <Calendar className="mr-2 h-4 w-4" />
-                                  {field.value ? format(field.value, "dd/MM/yyyy", {
-                            locale: es
-                          }) : "Selecciona fecha"}
+          <FormLabel>{t('classes.endDate')}</FormLabel>
+          <Popover>
+            <PopoverTrigger asChild>
+              <FormControl>
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {field.value ? format(field.value, "dd/MM/yyyy", {
+            locale: getDateFnsLocale()
+          }) : t('common.selectDate')}
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -467,24 +443,24 @@ export default function ScheduledClassForm({
                     <FormField control={form.control} name="recurrence_type" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>Tipo de recurrencia</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona tipo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="weekly">Semanal</SelectItem>
-                              <SelectItem value="biweekly">Quincenal</SelectItem>
-                              <SelectItem value="monthly">Mensual</SelectItem>
-                            </SelectContent>
-                          </Select>
+          <FormLabel>{t('classes.recurrence')}</FormLabel>
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder={t('classes.selectLevel')} />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="weekly">{t('classes.weekly')}</SelectItem>
+              <SelectItem value="biweekly">{t('classes.biweekly')}</SelectItem>
+              <SelectItem value="monthly">{t('classes.monthly')}</SelectItem>
+            </SelectContent>
+          </Select>
                           <FormMessage />
                         </FormItem>} />
 
                     {previewDates.length > 0 && <div className="space-y-2">
-                        <FormLabel>Vista previa ({previewDates.length} clases)</FormLabel>
+                        <FormLabel>{t('classes.previewDates')} ({previewDates.length} {t('classes.totalClasses')})</FormLabel>
                         <div className="max-h-32 overflow-y-auto space-y-1">
                           {previewDates.slice(0, 10).map((date, index) => <Badge key={index} variant="outline" className="text-xs">
                               {date}
@@ -511,7 +487,7 @@ export default function ScheduledClassForm({
                 <FormField control={form.control} name="selection_type" render={({
               field
             }) => <FormItem>
-                      <FormLabel>Tipo de asignación</FormLabel>
+                      <FormLabel>{t('classes.groupSelection')}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -519,8 +495,8 @@ export default function ScheduledClassForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="individual">Selección individual de alumnos</SelectItem>
-                          <SelectItem value="group">Usar grupo existente</SelectItem>
+                          <SelectItem value="individual">{t('classes.individualStudents')}</SelectItem>
+                          <SelectItem value="group">{t('classes.existingGroup')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -656,14 +632,14 @@ export default function ScheduledClassForm({
             <div className="flex justify-between pt-6">
               <Button type="button" variant="outline" onClick={currentStep === 1 ? onClose : prevStep}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                {currentStep === 1 ? "Cancelar" : "Anterior"}
+                {currentStep === 1 ? t('common.cancel') : t('classes.previous')}
               </Button>
 
               {currentStep < 3 ? <Button type="button" onClick={nextStep}>
-                  Siguiente
+                  {t('classes.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button> : <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creando..." : "Crear Clases"}
+                  {createMutation.isPending ? t('common.loading') : t('classes.createClasses')}
                 </Button>}
             </div>
           </form>

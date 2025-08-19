@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { useUpdateScheduledClass } from "@/hooks/useScheduledClasses";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface EditClassModalProps {
@@ -19,29 +20,30 @@ interface EditClassModalProps {
 }
 
 const DAYS_OF_WEEK = [
-  { value: "lunes", label: "Lunes" },
-  { value: "martes", label: "Martes" },
-  { value: "miércoles", label: "Miércoles" },
-  { value: "jueves", label: "Jueves" },
-  { value: "viernes", label: "Viernes" },
-  { value: "sábado", label: "Sábado" },
-  { value: "domingo", label: "Domingo" }
+  { value: "lunes", label: "classes.monday" },
+  { value: "martes", label: "classes.tuesday" },
+  { value: "miércoles", label: "classes.wednesday" },
+  { value: "jueves", label: "classes.thursday" },
+  { value: "viernes", label: "classes.friday" },
+  { value: "sábado", label: "classes.saturday" },
+  { value: "domingo", label: "classes.sunday" }
 ];
 
 const CUSTOM_LEVELS = [
-  { value: "primera_alta", label: "Primera Alta" },
-  { value: "primera_media", label: "Primera Media" },
-  { value: "primera_baja", label: "Primera Baja" },
-  { value: "segunda_alta", label: "Segunda Alta" },
-  { value: "segunda_media", label: "Segunda Media" },
-  { value: "segunda_baja", label: "Segunda Baja" },
-  { value: "tercera_alta", label: "Tercera Alta" },
-  { value: "tercera_media", label: "Tercera Media" },
-  { value: "tercera_baja", label: "Tercera Baja" }
+  { value: "primera_alta", label: "classes.primeraAlta" },
+  { value: "primera_media", label: "classes.primeraMedia" },
+  { value: "primera_baja", label: "classes.primeraBaja" },
+  { value: "segunda_alta", label: "classes.segundaAlta" },
+  { value: "segunda_media", label: "classes.segundaMedia" },
+  { value: "segunda_baja", label: "classes.segundaBaja" },
+  { value: "tercera_alta", label: "classes.terceraAlta" },
+  { value: "tercera_media", label: "classes.terceraMedia" },
+  { value: "tercera_baja", label: "classes.terceraBaja" }
 ];
 
 export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const updateClassMutation = useUpdateScheduledClass();
   
   const [formData, setFormData] = useState({
@@ -102,13 +104,13 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Clase</DialogTitle>
+          <DialogTitle>{t('classes.editClass')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Nombre de la clase</Label>
+              <Label htmlFor="name">{t('classes.className')}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -118,14 +120,14 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
             </div>
 
             <div>
-              <Label>Tipo de nivel</Label>
+              <Label>{t('classes.levelType')}</Label>
               <Select value={levelType} onValueChange={(value: 'numeric' | 'custom') => setLevelType(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="numeric">Nivel numérico</SelectItem>
-                  <SelectItem value="custom">Nivel personalizado</SelectItem>
+                  <SelectItem value="numeric">{t('classes.numericLevel')}</SelectItem>
+                  <SelectItem value="custom">{t('classes.customLevel')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -133,7 +135,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
             {levelType === 'numeric' ? (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="level_from">Nivel desde</Label>
+                  <Label htmlFor="level_from">{t('classes.levelFrom')}</Label>
                   <Input
                     id="level_from"
                     type="number"
@@ -148,7 +150,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
                   />
                 </div>
                 <div>
-                  <Label htmlFor="level_to">Nivel hasta</Label>
+                  <Label htmlFor="level_to">{t('classes.levelTo')}</Label>
                   <Input
                     id="level_to"
                     type="number"
@@ -165,18 +167,18 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
               </div>
             ) : (
               <div>
-                <Label htmlFor="custom_level">Nivel personalizado</Label>
+                <Label htmlFor="custom_level">{t('classes.customLevel')}</Label>
                 <Select 
                   value={formData.custom_level} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, custom_level: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un nivel" />
+                    <SelectValue placeholder={t('classes.selectLevel')} />
                   </SelectTrigger>
                   <SelectContent>
                     {CUSTOM_LEVELS.map(level => (
                       <SelectItem key={level.value} value={level.value}>
-                        {level.label}
+                        {t(level.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -186,7 +188,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="duration">Duración (minutos)</Label>
+                <Label htmlFor="duration">{t('classes.duration')} ({t('classes.minutes')})</Label>
                 <Input
                   id="duration"
                   type="number"
@@ -202,7 +204,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
                 />
               </div>
               <div>
-                <Label htmlFor="start_time">Hora de inicio</Label>
+                <Label htmlFor="start_time">{t('classes.startTime')}</Label>
                 <Input
                   id="start_time"
                   type="time"
@@ -214,11 +216,11 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
             </div>
 
             <div>
-              <Label>Días de la semana</Label>
+              <Label>{t('classes.daysOfWeek')}</Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.days_of_week.map(day => (
                   <Badge key={day} variant="default" className="flex items-center gap-1">
-                    {DAYS_OF_WEEK.find(d => d.value === day)?.label || day}
+                    {t(DAYS_OF_WEEK.find(d => d.value === day)?.label || day)}
                     <button
                       type="button"
                       onClick={() => removeDay(day)}
@@ -231,12 +233,12 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
               </div>
               <Select onValueChange={addDay}>
                 <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Añadir día" />
+                  <SelectValue placeholder={t('classes.addDay')} />
                 </SelectTrigger>
                 <SelectContent>
                   {DAYS_OF_WEEK.filter(day => !formData.days_of_week.includes(day.value)).map(day => (
                     <SelectItem key={day.value} value={day.value}>
-                      {day.label}
+                      {t(day.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -245,7 +247,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="start_date">Fecha de inicio</Label>
+                <Label htmlFor="start_date">{t('classes.startDate')}</Label>
                 <Input
                   id="start_date"
                   type="date"
@@ -255,7 +257,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
                 />
               </div>
               <div>
-                <Label htmlFor="end_date">Fecha de fin</Label>
+                <Label htmlFor="end_date">{t('classes.endDate')}</Label>
                 <Input
                   id="end_date"
                   type="date"
@@ -269,10 +271,10 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
 
           <div className="flex gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={updateClassMutation.isPending}>
-              {updateClassMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+              {updateClassMutation.isPending ? t('classes.saving') : t('classes.saveChanges')}
             </Button>
           </div>
         </form>
