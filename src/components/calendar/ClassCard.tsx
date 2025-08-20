@@ -443,52 +443,55 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
 
         {/* Información de disponibilidad y acciones */}
         <div className="border-t pt-4">
-          {hasAvailableSpots ? (
-            <div className="text-center space-y-2">
-              <div className="text-sm text-green-600 font-medium">
-                ¡Plazas disponibles!
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Contacta con el club para inscribirte
-              </div>
+          <div className="space-y-4">
+            <div className="text-center">
+              {hasAvailableSpots ? (
+                <div className="text-sm text-green-600 font-medium mb-2">
+                  ¡Plazas disponibles!
+                </div>
+              ) : (
+                <div className="text-sm text-amber-600 font-medium mb-2">
+                  Clase completa
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-center text-sm text-amber-600 font-medium">
-                Clase completa
-              </div>
-              
-              {/* Botones de lista de espera */}
-              <div className="flex justify-center">
-                {waitlistPosition ? (
-                  <div className="text-center space-y-3">
-                    <Badge variant="outline" className="text-sm">
-                      Posición {waitlistPosition.position} en lista de espera
-                    </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleLeaveWaitlist}
-                      disabled={leaveWaitlist.isPending}
-                      className="w-full"
-                    >
-                      <UserMinus className="h-4 w-4 mr-2" />
-                      {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
-                    </Button>
-                  </div>
-                ) : (
+            
+            {/* Botones de lista de espera - siempre disponibles */}
+            <div className="flex justify-center">
+              {waitlistPosition ? (
+                <div className="text-center space-y-3 w-full">
+                  <Badge variant="outline" className="text-sm">
+                    Posición {waitlistPosition.position} en lista de espera
+                  </Badge>
                   <Button 
-                    onClick={handleJoinWaitlist}
-                    disabled={joinWaitlist.isPending}
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLeaveWaitlist}
+                    disabled={leaveWaitlist.isPending}
                     className="w-full"
                   >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
+                    <UserMinus className="h-4 w-4 mr-2" />
+                    {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
                   </Button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <Button 
+                  onClick={handleJoinWaitlist}
+                  disabled={joinWaitlist.isPending}
+                  className="w-full"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {joinWaitlist.isPending ? "Uniéndose..." : "Reservar en lista de espera"}
+                </Button>
+              )}
             </div>
-          )}
+            
+            {hasAvailableSpots && (
+              <div className="text-xs text-center text-muted-foreground">
+                También puedes contactar directamente con el club para inscribirte
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DialogContent>
