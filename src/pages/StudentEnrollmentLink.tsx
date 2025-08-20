@@ -153,7 +153,10 @@ const StudentEnrollmentLink = () => {
         <StudentEnrollmentForm
           isPlayerMode={true}
           onClose={() => setShowForm(false)}
-          trainerProfile={null}
+          trainerProfile={{
+            id: enrollmentForm.trainer_profile_id,
+            club_id: enrollmentForm.club_id
+          }}
         />
       </div>
     </div>

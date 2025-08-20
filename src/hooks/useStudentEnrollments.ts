@@ -243,33 +243,39 @@ export const useCompleteEnrollmentForm = () => {
 
   return useMutation({
     mutationFn: async ({ token, studentData }: { token: string; studentData: any }) => {
-      // First update the enrollment form
+      // First get the enrollment form data
       const { data: formData, error: formError } = await supabase
         .from("enrollment_forms")
-        .update({
-          status: "completed",
-          student_data: studentData,
-          completed_at: new Date().toISOString(),
-        })
+        .select("*")
         .eq("token", token)
-        .select()
         .single();
 
       if (formError) throw formError;
 
-      // Then create the actual enrollment
+      // Create the actual enrollment with the club from the enrollment form
       const { data, error } = await supabase
         .from("student_enrollments")
         .insert({
           ...studentData,
           trainer_profile_id: formData.trainer_profile_id,
-          club_id: formData.club_id,
+          club_id: formData.club_id, // Always use the club from the enrollment form
           created_by_profile_id: formData.trainer_profile_id,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Update the enrollment form status
+      await supabase
+        .from("enrollment_forms")
+        .update({
+          status: "completed",
+          student_data: studentData,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("token", token);
+
       return data;
     },
     onSuccess: () => {

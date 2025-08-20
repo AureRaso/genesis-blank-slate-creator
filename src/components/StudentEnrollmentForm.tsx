@@ -160,7 +160,16 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
   };
 
   const onSubmit = (data: EnrollmentFormData) => {
-    const clubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
+    // En modo player, se usa el club_id que viene del enrollmentForm
+    // En modo teacher, se usa el club del trainer
+    let clubId;
+    
+    if (isPlayerMode && trainerProfile?.club_id) {
+      clubId = trainerProfile.club_id;
+    } else if (!isPlayerMode && trainerProfile?.trainer_clubs?.[0]?.club_id) {
+      clubId = trainerProfile.trainer_clubs[0].club_id;
+    }
+    
     if (!clubId) {
       toast({
         title: "Error",
@@ -196,7 +205,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
     if (!clubId) {
       toast({
         title: "Error",
-        description: "No se pudo determinar el club",
+        description: "No se pudo determinar el club del profesor",
         variant: "destructive",
       });
       return;
