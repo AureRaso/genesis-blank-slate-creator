@@ -149,13 +149,6 @@ export type Database = {
             foreignKeyName: "class_participants_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
-            referencedRelation: "debug_classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_participants_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
             referencedRelation: "programmed_classes"
             referencedColumns: ["id"]
           },
@@ -1238,13 +1231,6 @@ export type Database = {
             foreignKeyName: "waitlists_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
-            referencedRelation: "debug_classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "waitlists_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
             referencedRelation: "programmed_classes"
             referencedColumns: ["id"]
           },
@@ -1252,19 +1238,6 @@ export type Database = {
       }
     }
     Views: {
-      debug_classes: {
-        Row: {
-          available_spots: number | null
-          club_name: string | null
-          created_at: string | null
-          current_participants: number | null
-          id: string | null
-          is_active: boolean | null
-          max_participants: number | null
-          name: string | null
-        }
-        Relationships: []
-      }
       public_players: {
         Row: {
           created_at: string | null
