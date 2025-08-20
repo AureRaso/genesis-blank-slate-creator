@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -12,6 +11,7 @@ import {
   Trash2, 
   Eye,
   UserPlus,
+  UserMinus,
   MoreVertical
 } from "lucide-react";
 
@@ -36,6 +36,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
+import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassListViewProps {
@@ -47,6 +49,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const { isAdmin } = useAuth();
   
   const { data: classes, isLoading } = useScheduledClasses({
     clubId: clubId,
@@ -234,19 +237,23 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                               <Eye className="h-4 w-4 mr-2" />
                               {t('classes.viewDetails')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              {t('classes.manageStudents')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" />
-                              {t('classes.edit')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t('classes.cancelClass')}
-                            </DropdownMenuItem>
+                            {isAdmin && (
+                              <>
+                                <DropdownMenuItem>
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  {t('classes.manageStudents')}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  {t('classes.edit')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {t('classes.cancelClass')}
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -260,88 +267,322 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
 
         {/* Class details modal */}
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                {t('classes.classDetails')}
-              </DialogTitle>
-            </DialogHeader>
-
-            {selectedClass && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedClass.name}</h3>
-                  <Badge className={getLevelColor(selectedClass)}>
-                    {getLevelDisplay(selectedClass)}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">{t('classes.schedule')}</div>
-                    <div className="font-medium flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {selectedClass.start_time.slice(0, 5)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground">{t('classes.duration')}</div>
-                    <div className="font-medium">
-                      {selectedClass.duration_minutes} {t('classes.min')}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground">{t('classes.students')}</div>
-                    <div className="font-medium flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {selectedClass.participants?.length || 0}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground">{t('classes.days')}</div>
-                    <div className="font-medium">
-                      {selectedClass.days_of_week.join(', ')}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-muted-foreground text-sm">{t('classes.period')}</div>
-                  <div className="font-medium">
-                    {format(parseISO(selectedClass.start_date), "dd/MM/yyyy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yyyy")}
-                  </div>
-                </div>
-
-                {selectedClass.participants && selectedClass.participants.length > 0 && (
-                  <div>
-                    <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
-                    <div className="space-y-1">
-                      {selectedClass.participants.map((participant) => (
-                        <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                          {participant.student_enrollment.full_name}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    {t('classes.edit')}
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    {t('classes.manageStudentsAction')}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
+          {selectedClass && (
+            isAdmin ? (
+              <AdminClassDetailsModal class={selectedClass} />
+            ) : (
+              <PlayerClassDetailsModal class={selectedClass} />
+            )
+          )}
         </Dialog>
       </CardContent>
     </Card>
+  );
+}
+
+// Modal para administradores/profesores
+function AdminClassDetailsModal({ class: selectedClass }: { class: ScheduledClassWithTemplate }) {
+  const { t } = useTranslation();
+  
+  const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      return cls.custom_level.replace('_', ' ');
+    }
+    if (cls.level_from && cls.level_to) {
+      return cls.level_from === cls.level_to ? 
+        `${t('classes.level')} ${cls.level_from}` : 
+        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
+    }
+    return t('classes.withoutLevel');
+  };
+
+  const getLevelColor = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    if (cls.level_from) {
+      if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  return (
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Eye className="h-5 w-5" />
+          {t('classes.classDetails')}
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-lg">{selectedClass.name}</h3>
+          <Badge className={getLevelColor(selectedClass)}>
+            {getLevelDisplay(selectedClass)}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <div className="text-muted-foreground">{t('classes.schedule')}</div>
+            <div className="font-medium flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {selectedClass.start_time.slice(0, 5)}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-muted-foreground">{t('classes.duration')}</div>
+            <div className="font-medium">
+              {selectedClass.duration_minutes} {t('classes.min')}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-muted-foreground">{t('classes.students')}</div>
+            <div className="font-medium flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {selectedClass.participants?.length || 0}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-muted-foreground">{t('classes.days')}</div>
+            <div className="font-medium">
+              {selectedClass.days_of_week.join(', ')}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="text-muted-foreground text-sm">{t('classes.period')}</div>
+          <div className="font-medium">
+            {format(parseISO(selectedClass.start_date), "dd/MM/yyyy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yyyy")}
+          </div>
+        </div>
+
+        {selectedClass.participants && selectedClass.participants.length > 0 && (
+          <div>
+            <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
+            <div className="space-y-1">
+              {selectedClass.participants.map((participant) => (
+                <div key={participant.id} className="text-sm p-2 bg-muted rounded">
+                  {participant.student_enrollment.full_name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1">
+            {t('classes.edit')}
+          </Button>
+          <Button variant="outline" size="sm" className="flex-1">
+            {t('classes.manageStudentsAction')}
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  );
+}
+
+// Modal para jugadores
+function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledClassWithTemplate }) {
+  const { profile } = useAuth();
+  const { t } = useTranslation();
+  const enrolledCount = selectedClass.participants?.length || 0;
+  
+  // Hooks para lista de espera
+  const { data: capacity } = useClassCapacity(selectedClass.id);
+  const { data: waitlistPosition } = useUserWaitlistPosition(selectedClass.id, profile?.id);
+  const joinWaitlist = useJoinWaitlist();
+  const leaveWaitlist = useLeaveWaitlist();
+
+  const handleJoinWaitlist = () => {
+    if (profile?.id) {
+      joinWaitlist.mutate({ classId: selectedClass.id, userId: profile.id });
+    }
+  };
+
+  const handleLeaveWaitlist = () => {
+    if (profile?.id) {
+      leaveWaitlist.mutate({ classId: selectedClass.id, userId: profile.id });
+    }
+  };
+
+  const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      return cls.custom_level.replace('_', ' ');
+    }
+    if (cls.level_from && cls.level_to) {
+      return cls.level_from === cls.level_to ? 
+        `${t('classes.level')} ${cls.level_from}` : 
+        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
+    }
+    return t('classes.withoutLevel');
+  };
+
+  const getLevelColor = (cls: ScheduledClassWithTemplate) => {
+    if (cls.custom_level) {
+      if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    if (cls.level_from) {
+      if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
+      if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-red-100 text-red-800 border-red-200';
+    }
+    
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getEndTime = () => {
+    const [hours, minutes] = selectedClass.start_time.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endMinutes = startMinutes + selectedClass.duration_minutes;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  };
+
+  const actualCapacity = {
+    current: capacity?.currentParticipants || enrolledCount,
+    max: capacity?.maxParticipants || selectedClass.max_participants || 8,
+    waitlistCount: capacity?.waitlistCount || 0
+  };
+
+  const hasAvailableSpots = actualCapacity.current < actualCapacity.max;
+
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center justify-between">
+          <span>Detalles de la Clase</span>
+          <Badge className={getLevelColor(selectedClass)}>
+            {getLevelDisplay(selectedClass)}
+          </Badge>
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-semibold text-lg mb-2">{selectedClass.name}</h3>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Horario</div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{selectedClass.start_time.slice(0, 5)} - {getEndTime()}</span>
+                <span className="text-muted-foreground">({selectedClass.duration_minutes} min)</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
+              <div className="flex flex-wrap gap-1">
+                {selectedClass.days_of_week.map((day) => (
+                  <Badge key={day} variant="outline" className="text-xs">
+                    {day}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Periodo</div>
+              <div className="text-sm">
+                {new Date(selectedClass.start_date).toLocaleDateString('es-ES')} - {new Date(selectedClass.end_date).toLocaleDateString('es-ES')}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Capacidad</div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{actualCapacity.current}/{actualCapacity.max} alumnos</span>
+                {actualCapacity.waitlistCount > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{actualCapacity.waitlistCount} en lista de espera
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Tipo de recurrencia</div>
+              <div className="text-sm font-medium">{selectedClass.recurrence_type}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Información de disponibilidad y acciones */}
+        <div className="border-t pt-4">
+          <div className="space-y-4">
+            <div className="text-center">
+              {hasAvailableSpots ? (
+                <div className="text-sm text-green-600 font-medium mb-2">
+                  ¡Plazas disponibles!
+                </div>
+              ) : (
+                <div className="text-sm text-amber-600 font-medium mb-2">
+                  Clase completa
+                </div>
+              )}
+            </div>
+            
+            {/* Botones de lista de espera - siempre disponibles */}
+            <div className="flex justify-center">
+              {waitlistPosition ? (
+                <div className="text-center space-y-3 w-full">
+                  <Badge variant="outline" className="text-sm">
+                    Posición {waitlistPosition.position} en lista de espera
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLeaveWaitlist}
+                    disabled={leaveWaitlist.isPending}
+                    className="w-full"
+                  >
+                    <UserMinus className="h-4 w-4 mr-2" />
+                    {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  onClick={handleJoinWaitlist}
+                  disabled={joinWaitlist.isPending}
+                  className="w-full"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {joinWaitlist.isPending ? "Uniéndose..." : "Reservar en lista de espera"}
+                </Button>
+              )}
+            </div>
+            
+            {hasAvailableSpots && (
+              <div className="text-xs text-center text-muted-foreground">
+                También puedes contactar directamente con el club para inscribirte
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </DialogContent>
   );
 }
