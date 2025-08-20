@@ -97,7 +97,33 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Auth user created with ID:", authUser.user.id);
-    console.log("Profile created automatically by trigger");
+    
+    // Check if profile was created automatically by trigger
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", authUser.user.id)
+      .single();
+    
+    if (!profile) {
+      console.log("Profile not created by trigger, creating manually...");
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .insert({
+          id: authUser.user.id,
+          email: email,
+          full_name: full_name,
+          role: "player", 
+          club_id: club_id,
+        });
+      
+      if (profileError) {
+        console.error("Error creating profile manually:", profileError);
+        // Don't rollback - user creation was successful
+      }
+    } else {
+      console.log("Profile created automatically by trigger");
+    }
 
     console.log("Student user created successfully");
 
