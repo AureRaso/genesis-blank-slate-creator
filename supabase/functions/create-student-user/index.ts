@@ -1,0 +1,147 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface CreateStudentUserRequest {
+  email: string;
+  full_name: string;
+  club_id: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    console.log("Creating student user - Request started");
+    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing environment variables");
+      throw new Error("Missing Supabase configuration");
+    }
+
+    // Create admin client with service role key
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    const { email, full_name, club_id }: CreateStudentUserRequest = await req.json();
+    console.log("Creating student user for:", { email, full_name, club_id });
+
+    if (!email || !full_name || !club_id) {
+      console.error("Missing required fields");
+      return new Response(
+        JSON.stringify({ error: "Email, full_name, and club_id are required" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser.users.some(user => user.email === email);
+    
+    if (userExists) {
+      console.log("User already exists:", email);
+      return new Response(
+        JSON.stringify({ 
+          message: "El usuario ya existe y puede acceder con su email",
+          email: email,
+          password: "123456"
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Create the user with fixed password
+    console.log("Creating auth user...");
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: email,
+      password: "123456", // Fixed password
+      email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        full_name: full_name
+      }
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      throw authError;
+    }
+
+    if (!authUser?.user?.id) {
+      console.error("No user ID returned from auth creation");
+      throw new Error("Failed to create user - no ID returned");
+    }
+
+    console.log("Auth user created with ID:", authUser.user.id);
+
+    // Create the profile
+    console.log("Creating profile...");
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .insert({
+        id: authUser.user.id,
+        email: email,
+        full_name: full_name,
+        role: "player",
+        club_id: club_id,
+      });
+
+    if (profileError) {
+      console.error("Error creating profile:", profileError);
+      
+      // Rollback: delete the auth user if profile creation fails
+      console.log("Rolling back auth user creation...");
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+      
+      throw profileError;
+    }
+
+    console.log("Student user created successfully");
+
+    return new Response(
+      JSON.stringify({
+        message: "Cuenta de alumno creada exitosamente",
+        email: email,
+        password: "123456",
+        user_id: authUser.user.id
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+
+  } catch (error: any) {
+    console.error("Error in create-student-user function:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || "Error interno del servidor" 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);

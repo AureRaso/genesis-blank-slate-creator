@@ -128,6 +128,29 @@ export const useCreateStudentEnrollment = () => {
         clubId = trainerClubs.club_id;
       }
 
+      // First create the student user account
+      try {
+        const { data: createUserResponse, error: createUserError } = await supabase.functions.invoke('create-student-user', {
+          body: {
+            email: enrollmentData.email,
+            full_name: enrollmentData.full_name,
+            club_id: clubId
+          }
+        });
+
+        if (createUserError) {
+          console.error("Error creating student user:", createUserError);
+          throw new Error("Error al crear la cuenta del alumno");
+        }
+
+        console.log("Student user created:", createUserResponse);
+      } catch (userCreationError: any) {
+        console.error("User creation failed:", userCreationError);
+        // Continue with enrollment creation even if user creation fails
+        // The user might already exist or there might be other issues
+      }
+
+      // Then create the enrollment
       const { data, error } = await supabase
         .from("student_enrollments")
         .insert({
@@ -142,11 +165,12 @@ export const useCreateStudentEnrollment = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
       toast({
         title: "Inscripción creada",
-        description: "El alumno ha sido inscrito correctamente",
+        description: `${data.full_name} ha sido inscrito correctamente. Puede acceder con su email y contraseña: 123456`,
+        duration: 8000,
       });
     },
     onError: (error: any) => {
