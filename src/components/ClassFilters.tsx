@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Search, Filter, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +24,7 @@ interface ClassFiltersProps {
 
 export default function ClassFilters({ filters, onFiltersChange, groups, trainers }: ClassFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const updateFilter = (key: keyof ClassFiltersData, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -77,23 +79,23 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
 
   const getActiveFilters = () => {
     const active = [];
-    if (filters.search) active.push({ key: "search", label: `Búsqueda: ${filters.search}` });
-    if (filters.level) active.push({ key: "level", label: `Nivel: ${filters.level}` });
-    if (filters.dayOfWeek) active.push({ key: "dayOfWeek", label: `Día: ${filters.dayOfWeek}` });
+    if (filters.search) active.push({ key: "search", label: t('classes.searchBy', { value: filters.search }) });
+    if (filters.level) active.push({ key: "level", label: t('classes.levelBy', { value: filters.level }) });
+    if (filters.dayOfWeek) active.push({ key: "dayOfWeek", label: t('classes.dayBy', { value: filters.dayOfWeek }) });
     if (filters.groupId) {
       const group = groups?.find(g => g.id === filters.groupId);
-      active.push({ key: "groupId", label: `Grupo: ${group?.name || filters.groupId}` });
+      active.push({ key: "groupId", label: t('classes.groupBy', { value: group?.name || filters.groupId }) });
     }
-    if (filters.trainerName) active.push({ key: "trainerName", label: `Entrenador: ${filters.trainerName}` });
-    if (filters.status) active.push({ key: "status", label: `Estado: ${filters.status}` });
-    if (filters.minGroupSize !== undefined) active.push({ key: "minGroupSize", label: `Min. alumnos: ${filters.minGroupSize}` });
-    if (filters.maxGroupSize !== undefined) active.push({ key: "maxGroupSize", label: `Max. alumnos: ${filters.maxGroupSize}` });
-    if (filters.levelFrom !== undefined) active.push({ key: "levelFrom", label: `Nivel desde: ${filters.levelFrom}` });
-    if (filters.levelTo !== undefined) active.push({ key: "levelTo", label: `Nivel hasta: ${filters.levelTo}` });
-    if (filters.customLevels.length > 0) active.push({ key: "customLevels", label: `Niveles: ${filters.customLevels.length}` });
-    if (filters.weekDays.length > 0) active.push({ key: "weekDays", label: `Días: ${filters.weekDays.length}` });
-    if (filters.studentName) active.push({ key: "studentName", label: `Alumno: ${filters.studentName}` });
-    if (filters.withDiscountOnly) active.push({ key: "withDiscountOnly", label: "Con descuento" });
+    if (filters.trainerName) active.push({ key: "trainerName", label: t('classes.trainerBy', { value: filters.trainerName }) });
+    if (filters.status) active.push({ key: "status", label: t('classes.stateBy', { value: filters.status }) });
+    if (filters.minGroupSize !== undefined) active.push({ key: "minGroupSize", label: t('classes.minStudentsBy', { value: filters.minGroupSize }) });
+    if (filters.maxGroupSize !== undefined) active.push({ key: "maxGroupSize", label: t('classes.maxStudentsBy', { value: filters.maxGroupSize }) });
+    if (filters.levelFrom !== undefined) active.push({ key: "levelFrom", label: t('classes.levelFromBy', { value: filters.levelFrom }) });
+    if (filters.levelTo !== undefined) active.push({ key: "levelTo", label: t('classes.levelToBy', { value: filters.levelTo }) });
+    if (filters.customLevels.length > 0) active.push({ key: "customLevels", label: t('classes.levelsBy', { count: filters.customLevels.length }) });
+    if (filters.weekDays.length > 0) active.push({ key: "weekDays", label: t('classes.daysBy', { count: filters.weekDays.length }) });
+    if (filters.studentName) active.push({ key: "studentName", label: t('classes.studentBy', { value: filters.studentName }) });
+    if (filters.withDiscountOnly) active.push({ key: "withDiscountOnly", label: t('classes.withDiscount') });
     return active;
   };
 
@@ -108,7 +110,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar clases, alumnos, grupos..."
+              placeholder={t('classes.searchPlaceholder')}
               value={filters.search}
               onChange={(e) => updateFilter("search", e.target.value)}
               className="pl-10"
@@ -118,7 +120,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm">
                 <Filter className="h-4 w-4 mr-2" />
-                Filtros
+                {t('classes.filters')}
                 {activeFiltersCount > 0 && (
                   <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
                     {activeFiltersCount}
@@ -132,7 +134,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
         {/* Active filters display */}
         {activeFilters.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-sm text-muted-foreground">Filtros activos:</span>
+            <span className="text-sm text-muted-foreground">{t('classes.activeFilters')}:</span>
             {activeFilters.map((filter) => (
               <Badge key={filter.key} variant="secondary" className="flex items-center gap-1">
                 {filter.label}
@@ -143,7 +145,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
               </Badge>
             ))}
             <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-              Limpiar todo
+              {t('classes.clearAll')}
             </Button>
           </div>
         )}
@@ -188,35 +190,35 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
             {/* Filtros originales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
               <div>
-                <label className="text-sm font-medium mb-2 block">Estado</label>
+                <label className="text-sm font-medium mb-2 block">{t('classes.state')}</label>
                 <Select 
                   value={filters.status || "all"} 
                   onValueChange={(value) => updateFilter("status", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Todos los estados" />
+                    <SelectValue placeholder={t('classes.allStates')} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="scheduled">Programada</SelectItem>
-                    <SelectItem value="completed">Completada</SelectItem>
-                    <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectContent className="bg-background border shadow-md z-50">
+                    <SelectItem value="all">{t('classes.allStates')}</SelectItem>
+                    <SelectItem value="scheduled">{t('classes.scheduled')}</SelectItem>
+                    <SelectItem value="completed">{t('classes.completed')}</SelectItem>
+                    <SelectItem value="cancelled">{t('classes.cancelled')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {groups && groups.length > 0 && (
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Grupo</label>
+                  <label className="text-sm font-medium mb-2 block">{t('classes.group')}</label>
                   <Select 
                     value={filters.groupId || "all"} 
                     onValueChange={(value) => updateFilter("groupId", value === "all" ? "" : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Todos los grupos" />
+                      <SelectValue placeholder={t('classes.allGroups')} />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los grupos</SelectItem>
+                    <SelectContent className="bg-background border shadow-md z-50">
+                      <SelectItem value="all">{t('classes.allGroups')}</SelectItem>
                       {groups.map((group) => (
                         <SelectItem key={group.id} value={group.id}>
                           {group.name} - {group.level}
@@ -229,16 +231,16 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
 
               {trainers && trainers.length > 0 && (
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Entrenador</label>
+                  <label className="text-sm font-medium mb-2 block">{t('classes.trainer')}</label>
                   <Select 
                     value={filters.trainerName || "all"} 
                     onValueChange={(value) => updateFilter("trainerName", value === "all" ? "" : value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Todos los entrenadores" />
+                      <SelectValue placeholder={t('classes.allTrainers')} />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los entrenadores</SelectItem>
+                    <SelectContent className="bg-background border shadow-md z-50">
+                      <SelectItem value="all">{t('classes.allTrainers')}</SelectItem>
                       {trainers.map((trainer, index) => (
                         <SelectItem key={index} value={trainer.name}>
                           {trainer.name}

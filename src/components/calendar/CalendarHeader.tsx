@@ -1,7 +1,8 @@
 
 import { format, addWeeks, subWeeks } from "date-fns";
-import { es } from "date-fns/locale";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,16 +27,19 @@ export function CalendarHeader({
   onNextWeek,
   onToday
 }: CalendarHeaderProps) {
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
+  
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Calendario de Clases</h2>
+          <h2 className="text-xl font-semibold">{t('classes.calendarTitle')}</h2>
         </div>
         {filteredClassesCount !== totalClasses && (
           <Badge variant="secondary">
-            {filteredClassesCount} de {totalClasses}
+            {filteredClassesCount} {t('classes.of')} {totalClasses}
           </Badge>
         )}
       </div>
@@ -46,7 +50,7 @@ export function CalendarHeader({
         </Button>
         
         <Button variant="outline" size="sm" onClick={onToday}>
-          Hoy
+          {t('classes.today')}
         </Button>
         
         <Button variant="outline" size="sm" onClick={onNextWeek}>
@@ -54,7 +58,7 @@ export function CalendarHeader({
         </Button>
         
         <div className="text-sm font-medium ml-4 min-w-[200px] text-right">
-          {format(weekStart, "dd MMM", { locale: es })} - {format(weekEnd, "dd MMM yyyy", { locale: es })}
+          {format(weekStart, "dd MMM", { locale: getDateFnsLocale() })} - {format(weekEnd, "dd MMM yyyy", { locale: getDateFnsLocale() })}
         </div>
       </div>
     </div>

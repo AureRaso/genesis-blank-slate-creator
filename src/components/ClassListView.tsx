@@ -1,7 +1,8 @@
 
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   Calendar, 
   Clock, 
@@ -44,6 +45,8 @@ interface ClassListViewProps {
 
 export default function ClassListView({ clubId, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
   
   const { data: classes, isLoading } = useScheduledClasses({
     clubId: clubId,
@@ -112,10 +115,10 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
     }
     if (cls.level_from && cls.level_to) {
       return cls.level_from === cls.level_to ? 
-        `Nivel ${cls.level_from}` : 
-        `Nivel ${cls.level_from}-${cls.level_to}`;
+        `${t('classes.level')} ${cls.level_from}` : 
+        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
     }
-    return 'Sin nivel';
+    return t('classes.withoutLevel');
   };
 
   const getLevelColor = (cls: ScheduledClassWithTemplate) => {
@@ -150,24 +153,24 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Lista de Clases ({filteredClasses.length})</span>
+          <span>{t('classes.classList')} ({filteredClasses.length})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {filteredClasses.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No se encontraron clases que coincidan con los filtros seleccionados.
+            {t('classes.noClassesFound')}
           </div>
         ) : (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Clase</TableHead>
-                  <TableHead>Horario</TableHead>
-                  <TableHead>Alumnos</TableHead>
-                  <TableHead>Periodo</TableHead>
-                  <TableHead>Días</TableHead>
+                  <TableHead>{t('classes.className')}</TableHead>
+                  <TableHead>{t('classes.schedule')}</TableHead>
+                  <TableHead>{t('classes.students')}</TableHead>
+                  <TableHead>{t('classes.period')}</TableHead>
+                  <TableHead>{t('classes.days')}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -195,7 +198,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                             {cls.start_time.slice(0, 5)}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {cls.duration_minutes} min
+                            {cls.duration_minutes} {t('classes.min')}
                           </div>
                         </div>
                       </TableCell>
@@ -226,23 +229,23 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
                             <DropdownMenuItem onClick={() => setSelectedClass(cls)}>
                               <Eye className="h-4 w-4 mr-2" />
-                              Ver detalles
+                              {t('classes.viewDetails')}
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <UserPlus className="h-4 w-4 mr-2" />
-                              Gestionar alumnos
+                              {t('classes.manageStudents')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>
                               <Edit className="h-4 w-4 mr-2" />
-                              Editar
+                              {t('classes.edit')}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive">
                               <Trash2 className="h-4 w-4 mr-2" />
-                              Cancelar clase
+                              {t('classes.cancelClass')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -261,7 +264,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                Detalles de la Clase
+                {t('classes.classDetails')}
               </DialogTitle>
             </DialogHeader>
 
@@ -276,7 +279,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Horario</div>
+                    <div className="text-muted-foreground">{t('classes.schedule')}</div>
                     <div className="font-medium flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {selectedClass.start_time.slice(0, 5)}
@@ -284,14 +287,14 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                   </div>
 
                   <div>
-                    <div className="text-muted-foreground">Duración</div>
+                    <div className="text-muted-foreground">{t('classes.duration')}</div>
                     <div className="font-medium">
-                      {selectedClass.duration_minutes} min
+                      {selectedClass.duration_minutes} {t('classes.min')}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-muted-foreground">Alumnos</div>
+                    <div className="text-muted-foreground">{t('classes.students')}</div>
                     <div className="font-medium flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {selectedClass.participants?.length || 0}
@@ -299,7 +302,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                   </div>
 
                   <div>
-                    <div className="text-muted-foreground">Días</div>
+                    <div className="text-muted-foreground">{t('classes.days')}</div>
                     <div className="font-medium">
                       {selectedClass.days_of_week.join(', ')}
                     </div>
@@ -307,7 +310,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
                 </div>
 
                 <div>
-                  <div className="text-muted-foreground text-sm">Periodo</div>
+                  <div className="text-muted-foreground text-sm">{t('classes.period')}</div>
                   <div className="font-medium">
                     {format(parseISO(selectedClass.start_date), "dd/MM/yyyy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yyyy")}
                   </div>
@@ -315,7 +318,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
 
                 {selectedClass.participants && selectedClass.participants.length > 0 && (
                   <div>
-                    <div className="text-muted-foreground text-sm mb-2">Alumnos inscritos</div>
+                    <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
                     <div className="space-y-1">
                       {selectedClass.participants.map((participant) => (
                         <div key={participant.id} className="text-sm p-2 bg-muted rounded">
@@ -328,10 +331,10 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
 
                 <div className="flex gap-2 pt-2">
                   <Button variant="outline" size="sm" className="flex-1">
-                    Editar
+                    {t('classes.edit')}
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1">
-                    Gestionar alumnos
+                    {t('classes.manageStudentsAction')}
                   </Button>
                 </div>
               </div>

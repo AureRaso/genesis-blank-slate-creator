@@ -1,12 +1,14 @@
 
 import { useState } from "react";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarGrid } from "./calendar/CalendarGrid";
 import { TrainerLegend } from "./calendar/TrainerLegend";
 import { useScheduledClasses } from "@/hooks/useScheduledClasses";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassCalendarViewProps {
@@ -17,23 +19,17 @@ interface ClassCalendarViewProps {
 export default function ClassCalendarView({ clubId, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const { profile, isAdmin } = useAuth();
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
-  
-  console.log("ClassCalendarView - Current user profile:", profile);
-  console.log("ClassCalendarView - Week range:", {
-    weekStart: format(weekStart, 'yyyy-MM-dd'),
-    weekEnd: format(weekEnd, 'yyyy-MM-dd')
-  });
   
   const { data: classes, isLoading, error } = useScheduledClasses({
     startDate: format(weekStart, 'yyyy-MM-dd'),
     endDate: format(weekEnd, 'yyyy-MM-dd'),
     clubId: clubId,
   });
-
-  console.log("ClassCalendarView - useScheduledClasses result:", { classes, isLoading, error });
 
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
@@ -116,7 +112,7 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
       <Card>
         <CardContent className="py-8">
           <div className="text-center text-red-600">
-            Error al cargar las clases: {error.message}
+            {t('common.error')}: {error.message}
           </div>
         </CardContent>
       </Card>

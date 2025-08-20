@@ -576,19 +576,19 @@ export default function ScheduledClassForm({
             {/* Step 3: Final Configuration */}
             {currentStep === 3 && <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="court_number" render={({
+                   <FormField control={form.control} name="court_number" render={({
                 field
               }) => <FormItem>
-                        <FormLabel>Pista</FormLabel>
+                        <FormLabel>{t('classes.court')}</FormLabel>
                         <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value?.toString()}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecciona una pista" />
+                              <SelectValue placeholder={t('classes.selectCourt')} />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-background border shadow-md z-50">
                             {[1, 2, 3, 4, 5, 6, 7].map(court => <SelectItem key={court} value={court.toString()}>
-                                Pista {court}
+                                {t('classes.court')} {court}
                               </SelectItem>)}
                           </SelectContent>
                         </Select>

@@ -1,6 +1,7 @@
 
 import { format, eachDayOfInterval, isSameDay } from "date-fns";
-import { es } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { ClassCard } from "./ClassCard";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -34,14 +35,12 @@ const DAY_MAPPING: { [key: string]: string } = {
 };
 
 export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  console.log("CalendarGrid received classes:", classes);
-  console.log("Week range:", { weekStart, weekEnd });
-
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
-    const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
-    console.log("Checking day:", dayName, "timeSlot:", timeSlot);
+    const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
     
     const matchingClasses = classes.filter(cls => {
       const classDays = cls.days_of_week.map(d => {
@@ -55,22 +54,8 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
       const dayMatches = classDays.includes(normalizedDayName);
       const timeMatches = classTime === timeSlot;
       
-      console.log(`Class "${cls.name}":`, {
-        classDays,
-        classTime,
-        normalizedDayName,
-        timeSlot,
-        dayMatches,
-        timeMatches,
-        result: dayMatches && timeMatches
-      });
-      
       return dayMatches && timeMatches;
     });
-
-    if (matchingClasses.length > 0) {
-      console.log("Found matching classes for", dayName, timeSlot, ":", matchingClasses);
-    }
     
     return matchingClasses;
   };
@@ -82,7 +67,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
   };
 
   const isClassContinuation = (day: Date, timeSlot: string, cls: ScheduledClassWithTemplate) => {
-    const dayName = format(day, 'EEEE', { locale: es }).toLowerCase();
+    const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
     const normalizedDayName = DAY_MAPPING[dayName] || dayName;
     
     const classDays = cls.days_of_week.map(d => {
@@ -109,12 +94,12 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
       {/* Header with days */}
       <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-10">
         <div className="p-3 text-sm font-medium text-muted-foreground border-r">
-          Hora
+          {t('classes.hour')}
         </div>
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0">
             <div className="text-sm font-medium text-muted-foreground">
-              {format(day, "EEE", { locale: es })}
+              {format(day, "EEE", { locale: getDateFnsLocale() })}
             </div>
             <div className={cn(
               "text-lg font-semibold mt-1",

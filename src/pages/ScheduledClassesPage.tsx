@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Calendar, List } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ function ScheduledClassesContent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { data: clubs } = useActiveClubs();
   const { filters, setFilters } = useClassFilters();
@@ -49,9 +51,9 @@ function ScheduledClassesContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Clases Programadas</h1>
+          <h1 className="text-3xl font-bold">{t('pages.scheduledClasses.title')}</h1>
           <p className="text-muted-foreground mt-1">
-            Gestiona y programa clases recurrentes para {currentClub.name}
+            {t('pages.scheduledClasses.description')} {currentClub.name}
           </p>
         </div>
 
@@ -78,12 +80,12 @@ function ScheduledClassesContent() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Nueva Clase
+                {t('classes.createScheduledClasses')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader className="sr-only">
-                <DialogTitle>Crear Nueva Clase Programada</DialogTitle>
+                <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
                 <DialogDescription>
                   Formulario para crear una nueva clase programada con horarios recurrentes y asignación de alumnos.
                 </DialogDescription>
