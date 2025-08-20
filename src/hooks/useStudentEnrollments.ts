@@ -289,3 +289,32 @@ export const useCompleteEnrollmentForm = () => {
     },
   });
 };
+
+export const useDeleteStudentEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("student_enrollments")
+        .update({ status: 'inactive' })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      toast({
+        title: "Alumno eliminado",
+        description: "La inscripción del alumno ha sido eliminada correctamente.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la inscripción del alumno: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

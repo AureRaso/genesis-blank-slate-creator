@@ -161,11 +161,13 @@ const StudentsList = ({ onViewStudent, onEditStudent, onDeleteStudent }: Student
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">{student.full_name}</CardTitle>
-                    <CardDescription className="flex items-center space-x-2">
-                      <span>Nivel {student.level}</span>
-                      <Badge variant={getStatusBadgeVariant(student.status)}>
-                        {getStatusLabel(student.status)}
-                      </Badge>
+                    <CardDescription>
+                      <div className="flex items-center space-x-2">
+                        <span>Nivel {student.level}</span>
+                        <Badge variant={getStatusBadgeVariant(student.status)}>
+                          {getStatusLabel(student.status)}
+                        </Badge>
+                      </div>
                     </CardDescription>
                   </div>
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">

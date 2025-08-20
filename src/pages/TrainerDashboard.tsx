@@ -13,7 +13,7 @@ import ClassGroupsManager from "@/components/ClassGroupsManager";
 import TrainerNotifications from "@/components/TrainerNotifications";
 import WaitlistDebugger from "@/components/WaitlistDebugger";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
-import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { StudentEnrollment, useDeleteStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
 import { usePageStatePersistence } from "@/hooks/usePageStatePersistence";
 import { useWindowVisibility } from "@/hooks/useWindowVisibility";
@@ -66,6 +66,7 @@ const TrainerDashboard = () => {
     isLoading: classesLoading
   } = useProgrammedClasses(trainerClubId);
   const deleteMutation = useDeleteProgrammedClass();
+  const deleteStudentMutation = useDeleteStudentEnrollment();
   const handleCloseClassForm = () => {
     setShowClassForm(false);
     setEditingClass(undefined);
@@ -99,8 +100,7 @@ const TrainerDashboard = () => {
   };
   const handleDeleteStudent = (studentId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta inscripción?')) {
-      // TODO: Implement delete student mutation
-      console.log('Delete student:', studentId);
+      deleteStudentMutation.mutate(studentId);
     }
   };
   const handleCloseStudentForm = () => {
