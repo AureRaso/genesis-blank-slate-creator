@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,7 @@ interface LeagueFormData {
 
 const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
   const isEditing = !!league;
+  const navigate = useNavigate();
   const createLeague = useCreateLeague();
   const updateLeague = useUpdateLeague();
   const { data: clubs, isLoading: clubsLoading } = useClubs();
@@ -127,7 +129,7 @@ const LeagueForm = ({ league, onClose }: LeagueFormProps) => {
               <Button 
                 variant="link" 
                 className="p-0 h-auto text-orange-800 underline"
-                onClick={() => window.location.href = '/clubs'}
+                onClick={() => navigate('/clubs')}
               >
                 Ir a gestión de clubs
               </Button>
