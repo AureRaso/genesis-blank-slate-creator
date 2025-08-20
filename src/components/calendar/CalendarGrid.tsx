@@ -21,17 +21,25 @@ const TIME_SLOTS = [
 
 const SLOT_HEIGHT = 50; // Height in pixels for each 30-minute slot
 
-// Mapping of Spanish day names to lowercase
+// Mapping of Spanish day names to lowercase  
 const DAY_MAPPING: { [key: string]: string } = {
   'domingo': 'domingo',
-  'lunes': 'lunes',
+  'lunes': 'lunes', 
   'martes': 'martes',
   'miércoles': 'miércoles',
-  'miercoles': 'miércoles',
+  'miercoles': 'miércoles', // Handle both with and without accent
   'jueves': 'jueves',
   'viernes': 'viernes',
   'sábado': 'sábado',
-  'sabado': 'sábado'
+  'sabado': 'sábado', // Handle both with and without accent
+  // English mappings
+  'sunday': 'domingo',
+  'monday': 'lunes',
+  'tuesday': 'martes', 
+  'wednesday': 'miércoles',
+  'thursday': 'jueves',
+  'friday': 'viernes',
+  'saturday': 'sábado'
 };
 
 export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
@@ -45,10 +53,12 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     const matchingClasses = classes.filter(cls => {
       const classDays = cls.days_of_week.map(d => {
         const normalized = d.toLowerCase().trim();
-        return DAY_MAPPING[normalized] || normalized;
+        // Keep the original Spanish day names from database
+        return normalized;
       });
       
       const classTime = cls.start_time.slice(0, 5);
+      // Map the current day name to Spanish for comparison
       const normalizedDayName = DAY_MAPPING[dayName] || dayName;
       
       const dayMatches = classDays.includes(normalizedDayName);
@@ -72,7 +82,8 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     
     const classDays = cls.days_of_week.map(d => {
       const normalized = d.toLowerCase().trim();
-      return DAY_MAPPING[normalized] || normalized;
+      // Keep the original Spanish day names from database
+      return normalized;
     });
     
     if (!classDays.includes(normalizedDayName)) return false;
