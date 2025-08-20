@@ -21,25 +21,26 @@ const TIME_SLOTS = [
 
 const SLOT_HEIGHT = 50; // Height in pixels for each 30-minute slot
 
-// Mapping of Spanish day names to lowercase  
+// Mapping of day names to standardized Spanish format (database format)
 const DAY_MAPPING: { [key: string]: string } = {
+  // Spanish (database format - without accents)
   'domingo': 'domingo',
   'lunes': 'lunes', 
   'martes': 'martes',
-  'miércoles': 'miércoles',
-  'miercoles': 'miércoles', // Handle both with and without accent
+  'miercoles': 'miercoles', // Database uses no accent
+  'miércoles': 'miercoles', // Handle accented version too
   'jueves': 'jueves',
   'viernes': 'viernes',
-  'sábado': 'sábado',
-  'sabado': 'sábado', // Handle both with and without accent
-  // English mappings
+  'sabado': 'sabado', // Database uses no accent  
+  'sábado': 'sabado', // Handle accented version too
+  // English to Spanish mappings
   'sunday': 'domingo',
   'monday': 'lunes',
   'tuesday': 'martes', 
-  'wednesday': 'miércoles',
+  'wednesday': 'miercoles',
   'thursday': 'jueves',
   'friday': 'viernes',
-  'saturday': 'sábado'
+  'saturday': 'sabado'
 };
 
 export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
@@ -53,8 +54,8 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     const matchingClasses = classes.filter(cls => {
       const classDays = cls.days_of_week.map(d => {
         const normalized = d.toLowerCase().trim();
-        // Keep the original Spanish day names from database
-        return normalized;
+        // Normalize to database format (without accents)
+        return DAY_MAPPING[normalized] || normalized;
       });
       
       const classTime = cls.start_time.slice(0, 5);
@@ -82,8 +83,8 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
     
     const classDays = cls.days_of_week.map(d => {
       const normalized = d.toLowerCase().trim();
-      // Keep the original Spanish day names from database
-      return normalized;
+      // Normalize to database format (without accents)
+      return DAY_MAPPING[normalized] || normalized;
     });
     
     if (!classDays.includes(normalizedDayName)) return false;
