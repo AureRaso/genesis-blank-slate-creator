@@ -77,7 +77,12 @@ const handler = async (req: Request): Promise<Response> => {
       password: "123456", // Fixed password
       email_confirm: true, // Auto-confirm email
       user_metadata: {
-        full_name: full_name
+        full_name: full_name,
+        role: "player"
+      },
+      raw_user_meta_data: {
+        full_name: full_name,
+        club_id: club_id
       }
     });
 
@@ -92,28 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Auth user created with ID:", authUser.user.id);
-
-    // Create the profile
-    console.log("Creating profile...");
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: authUser.user.id,
-        email: email,
-        full_name: full_name,
-        role: "player",
-        club_id: club_id,
-      });
-
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      
-      // Rollback: delete the auth user if profile creation fails
-      console.log("Rolling back auth user creation...");
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
-      
-      throw profileError;
-    }
+    console.log("Profile created automatically by trigger");
 
     console.log("Student user created successfully");
 
