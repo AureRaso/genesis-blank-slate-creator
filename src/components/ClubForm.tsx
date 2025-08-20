@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateClub, useUpdateClub } from "@/hooks/useClubs";
 import { Club, CreateClubData, COURT_TYPES } from "@/types/clubs";
 import { X, Building2 } from "lucide-react";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 interface ClubFormProps {
   club?: Club;
@@ -30,24 +31,35 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
     setValue,
     watch,
   } = useForm<ClubFormData>({
-    defaultValues: club
-      ? {
-          name: club.name,
-          address: club.address,
-          phone: club.phone,
-          court_count: club.court_count,
-          court_types: club.court_types,
-          description: club.description || "",
-        }
-      : {
-          name: "",
-          address: "",
-          phone: "",
-          court_count: 1,
-          court_types: [],
-          description: "",
-        },
+    defaultValues: {
+      name: "",
+      address: "",
+      phone: "",
+      court_count: 1,
+      court_types: [],
+      description: "",
+    },
   });
+
+  // Persistencia del formulario solo para nuevos clubs
+  const persistenceKey = `club-form-${isEditing ? club?.id : 'new'}`;
+  const { clearPersistedData } = useFormPersistence({
+    key: persistenceKey,
+    watch,
+    setValue,
+  });
+
+  // Cargar datos del club existente si estamos editando
+  useEffect(() => {
+    if (isEditing && club) {
+      setValue("name", club.name);
+      setValue("address", club.address);
+      setValue("phone", club.phone);
+      setValue("court_count", club.court_count);
+      setValue("court_types", club.court_types);
+      setValue("description", club.description || "");
+    }
+  }, [isEditing, club, setValue]);
 
   const courtTypes = watch("court_types");
 
@@ -70,10 +82,20 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
       } else {
         await createClub.mutateAsync(data);
       }
+      // Limpiar datos persistidos después de envío exitoso
+      clearPersistedData();
       onClose();
     } catch (error) {
       console.error("Error submitting club form:", error);
     }
+  };
+
+  const handleCancel = () => {
+    // Limpiar datos persistidos al cancelar
+    if (!isEditing) {
+      clearPersistedData();
+    }
+    onClose();
   };
 
   return (
@@ -194,7 +216,7 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
             <Button 
