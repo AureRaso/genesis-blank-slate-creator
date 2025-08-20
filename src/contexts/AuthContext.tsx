@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Profile } from '@/types/auth';
+import { useWindowVisibility } from '@/hooks/useWindowVisibility';
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +32,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const currentUserIdRef = useRef<string | null>(null);
   const isCurrentlyFetching = useRef(false);
   const hasInitializedRef = useRef(false);
+  const isWindowVisible = useWindowVisibility();
+  const lastVisibilityChangeRef = useRef<number>(Date.now());
+
+  // Handle window visibility changes to prevent unnecessary auth calls
+  useEffect(() => {
+    if (isWindowVisible) {
+      lastVisibilityChangeRef.current = Date.now();
+    }
+  }, [isWindowVisible]);
 
   useEffect(() => {
     let mounted = true;
@@ -57,6 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
+        
+        // Prevent unnecessary re-authentication when window becomes visible again
+        const timeSinceVisibilityChange = Date.now() - lastVisibilityChangeRef.current;
+        const isRecentVisibilityChange = timeSinceVisibilityChange < 1000; // 1 second
+        
+        if (isRecentVisibilityChange && session?.user && currentUserIdRef.current === session.user.id && profile) {
+          console.log('AuthContext - Skipping auth update due to recent visibility change');
+          return;
+        }
         
         console.log('AuthContext - Auth state change:', event, session?.user?.email);
         
@@ -98,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearLoadingTimeout();
       subscription.unsubscribe();
     };
-  }, []);
+  }, [profile, isWindowVisible]);
 
   const fetchProfile = async (userId: string) => {
     console.log('AuthContext - Starting fetchProfile for user:', userId);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Plus, Clock, Users, Edit, Trash2, Eye, UserPlus, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,23 +15,44 @@ import WaitlistDebugger from "@/components/WaitlistDebugger";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
+import { usePageStatePersistence } from "@/hooks/usePageStatePersistence";
+import { useWindowVisibility } from "@/hooks/useWindowVisibility";
 
 const TrainerDashboard = () => {
-  // Persistir estado del formulario de estudiante
-  const getPersistedStudentFormState = () => {
-    try {
-      return localStorage.getItem('trainer-dashboard-show-student-form') === 'true';
-    } catch {
-      return false;
-    }
+  const isWindowVisible = useWindowVisibility();
+  const { savePageState, loadPageState, clearPageState } = usePageStatePersistence('trainer-dashboard');
+
+  // Initialize state with persisted values
+  const getInitialState = () => {
+    const saved = loadPageState();
+    return {
+      showClassForm: saved?.showForm && saved?.formType === 'class' || false,
+      showStudentForm: saved?.showForm && saved?.formType === 'student' || false,
+      activeTab: saved?.activeTab || 'classes',
+      editingId: saved?.editingId
+    };
   };
 
-  const [showClassForm, setShowClassForm] = useState(false);
+  const initialState = getInitialState();
+  const [showClassForm, setShowClassForm] = useState(initialState.showClassForm);
   const [editingClass, setEditingClass] = useState<ProgrammedClass | undefined>();
   const [viewingClass, setViewingClass] = useState<ProgrammedClass | undefined>();
-  const [showStudentForm, setShowStudentForm] = useState(getPersistedStudentFormState);
+  const [showStudentForm, setShowStudentForm] = useState(initialState.showStudentForm);
   const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
   const [viewingStudent, setViewingStudent] = useState<StudentEnrollment | undefined>();
+  const [activeTab, setActiveTab] = useState(initialState.activeTab);
+
+  // Persist state changes
+  useEffect(() => {
+    if (!isWindowVisible) return; // Don't persist when window is not visible
+    
+    savePageState({
+      activeTab,
+      showForm: showClassForm || showStudentForm,
+      formType: showClassForm ? 'class' : showStudentForm ? 'student' : undefined,
+      editingId: editingClass?.id || editingStudent?.id
+    });
+  }, [activeTab, showClassForm, showStudentForm, editingClass?.id, editingStudent?.id, isWindowVisible, savePageState]);
   const {
     data: trainerProfile,
     isLoading: profileLoading
@@ -68,7 +89,6 @@ const TrainerDashboard = () => {
   const handleCreateNewStudent = () => {
     setEditingStudent(undefined);
     setShowStudentForm(true);
-    localStorage.setItem('trainer-dashboard-show-student-form', 'true');
   };
   const handleViewStudent = (student: StudentEnrollment) => {
     setViewingStudent(student);
@@ -76,7 +96,6 @@ const TrainerDashboard = () => {
   const handleEditStudent = (student: StudentEnrollment) => {
     setEditingStudent(student);
     setShowStudentForm(true);
-    localStorage.setItem('trainer-dashboard-show-student-form', 'true');
   };
   const handleDeleteStudent = (studentId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta inscripción?')) {
@@ -87,7 +106,7 @@ const TrainerDashboard = () => {
   const handleCloseStudentForm = () => {
     setShowStudentForm(false);
     setEditingStudent(undefined);
-    localStorage.removeItem('trainer-dashboard-show-student-form');
+    clearPageState();
   };
 
   // Get club info from trainer profile - Updated to handle the correct structure
@@ -163,7 +182,7 @@ const TrainerDashboard = () => {
       <WaitlistDebugger />
 
       {/* Tabs Section */}
-      <Tabs defaultValue="classes" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="classes">Clases</TabsTrigger>
           <TabsTrigger value="students">Alumnos</TabsTrigger>

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { useWindowVisibility } from "@/hooks/useWindowVisibility";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,7 @@ const TIME_SLOTS = [
 const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }: StudentEnrollmentFormProps) => {
   const [enrollmentMode, setEnrollmentMode] = useState<"teacher" | "link" | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string>("");
+  const isWindowVisible = useWindowVisibility();
   
   const createEnrollmentMutation = useCreateStudentEnrollment();
   const createLinkMutation = useCreateEnrollmentForm();
@@ -115,14 +117,16 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
     }
   }, [setValue, persistenceKey, isPlayerMode]);
 
-  // Guardar estado cuando cambie
+  // Guardar estado cuando cambie (solo cuando la ventana es visible)
   useEffect(() => {
-    if (!isPlayerMode && enrollmentMode) {
+    if (!isPlayerMode && enrollmentMode && isWindowVisible) {
       localStorage.setItem(`${persistenceKey}-mode`, enrollmentMode);
     }
-  }, [enrollmentMode, persistenceKey, isPlayerMode]);
+  }, [enrollmentMode, persistenceKey, isPlayerMode, isWindowVisible]);
 
   useEffect(() => {
+    if (!isWindowVisible) return; // Don't persist when window is not visible
+    
     const subscription = watch((data) => {
       if (data.weekly_days) {
         localStorage.setItem(`${persistenceKey}-days`, JSON.stringify(data.weekly_days));
@@ -132,7 +136,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, persistenceKey]);
+  }, [watch, persistenceKey, isWindowVisible]);
 
   const watchedDays = watch("weekly_days");
   const watchedTimes = watch("preferred_times");
