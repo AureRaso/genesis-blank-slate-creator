@@ -15,6 +15,7 @@ import MatchesPage from "@/pages/MatchesPage";
 import ClassesPage from "@/pages/ClassesPage";
 import PlayersPage from "@/pages/PlayersPage";
 import ClubsPage from "@/pages/ClubsPage";
+import ClubFormPage from "@/pages/ClubFormPage";
 import NotFound from "@/pages/NotFound";
 import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
@@ -138,6 +139,8 @@ function App() {
                     <Route path="/classes" element={<ClassesPage />} />
                     <Route path="/players" element={<PlayersPage />} />
                      <Route path="/clubs" element={<ClubsPage />} />
+                     <Route path="/clubs/new" element={<ClubFormPage />} />
+                     <Route path="/clubs/edit/:id" element={<ClubFormPage />} />
                      <Route path="/trainers" element={<TrainersPage />} />
                      <Route path="/scheduled-classes" element={
                        isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />

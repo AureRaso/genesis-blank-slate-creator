@@ -1,40 +1,23 @@
 
-import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ClubForm from "@/components/ClubForm";
 import ClubsList from "@/components/ClubsList";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Club } from "@/types/clubs";
 
 const ClubsPage = () => {
-  const [showClubForm, setShowClubForm] = useState(false);
-  const [editingClub, setEditingClub] = useState<Club | undefined>();
+  const navigate = useNavigate();
   const { isAdmin, isPlayer } = useAuth();
 
-  const handleCloseClubForm = () => {
-    setShowClubForm(false);
-    setEditingClub(undefined);
-  };
-
   const handleEditClub = (club: Club) => {
-    setEditingClub(club);
-    setShowClubForm(true);
+    navigate(`/clubs/edit/${club.id}`);
   };
 
   const handleCreateNewClub = () => {
-    setEditingClub(undefined);
-    setShowClubForm(true);
+    navigate("/clubs/new");
   };
-
-  if (showClubForm) {
-    return (
-      <div className="space-y-6">
-        <ClubForm club={editingClub} onClose={handleCloseClubForm} />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
