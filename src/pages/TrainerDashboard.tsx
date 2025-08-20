@@ -15,11 +15,21 @@ import WaitlistDebugger from "@/components/WaitlistDebugger";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
+
 const TrainerDashboard = () => {
+  // Persistir estado del formulario de estudiante
+  const getPersistedStudentFormState = () => {
+    try {
+      return localStorage.getItem('trainer-dashboard-show-student-form') === 'true';
+    } catch {
+      return false;
+    }
+  };
+
   const [showClassForm, setShowClassForm] = useState(false);
   const [editingClass, setEditingClass] = useState<ProgrammedClass | undefined>();
   const [viewingClass, setViewingClass] = useState<ProgrammedClass | undefined>();
-  const [showStudentForm, setShowStudentForm] = useState(false);
+  const [showStudentForm, setShowStudentForm] = useState(getPersistedStudentFormState);
   const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
   const [viewingStudent, setViewingStudent] = useState<StudentEnrollment | undefined>();
   const {
@@ -58,6 +68,7 @@ const TrainerDashboard = () => {
   const handleCreateNewStudent = () => {
     setEditingStudent(undefined);
     setShowStudentForm(true);
+    localStorage.setItem('trainer-dashboard-show-student-form', 'true');
   };
   const handleViewStudent = (student: StudentEnrollment) => {
     setViewingStudent(student);
@@ -65,6 +76,7 @@ const TrainerDashboard = () => {
   const handleEditStudent = (student: StudentEnrollment) => {
     setEditingStudent(student);
     setShowStudentForm(true);
+    localStorage.setItem('trainer-dashboard-show-student-form', 'true');
   };
   const handleDeleteStudent = (studentId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta inscripción?')) {
@@ -75,6 +87,7 @@ const TrainerDashboard = () => {
   const handleCloseStudentForm = () => {
     setShowStudentForm(false);
     setEditingStudent(undefined);
+    localStorage.removeItem('trainer-dashboard-show-student-form');
   };
 
   // Get club info from trainer profile - Updated to handle the correct structure

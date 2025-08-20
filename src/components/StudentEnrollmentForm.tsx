@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,6 +77,63 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
     },
   });
 
+  // Persistencia del formulario
+  const persistenceKey = `student-enrollment-form-${trainerProfile?.id || 'unknown'}`;
+  const { clearPersistedData } = useFormPersistence({
+    key: persistenceKey,
+    watch,
+    setValue,
+    exclude: ['weekly_days', 'preferred_times'] // Arrays pueden causar problemas, los manejamos separadamente
+  });
+
+  // Persistir arrays separadamente
+  useEffect(() => {
+    const savedMode = localStorage.getItem(`${persistenceKey}-mode`);
+    const savedDays = localStorage.getItem(`${persistenceKey}-days`);
+    const savedTimes = localStorage.getItem(`${persistenceKey}-times`);
+    
+    if (savedMode && !isPlayerMode) {
+      setEnrollmentMode(savedMode as "teacher" | "link");
+    }
+    
+    if (savedDays) {
+      try {
+        const days = JSON.parse(savedDays);
+        setValue('weekly_days', days);
+      } catch (e) {
+        console.error('Error parsing saved days:', e);
+      }
+    }
+    
+    if (savedTimes) {
+      try {
+        const times = JSON.parse(savedTimes);
+        setValue('preferred_times', times);
+      } catch (e) {
+        console.error('Error parsing saved times:', e);
+      }
+    }
+  }, [setValue, persistenceKey, isPlayerMode]);
+
+  // Guardar estado cuando cambie
+  useEffect(() => {
+    if (!isPlayerMode && enrollmentMode) {
+      localStorage.setItem(`${persistenceKey}-mode`, enrollmentMode);
+    }
+  }, [enrollmentMode, persistenceKey, isPlayerMode]);
+
+  useEffect(() => {
+    const subscription = watch((data) => {
+      if (data.weekly_days) {
+        localStorage.setItem(`${persistenceKey}-days`, JSON.stringify(data.weekly_days));
+      }
+      if (data.preferred_times) {
+        localStorage.setItem(`${persistenceKey}-times`, JSON.stringify(data.preferred_times));
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, persistenceKey]);
+
   const watchedDays = watch("weekly_days");
   const watchedTimes = watch("preferred_times");
 
@@ -112,6 +170,21 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       ...data,
       club_id: clubId,
     } as any);
+    
+    // Limpiar datos persistidos después del envío exitoso
+    clearPersistedData();
+    localStorage.removeItem(`${persistenceKey}-mode`);
+    localStorage.removeItem(`${persistenceKey}-days`);
+    localStorage.removeItem(`${persistenceKey}-times`);
+  };
+
+  const handleCancel = () => {
+    // Limpiar datos persistidos al cancelar
+    clearPersistedData();
+    localStorage.removeItem(`${persistenceKey}-mode`);
+    localStorage.removeItem(`${persistenceKey}-days`);
+    localStorage.removeItem(`${persistenceKey}-times`);
+    onClose();
   };
 
   const handleCreateLink = async () => {
@@ -147,7 +220,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={handleCancel}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -190,7 +263,10 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => setEnrollmentMode(null)}>
+            <Button variant="ghost" size="sm" onClick={() => {
+              localStorage.removeItem(`${persistenceKey}-mode`);
+              setEnrollmentMode(null);
+            }}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -213,7 +289,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={handleCancel}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -247,10 +323,13 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={isPlayerMode ? onClose : () => setEnrollmentMode(null)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" onClick={isPlayerMode ? handleCancel : () => {
+              localStorage.removeItem(`${persistenceKey}-mode`);
+              setEnrollmentMode(null);
+            }}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
           <div>
             <CardTitle>
               {isPlayerMode ? "Completar Inscripción" : "Nueva Inscripción de Alumno"}
@@ -479,7 +558,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
           )}
 
           <div className="flex justify-end space-x-2 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
             <Button type="submit" disabled={createEnrollmentMutation.isPending}>
