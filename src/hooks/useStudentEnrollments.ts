@@ -297,7 +297,7 @@ export const useDeleteStudentEnrollment = () => {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("student_enrollments")
-        .update({ status: 'inactive' })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
@@ -313,6 +313,35 @@ export const useDeleteStudentEnrollment = () => {
       toast({
         title: "Error",
         description: "No se pudo eliminar la inscripción del alumno: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateStudentEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateStudentEnrollmentData> }) => {
+      const { error } = await supabase
+        .from("student_enrollments")
+        .update(data)
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      toast({
+        title: "Alumno actualizado",
+        description: "Los datos del alumno han sido actualizados correctamente.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar los datos del alumno: " + error.message,
         variant: "destructive",
       });
     },

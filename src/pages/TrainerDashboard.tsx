@@ -12,6 +12,7 @@ import StudentsList from "@/components/StudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
 import TrainerNotifications from "@/components/TrainerNotifications";
 import WaitlistDebugger from "@/components/WaitlistDebugger";
+import StudentEditModal from "@/components/StudentEditModal";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment, useDeleteStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
@@ -41,6 +42,7 @@ const TrainerDashboard = () => {
   const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
   const [viewingStudent, setViewingStudent] = useState<StudentEnrollment | undefined>();
   const [activeTab, setActiveTab] = useState(initialState.activeTab);
+  const [isStudentEditModalOpen, setIsStudentEditModalOpen] = useState(false);
 
   // Persist state changes
   useEffect(() => {
@@ -96,10 +98,10 @@ const TrainerDashboard = () => {
   };
   const handleEditStudent = (student: StudentEnrollment) => {
     setEditingStudent(student);
-    setShowStudentForm(true);
+    setIsStudentEditModalOpen(true);
   };
   const handleDeleteStudent = (studentId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta inscripción?')) {
+    if (confirm('¿Estás seguro de que quieres eliminar completamente este alumno? Esta acción no se puede deshacer.')) {
       deleteStudentMutation.mutate(studentId);
     }
   };
@@ -308,6 +310,16 @@ const TrainerDashboard = () => {
           <ClassGroupsManager />
         </TabsContent>
       </Tabs>
+
+      {/* Student Edit Modal */}
+      <StudentEditModal
+        student={editingStudent || null}
+        isOpen={isStudentEditModalOpen}
+        onClose={() => {
+          setIsStudentEditModalOpen(false);
+          setEditingStudent(undefined);
+        }}
+      />
 
       {/* Class Details Modal - TODO: Create ProgrammedClassDetailsModal */}
       {viewingClass && (
