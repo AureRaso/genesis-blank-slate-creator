@@ -219,7 +219,7 @@ export default function ScheduledClassForm({
         end_date: format(data.end_date, 'yyyy-MM-dd'),
         recurrence_type: data.recurrence_type,
         // Use assigned trainer if admin selected one, otherwise use current trainer
-        trainer_profile_id: (isAdmin && data.assigned_trainer_id) ? data.assigned_trainer_id : data.trainer_profile_id,
+        trainer_profile_id: (isAdmin && data.assigned_trainer_id && data.assigned_trainer_id !== "unassigned") ? data.assigned_trainer_id : data.trainer_profile_id,
         club_id: data.club_id,
         court_number: data.court_number,
         // Only include the appropriate field based on selection type
@@ -636,7 +636,7 @@ export default function ScheduledClassForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Sin asignar (permanece como mi clase)</SelectItem>
+                              <SelectItem value="unassigned">Sin asignar (permanece como mi clase)</SelectItem>
                                {availableTrainers && availableTrainers.length > 0 ? (
                                  availableTrainers
                                    .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
@@ -677,7 +677,7 @@ export default function ScheduledClassForm({
                     })()}
                      <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
                      <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
-                     {isAdmin && watchedValues.assigned_trainer_id && (() => {
+                     {isAdmin && watchedValues.assigned_trainer_id && watchedValues.assigned_trainer_id !== "unassigned" && (() => {
                        const assignedTrainer = availableTrainers?.find(t => t.profile_id === watchedValues.assigned_trainer_id);
                        return assignedTrainer ? <div>• Asignada a: {assignedTrainer.profiles?.full_name}</div> : null;
                      })()}
