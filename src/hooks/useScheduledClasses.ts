@@ -18,9 +18,6 @@ export type ScheduledClassWithTemplate = ProgrammedClass & {
   trainer: {
     full_name: string;
   } | null;
-  creator_profile: {
-    full_name: string;
-  } | null;
 };
 
 export type CreateScheduledClassData = {
@@ -64,9 +61,6 @@ export const useScheduledClasses = (filters?: {
             )
           ),
           trainer:profiles!trainer_profile_id(
-            full_name
-          ),
-          creator_profile:profiles!created_by(
             full_name
           )
         `)

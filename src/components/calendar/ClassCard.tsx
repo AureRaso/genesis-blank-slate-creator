@@ -131,8 +131,8 @@ export function ClassCard({ class: cls }: ClassCardProps) {
               {isAdmin && cls.trainer && (
                 <div className="text-xs">Profesor: {cls.trainer.full_name}</div>
               )}
-              {isAdmin && cls.creator_profile && (
-                <div className="text-xs">Creado por: {cls.creator_profile.full_name}</div>
+              {isAdmin && cls.created_by && (
+                <div className="text-xs">Creado por: {cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
               )}
             </div>
           </TooltipContent>
@@ -274,10 +274,10 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
               </div>
             )}
 
-            {isAdmin && cls.creator_profile && (
+            {isAdmin && cls.created_by && (
               <div>
                 <div className="text-sm text-muted-foreground mb-1">Creado por</div>
-                <div className="text-sm font-medium">{cls.creator_profile.full_name}</div>
+                <div className="text-sm font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
               </div>
             )}
           </div>
