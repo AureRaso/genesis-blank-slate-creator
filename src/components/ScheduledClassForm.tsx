@@ -124,10 +124,12 @@ export default function ScheduledClassForm({
     data: allTrainers
   } = useTrainers(); // Get all trainers
   
-  // Filter trainers by club
-  const availableTrainers = allTrainers?.filter(trainer => 
-    trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
-  );
+  // Filter trainers by club - if admin, show all trainers; otherwise filter by club
+  const availableTrainers = isAdmin 
+    ? allTrainers // Admins can assign to any trainer
+    : allTrainers?.filter(trainer => 
+        trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
+      );
   const createMutation = useCreateProgrammedClass();
   const {
     toast
