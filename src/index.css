@@ -45,6 +45,11 @@
     --sidebar-accent-foreground: 22 100% 25%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 22 100% 55%; /* Naranja Playtomic */
+
+    /* Admin class colors */
+    --admin-class: 35 100% 85%; /* Golden color for admin classes */
+    --admin-class-foreground: 35 100% 25%;
+    --admin-class-border: 35 100% 75%;
   }
 
   .dark {
@@ -83,6 +88,11 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 22 100% 55%; /* Naranja Playtomic */
+
+    /* Admin class colors */
+    --admin-class: 35 100% 20%; /* Darker golden color for admin classes in dark mode */
+    --admin-class-foreground: 35 100% 85%;
+    --admin-class-border: 35 100% 30%;
   }
 }
 

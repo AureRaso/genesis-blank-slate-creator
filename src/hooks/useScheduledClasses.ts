@@ -18,6 +18,9 @@ export type ScheduledClassWithTemplate = ProgrammedClass & {
   trainer: {
     full_name: string;
   } | null;
+  creator_profile: {
+    full_name: string;
+  } | null;
 };
 
 export type CreateScheduledClassData = {
@@ -62,6 +65,9 @@ export const useScheduledClasses = (filters?: {
           ),
           trainer:profiles!trainer_profile_id(
             full_name
+          ),
+          creator_profile:profiles!created_by(
+            full_name
           )
         `)
         .eq("is_active", true)
@@ -82,13 +88,13 @@ export const useScheduledClasses = (filters?: {
       console.log("Raw classes data:", data);
 
       // Filter classes that are active during the requested date range
-      let filteredClasses = data as ScheduledClassWithTemplate[];
+      let filteredClasses = data as any[];
       
       if (filters?.startDate && filters?.endDate) {
         const weekStart = parseISO(filters.startDate);
         const weekEnd = parseISO(filters.endDate);
         
-        filteredClasses = data.filter(cls => {
+        filteredClasses = filteredClasses.filter(cls => {
           const classStart = parseISO(cls.start_date);
           const classEnd = parseISO(cls.end_date);
           
@@ -103,7 +109,7 @@ export const useScheduledClasses = (filters?: {
       }
 
       console.log("Filtered classes for date range:", filteredClasses);
-      return filteredClasses;
+      return filteredClasses as ScheduledClassWithTemplate[];
     },
   });
 };

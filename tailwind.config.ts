@@ -63,6 +63,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				'admin-class': {
+					DEFAULT: 'hsl(var(--admin-class))',
+					foreground: 'hsl(var(--admin-class-foreground))',
+					border: 'hsl(var(--admin-class-border))'
+				},
 				// Colores específicos de Playtomic
 				playtomic: {
 					orange: '#FF6B35', // Naranja principal de Playtomic

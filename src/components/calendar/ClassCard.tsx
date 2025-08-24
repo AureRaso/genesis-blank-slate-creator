@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { EditClassModal } from "./EditClassModal";
 import { ManageStudentsModal } from "./ManageStudentsModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { getTrainerColor } from "@/utils/trainerColors";
+import { getTrainerColor, getClassColor } from "@/utils/trainerColors";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useTranslation } from "react-i18next";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -22,7 +22,7 @@ export function ClassCard({ class: cls }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   
   const enrolledCount = cls.participants?.length || 0;
 
@@ -39,12 +39,12 @@ export function ClassCard({ class: cls }: ClassCardProps) {
   };
 
   const getLevelColor = () => {
-    // For admins, use trainer colors instead of level colors
-    if (isAdmin && cls.trainer_profile_id) {
-      return getTrainerColor(cls.trainer_profile_id);
+    // For admins, use the new class color system that distinguishes creator vs trainer
+    if (isAdmin) {
+      return getClassColor(cls.created_by, cls.trainer_profile_id, profile?.id || null);
     }
     
-    // For trainers, use traditional level colors
+    // For trainers and players, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -131,6 +131,9 @@ export function ClassCard({ class: cls }: ClassCardProps) {
               {isAdmin && cls.trainer && (
                 <div className="text-xs">Profesor: {cls.trainer.full_name}</div>
               )}
+              {isAdmin && cls.creator_profile && (
+                <div className="text-xs">Creado por: {cls.creator_profile.full_name}</div>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>
@@ -159,7 +162,7 @@ interface AdminClassDetailsModalProps {
 
 function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: AdminClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
 
   const getLevelDisplay = () => {
     if (cls.custom_level) {
@@ -174,12 +177,12 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
   };
 
   const getLevelColor = () => {
-    // For admins, use trainer colors instead of level colors
-    if (isAdmin && cls.trainer_profile_id) {
-      return getTrainerColor(cls.trainer_profile_id);
+    // For admins, use the new class color system that distinguishes creator vs trainer
+    if (isAdmin) {
+      return getClassColor(cls.created_by, cls.trainer_profile_id, profile?.id || null);
     }
     
-    // For trainers, use traditional level colors
+    // For trainers and players, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -268,6 +271,13 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
               <div>
                 <div className="text-sm text-muted-foreground mb-1">Profesor</div>
                 <div className="text-sm font-medium">{cls.trainer.full_name}</div>
+              </div>
+            )}
+
+            {isAdmin && cls.creator_profile && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Creado por</div>
+                <div className="text-sm font-medium">{cls.creator_profile.full_name}</div>
               </div>
             )}
           </div>

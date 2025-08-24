@@ -32,6 +32,22 @@ export function getTrainerColor(trainerId: string): string {
   return TRAINER_COLORS[colorIndex];
 }
 
+// New function for admin-created classes color distinction
+export function getClassColor(createdBy: string, trainerId: string | null, currentAdminId: string | null): string {
+  // If the class was created by the current admin, use special admin color
+  if (currentAdminId && createdBy === currentAdminId) {
+    return 'bg-admin-class text-admin-class-foreground border-admin-class-border'; // Golden color for admin's own classes
+  }
+  
+  // Otherwise, use trainer colors if trainer is assigned
+  if (trainerId) {
+    return getTrainerColor(trainerId);
+  }
+  
+  // Fallback for unassigned classes
+  return 'bg-gray-100 text-gray-800 border-gray-200';
+}
+
 export function getAllTrainerColors(): string[] {
   return TRAINER_COLORS;
 }
