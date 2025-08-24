@@ -25,8 +25,9 @@ import { cn } from "@/lib/utils";
 import { useCreateProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useMyTrainerProfile } from "@/hooks/useTrainers";
+import { useMyTrainerProfile, useTrainers } from "@/hooks/useTrainers";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 const formSchema = z.object({
   // Step 1: Basic Info
   name: z.string().min(1, "Name is required"),
@@ -54,7 +55,9 @@ const formSchema = z.object({
   trainer_profile_id: z.string().min(1, "Trainer is required"),
   club_id: z.string().min(1, "Club is required"),
   objective: z.string().optional(),
-  court_number: z.number().min(1).max(7, "Select a court from 1 to 7")
+  court_number: z.number().min(1).max(7, "Select a court from 1 to 7"),
+  // Optional trainer assignment for admins
+  assigned_trainer_id: z.string().optional()
 }).refine(data => {
   if (data.level_format === "numeric") {
     return data.level_from && data.level_to && data.level_from <= data.level_to;
@@ -78,6 +81,7 @@ export default function ScheduledClassForm({
 }: ScheduledClassFormProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const { isAdmin } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
@@ -116,6 +120,14 @@ export default function ScheduledClassForm({
   const {
     data: students
   } = useStudentEnrollments();
+  const {
+    data: allTrainers
+  } = useTrainers(); // Get all trainers
+  
+  // Filter trainers by club
+  const availableTrainers = allTrainers?.filter(trainer => 
+    trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
+  );
   const createMutation = useCreateProgrammedClass();
   const {
     toast
@@ -206,7 +218,8 @@ export default function ScheduledClassForm({
         start_date: format(data.start_date, 'yyyy-MM-dd'),
         end_date: format(data.end_date, 'yyyy-MM-dd'),
         recurrence_type: data.recurrence_type,
-        trainer_profile_id: data.trainer_profile_id,
+        // Use assigned trainer if admin selected one, otherwise use current trainer
+        trainer_profile_id: (isAdmin && data.assigned_trainer_id) ? data.assigned_trainer_id : data.trainer_profile_id,
         club_id: data.club_id,
         court_number: data.court_number,
         // Only include the appropriate field based on selection type
@@ -606,6 +619,46 @@ export default function ScheduledClassForm({
                       </FormItem>} />
                 </div>
 
+                {/* Admin-only trainer assignment */}
+                {isAdmin && <div className="border-t pt-6">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Asignar Profesor (Opcional)
+                    </h4>
+                    <FormField control={form.control} name="assigned_trainer_id" render={({
+                  field
+                }) => <FormItem>
+                          <FormLabel>Asignar clase a otro profesor</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar profesor (opcional)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Sin asignar (permanece como mi clase)</SelectItem>
+                               {availableTrainers && availableTrainers.length > 0 ? (
+                                 availableTrainers
+                                   .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
+                                   .map(trainer => (
+                                     <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                                       {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
+                                     </SelectItem>
+                                   ))
+                              ) : (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No hay otros profesores disponibles
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Si seleccionas un profesor, la clase aparecerá en su calendario como si él la hubiera creado.
+                          </p>
+                        </FormItem>} />
+                  </div>}
+
                 {/* Summary */}
                 <div className="bg-muted p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Resumen de clases a crear:</h4>
@@ -624,6 +677,10 @@ export default function ScheduledClassForm({
                     })()}
                      <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
                      <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
+                     {isAdmin && watchedValues.assigned_trainer_id && (() => {
+                       const assignedTrainer = availableTrainers?.find(t => t.profile_id === watchedValues.assigned_trainer_id);
+                       return assignedTrainer ? <div>• Asignada a: {assignedTrainer.profiles?.full_name}</div> : null;
+                     })()}
                   </div>
                 </div>
               </div>}
