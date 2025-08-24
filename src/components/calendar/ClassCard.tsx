@@ -85,6 +85,11 @@ export function ClassCard({ class: cls }: ClassCardProps) {
                     <div className="font-medium truncate text-sm leading-tight">
                       {cls.name}
                     </div>
+                    {cls.club && (
+                      <div className="text-xs text-muted-foreground truncate font-medium">
+                        {cls.club.name}
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground truncate">
                       {getLevelDisplay()}
                     </div>

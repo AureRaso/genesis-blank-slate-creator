@@ -18,6 +18,9 @@ export type ScheduledClassWithTemplate = ProgrammedClass & {
   trainer: {
     full_name: string;
   } | null;
+  club: {
+    name: string;
+  } | null;
 };
 
 export type CreateScheduledClassData = {
@@ -42,6 +45,7 @@ export const useScheduledClasses = (filters?: {
   startDate?: string;
   endDate?: string;
   clubId?: string;
+  clubIds?: string[];
   status?: string;
 }) => {
   return useQuery({
@@ -62,14 +66,19 @@ export const useScheduledClasses = (filters?: {
           ),
           trainer:profiles!trainer_profile_id(
             full_name
+          ),
+          club:clubs!club_id(
+            name
           )
         `)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      // Filter by club if provided
+      // Filter by club(s) if provided
       if (filters?.clubId) {
         query = query.eq("club_id", filters.clubId);
+      } else if (filters?.clubIds && filters.clubIds.length > 0) {
+        query = query.in("club_id", filters.clubIds);
       }
 
       const { data, error } = await query;

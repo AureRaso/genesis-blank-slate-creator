@@ -13,10 +13,11 @@ import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassCalendarViewProps {
   clubId?: string;
+  clubIds?: string[];
   filters: ClassFiltersData;
 }
 
-export default function ClassCalendarView({ clubId, filters }: ClassCalendarViewProps) {
+export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const { profile, isAdmin } = useAuth();
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function ClassCalendarView({ clubId, filters }: ClassCalendarView
     startDate: format(weekStart, 'yyyy-MM-dd'),
     endDate: format(weekEnd, 'yyyy-MM-dd'),
     clubId: clubId,
+    clubIds: clubIds,
   });
 
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));

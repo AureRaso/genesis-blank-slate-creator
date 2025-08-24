@@ -42,10 +42,11 @@ import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
 interface ClassListViewProps {
   clubId?: string;
+  clubIds?: string[];
   filters: ClassFiltersData;
 }
 
-export default function ClassListView({ clubId, filters }: ClassListViewProps) {
+export default function ClassListView({ clubId, clubIds, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -53,6 +54,7 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
   
   const { data: classes, isLoading } = useScheduledClasses({
     clubId: clubId,
+    clubIds: clubIds,
   });
 
   // Aplicar todos los filtros
@@ -183,16 +185,21 @@ export default function ClassListView({ clubId, filters }: ClassListViewProps) {
 
                   return (
                     <TableRow key={cls.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{cls.name}</div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getLevelColor(cls)}>
-                              {getLevelDisplay(cls)}
-                            </Badge>
-                          </div>
-                        </div>
-                      </TableCell>
+                       <TableCell>
+                         <div className="space-y-1">
+                           <div className="font-medium">{cls.name}</div>
+                           {cls.club && (
+                             <div className="text-xs text-muted-foreground">
+                               {cls.club.name}
+                             </div>
+                           )}
+                           <div className="flex items-center gap-2">
+                             <Badge className={getLevelColor(cls)}>
+                               {getLevelDisplay(cls)}
+                             </Badge>
+                           </div>
+                         </div>
+                       </TableCell>
                       
                       <TableCell>
                         <div className="space-y-1">

@@ -9,10 +9,10 @@ const TRAINER_COLORS = [
   'bg-teal-100 text-teal-800 border-teal-200',
   'bg-emerald-100 text-emerald-800 border-emerald-200',
   'bg-lime-100 text-lime-800 border-lime-200',
-  'bg-amber-100 text-amber-800 border-amber-200',
   'bg-orange-100 text-orange-800 border-orange-200',
   'bg-rose-100 text-rose-800 border-rose-200',
   'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+  'bg-violet-100 text-violet-800 border-violet-200',
 ];
 
 // Simple hash function to convert string to number
@@ -36,7 +36,7 @@ export function getTrainerColor(trainerId: string): string {
 export function getClassColor(createdBy: string, trainerId: string | null, currentAdminId: string | null): string {
   // If the class was created by the current admin, use special admin color
   if (currentAdminId && createdBy === currentAdminId) {
-    return 'bg-admin-class text-admin-class-foreground border-admin-class-border'; // Golden color for admin's own classes
+    return 'bg-amber-100 text-amber-800 border-amber-200'; // Golden color for admin's own classes
   }
   
   // Otherwise, use trainer colors if trainer is assigned
