@@ -378,9 +378,26 @@ export default function ScheduledClassForm({
                 field
               }) => <FormItem>
                         <FormLabel>{t('classes.startTime')}</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar hora" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, hour) => {
+                              const hourStr = hour.toString().padStart(2, '0');
+                              return [
+                                <SelectItem key={`${hourStr}:00`} value={`${hourStr}:00`}>
+                                  {`${hourStr}:00`}
+                                </SelectItem>,
+                                <SelectItem key={`${hourStr}:30`} value={`${hourStr}:30`}>
+                                  {`${hourStr}:30`}
+                                </SelectItem>
+                              ];
+                            }).flat()}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>} />
 
