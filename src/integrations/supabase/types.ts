@@ -873,6 +873,7 @@ export type Database = {
           level_from: number | null
           level_to: number | null
           max_participants: number | null
+          monthly_price: number
           name: string
           recurrence_type: string
           start_date: string
@@ -895,6 +896,7 @@ export type Database = {
           level_from?: number | null
           level_to?: number | null
           max_participants?: number | null
+          monthly_price?: number
           name: string
           recurrence_type?: string
           start_date: string
@@ -917,6 +919,7 @@ export type Database = {
           level_from?: number | null
           level_to?: number | null
           max_participants?: number | null
+          monthly_price?: number
           name?: string
           recurrence_type?: string
           start_date?: string
