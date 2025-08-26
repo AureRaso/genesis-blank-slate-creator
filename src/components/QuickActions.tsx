@@ -28,7 +28,7 @@ const QuickActions = () => {
       title: "Crear Clases",
       description: "Configurar clases de entrenamiento",
       icon: GraduationCap,
-      action: () => navigate("/classes"),
+      action: () => navigate("/scheduled-classes"),
       color: "bg-gradient-to-r from-playtomic-orange-dark to-playtomic-orange hover:from-playtomic-orange to-playtomic-orange-dark"
     },
     {
