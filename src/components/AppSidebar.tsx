@@ -168,10 +168,6 @@ const AppSidebar = () => {
       url: "/matches",
       icon: Zap
     }, {
-      title: t('sidebar.classes'),
-      url: "/classes",
-      icon: GraduationCap
-    }, {
       title: t('sidebar.scheduledClasses'),
       url: "/scheduled-classes",
       icon: Calendar
