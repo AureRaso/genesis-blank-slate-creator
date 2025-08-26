@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
+import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Search, Filter } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Search, Filter, CreditCard, Euro } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -188,7 +189,21 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
   const { data: waitlistPosition } = useUserWaitlistPosition(programmedClass.id, profile?.id);
   const joinWaitlist = useJoinWaitlist();
   const leaveWaitlist = useLeaveWaitlist();
+  const createClassPayment = useCreateClassPayment();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePayment = () => {
+    if (programmedClass.monthly_price > 0) {
+      createClassPayment.mutate({
+        classId: programmedClass.id,
+        className: programmedClass.name,
+        monthlyPrice: programmedClass.monthly_price
+      });
+    } else {
+      // Si es gratis, unirse directamente a la lista de espera
+      handleJoinWaitlist();
+    }
+  };
 
   const handleJoinWaitlist = () => {
     if (profile?.id) {
@@ -272,6 +287,19 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             </div>
           )}
 
+          {/* Precio mensual */}
+          {programmedClass.monthly_price !== undefined && (
+            <div className="flex items-center gap-2 text-sm">
+              <Euro className="h-4 w-4 text-muted-foreground" />
+              <span>
+                {programmedClass.monthly_price > 0 
+                  ? `€${programmedClass.monthly_price}/mes`
+                  : 'Gratis'
+                }
+              </span>
+            </div>
+          )}
+
           <ClassCapacityInfo 
             classId={programmedClass.id}
             programmedClass={programmedClass}
@@ -279,8 +307,10 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             waitlistPosition={waitlistPosition}
             onJoinWaitlist={handleJoinWaitlist}
             onLeaveWaitlist={handleLeaveWaitlist}
+            onPayment={handlePayment}
             joinPending={joinWaitlist.isPending}
             leavePending={leaveWaitlist.isPending}
+            paymentPending={createClassPayment.isPending}
             showParticipants={true}
           />
         </CardContent>
@@ -347,8 +377,10 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
                 waitlistPosition={waitlistPosition}
                 onJoinWaitlist={handleJoinWaitlist}
                 onLeaveWaitlist={handleLeaveWaitlist}
+                onPayment={handlePayment}
                 joinPending={joinWaitlist.isPending}
                 leavePending={leaveWaitlist.isPending}
+                paymentPending={createClassPayment.isPending}
                 isModal={true}
               />
             </div>
@@ -367,8 +399,10 @@ const ClassCapacityInfo = ({
   waitlistPosition, 
   onJoinWaitlist, 
   onLeaveWaitlist, 
+  onPayment,
   joinPending, 
   leavePending,
+  paymentPending = false,
   isModal = false,
   showParticipants = false 
 }: {
@@ -378,8 +412,10 @@ const ClassCapacityInfo = ({
   waitlistPosition?: any;
   onJoinWaitlist: () => void;
   onLeaveWaitlist: () => void;
+  onPayment?: () => void;
   joinPending: boolean;
   leavePending: boolean;
+  paymentPending?: boolean;
   isModal?: boolean;
   showParticipants?: boolean;
 }) => {
@@ -465,12 +501,15 @@ const ClassCapacityInfo = ({
         ) : actualCapacity.isFull ? (
           <Button
             size="sm"
-            onClick={onJoinWaitlist}
-            disabled={joinPending}
+            onClick={onPayment || onJoinWaitlist}
+            disabled={joinPending || paymentPending}
             className={isModal ? 'w-full' : ''}
             variant="outline"
           >
-            {joinPending ? t('common.loading') : t('classes.joinWaitlist')}
+            {(joinPending || paymentPending) ? t('common.loading') : 
+             (programmedClass?.monthly_price > 0 ? 
+              `Pagar €${programmedClass.monthly_price} - Lista de espera` : 
+              t('classes.joinWaitlist'))}
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -479,12 +518,19 @@ const ClassCapacityInfo = ({
             </Badge>
             <Button
               size="sm"
-              onClick={onJoinWaitlist}
-              disabled={joinPending}
-              className="text-xs"
-              variant="outline"
+              onClick={onPayment || onJoinWaitlist}
+              disabled={joinPending || paymentPending}
+              className="text-xs flex items-center gap-1"
+              variant={programmedClass?.monthly_price > 0 ? "default" : "outline"}
             >
-              {joinPending ? t('common.loading') : t('classes.joinWaitlist')}
+              {(joinPending || paymentPending) ? t('common.loading') : (
+                <>
+                  {programmedClass?.monthly_price > 0 && <CreditCard className="h-3 w-3" />}
+                  {programmedClass?.monthly_price > 0 ? 
+                    `Pagar €${programmedClass.monthly_price}` : 
+                    'Reservar gratis'}
+                </>
+              )}
             </Button>
           </div>
         )}

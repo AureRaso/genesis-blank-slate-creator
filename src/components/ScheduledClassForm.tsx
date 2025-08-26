@@ -58,7 +58,9 @@ const formSchema = z.object({
   objective: z.string().optional(),
   court_number: z.number().min(1).max(7, "Select a court from 1 to 7"),
   // Optional trainer assignment for admins
-  assigned_trainer_id: z.string().optional()
+  assigned_trainer_id: z.string().optional(),
+  // Precio mensual
+  monthly_price: z.number().min(0, "El precio debe ser mayor o igual a 0")
 }).refine(data => {
   if (data.level_format === "numeric") {
     return data.level_from && data.level_to && data.level_from <= data.level_to;
@@ -150,7 +152,8 @@ export default function ScheduledClassForm({
       level_format: "numeric",
       level_from: 1.0,
       level_to: 10.0,
-      selected_days: []
+      selected_days: [],
+      monthly_price: 0
     }
   });
   const watchedValues = form.watch();
@@ -230,7 +233,8 @@ export default function ScheduledClassForm({
         court_number: data.court_number,
         // Only include the appropriate field based on selection type
         group_id: data.selection_type === "group" ? data.group_id : undefined,
-        selected_students: data.selection_type === "individual" ? data.selected_students : []
+        selected_students: data.selection_type === "individual" ? data.selected_students : [],
+        monthly_price: data.monthly_price
       };
       await createMutation.mutateAsync(submitData);
       onClose();
@@ -639,6 +643,28 @@ export default function ScheduledClassForm({
                           <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField control={form.control} name="monthly_price" render={({
+                field
+              }) => <FormItem>
+                        <FormLabel>Precio mensual (€)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            {...field} 
+                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-sm text-muted-foreground">
+                          Si es 0, la clase será gratuita. Si tiene precio, los jugadores deberán pagar para inscribirse.
+                        </p>
                       </FormItem>} />
                 </div>
 
