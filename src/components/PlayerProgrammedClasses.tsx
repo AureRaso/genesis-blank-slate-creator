@@ -205,6 +205,20 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
     }
   };
 
+  const handleJoinWaitlistWithPayment = () => {
+    // Para clases de pago, siempre debe pagar primero (ya sea para cupo directo o lista de espera)
+    if (programmedClass.monthly_price > 0) {
+      createClassPayment.mutate({
+        classId: programmedClass.id,
+        className: programmedClass.name,
+        monthlyPrice: programmedClass.monthly_price
+      });
+    } else {
+      // Si es gratis, unirse directamente a la lista de espera
+      handleJoinWaitlist();
+    }
+  };
+
   const handleJoinWaitlist = () => {
     if (profile?.id) {
       joinWaitlist.mutate({ classId: programmedClass.id, userId: profile.id });
@@ -305,7 +319,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             programmedClass={programmedClass}
             capacity={capacity}
             waitlistPosition={waitlistPosition}
-            onJoinWaitlist={handleJoinWaitlist}
+            onJoinWaitlist={handleJoinWaitlistWithPayment}
             onLeaveWaitlist={handleLeaveWaitlist}
             onPayment={handlePayment}
             joinPending={joinWaitlist.isPending}
@@ -375,7 +389,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
                 programmedClass={programmedClass}
                 capacity={capacity}
                 waitlistPosition={waitlistPosition}
-                onJoinWaitlist={handleJoinWaitlist}
+                onJoinWaitlist={handleJoinWaitlistWithPayment}
                 onLeaveWaitlist={handleLeaveWaitlist}
                 onPayment={handlePayment}
                 joinPending={joinWaitlist.isPending}
