@@ -8,7 +8,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserCheck } from "lucide-react";
-import { useClubs } from "@/hooks/useClubs";
+import { useClubs, useAdminClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
 
 const createFormSchema = z.object({
@@ -36,7 +36,7 @@ interface TrainerFormProps {
 }
 
 const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
-  const { data: clubs } = useClubs();
+  const { data: clubs } = useAdminClubs();
   const createMutation = useCreateTrainer();
   const updateMutation = useUpdateTrainer();
 
