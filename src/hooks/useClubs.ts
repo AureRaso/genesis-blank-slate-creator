@@ -46,6 +46,32 @@ export const useClubs = () => {
   });
 };
 
+export const useAdminClubs = () => {
+  return useQuery({
+    queryKey: ['admin-clubs'],
+    queryFn: async () => {
+      console.log('Fetching admin clubs...');
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('*')
+        .eq('created_by_profile_id', userData.user.id)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching admin clubs:', error);
+        throw error;
+      }
+      
+      console.log('Admin clubs fetched:', data);
+      return data as Club[];
+    },
+  });
+};
+
 export const usePlayerClubs = (clubId?: string) => {
   return useQuery({
     queryKey: ['player-clubs', clubId],
@@ -118,6 +144,7 @@ export const useCreateClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-clubs'] });
       queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",
@@ -153,6 +180,7 @@ export const useUpdateClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-clubs'] });
       queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",
@@ -185,6 +213,7 @@ export const useDeleteClub = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clubs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-clubs'] });
       queryClient.invalidateQueries({ queryKey: ['active-clubs'] });
       toast({
         title: "Éxito",

@@ -4,7 +4,7 @@ import { Trash2, Edit, MapPin, Phone, Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useClubs, usePlayerClubs, useDeleteClub } from "@/hooks/useClubs";
+import { useClubs, usePlayerClubs, useDeleteClub, useAdminClubs } from "@/hooks/useClubs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Club } from "@/types/clubs";
 import {
@@ -27,13 +27,13 @@ const ClubsList = ({ onEditClub }: ClubsListProps) => {
   const { isAdmin, isPlayer, profile } = useAuth();
   
   // Use different hooks based on user role
-  const { data: allClubs, isLoading: isLoadingAll } = useClubs();
+  const { data: adminClubs, isLoading: isLoadingAdmin } = useAdminClubs();
   const { data: playerClubs, isLoading: isLoadingPlayer } = usePlayerClubs(
     isPlayer ? profile?.club_id : undefined
   );
   
-  const clubs = isPlayer ? playerClubs : allClubs;
-  const isLoading = isPlayer ? isLoadingPlayer : isLoadingAll;
+  const clubs = isPlayer ? playerClubs : adminClubs;
+  const isLoading = isPlayer ? isLoadingPlayer : isLoadingAdmin;
   
   const deleteClub = useDeleteClub();
   const [deletingClub, setDeletingClub] = useState<string | null>(null);
