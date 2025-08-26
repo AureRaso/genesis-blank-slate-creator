@@ -517,7 +517,12 @@ const ClassCapacityInfo = ({
         ) : actualCapacity.isFull ? (
           <Button
             size="sm"
-            onClick={onJoinWaitlist}
+            onClick={() => {
+              console.log('Botón de lista de espera clickeado - clase llena');
+              console.log('Monthly price:', programmedClass?.monthly_price);
+              console.log('onJoinWaitlist:', onJoinWaitlist);
+              onJoinWaitlist();
+            }}
             disabled={joinPending || paymentPending}
             className={isModal ? 'w-full' : ''}
             variant="outline"
@@ -534,7 +539,12 @@ const ClassCapacityInfo = ({
             </Badge>
             <Button
               size="sm"
-              onClick={onJoinWaitlist}
+              onClick={() => {
+                console.log('Botón de reserva clickeado - cupos disponibles');
+                console.log('Monthly price:', programmedClass?.monthly_price);
+                console.log('onJoinWaitlist:', onJoinWaitlist);
+                onJoinWaitlist();
+              }}
               disabled={joinPending || paymentPending}
               className="text-xs flex items-center gap-1"
               variant={programmedClass?.monthly_price > 0 ? "default" : "outline"}
