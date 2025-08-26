@@ -105,6 +105,58 @@ export const useStudentEnrollments = () => {
   });
 };
 
+export const useAdminStudentEnrollments = () => {
+  return useQuery({
+    queryKey: ["admin-student-enrollments"],
+    queryFn: async () => {
+      console.log('Fetching admin student enrollments...');
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // First, get clubs created by this admin
+      const { data: adminClubs, error: clubsError } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('created_by_profile_id', userData.user.id);
+
+      if (clubsError) throw clubsError;
+      
+      if (!adminClubs || adminClubs.length === 0) {
+        return [];
+      }
+
+      const clubIds = adminClubs.map(club => club.id);
+
+      // Get trainers associated with these clubs
+      const { data: trainerClubsData, error: trainerClubsError } = await supabase
+        .from('trainer_clubs')
+        .select('trainer_profile_id')
+        .in('club_id', clubIds);
+
+      if (trainerClubsError) throw trainerClubsError;
+
+      if (!trainerClubsData || trainerClubsData.length === 0) {
+        return [];
+      }
+
+      const trainerProfileIds = [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))];
+
+      // Get student enrollments created by these trainers
+      const { data: students, error: studentsError } = await supabase
+        .from('student_enrollments')
+        .select('*')
+        .in('trainer_profile_id', trainerProfileIds)
+        .order('created_at', { ascending: false });
+
+      if (studentsError) throw studentsError;
+
+      console.log('Admin student enrollments fetched:', students);
+      return students as StudentEnrollment[];
+    },
+  });
+};
+
 export const useCreateStudentEnrollment = () => {
   const queryClient = useQueryClient();
 
@@ -167,6 +219,7 @@ export const useCreateStudentEnrollment = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-student-enrollments"] });
       toast({
         title: "Inscripción creada",
         description: `${data.full_name} ha sido inscrito correctamente. Puede acceder con su email y contraseña: 123456`,

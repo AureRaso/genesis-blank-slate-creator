@@ -23,9 +23,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useCreateProgrammedClass } from "@/hooks/useProgrammedClasses";
-import { useClassGroups } from "@/hooks/useClassGroups";
-import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useMyTrainerProfile, useTrainers } from "@/hooks/useTrainers";
+import { useClassGroups, useAdminClassGroups } from "@/hooks/useClassGroups";
+import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
+import { useMyTrainerProfile, useTrainers, useAdminTrainers } from "@/hooks/useTrainers";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 const formSchema = z.object({
@@ -116,17 +116,17 @@ export default function ScheduledClassForm({
   
   const {
     data: groups
-  } = useClassGroups(trainerClubId); // Use trainer's club instead of passed clubId
+  } = isAdmin ? useAdminClassGroups() : useClassGroups(trainerClubId); // Use admin hook for admins
   const {
     data: students
-  } = useStudentEnrollments();
+  } = isAdmin ? useAdminStudentEnrollments() : useStudentEnrollments(); // Use admin hook for admins
   const {
     data: allTrainers
-  } = useTrainers(); // Get all trainers
+  } = isAdmin ? useAdminTrainers() : useTrainers(); // Use admin hook for admins
   
-  // Filter trainers by club - if admin, show all trainers; otherwise filter by club
+  // Filter trainers by club - for admins, adminTrainers already filtered
   const availableTrainers = isAdmin 
-    ? allTrainers // Admins can assign to any trainer
+    ? allTrainers // Admin trainers already filtered by admin's clubs
     : allTrainers?.filter(trainer => 
         trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
       );

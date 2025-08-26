@@ -63,6 +63,57 @@ export const useClassGroups = (clubId?: string) => {
   });
 };
 
+// Hook to fetch class groups for admin (groups from clubs they created)
+export const useAdminClassGroups = () => {
+  return useQuery({
+    queryKey: ["admin-class-groups"],
+    queryFn: async () => {
+      console.log('Fetching admin class groups...');
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // First, get clubs created by this admin
+      const { data: adminClubs, error: clubsError } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('created_by_profile_id', userData.user.id);
+
+      if (clubsError) throw clubsError;
+      
+      if (!adminClubs || adminClubs.length === 0) {
+        return [];
+      }
+
+      const clubIds = adminClubs.map(club => club.id);
+
+      // Get class groups from these clubs
+      const { data: groups, error: groupsError } = await supabase
+        .from("class_groups")
+        .select(`
+          *,
+          members:group_members(
+            *,
+            student_enrollment:student_enrollments(
+              id,
+              full_name,
+              email,
+              level
+            )
+          )
+        `)
+        .in("club_id", clubIds)
+        .eq("is_active", true)
+        .order("name");
+
+      if (groupsError) throw groupsError;
+
+      console.log('Admin class groups fetched:', groups);
+      return groups as ClassGroupWithMembers[];
+    },
+  });
+};
+
 // Hook to create a class group
 export const useCreateClassGroup = () => {
   const queryClient = useQueryClient();
@@ -84,6 +135,7 @@ export const useCreateClassGroup = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["class-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-class-groups"] });
       toast({
         title: "Grupo creado",
         description: "El grupo se ha creado correctamente.",
