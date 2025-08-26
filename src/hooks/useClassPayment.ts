@@ -25,9 +25,12 @@ export const useCreateClassPayment = () => {
       return data;
     },
     onSuccess: (data) => {
-      if (data.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
+      console.log('Payment response:', data);
+      if (data?.url) {
+        // Redirect to Stripe checkout in the same window
+        window.location.href = data.url;
+      } else {
+        console.error('No URL received from payment function');
       }
     },
     onError: (error) => {

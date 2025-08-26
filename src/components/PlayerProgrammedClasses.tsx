@@ -206,8 +206,10 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
   };
 
   const handleJoinWaitlistWithPayment = () => {
+    console.log('Joining waitlist with payment, monthly_price:', programmedClass.monthly_price);
     // Para clases de pago, siempre debe pagar primero (ya sea para cupo directo o lista de espera)
     if (programmedClass.monthly_price > 0) {
+      console.log('Initiating payment for class:', programmedClass.name);
       createClassPayment.mutate({
         classId: programmedClass.id,
         className: programmedClass.name,
