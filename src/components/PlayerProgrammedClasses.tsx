@@ -517,7 +517,7 @@ const ClassCapacityInfo = ({
         ) : actualCapacity.isFull ? (
           <Button
             size="sm"
-            onClick={onPayment || onJoinWaitlist}
+            onClick={onJoinWaitlist}
             disabled={joinPending || paymentPending}
             className={isModal ? 'w-full' : ''}
             variant="outline"
@@ -534,7 +534,7 @@ const ClassCapacityInfo = ({
             </Badge>
             <Button
               size="sm"
-              onClick={onPayment || onJoinWaitlist}
+              onClick={onJoinWaitlist}
               disabled={joinPending || paymentPending}
               className="text-xs flex items-center gap-1"
               variant={programmedClass?.monthly_price > 0 ? "default" : "outline"}
