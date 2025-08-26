@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Search, Filter, CreditCard, Euro } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Search, Filter, CreditCard, Euro, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -407,7 +407,7 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
   );
 };
 
-// Componente para mostrar información de capacidad y botones de lista de espera
+// Componente simplificado para mostrar información de capacidad y botones
 const ClassCapacityInfo = ({ 
   classId, 
   programmedClass,
@@ -436,29 +436,44 @@ const ClassCapacityInfo = ({
   showParticipants?: boolean;
 }) => {
   const { t } = useTranslation();
+  const { profile } = useAuth();
+
+  // Siempre obtener datos frescos de capacidad
+  const { data: freshCapacity, isLoading: capacityLoading } = useClassCapacity(classId);
   
-  // Usar los datos de la clase programada si están disponibles
-  const maxParticipants = programmedClass?.max_participants || 8;
-  const activeParticipants = programmedClass?.participants?.filter(
-    (p: any) => p.status === 'active'
-  ) || [];
-  const currentParticipants = activeParticipants.length;
-  
-  // Si tenemos capacity data, usarla; si no, usar los datos de programmedClass
-  const actualCapacity = capacity || {
-    maxParticipants,
-    currentParticipants,
-    availableSpots: Math.max(0, maxParticipants - currentParticipants),
-    waitlistCount: 0, // Se actualizará con datos reales si están disponibles
-    isFull: currentParticipants >= maxParticipants,
-    participants: activeParticipants
+  if (!profile) return null;
+
+  if (capacityLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="ml-2 text-sm">Cargando...</span>
+      </div>
+    );
+  }
+
+  // Usar datos frescos como prioridad
+  const actualCapacity = freshCapacity || capacity || {
+    currentParticipants: 0,
+    maxParticipants: programmedClass?.max_participants || 8,
+    availableSpots: programmedClass?.max_participants || 8,
+    waitlistCount: 0,
+    isFull: false
   };
 
-  // Intentar obtener datos de capacidad si no los tenemos
-  const { data: fetchedCapacity, isLoading: capacityLoading } = useClassCapacity(classId);
-  if (fetchedCapacity && !capacity) {
-    actualCapacity.waitlistCount = fetchedCapacity.waitlistCount;
-  }
+  const monthlyPrice = programmedClass?.monthly_price || 0;
+  const isPaymentRequired = monthlyPrice > 0;
+
+  console.log('🔍 ClassCapacityInfo Debug:', {
+    classId,
+    className: programmedClass?.name,
+    monthlyPrice,
+    isPaymentRequired,
+    actualCapacity,
+    waitlistPosition: waitlistPosition?.position || null,
+    freshCapacity,
+    capacity
+  });
 
   return (
     <div className="space-y-3">
@@ -527,10 +542,26 @@ const ClassCapacityInfo = ({
             className={isModal ? 'w-full' : ''}
             variant="outline"
           >
-            {(joinPending || paymentPending) ? t('common.loading') : 
-             (programmedClass?.monthly_price > 0 ? 
-              `Pagar €${programmedClass.monthly_price} - Lista de espera` : 
-              t('classes.joinWaitlist'))}
+            {(joinPending || paymentPending) ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                {programmedClass?.monthly_price > 0 ? 'Procesando pago...' : 'Uniéndose...'}
+              </>
+            ) : (
+              <>
+                {programmedClass?.monthly_price > 0 ? (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    Pagar €{programmedClass.monthly_price} - Lista de espera
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-4 w-4 mr-1" />
+                    {t('classes.joinWaitlist')}
+                  </>
+                )}
+              </>
+            )}
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -549,14 +580,26 @@ const ClassCapacityInfo = ({
               className="text-xs flex items-center gap-1"
               variant={programmedClass?.monthly_price > 0 ? "default" : "outline"}
             >
-              {(joinPending || paymentPending) ? t('common.loading') : (
+               {(joinPending || paymentPending) ? (
                 <>
-                  {programmedClass?.monthly_price > 0 && <CreditCard className="h-3 w-3" />}
-                  {programmedClass?.monthly_price > 0 ? 
-                    `Pagar €${programmedClass.monthly_price}` : 
-                    'Reservar gratis'}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {programmedClass?.monthly_price > 0 ? 'Procesando pago...' : 'Reservando...'}
                 </>
-              )}
+               ) : (
+                <>
+                  {programmedClass?.monthly_price > 0 ? (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Pagar €{programmedClass.monthly_price} - Reservar
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-4 w-4" />
+                      Reservar gratis
+                    </>
+                  )}
+                </>
+               )}
             </Button>
           </div>
         )}

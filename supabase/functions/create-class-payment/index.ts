@@ -83,8 +83,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/classes?payment=success&class_id=${classId}`,
-      cancel_url: `${origin}/classes?payment=cancelled`,
+      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/payment-cancel`,
       metadata: {
         classId: classId,
         userId: user.id,

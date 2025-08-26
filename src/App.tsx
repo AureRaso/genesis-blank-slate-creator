@@ -26,6 +26,8 @@ import PlayerScheduledClassesPage from "@/pages/PlayerScheduledClassesPage";
 import WaitlistNotifications from "@/pages/WaitlistNotifications";
 import PublicEnrollmentPage from "@/pages/PublicEnrollmentPage";
 import ClassEnrollmentPage from "@/pages/ClassEnrollmentPage";
+import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
+import PaymentCancelPage from "@/pages/PaymentCancelPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -117,6 +119,8 @@ function App() {
               <Route path="/logout" element={<LogoutPage />} />
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/payment-cancel" element={<PaymentCancelPage />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout>
