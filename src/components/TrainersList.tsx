@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useTrainers, useDeleteTrainer, Trainer } from "@/hooks/useTrainers";
+import { useTrainers, useDeleteTrainer, Trainer, useAdminTrainers } from "@/hooks/useTrainers";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface TrainersListProps {
@@ -112,8 +112,13 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
 };
 
 const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => {
-  const { data: trainers, isLoading, error } = useTrainers();
+  const { data: adminTrainers, isLoading: isLoadingAdmin, error: adminError } = useAdminTrainers();
   const { isAdmin } = useAuth();
+
+  // For admins, use filtered trainers; for other roles, we could extend this logic
+  const trainers = adminTrainers;
+  const isLoading = isLoadingAdmin;
+  const error = adminError;
 
   if (isLoading) {
     return (

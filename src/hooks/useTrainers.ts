@@ -89,6 +89,80 @@ export const useTrainers = () => {
   });
 };
 
+export const useAdminTrainers = () => {
+  return useQuery({
+    queryKey: ['admin-trainers'],
+    queryFn: async () => {
+      console.log('Fetching admin trainers...');
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // First, get clubs created by this admin
+      const { data: adminClubs, error: clubsError } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('created_by_profile_id', userData.user.id);
+
+      if (clubsError) throw clubsError;
+      
+      if (!adminClubs || adminClubs.length === 0) {
+        return [];
+      }
+
+      const clubIds = adminClubs.map(club => club.id);
+
+      // Get trainers associated with these clubs
+      const { data: trainerClubsData, error: trainerClubsError } = await supabase
+        .from('trainer_clubs')
+        .select(`
+          trainer_profile_id,
+          club_id,
+          clubs:club_id (
+            id,
+            name
+          )
+        `)
+        .in('club_id', clubIds);
+
+      if (trainerClubsError) throw trainerClubsError;
+
+      if (!trainerClubsData || trainerClubsData.length === 0) {
+        return [];
+      }
+
+      const trainerProfileIds = [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))];
+
+      // Get trainer details
+      const { data: trainers, error: trainersError } = await supabase
+        .from('trainers')
+        .select(`
+          *,
+          profiles:profile_id (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .in('profile_id', trainerProfileIds)
+        .eq('is_active', true);
+
+      if (trainersError) throw trainersError;
+
+      // Combine trainers with their club information
+      const trainersWithClubs = (trainers || []).map(trainer => {
+        const trainerClubs = trainerClubsData.filter(
+          tc => tc.trainer_profile_id === trainer.profile_id
+        );
+        return { ...trainer, trainer_clubs: trainerClubs };
+      });
+
+      console.log('Admin trainers fetched:', trainersWithClubs);
+      return trainersWithClubs;
+    },
+  });
+};
+
 export const useMyTrainerProfile = () => {
   return useQuery({
     queryKey: ['my-trainer-profile'],
@@ -213,6 +287,7 @@ export const useCreateTrainer = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
       
       // Mostrar información de la contraseña temporal
       if (data && data.temporary_password) {
@@ -261,6 +336,7 @@ export const useUpdateTrainer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
       toast({
         title: "Éxito",
         description: "Profesor actualizado correctamente",
@@ -292,6 +368,7 @@ export const useDeleteTrainer = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
       toast({
         title: "Éxito",
         description: "Profesor desactivado correctamente",
