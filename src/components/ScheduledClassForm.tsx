@@ -26,6 +26,7 @@ import { useCreateProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { useClassGroups, useAdminClassGroups } from "@/hooks/useClassGroups";
 import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
 import { useMyTrainerProfile, useTrainers, useAdminTrainers } from "@/hooks/useTrainers";
+import { useAdminClubs } from "@/hooks/useClubs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 const formSchema = z.object({
@@ -123,6 +124,9 @@ export default function ScheduledClassForm({
   const {
     data: allTrainers
   } = isAdmin ? useAdminTrainers() : useTrainers(); // Use admin hook for admins
+  
+  // Get admin clubs for club selection
+  const { data: adminClubs } = useAdminClubs();
   
   // Filter trainers by club - for admins, adminTrainers already filtered
   const availableTrainers = isAdmin 
@@ -621,16 +625,49 @@ export default function ScheduledClassForm({
                       </FormItem>} />
                 </div>
 
-                {/* Admin-only trainer assignment */}
-                {isAdmin && <div className="border-t pt-6">
+                 {/* Admin-only club and trainer assignment */}
+                {isAdmin && <div className="border-t pt-6 space-y-6">
                     <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <Users className="h-5 w-5" />
-                      Asignar Profesor (Opcional)
+                      Configuración Avanzada (Admin)
                     </h4>
+                    
+                    {/* Club assignment */}
+                    <FormField control={form.control} name="club_id" render={({
+                  field
+                }) => <FormItem>
+                          <FormLabel>Asignar a Club</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar club" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                               {adminClubs && adminClubs.length > 0 ? (
+                                 adminClubs.map(club => (
+                                     <SelectItem key={club.id} value={club.id}>
+                                       {club.name}
+                                     </SelectItem>
+                                   ))
+                              ) : (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No tienes clubes creados
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Selecciona en qué club se creará esta clase programada.
+                          </p>
+                        </FormItem>} />
+                    
+                    {/* Trainer assignment */}
                     <FormField control={form.control} name="assigned_trainer_id" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>Asignar clase a otro profesor</FormLabel>
+                          <FormLabel>Asignar clase a otro profesor (Opcional)</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -679,6 +716,10 @@ export default function ScheduledClassForm({
                     })()}
                      <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
                      <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
+                     {isAdmin && (() => {
+                       const selectedClub = adminClubs?.find(c => c.id === watchedValues.club_id);
+                       return selectedClub ? <div>• Club: {selectedClub.name}</div> : null;
+                     })()}
                      {isAdmin && watchedValues.assigned_trainer_id && watchedValues.assigned_trainer_id !== "unassigned" && (() => {
                        const assignedTrainer = availableTrainers?.find(t => t.profile_id === watchedValues.assigned_trainer_id);
                        return assignedTrainer ? <div>• Asignada a: {assignedTrainer.profiles?.full_name}</div> : null;
