@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateClassPaymentParams {
-  classId: string;
-  className: string;
-  monthlyPrice: number;
+  classId?: string;
+  slotId?: string;
+  className?: string;
+  trainerName?: string;
+  monthlyPrice?: number;
+  price?: number;
+  notes?: string;
 }
 
 interface VerifyClassPaymentParams {
@@ -16,9 +20,9 @@ export const useCreateClassPayment = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ classId, className, monthlyPrice }: CreateClassPaymentParams) => {
+    mutationFn: async (params: CreateClassPaymentParams) => {
       const { data, error } = await supabase.functions.invoke('create-class-payment', {
-        body: { classId, className, monthlyPrice }
+        body: params
       });
 
       if (error) throw error;

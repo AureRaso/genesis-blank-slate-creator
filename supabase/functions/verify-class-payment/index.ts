@@ -68,78 +68,155 @@ serve(async (req) => {
       });
     }
 
-    if (!session.metadata?.classId || session.metadata?.userId !== user.id) {
+    // Validate that the payment is for the correct class/slot and user
+    logStep("Validating payment metadata");
+    const classId = session.metadata?.classId;
+    const slotId = session.metadata?.slotId;
+    const userId = session.metadata?.userId;
+    const notes = session.metadata?.notes;
+    
+    if ((!classId && !slotId) || !userId) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: "Invalid session metadata" 
+        error: "Missing class/slot ID or user ID in session metadata" 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
-
-    const classId = session.metadata.classId;
-    logStep("Payment verified, creating reservation", { classId, userId: user.id });
-
-    // Check if user already has a reservation for this class
-    const { data: existingReservation, error: checkError } = await supabaseClient
-      .from('class_participants')
-      .select('id')
-      .eq('class_id', classId)
-      .eq('student_enrollment_id', user.id) // Assuming we use user.id for player reservations
-      .eq('status', 'active')
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" which is expected
-      throw new Error(`Error checking existing reservation: ${checkError.message}`);
-    }
-
-    if (existingReservation) {
-      logStep("User already has reservation", { reservationId: existingReservation.id });
+    
+    if (userId !== user.id) {
       return new Response(JSON.stringify({ 
-        success: true, 
-        message: "User already enrolled in this class",
-        reservationId: existingReservation.id 
+        success: false, 
+        error: "User ID mismatch in payment session" 
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        status: 400,
       });
     }
+    
+    logStep("Payment validation successful", { classId, slotId, userId });
 
-    // Create the class participation record
-    const { data: reservation, error: reservationError } = await supabaseClient
-      .from('class_participants')
-      .insert({
-        class_id: classId,
-        student_enrollment_id: user.id, // Using user.id for now, might need adjustment
-        status: 'active'
-      })
-      .select()
-      .single();
+    if (slotId) {
+      // Handle class slot reservation
+      logStep("Processing slot reservation");
+      
+      // Check if user already has a reservation for this slot
+      const { data: existingReservation, error: checkError } = await supabaseClient
+        .from('class_reservations')
+        .select('id')
+        .eq('slot_id', slotId)
+        .eq('player_profile_id', user.id)
+        .eq('status', 'reservado')
+        .single();
 
-    if (reservationError) {
-      throw new Error(`Error creating reservation: ${reservationError.message}`);
-    }
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new Error(`Error checking existing reservation: ${checkError.message}`);
+      }
 
-    logStep("Reservation created successfully", { reservationId: reservation.id });
+      if (existingReservation) {
+        logStep("User already has reservation for this slot");
+        return new Response(JSON.stringify({
+          success: true,
+          message: "Ya tienes una reserva para esta clase",
+          reservationId: existingReservation.id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
 
-    // Remove user from waitlist if they were on it
-    const { error: waitlistError } = await supabaseClient
-      .from('waitlists')
-      .delete()
-      .eq('class_id', classId)
-      .eq('user_id', user.id);
+      // Create new class reservation
+      logStep("Creating class reservation");
+      const { data: reservation, error: reservationError } = await supabaseClient
+        .from('class_reservations')
+        .insert([
+          {
+            slot_id: slotId,
+            player_profile_id: user.id,
+            status: 'reservado',
+            notes: notes || null
+          }
+        ])
+        .select()
+        .single();
 
-    if (waitlistError) {
-      logStep("Warning: Could not remove from waitlist", { error: waitlistError.message });
-    } else {
-      logStep("User removed from waitlist");
+      if (reservationError) {
+        logStep("Error creating reservation", { error: reservationError });
+        throw reservationError;
+      }
+
+      logStep("Class reservation created successfully", { reservationId: reservation.id });
+
+    } else if (classId) {
+      // Handle programmed class participation (existing logic)
+      logStep("Processing class participation");
+      
+      // Check if user is already enrolled in this class
+      const { data: existingParticipation, error: checkError } = await supabaseClient
+        .from('class_participants')
+        .select('id')
+        .eq('class_id', classId)
+        .eq('student_enrollment_id', user.id)
+        .eq('status', 'active')
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new Error(`Error checking existing participation: ${checkError.message}`);
+      }
+
+      if (existingParticipation) {
+        logStep("User already enrolled in class");
+        return new Response(JSON.stringify({
+          success: true,
+          message: "Ya estás inscrito en esta clase",
+          participationId: existingParticipation.id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      // Create new class participation
+      logStep("Creating class participation");
+      const { data: participation, error: participationError } = await supabaseClient
+        .from('class_participants')
+        .insert([
+          {
+            class_id: classId,
+            student_enrollment_id: user.id,
+            status: 'active'
+          }
+        ])
+        .select()
+        .single();
+
+      if (participationError) {
+        logStep("Error creating participation", { error: participationError });
+        throw participationError;
+      }
+
+      logStep("Class participation created successfully", { participationId: participation.id });
+
+      // Try to remove user from waitlist if they were on it
+      logStep("Attempting to remove from waitlist");
+      try {
+        await supabaseClient
+          .from('waitlists')
+          .delete()
+          .eq('class_id', classId)
+          .eq('user_id', user.id);
+        logStep("Removed from waitlist (if existed)");
+      } catch (waitlistError) {
+        logStep("No waitlist entry found or error removing", { error: waitlistError });
+        // Don't throw error here as this is optional cleanup
+      }
     }
 
     return new Response(JSON.stringify({ 
       success: true, 
-      reservationId: reservation.id,
-      message: "Payment verified and reservation created successfully"
+      type: slotId ? 'slot_reservation' : 'class_participation',
+      message: "Pago verificado y reserva creada exitosamente"
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -43,16 +43,29 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Get request body
-    const { classId, className, monthlyPrice } = await req.json();
-    if (!classId || !className || monthlyPrice === undefined) {
-      throw new Error("Missing required parameters: classId, className, monthlyPrice");
+    const body = await req.json();
+    const { classId, slotId, className, trainerName, monthlyPrice, price, notes } = body;
+    
+    // Validate required parameters based on type
+    if (slotId) {
+      // Slot payment validation
+      if (!slotId || !trainerName || price === undefined) {
+        throw new Error("Missing required parameters for slot: slotId, trainerName, price");
+      }
+      if (price <= 0) {
+        throw new Error("Invalid slot price amount");
+      }
+    } else {
+      // Class payment validation
+      if (!classId || !className || monthlyPrice === undefined) {
+        throw new Error("Missing required parameters for class: classId, className, monthlyPrice");
+      }
+      if (monthlyPrice <= 0) {
+        throw new Error("Invalid class price amount");
+      }
     }
     
-    if (monthlyPrice <= 0) {
-      throw new Error("Invalid price amount");
-    }
-    
-    logStep("Request parameters validated", { classId, className, monthlyPrice });
+    logStep("Request parameters validated", body);
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -64,8 +77,35 @@ serve(async (req) => {
       logStep("Existing customer found", { customerId });
     }
 
-    // Create Stripe checkout session for class payment
+    // Determine payment details based on whether it's a class or slot
+    let productName, productDescription, unitAmount, metadata;
+    
+    if (slotId) {
+      // Payment for class slot
+      productName = `Clase con ${trainerName}`;
+      productDescription = `Reserva de clase individual`;
+      unitAmount = Math.round(price * 100);
+      metadata = {
+        slotId: slotId,
+        userId: user.id,
+        notes: notes || '',
+        type: "slot_payment"
+      };
+    } else {
+      // Payment for programmed class (existing logic)
+      productName = `Clase: ${className}`;
+      productDescription = `Pago mensual de clase programada`;
+      unitAmount = Math.round(monthlyPrice * 100);
+      metadata = {
+        classId: classId,
+        userId: user.id,
+        type: "class_payment"
+      };
+    }
+
+    // Create Stripe checkout session
     const origin = req.headers.get("origin") || "http://localhost:3000";
+    logStep("Creating Stripe checkout session", { productName, unitAmount });
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -74,10 +114,10 @@ serve(async (req) => {
           price_data: {
             currency: "eur",
             product_data: { 
-              name: `Clase: ${className}`,
-              description: "Pago mensual de clase programada"
+              name: productName,
+              description: productDescription
             },
-            unit_amount: Math.round(monthlyPrice * 100), // Convert to cents
+            unit_amount: unitAmount,
           },
           quantity: 1,
         },
@@ -85,11 +125,7 @@ serve(async (req) => {
       mode: "payment",
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/payment-cancel`,
-      metadata: {
-        classId: classId,
-        userId: user.id,
-        type: "class_payment"
-      }
+      metadata: metadata
     });
 
     logStep("Stripe session created", { sessionId: session.id, url: session.url });

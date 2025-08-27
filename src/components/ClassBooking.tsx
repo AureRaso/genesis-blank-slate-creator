@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useClassSlots } from "@/hooks/useClassSlots";
-import { useCreateReservation } from "@/hooks/useClassReservations";
+import { useCreateClassPayment } from "@/hooks/useClassPayment";
 
 const ClassBooking = () => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const { data: classSlots, isLoading } = useClassSlots();
-  const createReservation = useCreateReservation();
+  const createPayment = useCreateClassPayment();
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -48,11 +48,14 @@ const ClassBooking = () => {
   };
 
   const handleReservation = (slotId: string) => {
-    createReservation.mutate({ slot_id: slotId, notes }, {
-      onSuccess: () => {
-        setSelectedSlot(null);
-        setNotes("");
-      }
+    const slot = classSlots?.find(s => s.id === slotId);
+    if (!slot) return;
+
+    createPayment.mutate({
+      slotId: slotId,
+      trainerName: slot.trainer_name,
+      price: slot.price_per_player,
+      notes
     });
   };
 
@@ -173,15 +176,15 @@ const ClassBooking = () => {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Confirmar Reserva</AlertDialogTitle>
-                      <AlertDialogDescription asChild>
-                        <div className="space-y-3">
-                          <p>¿Confirmas tu reserva para esta clase?</p>
-                          <div className="bg-playtomic-gray-50 p-3 rounded-lg space-y-2">
-                            <p><strong>Clase:</strong> {formatDayOfWeek(classSlot.day_of_week)} - {classSlot.start_time}</p>
-                            <p><strong>Club:</strong> {classSlot.clubs?.name} - Pista {classSlot.court_number}</p>
-                            <p><strong>Entrenador:</strong> {classSlot.trainer_name}</p>
-                            <p><strong>Precio:</strong> {classSlot.price_per_player}€</p>
-                          </div>
+                       <AlertDialogDescription asChild>
+                         <div className="space-y-3">
+                           <p>Confirma tu reserva para esta clase. Serás redirigido al pago de {classSlot.price_per_player}€ por la clase.</p>
+                           <div className="bg-playtomic-gray-50 p-3 rounded-lg space-y-2">
+                             <p><strong>Clase:</strong> {formatDayOfWeek(classSlot.day_of_week)} - {classSlot.start_time}</p>
+                             <p><strong>Club:</strong> {classSlot.clubs?.name} - Pista {classSlot.court_number}</p>
+                             <p><strong>Entrenador:</strong> {classSlot.trainer_name}</p>
+                             <p><strong>Precio:</strong> {classSlot.price_per_player}€</p>
+                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="notes">Notas adicionales (opcional)</Label>
                             <Textarea
@@ -198,13 +201,13 @@ const ClassBooking = () => {
                       <AlertDialogCancel onClick={() => setNotes("")}>
                         Cancelar
                       </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleReservation(classSlot.id)}
-                        className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
-                        disabled={createReservation.isPending}
-                      >
-                        Confirmar Reserva
-                      </AlertDialogAction>
+                       <AlertDialogAction
+                         onClick={() => handleReservation(classSlot.id)}
+                         className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+                         disabled={createPayment.isPending}
+                       >
+                         {createPayment.isPending ? "Procesando..." : "Pagar y Reservar"}
+                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
