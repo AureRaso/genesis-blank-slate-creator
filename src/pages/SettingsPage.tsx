@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useClub } from '@/hooks/useClub';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, CreditCard, ExternalLink, Settings } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+const SettingsPage = () => {
+  const { profile, isAdmin } = useAuth();
+  const { data: club } = useClub(profile?.club_id);
+  const [loading, setLoading] = useState(false);
+
+  const handleConnectStripe = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-connect', {
+        body: { clubId: profile?.club_id }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No se recibió la URL de conexión');
+      }
+    } catch (error) {
+      console.error('Error connecting to Stripe:', error);
+      toast.error('Error al conectar con Stripe. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStripeLoginLink = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-login-link', {
+        body: { clubId: profile?.club_id }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No se pudo acceder al panel de Stripe');
+      }
+    } catch (error) {
+      console.error('Error accessing Stripe dashboard:', error);
+      toast.error('Error al acceder al panel de Stripe. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isStripeConnected = club?.stripe_account_id && club?.stripe_onboarding_completed;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
+        <div className="max-w-2xl mx-auto pt-20">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Acceso Denegado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Solo los administradores pueden acceder a la configuración.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
+      <div className="max-w-4xl mx-auto pt-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Configuración
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Gestiona la configuración de tu club
+          </p>
+        </div>
+
+        <Tabs defaultValue="payments" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="general">General</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="payments" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Conecta tu cuenta de Stripe
+                </CardTitle>
+                <CardDescription>
+                  Para poder cobrar a tus jugadores directamente en tu cuenta bancaria, 
+                  conecta tu Stripe con nuestra plataforma. Es rápido y seguro.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!isStripeConnected ? (
+                  <Button 
+                    onClick={handleConnectStripe}
+                    disabled={loading}
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    {loading ? 'Conectando...' : 'Conectar con Stripe'}
+                  </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-green-800 font-medium">
+                        Tu cuenta Stripe está conectada correctamente
+                      </span>
+                    </div>
+                    
+                    <Button
+                      onClick={handleStripeLoginLink}
+                      disabled={loading}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      {loading ? 'Accediendo...' : 'Revisar tu cuenta en Stripe'}
+                    </Button>
+                  </div>
+                )}
+
+                {club && (
+                  <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Estado de la cuenta:</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Estado:</span>
+                        <Badge variant={isStripeConnected ? "default" : "secondary"}>
+                          {club.stripe_account_status || 'Desconectado'}
+                        </Badge>
+                      </div>
+                      {club.stripe_account_id && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">ID de cuenta:</span>
+                          <code className="text-xs bg-background px-2 py-1 rounded">
+                            {club.stripe_account_id}
+                          </code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="general" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuración General</CardTitle>
+                <CardDescription>
+                  Próximamente podrás configurar otros aspectos de tu club aquí.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Esta sección estará disponible en futuras actualizaciones.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;

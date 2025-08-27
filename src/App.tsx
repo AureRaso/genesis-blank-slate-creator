@@ -28,6 +28,7 @@ import PublicEnrollmentPage from "@/pages/PublicEnrollmentPage";
 import ClassEnrollmentPage from "@/pages/ClassEnrollmentPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import PaymentCancelPage from "@/pages/PaymentCancelPage";
+import SettingsPage from "@/pages/SettingsPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -147,8 +148,9 @@ function App() {
                      <Route path="/clubs/edit/:id" element={<ClubFormPage />} />
                      <Route path="/trainers" element={<TrainersPage />} />
                      <Route path="/scheduled-classes" element={
-                       isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
-                     } />
+                        isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
+                      } />
+                     <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>
                 )}

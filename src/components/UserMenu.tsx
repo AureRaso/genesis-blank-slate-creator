@@ -68,9 +68,11 @@ const UserMenu = () => {
           <LanguageSelector />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>{t('userMenu.settings')}</span>
+        <DropdownMenuItem asChild>
+          <a href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>{t('userMenu.settings')}</span>
+          </a>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />

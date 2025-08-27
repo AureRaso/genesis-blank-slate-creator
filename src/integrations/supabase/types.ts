@@ -314,6 +314,9 @@ export type Database = {
           name: string
           phone: string
           status: string | null
+          stripe_account_id: string | null
+          stripe_account_status: string | null
+          stripe_onboarding_completed: boolean | null
           updated_at: string
         }
         Insert: {
@@ -327,6 +330,9 @@ export type Database = {
           name: string
           phone: string
           status?: string | null
+          stripe_account_id?: string | null
+          stripe_account_status?: string | null
+          stripe_onboarding_completed?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -340,6 +346,9 @@ export type Database = {
           name?: string
           phone?: string
           status?: string | null
+          stripe_account_id?: string | null
+          stripe_account_status?: string | null
+          stripe_onboarding_completed?: boolean | null
           updated_at?: string
         }
         Relationships: [
