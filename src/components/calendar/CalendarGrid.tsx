@@ -103,7 +103,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick }: C
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card max-h-[75vh] overflow-y-auto">
+    <div className="border rounded-lg overflow-hidden bg-card h-full flex flex-col">
       {/* Header with days */}
       <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90">
         <div className="p-3 text-sm font-medium text-muted-foreground border-r bg-background/90">
@@ -125,7 +125,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick }: C
       </div>
 
       {/* Calendar grid */}
-      <div className="relative">
+      <div className="flex-1 overflow-y-auto">
         {TIME_SLOTS.map((timeSlot, index) => (
           <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
             <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">

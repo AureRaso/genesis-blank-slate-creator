@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format } from "date-fns";
+import { Calendar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ interface ClassCalendarViewProps {
 export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ day: Date; time: string } | null>(null);
   const { profile, isAdmin } = useAuth();
   const { t } = useTranslation();
@@ -40,6 +42,10 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
   const goToToday = () => setCurrentWeek(new Date());
+
+  const handleFullscreen = () => {
+    setShowFullscreen(true);
+  };
 
   const handleTimeSlotClick = (day: Date, timeSlot: string) => {
     if (isAdmin) {
@@ -162,6 +168,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         onPreviousWeek={goToPreviousWeek}
         onNextWeek={goToNextWeek}
         onToday={goToToday}
+        onFullscreen={handleFullscreen}
       />
       
       {/* Show trainer legend for admins when there are multiple trainers */}
@@ -198,6 +205,46 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Fullscreen Calendar Modal */}
+      <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {t('classes.calendarTitle')} - Pantalla completa
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            <div className="space-y-4 h-full">
+              <CalendarHeader
+                currentWeek={currentWeek}
+                weekStart={weekStart}
+                weekEnd={weekEnd}
+                totalClasses={classes?.length || 0}
+                filteredClassesCount={filteredClasses.length}
+                onPreviousWeek={goToPreviousWeek}
+                onNextWeek={goToNextWeek}
+                onToday={goToToday}
+                showFullscreenButton={false}
+              />
+              
+              {/* Show trainer legend for admins when there are multiple trainers */}
+              {isAdmin && <TrainerLegend classes={filteredClasses} />}
+              
+              <div className="flex-1 min-h-0">
+                <CalendarGrid
+                  weekStart={weekStart}
+                  weekEnd={weekEnd}
+                  classes={filteredClasses}
+                  onTimeSlotClick={handleTimeSlotClick}
+                />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

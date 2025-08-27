@@ -1,6 +1,6 @@
 
 import { format, addWeeks, subWeeks } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface CalendarHeaderProps {
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
+  onFullscreen?: () => void;
+  showFullscreenButton?: boolean;
 }
 
 export function CalendarHeader({
@@ -25,7 +27,9 @@ export function CalendarHeader({
   filteredClassesCount,
   onPreviousWeek,
   onNextWeek,
-  onToday
+  onToday,
+  onFullscreen,
+  showFullscreenButton = true
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -56,6 +60,12 @@ export function CalendarHeader({
         <Button variant="outline" size="sm" onClick={onNextWeek}>
           <ChevronRight className="h-4 w-4" />
         </Button>
+
+        {showFullscreenButton && onFullscreen && (
+          <Button variant="outline" size="sm" onClick={onFullscreen}>
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        )}
         
         <div className="text-sm font-medium ml-4 min-w-[200px] text-right">
           {format(weekStart, "dd MMM", { locale: getDateFnsLocale() })} - {format(weekEnd, "dd MMM yyyy", { locale: getDateFnsLocale() })}
