@@ -14,60 +14,40 @@ const QuickActions = () => {
       title: "Crear Liga",
       description: "Configura una nueva liga de pádel",
       icon: Plus,
-      action: () => navigate("/leagues"),
-      color: "bg-gradient-to-r from-playtomic-green to-playtomic-green-dark hover:from-playtomic-green-dark hover:to-playtomic-green"
+      action: () => navigate("/leagues")
     },
     {
       title: "Gestionar Jugadores",
       description: "Ver y administrar jugadores registrados",
       icon: Users,
-      action: () => navigate("/players"),
-      color: "bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+      action: () => navigate("/players")
     },
     {
       title: "Crear Clases",
       description: "Configurar clases de entrenamiento",
       icon: GraduationCap,
-      action: () => navigate("/scheduled-classes"),
-      color: "bg-gradient-to-r from-playtomic-orange-dark to-playtomic-orange hover:from-playtomic-orange to-playtomic-orange-dark"
-    },
-    {
-      title: "Ver Estadísticas",
-      description: "Analizar rendimiento de las ligas",
-      icon: BarChart3,
-      action: () => navigate("/standings"),
-      color: "bg-gradient-to-r from-playtomic-green-dark to-playtomic-green hover:from-playtomic-green hover:to-playtomic-green-dark"
+      action: () => navigate("/scheduled-classes")
     }
   ];
 
   const playerActions = [
     {
-      title: "Inscribirse en Liga",
-      description: "Únete a las ligas disponibles",
+      title: "Crear Liga",
+      description: "Configura una nueva liga de pádel",
       icon: Plus,
-      action: () => navigate("/league-players"),
-      color: "bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+      action: () => navigate("/leagues")
     },
     {
-      title: "Reservar Clases",
-      description: "Apúntate a clases de entrenamiento",
+      title: "Gestionar Jugadores",
+      description: "Ver y administrar jugadores registrados",
+      icon: Users,
+      action: () => navigate("/players")
+    },
+    {
+      title: "Crear Clases",
+      description: "Configurar clases de entrenamiento",
       icon: GraduationCap,
-      action: () => navigate("/classes"),
-      color: "bg-gradient-to-r from-playtomic-green to-playtomic-green-dark hover:from-playtomic-green-dark hover:to-playtomic-green"
-    },
-    {
-      title: "Mis Partidos",
-      description: "Ver tus próximos partidos",
-      icon: Calendar,
-      action: () => navigate("/matches"),
-      color: "bg-gradient-to-r from-playtomic-orange-dark to-playtomic-orange hover:from-playtomic-orange hover:to-playtomic-orange-dark"
-    },
-    {
-      title: "Clasificaciones",
-      description: "Ver tu posición en las ligas",
-      icon: BarChart3,
-      action: () => navigate("/standings"),
-      color: "bg-gradient-to-r from-playtomic-green-dark to-playtomic-green hover:from-playtomic-green hover:to-playtomic-green-dark"
+      action: () => navigate("/scheduled-classes")
     }
   ];
 
@@ -82,19 +62,17 @@ const QuickActions = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Button
                 key={index}
                 onClick={action.action}
-                className={`h-auto p-4 flex flex-col items-start space-y-2 ${action.color} text-white`}
+                className="h-auto p-4 flex flex-col items-center space-y-2 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground"
               >
-                <div className="flex items-center space-x-2">
-                  <Icon className="h-5 w-5" />
-                  <span className="font-semibold">{action.title}</span>
-                </div>
+                <Icon className="h-6 w-6" />
+                <span className="font-semibold text-sm text-center">{action.title}</span>
               </Button>
             );
           })}
