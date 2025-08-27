@@ -69,7 +69,7 @@ const QuickActions = () => {
               <Button
                 key={index}
                 onClick={action.action}
-                className="h-auto p-4 flex flex-col items-center space-y-2 bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground"
+                className="h-auto p-4 flex flex-col items-center space-y-2 bg-muted hover:bg-muted/80 text-foreground border"
               >
                 <Icon className="h-6 w-6" />
                 <span className="font-semibold text-sm text-center">{action.title}</span>
