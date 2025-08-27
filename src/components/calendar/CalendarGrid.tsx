@@ -104,12 +104,12 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
   return (
     <div className="border rounded-lg overflow-hidden bg-card max-h-[75vh] overflow-y-auto">
       {/* Header with days */}
-      <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-10">
-        <div className="p-3 text-sm font-medium text-muted-foreground border-r">
+      <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90">
+        <div className="p-3 text-sm font-medium text-muted-foreground border-r bg-background/90">
           {t('classes.hour')}
         </div>
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0">
+          <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0 bg-background/90">
             <div className="text-sm font-medium text-muted-foreground">
               {format(day, "EEE", { locale: getDateFnsLocale() })}
             </div>
@@ -127,7 +127,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
       <div className="relative">
         {TIME_SLOTS.map((timeSlot, index) => (
           <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
-            <div className="p-2 text-sm text-muted-foreground border-r bg-muted/20 flex items-center justify-center">
+            <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
               {timeSlot}
             </div>
             
@@ -150,7 +150,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
                       className="absolute inset-x-0 top-0 p-1"
                       style={{
                         height: `${getClassHeight(cls.duration_minutes)}px`,
-                        zIndex: 10
+                        zIndex: 5
                       }}
                     >
                       <ClassCard class={cls} />
