@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getTrainerColor, getClassColor } from "@/utils/trainerColors";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useTranslation } from "react-i18next";
+import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface ClassCardProps {
@@ -331,6 +332,9 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
   const { data: waitlistPosition } = useUserWaitlistPosition(cls.id, profile?.id);
   const joinWaitlist = useJoinWaitlist();
   const leaveWaitlist = useLeaveWaitlist();
+  
+  // Hook para pagos
+  const createPayment = useCreateClassPayment();
 
   const handleJoinWaitlist = () => {
     if (profile?.id) {
@@ -342,6 +346,15 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
     if (profile?.id) {
       leaveWaitlist.mutate({ classId: cls.id, userId: profile.id });
     }
+  };
+
+  const handleEnrollWithPayment = () => {
+    createPayment.mutate({
+      classId: cls.id,
+      className: cls.name,
+      trainerName: cls.trainer?.full_name,
+      monthlyPrice: cls.monthly_price
+    });
   };
 
   const getLevelDisplay = () => {
@@ -471,41 +484,68 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
               )}
             </div>
             
-            {/* Botones de lista de espera - siempre disponibles */}
             <div className="flex justify-center">
-              {waitlistPosition ? (
-                <div className="text-center space-y-3 w-full">
-                  <Badge variant="outline" className="text-sm">
-                    Posición {waitlistPosition.position} en lista de espera
-                  </Badge>
+              {hasAvailableSpots ? (
+                // Si hay plazas disponibles, mostrar botón de pago
+                <div className="space-y-3 w-full">
+                  {cls.monthly_price > 0 && (
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-green-600 mb-2">
+                        {cls.monthly_price}€/mes
+                      </div>
+                    </div>
+                  )}
                   <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleLeaveWaitlist}
-                    disabled={leaveWaitlist.isPending}
-                    className="w-full"
+                    onClick={handleEnrollWithPayment}
+                    disabled={createPayment.isPending}
+                    className="w-full bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
                   >
-                    <UserMinus className="h-4 w-4 mr-2" />
-                    {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
+                    {createPayment.isPending ? "Procesando..." : cls.monthly_price > 0 ? "Pagar e Inscribirse" : "Inscribirse"}
                   </Button>
+                  
+                  {/* También mostrar opción de lista de espera como alternativa */}
+                  {!waitlistPosition && (
+                    <Button 
+                      variant="outline"
+                      onClick={handleJoinWaitlist}
+                      disabled={joinWaitlist.isPending}
+                      className="w-full"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
+                    </Button>
+                  )}
                 </div>
               ) : (
-                <Button 
-                  onClick={handleJoinWaitlist}
-                  disabled={joinWaitlist.isPending}
-                  className="w-full"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  {joinWaitlist.isPending ? "Uniéndose..." : "Reservar en lista de espera"}
-                </Button>
+                // Si no hay plazas, solo mostrar lista de espera
+                waitlistPosition ? (
+                  <div className="text-center space-y-3 w-full">
+                    <Badge variant="outline" className="text-sm">
+                      Posición {waitlistPosition.position} en lista de espera
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleLeaveWaitlist}
+                      disabled={leaveWaitlist.isPending}
+                      className="w-full"
+                    >
+                      <UserMinus className="h-4 w-4 mr-2" />
+                      {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={handleJoinWaitlist}
+                    disabled={joinWaitlist.isPending}
+                    className="w-full"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
+                  </Button>
+                )
               )}
             </div>
-            
-            {hasAvailableSpots && (
-              <div className="text-xs text-center text-muted-foreground">
-                También puedes contactar directamente con el club para inscribirte
-              </div>
-            )}
           </div>
         </div>
       </div>
