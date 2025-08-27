@@ -93,10 +93,23 @@ serve(async (req) => {
 
     console.log("stripe-connect: User profile:", profile);
 
-    // Verify user is admin and owns the club
-    if (profile.role !== 'admin' || profile.club_id !== clubId) {
-      console.log("stripe-connect: Unauthorized access attempt");
-      throw new Error("Unauthorized: Only club admins can connect Stripe accounts");
+    // Verify user is admin and check if they own the club
+    if (profile.role !== 'admin') {
+      console.log("stripe-connect: User is not admin");
+      throw new Error("Unauthorized: Only admins can connect Stripe accounts");
+    }
+
+    // Check if the user owns this specific club
+    const { data: clubOwnership, error: ownershipError } = await supabaseAdmin
+      .from('clubs')
+      .select('created_by_profile_id')
+      .eq('id', clubId)
+      .eq('created_by_profile_id', user.id)
+      .single();
+
+    if (ownershipError || !clubOwnership) {
+      console.log("stripe-connect: User does not own this club");
+      throw new Error("Unauthorized: You can only connect Stripe accounts for clubs you own");
     }
 
     // Get club information
