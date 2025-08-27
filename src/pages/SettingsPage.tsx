@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CheckCircle, CreditCard, ExternalLink, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -24,6 +26,7 @@ const SettingsPage = () => {
   const { data: clubs } = useClubs();
   const [loading, setLoading] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>('');
+  const [testStripeUrl, setTestStripeUrl] = useState<string>('');
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0 
@@ -61,6 +64,14 @@ const SettingsPage = () => {
       toast.error('Error al conectar con Stripe. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUseTestUrl = () => {
+    if (testStripeUrl.trim()) {
+      window.open(testStripeUrl.trim(), '_blank');
+    } else {
+      toast.error('Por favor introduce un enlace válido');
     }
   };
 
@@ -196,15 +207,57 @@ const SettingsPage = () => {
                   </div>
 
                   {!isStripeConnected ? (
-                    <Button 
-                      onClick={handleConnectStripe}
-                      disabled={loading}
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      {loading ? 'Conectando...' : 'Conectar con Stripe'}
-                    </Button>
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <Label htmlFor="test-stripe-url" className="text-sm font-medium">
+                          Enlace de prueba de Stripe Connect (temporal)
+                        </Label>
+                        <Input
+                          id="test-stripe-url"
+                          type="url"
+                          placeholder="https://connect.stripe.com/d/setup/s/..."
+                          value={testStripeUrl}
+                          onChange={(e) => setTestStripeUrl(e.target.value)}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Introduce aquí el enlace de configuración de prueba que te ha proporcionado Stripe para continuar con la configuración.
+                        </p>
+                      </div>
+
+                      {testStripeUrl.trim() && (
+                        <Button 
+                          onClick={handleUseTestUrl}
+                          size="lg"
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                        >
+                          <ExternalLink className="mr-2 h-5 w-5" />
+                          Usar enlace de prueba
+                        </Button>
+                      )}
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            O usar configuración automática
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={handleConnectStripe}
+                        disabled={loading}
+                        size="lg"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <CreditCard className="mr-2 h-5 w-5" />
+                        {loading ? 'Conectando...' : 'Conectar con Stripe (requiere cuenta completa)'}
+                      </Button>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
