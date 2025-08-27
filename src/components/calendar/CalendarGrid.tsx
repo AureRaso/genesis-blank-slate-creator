@@ -10,6 +10,7 @@ interface CalendarGridProps {
   weekStart: Date;
   weekEnd: Date;
   classes: ScheduledClassWithTemplate[];
+  onTimeSlotClick?: (day: Date, timeSlot: string) => void;
 }
 
 const TIME_SLOTS = [
@@ -43,7 +44,7 @@ const DAY_MAPPING: { [key: string]: string } = {
   'saturday': 'sabado'
 };
 
-export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps) {
+export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick }: CalendarGridProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -139,10 +140,15 @@ export function CalendarGrid({ weekStart, weekEnd, classes }: CalendarGridProps)
                 <div 
                   key={`${day.toISOString()}-${timeSlot}`} 
                   className={cn(
-                    "border-r last:border-r-0 relative",
+                    "border-r last:border-r-0 relative cursor-pointer hover:bg-muted/50 transition-colors",
                     hasContinuationClasses && "bg-muted/10"
                   )}
                   style={{ minHeight: `${SLOT_HEIGHT}px` }}
+                  onClick={() => {
+                    if (dayClasses.length === 0 && onTimeSlotClick) {
+                      onTimeSlotClick(day, timeSlot);
+                    }
+                  }}
                 >
                   {dayClasses.map((cls) => (
                     <div

@@ -76,11 +76,18 @@ interface ScheduledClassFormProps {
   onClose: () => void;
   clubId: string;
   trainerProfileId: string;
+  initialData?: {
+    start_time?: string;
+    selected_days?: string[];
+    start_date?: Date;
+    end_date?: Date;
+  };
 }
 export default function ScheduledClassForm({
   onClose,
   clubId,
-  trainerProfileId
+  trainerProfileId,
+  initialData
 }: ScheduledClassFormProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -152,8 +159,11 @@ export default function ScheduledClassForm({
       level_format: "numeric",
       level_from: 1.0,
       level_to: 10.0,
-      selected_days: [],
-      monthly_price: 0
+      selected_days: initialData?.selected_days || [],
+      monthly_price: 0,
+      start_time: initialData?.start_time || "",
+      start_date: initialData?.start_date || new Date(),
+      end_date: initialData?.end_date || new Date(Date.now() + (90 * 24 * 60 * 60 * 1000))
     }
   });
   const watchedValues = form.watch();
