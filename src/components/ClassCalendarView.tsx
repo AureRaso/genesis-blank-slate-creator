@@ -84,7 +84,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
       const matchesSearch = 
         cls.name.toLowerCase().includes(searchLower) ||
         cls.participants?.some(p => 
-          p.student_enrollment.full_name.toLowerCase().includes(searchLower)
+          p.student_enrollment?.full_name?.toLowerCase().includes(searchLower)
         );
       if (!matchesSearch) return false;
     }
@@ -115,8 +115,8 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
     if (filters.studentName) {
       const studentNameLower = filters.studentName.toLowerCase();
       const hasMatchingStudent = cls.participants?.some(p => 
-        p.student_enrollment.full_name.toLowerCase().includes(studentNameLower) ||
-        p.student_enrollment.email.toLowerCase().includes(studentNameLower)
+        p.student_enrollment?.full_name?.toLowerCase().includes(studentNameLower) ||
+        p.student_enrollment?.email?.toLowerCase().includes(studentNameLower)
       );
       if (!hasMatchingStudent) return false;
     }
