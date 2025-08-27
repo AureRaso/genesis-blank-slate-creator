@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, CreditCard, ExternalLink, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,9 +23,19 @@ const SettingsPage = () => {
   const { profile, isAdmin } = useAuth();
   const { data: clubs } = useClubs();
   const [loading, setLoading] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState<string>('');
 
-  // For admins, use the first club they own since they might have multiple
-  const club = clubs && clubs.length > 0 ? clubs[0] as ClubWithStripe : null;
+  // Get the selected club or default to the first one
+  const club = clubs && clubs.length > 0 
+    ? clubs.find(c => c.id === selectedClubId) as ClubWithStripe || clubs[0] as ClubWithStripe
+    : null;
+
+  // Set default selected club when clubs load
+  React.useEffect(() => {
+    if (clubs && clubs.length > 0 && !selectedClubId) {
+      setSelectedClubId(clubs[0].id);
+    }
+  }, [clubs, selectedClubId]);
 
   const handleConnectStripe = async () => {
     setLoading(true);
@@ -156,10 +167,32 @@ const SettingsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 mb-4">
-                    <p className="text-blue-800 text-sm">
-                      <strong>Club seleccionado:</strong> {club.name}
-                    </p>
+                  <div className="space-y-4 mb-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Seleccionar Club:
+                      </label>
+                      <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un club" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clubs?.map((clubOption) => (
+                            <SelectItem key={clubOption.id} value={clubOption.id}>
+                              {clubOption.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {club && (
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-blue-800 text-sm">
+                          <strong>Club seleccionado:</strong> {club.name}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {!isStripeConnected ? (
