@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.detect-available-spots]
 verify_jwt = false
+
+[functions.stripe-connect]
+verify_jwt = true
+
+[functions.stripe-login-link]
+verify_jwt = true
