@@ -15,7 +15,7 @@ const PaymentSuccessPage = () => {
     const urlParams = new URLSearchParams(location.search);
     const sessionId = urlParams.get('session_id');
 
-    if (sessionId) {
+    if (sessionId && verificationStatus === 'loading') {
       verifyPayment.mutate(
         { sessionId },
         {
@@ -31,10 +31,10 @@ const PaymentSuccessPage = () => {
           }
         }
       );
-    } else {
+    } else if (!sessionId) {
       setVerificationStatus('error');
     }
-  }, [location.search, verifyPayment]);
+  }, [location.search, verificationStatus]);
 
   const handleGoToClasses = () => {
     navigate('/scheduled-classes');

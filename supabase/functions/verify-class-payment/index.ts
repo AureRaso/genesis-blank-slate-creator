@@ -195,7 +195,7 @@ serve(async (req) => {
               level: 3, // Default level
               weekly_days: classData.days_of_week,
               preferred_times: [classData.start_time],
-              enrollment_period: 'monthly',
+              enrollment_period: 'mensual',
               status: 'active'
             }
           ])
