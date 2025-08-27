@@ -149,15 +149,77 @@ serve(async (req) => {
       logStep("Class reservation created successfully", { reservationId: reservation.id });
 
     } else if (classId) {
-      // Handle programmed class participation (existing logic)
+      // Handle programmed class participation
       logStep("Processing class participation");
       
-      // Check if user is already enrolled in this class
+      // Get class details for student enrollment
+      const { data: classData, error: classError } = await supabaseClient
+        .from('programmed_classes')
+        .select('*')
+        .eq('id', classId)
+        .single();
+
+      if (classError) {
+        throw new Error(`Error fetching class: ${classError.message}`);
+      }
+
+      // Check if user already has a student enrollment for this trainer/club
+      let { data: existingEnrollment, error: enrollmentError } = await supabaseClient
+        .from('student_enrollments')
+        .select('id')
+        .eq('email', user.email)
+        .eq('trainer_profile_id', classData.trainer_profile_id)
+        .eq('club_id', classData.club_id)
+        .eq('status', 'active')
+        .single();
+
+      if (enrollmentError && enrollmentError.code !== 'PGRST116') {
+        throw new Error(`Error checking existing enrollment: ${enrollmentError.message}`);
+      }
+
+      let studentEnrollmentId;
+
+      if (!existingEnrollment) {
+        // Create student enrollment
+        logStep("Creating student enrollment");
+        const { data: newEnrollment, error: newEnrollmentError } = await supabaseClient
+          .from('student_enrollments')
+          .insert([
+            {
+              trainer_profile_id: classData.trainer_profile_id,
+              club_id: classData.club_id,
+              created_by_profile_id: user.id,
+              full_name: user.user_metadata?.full_name || user.email,
+              email: user.email,
+              phone: '',
+              level: 3, // Default level
+              weekly_days: classData.days_of_week,
+              preferred_times: [classData.start_time],
+              enrollment_period: 'monthly',
+              status: 'active'
+            }
+          ])
+          .select('id')
+          .single();
+
+        if (newEnrollmentError) {
+          logStep("Error creating enrollment", { error: newEnrollmentError });
+          throw newEnrollmentError;
+        }
+
+        studentEnrollmentId = newEnrollment.id;
+        logStep("Student enrollment created", { enrollmentId: studentEnrollmentId });
+      } else {
+        studentEnrollmentId = existingEnrollment.id;
+        logStep("Using existing enrollment", { enrollmentId: studentEnrollmentId });
+      }
+
+      // Check if user is already participating in this class
       const { data: existingParticipation, error: checkError } = await supabaseClient
         .from('class_participants')
         .select('id')
         .eq('class_id', classId)
-        .eq('student_enrollment_id', user.id)
+        .eq('student_enrollment_id', studentEnrollmentId)
         .eq('status', 'active')
         .single();
 
@@ -184,7 +246,7 @@ serve(async (req) => {
         .insert([
           {
             class_id: classId,
-            student_enrollment_id: user.id,
+            student_enrollment_id: studentEnrollmentId,
             status: 'active'
           }
         ])
