@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Users, Clock, Edit, Settings, UserPlus, UserMinus } from "lucide-react";
+import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWai
 import { useTranslation } from "react-i18next";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
+import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
 
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
@@ -169,6 +170,13 @@ interface AdminClassDetailsModalProps {
 function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: AdminClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
   const { isAdmin, profile } = useAuth();
+  const deleteClassMutation = useDeleteScheduledClass();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteClass = () => {
+    deleteClassMutation.mutate(cls.id);
+    setShowDeleteConfirm(false);
+  };
 
   const getLevelDisplay = () => {
     if (cls.custom_level) {
@@ -295,8 +303,8 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
               {cls.participants.map((participant) => (
                 <div key={participant.id} className="text-sm p-3 bg-muted rounded-lg">
-                  <div className="font-medium">{participant.student_enrollment.full_name}</div>
-                  <div className="text-xs text-muted-foreground">{participant.student_enrollment.email}</div>
+                  <div className="font-medium">{participant.student_enrollment?.full_name || 'Alumno sin nombre'}</div>
+                  <div className="text-xs text-muted-foreground">{participant.student_enrollment?.email || 'Sin email'}</div>
                 </div>
               ))}
             </div>
@@ -312,6 +320,26 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
             <Settings className="h-4 w-4" />
             Gestionar Alumnos
           </Button>
+          {!showDeleteConfirm ? (
+            <Button onClick={() => setShowDeleteConfirm(true)} variant="destructive" className="gap-2">
+              <Trash2 className="h-4 w-4" />
+              Cancelar Clase
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" size="sm">
+                No
+              </Button>
+              <Button 
+                onClick={handleDeleteClass} 
+                variant="destructive" 
+                size="sm"
+                disabled={deleteClassMutation.isPending}
+              >
+                {deleteClassMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </DialogContent>
