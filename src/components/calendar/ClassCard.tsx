@@ -24,7 +24,7 @@ export function ClassCard({ class: cls }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
-  const { isAdmin, profile } = useAuth();
+  const { isAdmin, isTrainer, profile } = useAuth();
   
   const enrolledCount = cls.participants?.length || 0;
 
@@ -110,7 +110,7 @@ export function ClassCard({ class: cls }: ClassCardProps) {
                 </div>
               </DialogTrigger>
 
-              {isAdmin ? (
+              {isAdmin || isTrainer ? (
                 <AdminClassDetailsModal 
                   class={cls} 
                   onEditClass={() => {
