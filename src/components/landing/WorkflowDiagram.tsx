@@ -118,14 +118,14 @@ export const WorkflowDiagram = () => {
               ))}
             </div>
 
-             {/* Arrow Down */}
-             <div className="flex justify-center my-8">
-               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 animate-pulse">
-                 <ArrowRight className="h-8 w-8 text-primary rotate-90" />
-               </div>
-             </div>
+            {/* Arrow Down to connect rows */}
+            <div className="flex justify-center my-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 animate-pulse">
+                <ArrowRight className="h-8 w-8 text-primary rotate-90" />
+              </div>
+            </div>
 
-            {/* Second Row */}
+            {/* Second Row - Steps 4, 5, 6 (reversed order, arrows pointing left) */}
             <div className="grid grid-cols-3 gap-8">
               {workflowSteps.slice(3).reverse().map((step, index) => {
                 const originalIndex = workflowSteps.length - index - 1;
@@ -145,13 +145,13 @@ export const WorkflowDiagram = () => {
                         </div>
                       </CardContent>
                     </Card>
-                     {index < 2 && (
-                       <div className="absolute top-1/2 -left-6 transform -translate-y-1/2 z-10">
-                         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
-                           <ArrowRight className="h-6 w-6 text-primary rotate-180" />
-                         </div>
-                       </div>
-                     )}
+                    {index > 0 && (
+                      <div className="absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
+                          <ArrowRight className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
