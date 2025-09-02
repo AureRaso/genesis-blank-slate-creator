@@ -25,7 +25,7 @@ export const LandingHero = () => {
                 <span className="text-foreground">La plataforma completa para academias de Padel</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-lg">
-                Automatiza tu club, gestiona clases y mantén a tus clientes informados vía WhatsApp. 
+                Automatiza tu academia, gestiona clases y mantén a tus clientes informados vía WhatsApp. 
                 La solución integral que necesitas para hacer crecer tu negocio.
               </p>
             </div>
