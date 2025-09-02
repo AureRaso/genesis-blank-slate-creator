@@ -57,7 +57,7 @@ export const WorkflowDiagram = () => {
           {/* Mobile Layout */}
           <div className="lg:hidden space-y-6">
             {workflowSteps.map((step, index) => (
-              <div key={index} className="relative">
+              <div key={index}>
                 <Card className="border-l-4 border-l-primary/20">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
@@ -76,13 +76,6 @@ export const WorkflowDiagram = () => {
                     </div>
                   </CardContent>
                 </Card>
-                 {index < workflowSteps.length - 1 && (
-                   <div className="flex justify-center my-4">
-                     <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                       <ArrowRight className="h-5 w-5 text-primary rotate-90" />
-                     </div>
-                   </div>
-                 )}
               </div>
             ))}
           </div>
@@ -92,7 +85,7 @@ export const WorkflowDiagram = () => {
             <div className="grid grid-cols-3 gap-8">
               {/* First Row */}
               {workflowSteps.slice(0, 3).map((step, index) => (
-                <div key={index} className="relative">
+                <div key={index}>
                   <Card className="hover:shadow-lg transition-shadow">
                     <CardContent className="p-6 text-center space-y-4">
                       <div className={`w-16 h-16 ${step.color} rounded-full flex items-center justify-center mx-auto`}>
@@ -107,30 +100,18 @@ export const WorkflowDiagram = () => {
                       </div>
                     </CardContent>
                   </Card>
-                   {index < 2 && (
-                     <div className="absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
-                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
-                         <ArrowRight className="h-6 w-6 text-primary" />
-                       </div>
-                     </div>
-                   )}
                 </div>
               ))}
             </div>
 
-            {/* Arrow Down to connect rows */}
-            <div className="flex justify-center my-8">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 animate-pulse">
-                <ArrowRight className="h-8 w-8 text-primary rotate-90" />
-              </div>
-            </div>
+            <div className="my-8"></div>
 
-            {/* Second Row - Steps 4, 5, 6 (reversed order, arrows pointing left) */}
+            {/* Second Row - Steps 4, 5, 6 (reversed order) */}
             <div className="grid grid-cols-3 gap-8">
               {workflowSteps.slice(3).reverse().map((step, index) => {
                 const originalIndex = workflowSteps.length - index - 1;
                 return (
-                  <div key={originalIndex} className="relative">
+                  <div key={originalIndex}>
                     <Card className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6 text-center space-y-4">
                         <div className={`w-16 h-16 ${step.color} rounded-full flex items-center justify-center mx-auto`}>
@@ -145,13 +126,6 @@ export const WorkflowDiagram = () => {
                         </div>
                       </CardContent>
                     </Card>
-                    {index > 0 && (
-                      <div className="absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
-                          <ArrowRight className="h-6 w-6 text-primary" />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
