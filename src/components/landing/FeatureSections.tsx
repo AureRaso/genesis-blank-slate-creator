@@ -28,14 +28,14 @@ const features = [
   },
   {
     icon: Users,
-    title: "App para Estudiantes",
+    title: "App para Alumnos",
     description: "Experiencia simplificada para que los jugadores gestionen sus reservas y clases.",
     items: [
       "Dashboard personal del jugador",
       "Inscripción fácil a clases",
       "Vista de clases disponibles",
       "Sistema de reservas automático",
-      "Historial de clases y pagos"
+      "Historial de clases"
     ]
   },
   {
@@ -52,14 +52,14 @@ const features = [
   },
   {
     icon: CreditCard,
-    title: "Sistema de Pagos",
-    description: "Procesamiento seguro de pagos online integrado con Stripe para máxima confianza.",
+    title: "Control de Precios",
+    description: "Gestión flexible de precios y descuentos adaptada a tu forma actual de cobro.",
     items: [
-      "Pagos online seguros con Stripe",
-      "Gestión automática de cobros",
+      "Configuración de precios por clase",
       "Sistema de descuentos y promociones",
-      "Facturación automática",
-      "Historial completo de transacciones"
+      "Control de tarifas por nivel",
+      "Gestión de abonos y paquetes",
+      "Historial de inscripciones"
     ]
   }
 ];

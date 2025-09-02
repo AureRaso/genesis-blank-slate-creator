@@ -6,59 +6,24 @@ import { Badge } from "@/components/ui/badge";
 const plans = [
   {
     name: "Básico",
-    description: "Perfecto para clubes pequeños que empiezan",
-    price: "49",
+    description: "Solución completa para gestionar tu club de pádel",
+    price: "50",
     period: "mes",
-    badge: null,
+    badge: "30 días gratis",
     features: [
-      "Hasta 2 entrenadores",
-      "Gestión de clases básica",
-      "Notificaciones WhatsApp",
+      "Entrenadores ilimitados",
+      "Gestión completa de clases",
+      "Notificaciones WhatsApp automáticas",
       "Dashboard administrativo",
-      "Pagos con Stripe",
-      "Soporte por email"
-    ],
-    cta: "Empezar Gratis",
-    popular: false,
-  },
-  {
-    name: "Profesional",
-    description: "La opción más popular para clubes en crecimiento",
-    price: "99",
-    period: "mes",
-    badge: "Más Popular",
-    features: [
-      "Hasta 10 entrenadores",
-      "Gestión avanzada de clases",
-      "WhatsApp + grupos automáticos",
-      "Analytics y reportes",
+      "Sistema de listas de espera",
+      "Control de precios y descuentos",
       "Múltiples pistas",
-      "Sistema de descuentos",
-      "Soporte prioritario",
-      "Integración calendario"
+      "Analytics y reportes",
+      "Calendario con drag & drop",
+      "Soporte técnico incluido"
     ],
     cta: "Probar 30 días gratis",
     popular: true,
-  },
-  {
-    name: "Enterprise",
-    description: "Solución completa para grandes clubes",
-    price: "199",
-    period: "mes",
-    badge: "Completo",
-    features: [
-      "Entrenadores ilimitados",
-      "Funcionalidades completas",
-      "WhatsApp Business API",
-      "Reportes personalizados",
-      "Múltiples ubicaciones",
-      "Branding personalizado",
-      "Soporte 24/7",
-      "Onboarding personalizado",
-      "Integraciones personalizadas"
-    ],
-    cta: "Contactar Ventas",
-    popular: false,
   },
 ];
 
@@ -87,26 +52,16 @@ export const PricingSection = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="flex justify-center max-w-2xl mx-auto">
           {plans.map((plan, index) => (
             <Card 
               key={index} 
-              className={`relative transition-all duration-300 hover:shadow-xl ${
-                plan.popular 
-                  ? 'border-primary shadow-lg scale-105 lg:scale-110' 
-                  : 'hover:scale-105'
-              }`}
+              className="relative transition-all duration-300 hover:shadow-xl border-primary shadow-lg max-w-md mx-auto"
             >
               {plan.badge && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge 
-                    className={`${
-                      plan.popular 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-accent text-accent-foreground'
-                    }`}
-                  >
-                    {plan.popular && <Star className="h-3 w-3 mr-1" />}
+                  <Badge className="bg-primary text-primary-foreground">
+                    <Star className="h-3 w-3 mr-1" />
                     {plan.badge}
                   </Badge>
                 </div>
@@ -122,12 +77,6 @@ export const PricingSection = () => {
                       <span className="text-4xl font-bold">{plan.price}€</span>
                       <span className="text-muted-foreground">/{plan.period}</span>
                     </div>
-                    {plan.popular && (
-                      <div className="text-sm text-muted-foreground">
-                        <span className="line-through">149€</span>
-                        <span className="text-primary font-semibold ml-2">Ahorra 33%</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -143,12 +92,7 @@ export const PricingSection = () => {
                 </div>
 
                 <Button 
-                  className={`w-full ${
-                    plan.popular 
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                      : ''
-                  }`}
-                  variant={plan.popular ? 'default' : 'outline'}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   size="lg"
                   onClick={scrollToContact}
                 >
