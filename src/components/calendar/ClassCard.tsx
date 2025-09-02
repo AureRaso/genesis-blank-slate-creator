@@ -1,13 +1,13 @@
 
 import { useState } from "react";
-import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2 } from "lucide-react";
+import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { EditClassModal } from "./EditClassModal";
-import { ManageStudentsModal } from "./ManageStudentsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTrainerColor, getClassColor } from "@/utils/trainerColors";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
@@ -24,7 +24,6 @@ interface ClassCardProps {
 export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showManageStudents, setShowManageStudents] = useState(false);
   const { isAdmin, isTrainer, profile } = useAuth();
   
   const enrolledCount = cls.participants?.length || 0;
@@ -124,17 +123,13 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
               </DialogTrigger>
 
               {isAdmin || isTrainer ? (
-                <AdminClassDetailsModal 
-                  class={cls} 
-                  onEditClass={() => {
-                    setShowDetails(false);
-                    setShowEditModal(true);
-                  }}
-                  onManageStudents={() => {
-                    setShowDetails(false);
-                    setShowManageStudents(true);
-                  }}
-                />
+              <AdminClassDetailsModal 
+                class={cls} 
+                onEditClass={() => {
+                  setShowDetails(false);
+                  setShowEditModal(true);
+                }}
+              />
               ) : (
                 <PlayerClassDetailsModal class={cls} />
               )}
@@ -164,12 +159,6 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
       />
-
-      <ManageStudentsModal 
-        class={cls}
-        isOpen={showManageStudents}
-        onClose={() => setShowManageStudents(false)}
-      />
     </>
   );
 }
@@ -177,10 +166,9 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
 interface AdminClassDetailsModalProps {
   class: ScheduledClassWithTemplate;
   onEditClass: () => void;
-  onManageStudents: () => void;
 }
 
-function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: AdminClassDetailsModalProps) {
+function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
   const { isAdmin, profile } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
@@ -235,13 +223,23 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-3xl">
       <DialogHeader>
         <DialogTitle className="flex items-center justify-between">
           <span>Detalles de la Clase</span>
-          <Badge className={getLevelColor()}>
-            {getLevelDisplay()}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEditClass}
+              className="h-8 w-8 p-0"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Badge className={getLevelColor()}>
+              {getLevelDisplay()}
+            </Badge>
+          </div>
         </DialogTitle>
       </DialogHeader>
 
@@ -250,110 +248,131 @@ function AdminClassDetailsModal({ class: cls, onEditClass, onManageStudents }: A
           <h3 className="font-semibold text-lg mb-2">{cls.name}</h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Horario</div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{cls.start_time.slice(0, 5)} - {getEndTime()}</span>
-                <span className="text-muted-foreground">({cls.duration_minutes} min)</span>
-              </div>
-            </div>
+        <Tabs defaultValue="information" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="information">Información</TabsTrigger>
+            <TabsTrigger value="students">Alumnos</TabsTrigger>
+          </TabsList>
 
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
-              <div className="flex flex-wrap gap-1">
-                {cls.days_of_week.map((day) => (
-                  <Badge key={day} variant="outline" className="text-xs">
-                    {day}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Periodo</div>
-              <div className="text-sm">
-                {new Date(cls.start_date).toLocaleDateString('es-ES')} - {new Date(cls.end_date).toLocaleDateString('es-ES')}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Alumnos inscritos</div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{enrolledCount} alumnos</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Tipo de recurrencia</div>
-              <div className="text-sm font-medium">{cls.recurrence_type}</div>
-            </div>
-
-            {isAdmin && cls.trainer && (
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Profesor</div>
-                <div className="text-sm font-medium">{cls.trainer.full_name}</div>
-              </div>
-            )}
-
-            {isAdmin && cls.created_by && (
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Creado por</div>
-                <div className="text-sm font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {cls.participants && cls.participants.length > 0 && (
-          <div>
-            <div className="text-sm text-muted-foreground mb-3">Lista de alumnos</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-              {cls.participants.map((participant) => (
-                <div key={participant.id} className="text-sm p-3 bg-muted rounded-lg">
-                  <div className="font-medium">{participant.student_enrollment?.full_name || 'Alumno sin nombre'}</div>
-                  <div className="text-xs text-muted-foreground">{participant.student_enrollment?.email || 'Sin email'}</div>
+          <TabsContent value="information" className="space-y-6 mt-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Horario</div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{cls.start_time.slice(0, 5)} - {getEndTime()}</span>
+                    <span className="text-muted-foreground">({cls.duration_minutes} min)</span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button onClick={onEditClass} className="flex-1 gap-2">
-            <Edit className="h-4 w-4" />
-            Editar Clase
-          </Button>
-          <Button onClick={onManageStudents} variant="outline" className="flex-1 gap-2">
-            <Settings className="h-4 w-4" />
-            Gestionar Alumnos
-          </Button>
-          {!showDeleteConfirm ? (
-            <Button onClick={() => setShowDeleteConfirm(true)} variant="destructive" className="gap-2">
-              <Trash2 className="h-4 w-4" />
-              Cancelar Clase
-            </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" size="sm">
-                No
-              </Button>
-              <Button 
-                onClick={handleDeleteClass} 
-                variant="destructive" 
-                size="sm"
-                disabled={deleteClassMutation.isPending}
-              >
-                {deleteClassMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
+                  <div className="flex flex-wrap gap-1">
+                    {cls.days_of_week.map((day) => (
+                      <Badge key={day} variant="outline" className="text-xs">
+                        {day}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Periodo</div>
+                  <div className="text-sm">
+                    {new Date(cls.start_date).toLocaleDateString('es-ES')} - {new Date(cls.end_date).toLocaleDateString('es-ES')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Alumnos inscritos</div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{enrolledCount} alumnos</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Tipo de recurrencia</div>
+                  <div className="text-sm font-medium">{cls.recurrence_type}</div>
+                </div>
+
+                {isAdmin && cls.trainer && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Profesor</div>
+                    <div className="text-sm font-medium">{cls.trainer.full_name}</div>
+                  </div>
+                )}
+
+                {isAdmin && cls.created_by && (
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Creado por</div>
+                    <div className="text-sm font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4 border-t">
+              <div></div>
+              {!showDeleteConfirm ? (
+                <Button onClick={() => setShowDeleteConfirm(true)} variant="destructive" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Cancelar Clase
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" size="sm">
+                    No
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteClass} 
+                    variant="destructive" 
+                    size="sm"
+                    disabled={deleteClassMutation.isPending}
+                  >
+                    {deleteClassMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="students" className="space-y-4 mt-6">
+            {cls.participants && cls.participants.length > 0 ? (
+              <div>
+                <div className="text-sm text-muted-foreground mb-3">Lista de alumnos ({enrolledCount})</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                  {cls.participants.map((participant) => (
+                    <div key={participant.id} className="text-sm p-3 bg-muted rounded-lg flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{participant.student_enrollment?.full_name || 'Alumno sin nombre'}</div>
+                        <div className="text-xs text-muted-foreground">{participant.student_enrollment?.email || 'Sin email'}</div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">No hay alumnos inscritos en esta clase</p>
+              </div>
+            )}
+            
+            <div className="pt-4 border-t">
+              <Button variant="outline" className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Añadir Alumno
               </Button>
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </DialogContent>
   );
