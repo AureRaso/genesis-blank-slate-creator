@@ -225,7 +225,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
   return (
     <DialogContent className="max-w-4xl">
       <DialogHeader className="relative">
-        <DialogTitle className="flex items-center justify-between">
+        <DialogTitle className="flex items-center justify-between pr-20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Clock className="h-5 w-5 text-primary" />
@@ -235,52 +235,52 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
               <p className="text-sm text-muted-foreground">Detalles de la clase</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
-              {getLevelDisplay()}
-            </Badge>
-            <div className="flex items-center gap-1 ml-4">
+          <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
+            {getLevelDisplay()}
+          </Badge>
+        </DialogTitle>
+        
+        {/* Action buttons positioned absolutely */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEditClass}
+            className="h-9 w-9 p-0 rounded-full hover:bg-muted"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          {!showDeleteConfirm ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : (
+            <div className="flex items-center gap-1 bg-background rounded-lg border p-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onEditClass}
-                className="h-9 w-9 p-0 rounded-full hover:bg-primary/10"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="h-7 px-2 text-xs"
               >
-                <Pencil className="h-4 w-4" />
+                No
               </Button>
-              {!showDeleteConfirm ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="h-8 px-2 text-xs"
-                  >
-                    No
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteClass}
-                    disabled={deleteClassMutation.isPending}
-                    className="h-8 px-2 text-xs"
-                  >
-                    {deleteClassMutation.isPending ? "..." : "Sí"}
-                  </Button>
-                </div>
-              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteClass}
+                disabled={deleteClassMutation.isPending}
+                className="h-7 px-2 text-xs"
+              >
+                {deleteClassMutation.isPending ? "..." : "Sí"}
+              </Button>
             </div>
-          </div>
-        </DialogTitle>
+          )}
+        </div>
       </DialogHeader>
 
       <div className="mt-6">
