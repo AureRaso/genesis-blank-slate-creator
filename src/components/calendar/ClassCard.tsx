@@ -235,9 +235,6 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
               <p className="text-sm text-muted-foreground">Detalles de la clase</p>
             </div>
           </div>
-          <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
-            {getLevelDisplay()}
-          </Badge>
         </DialogTitle>
         
         {/* Action buttons positioned absolutely */}
@@ -359,6 +356,12 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                   DETALLES
                 </div>
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Nivel</span>
+                    <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
+                      {getLevelDisplay()}
+                    </Badge>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Alumnos</span>
                     <span className="font-medium">{enrolledCount}</span>
