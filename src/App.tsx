@@ -29,6 +29,7 @@ import ClassEnrollmentPage from "@/pages/ClassEnrollmentPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import PaymentCancelPage from "@/pages/PaymentCancelPage";
 import SettingsPage from "@/pages/SettingsPage";
+import LandingPage from "@/pages/LandingPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -115,7 +116,8 @@ function App() {
 
   return (
     <Router>
-            <Routes>
+        <Routes>
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/logout" element={<LogoutPage />} />
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
