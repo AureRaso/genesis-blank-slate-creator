@@ -134,7 +134,7 @@ export const WorkflowDiagram = () => {
         </div>
 
         {/* WhatsApp Integration Highlight */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center max-w-4xl mx-auto">
           <Card className="bg-gradient-to-r from-green-500/10 to-green-600/10 border-green-200">
             <CardContent className="p-8">
               <div className="flex items-center justify-center space-x-4 mb-4">
