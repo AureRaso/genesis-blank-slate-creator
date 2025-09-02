@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil, Calendar } from "lucide-react";
+import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil, Calendar, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,7 +25,9 @@ interface ClassCardProps {
 export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { isAdmin, isTrainer, profile } = useAuth();
+  const deleteClassMutation = useDeleteScheduledClass();
   
   const enrolledCount = cls.participants?.length || 0;
 
@@ -80,6 +82,11 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
     }
   };
 
+  const handleDeleteClass = () => {
+    deleteClassMutation.mutate(cls.id);
+    setShowDeleteConfirm(false);
+  };
+
   return (
     <>
       <TooltipProvider>
@@ -89,13 +96,28 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
               <DialogTrigger asChild>
                 <div 
                   className={cn(
-                    "w-full h-full p-2 rounded-md text-xs cursor-move hover:opacity-90 transition-all border shadow-sm",
+                    "w-full h-full p-2 rounded-md text-xs cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
                     "flex flex-col justify-between",
                     getLevelColor()
                   )}
                   draggable={isAdmin || isTrainer}
                   onDragStart={handleDragStart}
                 >
+                  {/* Delete X button - only for admin/trainer */}
+                  {(isAdmin || isTrainer) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                   <div className="space-y-1">
                     <div className="font-medium truncate text-sm leading-tight">
                       {cls.name}
@@ -160,6 +182,29 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
       />
+
+      {/* Delete Confirmation AlertDialog for calendar card */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar clase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente la clase "{cls.name}" y todos sus datos asociados. 
+              Los alumnos inscritos serán notificados de la cancelación. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, mantener</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClass}
+              disabled={deleteClassMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -174,11 +219,6 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
   const { isAdmin, profile } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleDeleteClass = () => {
-    deleteClassMutation.mutate(cls.id);
-    setShowDeleteConfirm(false);
-  };
 
   const getLevelDisplay = () => {
     if (cls.custom_level) {
@@ -221,6 +261,11 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
     const endHours = Math.floor(endMinutes / 60);
     const endMins = endMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  };
+
+  const handleDeleteClass = () => {
+    deleteClassMutation.mutate(cls.id);
+    setShowDeleteConfirm(false);
   };
 
   return (
