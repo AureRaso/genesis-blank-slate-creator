@@ -382,33 +382,6 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                 </div>
               </div>
             </div>
-
-            {/* Delete Button */}
-            <div className="flex justify-end pt-6 border-t">
-              {!showDeleteConfirm ? (
-                <Button 
-                  onClick={() => setShowDeleteConfirm(true)} 
-                  variant="destructive" 
-                  className="gap-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Cancelar Clase
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button onClick={() => setShowDeleteConfirm(false)} variant="outline">
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleDeleteClass} 
-                    variant="destructive"
-                    disabled={deleteClassMutation.isPending}
-                  >
-                    {deleteClassMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
-                  </Button>
-                </div>
-              )}
-            </div>
           </TabsContent>
 
           <TabsContent value="students" className="mt-6">
