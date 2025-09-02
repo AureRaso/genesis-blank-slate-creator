@@ -1,17 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Smartphone, Monitor } from "lucide-react";
-
 export const LandingHero = () => {
   const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('contact')?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
   const scrollToDemo = () => {
-    document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('workflow')?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/5 py-20 lg:py-32">
+  return <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/5 py-20 lg:py-32">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
@@ -22,9 +22,7 @@ export const LandingHero = () => {
                   PadelLock
                 </span>
                 <br />
-                <span className="text-foreground">
-                  La Plataforma Completa para Gestión de Clubes de Pádel
-                </span>
+                <span className="text-foreground">La plataforma completa para academias de Padel</span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-lg">
                 Automatiza tu club, gestiona clases y mantén a tus clientes informados vía WhatsApp. 
@@ -54,19 +52,11 @@ export const LandingHero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                onClick={scrollToContact}
-              >
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={scrollToContact}>
                 Solicitar Demo Gratuita
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={scrollToDemo}
-              >
+              <Button variant="outline" size="lg" onClick={scrollToDemo}>
                 <Play className="mr-2 h-4 w-4" />
                 Ver Cómo Funciona
               </Button>
@@ -147,6 +137,5 @@ export const LandingHero = () => {
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
       </div>
-    </section>
-  );
+    </section>;
 };
