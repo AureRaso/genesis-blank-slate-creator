@@ -18,9 +18,10 @@ import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
 
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
+  onDragStart?: () => void;
 }
 
-export function ClassCard({ class: cls }: ClassCardProps) {
+export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
@@ -71,6 +72,14 @@ export function ClassCard({ class: cls }: ClassCardProps) {
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', cls.id);
+    e.dataTransfer.effectAllowed = 'move';
+    if (onDragStart) {
+      onDragStart();
+    }
+  };
+
   return (
     <>
       <TooltipProvider>
@@ -78,11 +87,15 @@ export function ClassCard({ class: cls }: ClassCardProps) {
           <TooltipTrigger asChild>
             <Dialog open={showDetails} onOpenChange={setShowDetails}>
               <DialogTrigger asChild>
-                <div className={cn(
-                  "w-full h-full p-2 rounded-md text-xs cursor-pointer hover:opacity-90 transition-all border shadow-sm",
-                  "flex flex-col justify-between",
-                  getLevelColor()
-                )}>
+                <div 
+                  className={cn(
+                    "w-full h-full p-2 rounded-md text-xs cursor-move hover:opacity-90 transition-all border shadow-sm",
+                    "flex flex-col justify-between",
+                    getLevelColor()
+                  )}
+                  draggable={isAdmin || isTrainer}
+                  onDragStart={handleDragStart}
+                >
                   <div className="space-y-1">
                     <div className="font-medium truncate text-sm leading-tight">
                       {cls.name}

@@ -15,6 +15,7 @@ import ScheduledClassForm from "@/components/ScheduledClassForm";
 import { ClassCard } from "./calendar/ClassCard";
 import { cn } from "@/lib/utils";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
+import { useClassDragDrop } from "@/hooks/useClassDragDrop";
 
 interface ClassCalendarViewProps {
   clubId?: string;
@@ -30,6 +31,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   const { profile, isAdmin } = useAuth();
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const { handleClassDrop } = useClassDragDrop();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -182,6 +184,9 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         weekEnd={weekEnd}
         classes={filteredClasses}
         onTimeSlotClick={handleTimeSlotClick}
+        onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) => 
+          handleClassDrop(classId, newDay, newTimeSlot, classes || [])
+        }
       />
 
       {/* Create Class Form Dialog */}
@@ -260,13 +265,19 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
 
                 {/* Calendar grid with time slots */}
                 <div className="flex-1 overflow-y-auto">
-                  {Array.from({ length: 24 }, (_, hour) => {
-                    const timeSlots = [`${hour.toString().padStart(2, '0')}:00`, `${hour.toString().padStart(2, '0')}:30`];
-                    return timeSlots.map((timeSlot) => (
-                      <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: '50px' }}>
-                        <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
-                          {timeSlot}
-                        </div>
+                  {[
+                    "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
+                    "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
+                    "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45",
+                    "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45",
+                    "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45",
+                    "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45",
+                    "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00"
+                  ].map((timeSlot) => (
+                    <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: '25px' }}>
+                      <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
+                        {timeSlot}
+                      </div>
                         
                         {weekDays.map((day) => {
                           const dayClasses = filteredClasses.filter(cls => {
@@ -285,10 +296,21 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                             <div 
                               key={`${day.toISOString()}-${timeSlot}`} 
                               className="border-r last:border-r-0 relative cursor-pointer hover:bg-muted/50 transition-colors"
-                              style={{ minHeight: '50px' }}
+                              style={{ minHeight: '25px' }}
                               onClick={() => {
                                 if (dayClasses.length === 0 && isAdmin) {
                                   handleTimeSlotClick(day, timeSlot);
+                                }
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const classId = e.dataTransfer.getData('text/plain');
+                                if (classId && dayClasses.length === 0) {
+                                  handleClassDrop(classId, day, timeSlot, classes || []);
                                 }
                               }}
                             >
@@ -297,7 +319,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                                   key={cls.id}
                                   className="absolute inset-x-0 top-0 p-1"
                                   style={{
-                                    height: `${Math.ceil(cls.duration_minutes / 30) * 50}px`,
+                                    height: `${Math.ceil(cls.duration_minutes / 15) * 25}px`,
                                     zIndex: 5
                                   }}
                                 >
@@ -306,11 +328,10 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                               ))}
                             </div>
                           );
-                        })}
-                      </div>
-                    ));
-                  })}
-                </div>
+                         })}
+                       </div>
+                     ))}
+                 </div>
               </div>
             </div>
           </div>
