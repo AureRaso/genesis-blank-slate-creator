@@ -225,7 +225,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
   return (
     <DialogContent className="max-w-4xl">
       <DialogHeader className="relative">
-        <DialogTitle className="flex items-center justify-between pr-12">
+        <DialogTitle className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Clock className="h-5 w-5 text-primary" />
@@ -239,16 +239,48 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
             <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
               {getLevelDisplay()}
             </Badge>
+            <div className="flex items-center gap-1 ml-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEditClass}
+                className="h-9 w-9 p-0 rounded-full hover:bg-primary/10"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="h-8 px-2 text-xs"
+                  >
+                    No
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteClass}
+                    disabled={deleteClassMutation.isPending}
+                    className="h-8 px-2 text-xs"
+                  >
+                    {deleteClassMutation.isPending ? "..." : "Sí"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </DialogTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEditClass}
-          className="absolute top-4 right-4 h-9 w-9 p-0 rounded-full hover:bg-primary/10"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
       </DialogHeader>
 
       <div className="mt-6">
