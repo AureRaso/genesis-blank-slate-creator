@@ -1,8 +1,7 @@
 
 import PlayerForm from "@/components/PlayerForm";
 import PlayersList from "@/components/PlayersList";
-import TeamForm from "@/components/TeamForm";
-import TeamsList from "@/components/TeamsList";
+import AdminStudentsList from "@/components/AdminStudentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
@@ -22,10 +21,10 @@ const PlayersPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-          {isAdmin ? 'Gestión de Jugadores' : 'Jugadores'}
+          {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
         </h1>
         <p className="text-muted-foreground">
-          {isAdmin ? 'Administra jugadores y forma parejas' : 'Lista de jugadores registrados'}
+          {isAdmin ? 'Alumnos inscritos en tus clubes' : 'Lista de jugadores registrados'}
         </p>
       </div>
 
@@ -33,11 +32,9 @@ const PlayersPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             <PlayerForm />
-            <TeamForm />
           </div>
           <div className="space-y-6">
-            <PlayersList />
-            <TeamsList />
+            <AdminStudentsList />
           </div>
         </div>
       ) : (
