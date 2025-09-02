@@ -106,12 +106,12 @@ export const WorkflowDiagram = () => {
 
             <div className="my-8"></div>
 
-            {/* Second Row - Steps 4, 5, 6 (reversed order) */}
+            {/* Second Row - Steps 4, 5, 6 */}
             <div className="grid grid-cols-3 gap-8">
-              {workflowSteps.slice(3).reverse().map((step, index) => {
-                const originalIndex = workflowSteps.length - index - 1;
+              {workflowSteps.slice(3).map((step, index) => {
+                const stepIndex = index + 3;
                 return (
-                  <div key={originalIndex}>
+                  <div key={stepIndex}>
                     <Card className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6 text-center space-y-4">
                         <div className={`w-16 h-16 ${step.color} rounded-full flex items-center justify-center mx-auto`}>
@@ -119,7 +119,7 @@ export const WorkflowDiagram = () => {
                         </div>
                         <div className="space-y-2">
                           <div className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full inline-block">
-                            Paso {originalIndex + 1}
+                            Paso {stepIndex + 1}
                           </div>
                           <h3 className="font-semibold text-lg">{step.title}</h3>
                           <p className="text-muted-foreground text-sm">{step.description}</p>
