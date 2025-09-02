@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { EditClassModal } from "./EditClassModal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -247,36 +248,14 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
           >
             <Pencil className="h-4 w-4" />
           </Button>
-          {!showDeleteConfirm ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1 bg-background rounded-lg border p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="h-7 px-2 text-xs"
-              >
-                No
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteClass}
-                disabled={deleteClassMutation.isPending}
-                className="h-7 px-2 text-xs"
-              >
-                {deleteClassMutation.isPending ? "..." : "Sí"}
-              </Button>
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </DialogHeader>
 
@@ -456,6 +435,29 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation AlertDialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar clase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente la clase "{cls.name}" y todos sus datos asociados. 
+              Los alumnos inscritos serán notificados de la cancelación. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, mantener</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClass}
+              disabled={deleteClassMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DialogContent>
   );
 }
