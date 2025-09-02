@@ -22,14 +22,14 @@ const workflowSteps = [
   },
   {
     icon: CheckCircle,
-    title: "Estudiantes se inscriben",
+    title: "Alumnos se inscriben",
     description: "Los jugadores hacen clic en el enlace y se inscriben directamente",
     color: "bg-orange-500",
   },
   {
     icon: CreditCard,
-    title: "Pago automatizado",
-    description: "El sistema procesa el pago de forma segura con Stripe",
+    title: "Gestión de pagos",
+    description: "Los alumnos realizan el pago según el método habitual del club",
     color: "bg-red-500",
   },
   {
@@ -76,11 +76,13 @@ export const WorkflowDiagram = () => {
                     </div>
                   </CardContent>
                 </Card>
-                {index < workflowSteps.length - 1 && (
-                  <div className="flex justify-center my-4">
-                    <ArrowRight className="h-6 w-6 text-primary rotate-90" />
-                  </div>
-                )}
+                 {index < workflowSteps.length - 1 && (
+                   <div className="flex justify-center my-4">
+                     <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                       <ArrowRight className="h-5 w-5 text-primary rotate-90" />
+                     </div>
+                   </div>
+                 )}
               </div>
             ))}
           </div>
@@ -105,17 +107,23 @@ export const WorkflowDiagram = () => {
                       </div>
                     </CardContent>
                   </Card>
-                  {index < 2 && (
-                    <ArrowRight className="absolute top-1/2 -right-4 transform -translate-y-1/2 h-8 w-8 text-primary" />
-                  )}
+                   {index < 2 && (
+                     <div className="absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
+                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
+                         <ArrowRight className="h-6 w-6 text-primary" />
+                       </div>
+                     </div>
+                   )}
                 </div>
               ))}
             </div>
 
-            {/* Arrow Down */}
-            <div className="flex justify-center my-8">
-              <ArrowRight className="h-8 w-8 text-primary rotate-90" />
-            </div>
+             {/* Arrow Down */}
+             <div className="flex justify-center my-8">
+               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20 animate-pulse">
+                 <ArrowRight className="h-8 w-8 text-primary rotate-90" />
+               </div>
+             </div>
 
             {/* Second Row */}
             <div className="grid grid-cols-3 gap-8">
@@ -137,9 +145,13 @@ export const WorkflowDiagram = () => {
                         </div>
                       </CardContent>
                     </Card>
-                    {index < 2 && (
-                      <ArrowRight className="absolute top-1/2 -left-4 transform -translate-y-1/2 rotate-180 h-8 w-8 text-primary" />
-                    )}
+                     {index < 2 && (
+                       <div className="absolute top-1/2 -left-6 transform -translate-y-1/2 z-10">
+                         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
+                           <ArrowRight className="h-6 w-6 text-primary rotate-180" />
+                         </div>
+                       </div>
+                     )}
                   </div>
                 );
               })}
