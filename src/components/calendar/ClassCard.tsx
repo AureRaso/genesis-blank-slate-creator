@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil } from "lucide-react";
+import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -223,114 +223,153 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
   };
 
   return (
-    <DialogContent className="max-w-3xl">
-      <DialogHeader>
-        <DialogTitle className="flex items-center justify-between">
-          <span>Detalles de la Clase</span>
+    <DialogContent className="max-w-4xl">
+      <DialogHeader className="relative">
+        <DialogTitle className="flex items-center justify-between pr-12">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">{cls.name}</h2>
+              <p className="text-sm text-muted-foreground">Detalles de la clase</p>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEditClass}
-              className="h-8 w-8 p-0"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Badge className={getLevelColor()}>
+            <Badge className={cn("text-sm px-3 py-1", getLevelColor())}>
               {getLevelDisplay()}
             </Badge>
           </div>
         </DialogTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onEditClass}
+          className="absolute top-4 right-4 h-9 w-9 p-0 rounded-full hover:bg-primary/10"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
       </DialogHeader>
 
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-semibold text-lg mb-2">{cls.name}</h3>
-        </div>
-
+      <div className="mt-6">
         <Tabs defaultValue="information" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="information">Información</TabsTrigger>
-            <TabsTrigger value="students">Alumnos</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-12 bg-muted rounded-lg p-1">
+            <TabsTrigger 
+              value="information" 
+              className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Información
+            </TabsTrigger>
+            <TabsTrigger 
+              value="students"
+              className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Alumnos ({enrolledCount})
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="information" className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Horario</div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{cls.start_time.slice(0, 5)} - {getEndTime()}</span>
-                    <span className="text-muted-foreground">({cls.duration_minutes} min)</span>
-                  </div>
+          <TabsContent value="information" className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Schedule Card */}
+              <div className="bg-muted/30 rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+                  <Clock className="h-4 w-4" />
+                  HORARIO
                 </div>
-
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
-                  <div className="flex flex-wrap gap-1">
-                    {cls.days_of_week.map((day) => (
-                      <Badge key={day} variant="outline" className="text-xs">
-                        {day}
-                      </Badge>
-                    ))}
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold">
+                    {cls.start_time.slice(0, 5)} - {getEndTime()}
                   </div>
-                </div>
-
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Periodo</div>
-                  <div className="text-sm">
-                    {new Date(cls.start_date).toLocaleDateString('es-ES')} - {new Date(cls.end_date).toLocaleDateString('es-ES')}
+                  <div className="text-sm text-muted-foreground">
+                    {cls.duration_minutes} minutos de duración
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Alumnos inscritos</div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{enrolledCount} alumnos</span>
+              {/* Days Card */}
+              <div className="bg-muted/30 rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+                  <Calendar className="h-4 w-4" />
+                  DÍAS DE LA SEMANA
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {cls.days_of_week.map((day) => (
+                    <Badge key={day} variant="secondary" className="text-sm px-3 py-1 capitalize">
+                      {day}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Period Card */}
+              <div className="bg-muted/30 rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+                  <Calendar className="h-4 w-4" />
+                  PERÍODO
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium">
+                    {new Date(cls.start_date).toLocaleDateString('es-ES')}
+                  </div>
+                  <div className="text-sm text-muted-foreground">hasta</div>
+                  <div className="font-medium">
+                    {new Date(cls.end_date).toLocaleDateString('es-ES')}
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Tipo de recurrencia</div>
-                  <div className="text-sm font-medium">{cls.recurrence_type}</div>
+              {/* Details Card */}
+              <div className="bg-muted/30 rounded-xl p-6 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+                  <Settings className="h-4 w-4" />
+                  DETALLES
                 </div>
-
-                {isAdmin && cls.trainer && (
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Profesor</div>
-                    <div className="text-sm font-medium">{cls.trainer.full_name}</div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Alumnos</span>
+                    <span className="font-medium">{enrolledCount}</span>
                   </div>
-                )}
-
-                {isAdmin && cls.created_by && (
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Creado por</div>
-                    <div className="text-sm font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Recurrencia</span>
+                    <span className="font-medium capitalize">{cls.recurrence_type}</span>
                   </div>
-                )}
+                  {isAdmin && cls.trainer && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Profesor</span>
+                      <span className="font-medium">{cls.trainer.full_name}</span>
+                    </div>
+                  )}
+                  {isAdmin && cls.created_by && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Creado por</span>
+                      <span className="font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between pt-4 border-t">
-              <div></div>
+            {/* Delete Button */}
+            <div className="flex justify-end pt-6 border-t">
               {!showDeleteConfirm ? (
-                <Button onClick={() => setShowDeleteConfirm(true)} variant="destructive" className="gap-2">
+                <Button 
+                  onClick={() => setShowDeleteConfirm(true)} 
+                  variant="destructive" 
+                  className="gap-2"
+                >
                   <Trash2 className="h-4 w-4" />
                   Cancelar Clase
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" size="sm">
-                    No
+                  <Button onClick={() => setShowDeleteConfirm(false)} variant="outline">
+                    Cancelar
                   </Button>
                   <Button 
                     onClick={handleDeleteClass} 
-                    variant="destructive" 
-                    size="sm"
+                    variant="destructive"
                     disabled={deleteClassMutation.isPending}
                   >
                     {deleteClassMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
@@ -340,36 +379,71 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
             </div>
           </TabsContent>
 
-          <TabsContent value="students" className="space-y-4 mt-6">
-            {cls.participants && cls.participants.length > 0 ? (
-              <div>
-                <div className="text-sm text-muted-foreground mb-3">Lista de alumnos ({enrolledCount})</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                  {cls.participants.map((participant) => (
-                    <div key={participant.id} className="text-sm p-3 bg-muted rounded-lg flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{participant.student_enrollment?.full_name || 'Alumno sin nombre'}</div>
-                        <div className="text-xs text-muted-foreground">{participant.student_enrollment?.email || 'Sin email'}</div>
+          <TabsContent value="students" className="mt-6">
+            <div className="bg-muted/30 rounded-xl p-6">
+              {cls.participants && cls.participants.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-lg">Lista de alumnos</h3>
+                    <Badge variant="secondary" className="text-sm">
+                      {enrolledCount} estudiantes
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid gap-3 max-h-80 overflow-y-auto">
+                    {cls.participants.map((participant) => (
+                      <div 
+                        key={participant.id} 
+                        className="flex items-center justify-between p-4 bg-background rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {participant.student_enrollment?.full_name || 'Alumno sin nombre'}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {participant.student_enrollment?.email || 'Sin email'}
+                            </div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">No hay alumnos inscritos en esta clase</p>
-              </div>
-            )}
-            
-            <div className="pt-4 border-t">
-              <Button variant="outline" className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Añadir Alumno
-              </Button>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Sin alumnos inscritos</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Esta clase aún no tiene estudiantes registrados
+                  </p>
+                  <Button variant="outline" className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Añadir primer alumno
+                  </Button>
+                </div>
+              )}
+              
+              {cls.participants && cls.participants.length > 0 && (
+                <div className="pt-6 border-t mt-6">
+                  <Button variant="outline" className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Añadir Alumno
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
