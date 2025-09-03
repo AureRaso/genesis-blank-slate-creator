@@ -39,6 +39,7 @@ const formSchema = z.object({
   custom_level: z.enum(["primera_alta", "primera_media", "primera_baja", "segunda_alta", "segunda_media", "segunda_baja", "tercera_alta", "tercera_media", "tercera_baja"]).optional(),
   start_time: z.string().min(1, "Start time is required"),
   duration_minutes: z.number().min(30).max(180),
+  max_participants: z.number().min(1).max(12).default(4),
   // Modified days of week - now multiple selection
   selected_days: z.array(z.string()).min(1, "Select at least one day"),
   start_date: z.date({
@@ -153,6 +154,7 @@ export default function ScheduledClassForm({
       club_id: clubId,
       trainer_profile_id: trainerProfileId,
       duration_minutes: 60,
+      max_participants: 4,
       recurrence_type: "weekly",
       selection_type: "individual",
       selected_students: [],
@@ -387,7 +389,7 @@ export default function ScheduledClassForm({
 
                 <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField control={form.control} name="start_time" render={({
                 field
               }) => <FormItem>
@@ -421,6 +423,16 @@ export default function ScheduledClassForm({
                         <FormLabel>{t('classes.duration')} ({t('classes.minutes')})</FormLabel>
                         <FormControl>
                           <Input type="number" min="30" max="180" step="15" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>} />
+
+                  <FormField control={form.control} name="max_participants" render={({
+                field
+              }) => <FormItem>
+                        <FormLabel>Número de jugadores</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="1" max="12" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>} />
