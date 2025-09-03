@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import Index from "@/pages/Index";
@@ -78,6 +79,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 
 function App() {
   const { isAdmin, isPlayer, isTrainer, loading, user, authError, retryAuth } = useAuth();
+  const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
   console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, loading, user: user?.email, authError });
 
@@ -138,11 +140,11 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (
-                  // Rutas para otros roles (admin y player)
+                  // Rutas para otros roles (admin y player) con feature flags
                   <>
                     <Route path="/" element={<Index />} />
-                    <Route path="/leagues" element={<LeaguesPage />} />
-                    <Route path="/matches" element={<MatchesPage />} />
+                    {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
+                    {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
                     <Route path="/players" element={<PlayersPage />} />
                      <Route path="/clubs" element={<ClubsPage />} />
@@ -150,8 +152,8 @@ function App() {
                      <Route path="/clubs/edit/:id" element={<ClubFormPage />} />
                      <Route path="/trainers" element={<TrainersPage />} />
                      <Route path="/scheduled-classes" element={
-                        isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
-                      } />
+                       isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
+                     } />
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>

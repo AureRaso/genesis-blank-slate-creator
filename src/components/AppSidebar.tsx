@@ -6,10 +6,12 @@ import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWaitlistCount } from "@/hooks/useWaitlistCount";
 import { useTranslation } from "react-i18next";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
   const { t } = useTranslation();
+  const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
   // Provide safe defaults if auth context is not available
   const {
@@ -82,24 +84,29 @@ const AppSidebar = () => {
 
   // Si es jugador, mostrar panel personalizado sin profesores
   if (isPlayer) {
-    const playerNavItems = [{
-      title: t('sidebar.dashboard'),
-      url: "/",
-      icon: SquareTerminal,
-      isActive: true
-    }, {
-      title: t('sidebar.leagues'),
-      url: "/leagues",
-      icon: Trophy
-    }, {
-      title: t('sidebar.scheduledClasses'),
-      url: "/scheduled-classes",
-      icon: Calendar
-    }, {
-      title: t('sidebar.clubs'),
-      url: "/clubs",
-      icon: Building2
-    }];
+    const playerNavItems = [
+      {
+        title: t('sidebar.dashboard'),
+        url: "/",
+        icon: SquareTerminal,
+        isActive: true
+      },
+      ...(leaguesEnabled ? [{
+        title: t('sidebar.leagues'),
+        url: "/leagues",
+        icon: Trophy
+      }] : []),
+      {
+        title: t('sidebar.scheduledClasses'),
+        url: "/scheduled-classes",
+        icon: Calendar
+      },
+      {
+        title: t('sidebar.clubs'),
+        url: "/clubs",
+        icon: Building2
+      }
+    ];
     return <Sidebar variant="inset">
         <SidebarHeader>
           <SidebarMenu>
@@ -152,38 +159,46 @@ const AppSidebar = () => {
       </Sidebar>;
   }
 
-  // Panel para administradores (mantener funcionalidad original)
+  // Panel para administradores con feature flags
   const data = {
-    navMain: [{
-      title: t('sidebar.dashboard'),
-      url: "/",
-      icon: SquareTerminal,
-      isActive: true
-    }, {
-      title: t('sidebar.leagues'),
-      url: "/leagues",
-      icon: Trophy
-    }, {
-      title: t('sidebar.matches'),
-      url: "/matches",
-      icon: Zap
-    }, {
-      title: t('sidebar.scheduledClasses'),
-      url: "/scheduled-classes",
-      icon: Calendar
-    }, {
-      title: t('sidebar.players'),
-      url: "/players",
-      icon: Users
-    }, {
-      title: t('sidebar.trainers'),
-      url: "/trainers",
-      icon: UserCheck
-    }, {
-      title: t('sidebar.clubs'),
-      url: "/clubs",
-      icon: Building2
-    }]
+    navMain: [
+      {
+        title: t('sidebar.dashboard'),
+        url: "/",
+        icon: SquareTerminal,
+        isActive: true
+      },
+      ...(leaguesEnabled ? [{
+        title: t('sidebar.leagues'),
+        url: "/leagues",
+        icon: Trophy
+      }] : []),
+      ...(matchesEnabled ? [{
+        title: t('sidebar.matches'),
+        url: "/matches",
+        icon: Zap
+      }] : []),
+      {
+        title: t('sidebar.scheduledClasses'),
+        url: "/scheduled-classes",
+        icon: Calendar
+      },
+      {
+        title: t('sidebar.players'),
+        url: "/players",
+        icon: Users
+      },
+      {
+        title: t('sidebar.trainers'),
+        url: "/trainers",
+        icon: UserCheck
+      },
+      {
+        title: t('sidebar.clubs'),
+        url: "/clubs",
+        icon: Building2
+      }
+    ]
   };
   return <Sidebar variant="inset">
       <SidebarHeader>
