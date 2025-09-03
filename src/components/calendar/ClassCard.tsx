@@ -220,6 +220,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
   const { isAdmin, profile } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showManageStudents, setShowManageStudents] = useState(false);
 
   const getLevelDisplay = () => {
     if (cls.custom_level) {
