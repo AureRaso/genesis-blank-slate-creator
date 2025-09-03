@@ -472,7 +472,11 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
               
               {cls.participants && cls.participants.length > 0 && (
                 <div className="pt-6 border-t mt-6">
-                  <Button variant="outline" className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setShowManageStudents(true)}
+                  >
                     <UserPlus className="h-4 w-4" />
                     Añadir Alumno
                   </Button>
