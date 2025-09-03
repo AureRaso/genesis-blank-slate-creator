@@ -1,8 +1,9 @@
 
 import { useState } from "react";
-import { Filter, X } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { GroupSizeFilter } from "./filters/GroupSizeFilter";
 import { LevelFilter } from "./filters/LevelFilter";
 import { WeekDaysFilter } from "./filters/WeekDaysFilter";
+import { StudentNameFilter } from "./filters/StudentNameFilter";
 import { DiscountFilter } from "./filters/DiscountFilter";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 
@@ -58,6 +60,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
 
   const getActiveFiltersCount = () => {
     let count = 0;
+    if (filters.search) count++;
     if (filters.level) count++;
     if (filters.dayOfWeek) count++;
     if (filters.groupId) count++;
@@ -69,12 +72,14 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
     if (filters.levelTo !== undefined) count++;
     if (filters.customLevels.length > 0) count++;
     if (filters.weekDays.length > 0) count++;
+    if (filters.studentName) count++;
     if (filters.withDiscountOnly) count++;
     return count;
   };
 
   const getActiveFilters = () => {
     const active = [];
+    if (filters.search) active.push({ key: "search", label: t('classes.searchBy', { value: filters.search }) });
     if (filters.level) active.push({ key: "level", label: t('classes.levelBy', { value: filters.level }) });
     if (filters.dayOfWeek) active.push({ key: "dayOfWeek", label: t('classes.dayBy', { value: filters.dayOfWeek }) });
     if (filters.groupId) {
@@ -89,6 +94,7 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
     if (filters.levelTo !== undefined) active.push({ key: "levelTo", label: t('classes.levelToBy', { value: filters.levelTo }) });
     if (filters.customLevels.length > 0) active.push({ key: "customLevels", label: t('classes.levelsBy', { count: filters.customLevels.length }) });
     if (filters.weekDays.length > 0) active.push({ key: "weekDays", label: t('classes.daysBy', { count: filters.weekDays.length }) });
+    if (filters.studentName) active.push({ key: "studentName", label: t('classes.studentBy', { value: filters.studentName }) });
     if (filters.withDiscountOnly) active.push({ key: "withDiscountOnly", label: t('classes.withDiscount') });
     return active;
   };
@@ -99,8 +105,17 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
   return (
     <Card>
       <CardContent className="p-4">
-        {/* Filters button */}
-        <div className="flex items-center justify-start mb-4">
+        {/* Search bar always visible */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('classes.searchPlaceholder')}
+              value={filters.search}
+              onChange={(e) => updateFilter("search", e.target.value)}
+              className="pl-10"
+            />
+          </div>
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm">
@@ -161,6 +176,10 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
                 onDaysChange={(days) => updateFilter("weekDays", days)}
               />
 
+              <StudentNameFilter
+                value={filters.studentName}
+                onChange={(value) => updateFilter("studentName", value)}
+              />
 
               <DiscountFilter
                 withDiscountOnly={filters.withDiscountOnly}
