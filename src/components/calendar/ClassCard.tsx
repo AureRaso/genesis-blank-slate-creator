@@ -509,6 +509,13 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Manage Students Modal */}
+      <ManageStudentsModal 
+        class={cls}
+        isOpen={showManageStudents}
+        onClose={() => setShowManageStudents(false)}
+      />
     </DialogContent>
   );
 }
