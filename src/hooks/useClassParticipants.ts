@@ -9,6 +9,11 @@ export interface ClassParticipant {
   status: string;
   discount_1?: number;
   discount_2?: number;
+  payment_status: string;
+  payment_method?: string;
+  payment_date?: string;
+  payment_verified: boolean;
+  payment_notes?: string;
   created_at: string;
   updated_at: string;
   student_enrollment: {
@@ -53,7 +58,19 @@ export const useAddStudentToClass = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ classId, studentId }: { classId: string; studentId: string }) => {
+    mutationFn: async ({ 
+      classId, 
+      studentId, 
+      paymentMethod, 
+      paymentStatus = 'pending',
+      paymentNotes 
+    }: { 
+      classId: string; 
+      studentId: string; 
+      paymentMethod?: string;
+      paymentStatus?: string;
+      paymentNotes?: string;
+    }) => {
       // Check if student is already in the class
       const { data: existing } = await supabase
         .from("class_participants")
@@ -72,7 +89,12 @@ export const useAddStudentToClass = () => {
         .insert({
           class_id: classId,
           student_enrollment_id: studentId,
-          status: "active"
+          status: "active",
+          payment_status: paymentStatus,
+          payment_method: paymentMethod,
+          payment_date: paymentStatus === 'paid' ? new Date().toISOString() : null,
+          payment_verified: false,
+          payment_notes: paymentNotes
         })
         .select()
         .single();
@@ -138,11 +160,17 @@ export const useBulkUpdateClassParticipants = () => {
     mutationFn: async ({ 
       classId, 
       studentsToAdd, 
-      participantsToRemove 
+      participantsToRemove,
+      paymentData = {}
     }: { 
       classId: string; 
       studentsToAdd: string[]; 
-      participantsToRemove: string[] 
+      participantsToRemove: string[];
+      paymentData?: Record<string, {
+        paymentMethod?: string;
+        paymentStatus?: string;
+        paymentNotes?: string;
+      }>
     }) => {
       // Remove students (set status to inactive)
       if (participantsToRemove.length > 0) {
@@ -168,11 +196,19 @@ export const useBulkUpdateClassParticipants = () => {
         const newStudents = studentsToAdd.filter(id => !existingIds.includes(id));
 
         if (newStudents.length > 0) {
-          const participantsToInsert = newStudents.map(studentId => ({
-            class_id: classId,
-            student_enrollment_id: studentId,
-            status: "active"
-          }));
+          const participantsToInsert = newStudents.map(studentId => {
+            const payment = paymentData[studentId] || {};
+            return {
+              class_id: classId,
+              student_enrollment_id: studentId,
+              status: "active",
+              payment_status: payment.paymentStatus || 'pending',
+              payment_method: payment.paymentMethod,
+              payment_date: payment.paymentStatus === 'paid' ? new Date().toISOString() : null,
+              payment_verified: false,
+              payment_notes: payment.paymentNotes
+            };
+          });
 
           const { error: addError } = await supabase
             .from("class_participants")

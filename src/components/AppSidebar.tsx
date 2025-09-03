@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -182,6 +182,11 @@ const AppSidebar = () => {
         title: t('sidebar.scheduledClasses'),
         url: "/scheduled-classes",
         icon: Calendar
+      },
+      {
+        title: "Control de Pagos",
+        url: "/payment-control",
+        icon: CreditCard
       },
       {
         title: t('sidebar.players'),

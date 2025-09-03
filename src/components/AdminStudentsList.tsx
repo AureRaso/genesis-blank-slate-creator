@@ -10,7 +10,10 @@ import {
   Phone, 
   Calendar,
   Clock,
-  Euro
+  Euro,
+  CreditCard,
+  CheckCircle,
+  AlertTriangle
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment } from "@/hooks/useStudentEnrollments";
 
@@ -198,6 +201,13 @@ const AdminStudentsList = () => {
                       <span>{student.first_payment}€</span>
                     </div>
                   )}
+
+                  <div className="flex items-center text-muted-foreground">
+                    <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span className="text-xs">
+                      Estado de pagos: <Badge variant="outline" className="ml-1">Ver detalles</Badge>
+                    </span>
+                  </div>
                 </div>
 
                 {student.course && (

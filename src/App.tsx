@@ -29,6 +29,7 @@ import PublicEnrollmentPage from "@/pages/PublicEnrollmentPage";
 import ClassEnrollmentPage from "@/pages/ClassEnrollmentPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import PaymentCancelPage from "@/pages/PaymentCancelPage";
+import PaymentControlPage from "@/pages/PaymentControlPage";
 import SettingsPage from "@/pages/SettingsPage";
 import LandingPage from "@/pages/LandingPage";
 
@@ -126,6 +127,7 @@ function App() {
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
+              <Route path="/payment-control" element={<PaymentControlPage />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout>

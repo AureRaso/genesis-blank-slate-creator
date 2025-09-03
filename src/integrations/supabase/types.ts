@@ -120,6 +120,11 @@ export type Database = {
           discount_1: number | null
           discount_2: number | null
           id: string
+          payment_date: string | null
+          payment_method: string | null
+          payment_notes: string | null
+          payment_status: string
+          payment_verified: boolean
           status: string
           student_enrollment_id: string
           updated_at: string
@@ -130,6 +135,11 @@ export type Database = {
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_notes?: string | null
+          payment_status?: string
+          payment_verified?: boolean
           status?: string
           student_enrollment_id: string
           updated_at?: string
@@ -140,6 +150,11 @@ export type Database = {
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_notes?: string | null
+          payment_status?: string
+          payment_verified?: boolean
           status?: string
           student_enrollment_id?: string
           updated_at?: string
