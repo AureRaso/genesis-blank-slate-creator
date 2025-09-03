@@ -27,6 +27,9 @@ export interface PaymentRecord {
     monthly_price: number;
     start_date: string;
     end_date: string;
+    start_time: string;
+    duration_minutes: number;
+    days_of_week: string[];
     club: {
       id: string;
       name: string;
@@ -60,6 +63,9 @@ export const usePaymentRecords = (filters?: {
             monthly_price,
             start_date,
             end_date,
+            start_time,
+            duration_minutes,
+            days_of_week,
             club:clubs(
               id,
               name

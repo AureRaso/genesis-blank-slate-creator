@@ -31,6 +31,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         return { title: "Clasificaciones", path: "/standings" };
       case "/league-players":
         return { title: "Inscripciones", path: "/league-players" };
+      case "/payment-control":
+        return { title: "Control de Pagos", path: "/payment-control" };
       default:
         return { title: "Dashboard", path: "/" };
     }

@@ -26,6 +26,7 @@ import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import AppLayout from "@/components/AppLayout";
 
 const PaymentControlPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,7 +111,8 @@ const PaymentControlPage = () => {
   );
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Control de Pagos</h1>
@@ -336,7 +338,7 @@ const PaymentControlPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{payment.programmed_class.name}</span>
@@ -346,11 +348,40 @@ const PaymentControlPage = () => {
                       <Building className="h-4 w-4 text-muted-foreground" />
                       <span>{payment.programmed_class.club.name}</span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                      {getMethodIcon(payment.payment_method)}
-                      <span>{payment.payment_method || 'No especificado'}</span>
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {payment.programmed_class.start_time ? (
+                          <>
+                            {payment.programmed_class.start_time.slice(0, 5)} - {
+                              (() => {
+                                const [hours, minutes] = payment.programmed_class.start_time.split(':').map(Number);
+                                const totalMinutes = hours * 60 + minutes + payment.programmed_class.duration_minutes;
+                                const endHours = Math.floor(totalMinutes / 60);
+                                const endMins = totalMinutes % 60;
+                                return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+                              })()
+                            } ({payment.programmed_class.duration_minutes}min)
+                          </>
+                        ) : 'Horario no definido'}
+                      </span>
                     </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {payment.programmed_class.days_of_week?.length > 0 
+                          ? payment.programmed_class.days_of_week.join(', ')
+                          : 'Días no definidos'
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 text-sm">
+                    {getMethodIcon(payment.payment_method)}
+                    <span>{payment.payment_method || 'No especificado'}</span>
                   </div>
 
                   {payment.payment_date && (
@@ -370,7 +401,8 @@ const PaymentControlPage = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
