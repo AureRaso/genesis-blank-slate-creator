@@ -23,7 +23,10 @@ interface ManageStudentsModalProps {
 }
 
 export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStudentsModalProps) {
+  console.log('🔵 ManageStudentsModal rendered - isOpen:', isOpen, 'class:', cls.name);
+  
   const { toast } = useToast();
+  const { profile, isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
@@ -33,8 +36,25 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     paymentNotes?: string;
   }>>({});
   
-  // Get all available students and current participants
-  const { data: allStudents, isLoading: studentsLoading } = useStudentEnrollments();
+  console.log('🔵 User role check:', { isAdmin, profileRole: profile?.role, profileId: profile?.id });
+  
+  // Use different hooks based on user role
+  const { data: trainerStudents, isLoading: trainerStudentsLoading, error: trainerError } = useStudentEnrollments();
+  const { data: adminStudents, isLoading: adminStudentsLoading, error: adminError } = useAdminStudentEnrollments();
+  
+  console.log('🔵 Hook results:', {
+    trainerStudentsCount: trainerStudents?.length || 0,
+    adminStudentsCount: adminStudents?.length || 0,
+    trainerError: trainerError?.message,
+    adminError: adminError?.message,
+    trainerLoading: trainerStudentsLoading,
+    adminLoading: adminStudentsLoading
+  });
+  
+  // Select the correct data source based on role
+  const allStudents = isAdmin ? adminStudents : trainerStudents;
+  const studentsLoading = isAdmin ? adminStudentsLoading : trainerStudentsLoading;
+  
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const bulkUpdateMutation = useBulkUpdateClassParticipants();
 
@@ -44,6 +64,20 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     !currentParticipants?.some(p => p.student_enrollment_id === student.id) &&
     student.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  console.log('🔵 Final filtering results:', {
+    classClubId: cls.club_id,
+    allStudentsCount: allStudents?.length || 0,
+    currentParticipantsCount: currentParticipants?.length || 0,
+    availableStudentsCount: availableStudents.length,
+    firstFewStudents: allStudents?.slice(0, 3).map(s => ({ 
+      id: s.id, 
+      name: s.full_name, 
+      club_id: s.club_id 
+    })),
+    currentParticipantsIds: currentParticipants?.map(p => p.student_enrollment_id),
+    searchTerm
+  });
 
   const handleStudentToggle = (studentId: string, checked: boolean) => {
     const newSelected = new Set(selectedStudents);
