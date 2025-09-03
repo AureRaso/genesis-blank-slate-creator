@@ -10,9 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, UserPlus, UserMinus, Mail, User, Loader2, CreditCard, Banknote, CheckCircle } from "lucide-react";
-import { useStudentEnrollments } from "@/hooks/useStudentEnrollments";
+import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
 import { useClassParticipants, useBulkUpdateClassParticipants } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface ManageStudentsModalProps {
