@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { EditClassModal } from "./EditClassModal";
+import { ManageStudentsModal } from "./ManageStudentsModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { getTrainerColor, getClassColor } from "@/utils/trainerColors";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";

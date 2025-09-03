@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ManageStudentsModal } from "@/components/calendar/ManageStudentsModal";
 
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
@@ -48,6 +49,7 @@ interface ClassListViewProps {
 
 export default function ClassListView({ clubId, clubIds, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
+  const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const { isAdmin } = useAuth();
@@ -246,10 +248,10 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
                             </DropdownMenuItem>
                             {isAdmin && (
                               <>
-                                <DropdownMenuItem>
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  {t('classes.manageStudents')}
-                                </DropdownMenuItem>
+                                 <DropdownMenuItem onClick={() => setManageStudentsClass(cls)}>
+                                   <UserPlus className="h-4 w-4 mr-2" />
+                                   {t('classes.manageStudents')}
+                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
                                   <Edit className="h-4 w-4 mr-2" />
@@ -276,19 +278,34 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
           {selectedClass && (
             isAdmin ? (
-              <AdminClassDetailsModal class={selectedClass} />
+              <AdminClassDetailsModal class={selectedClass} onManageStudents={() => {
+                setManageStudentsClass(selectedClass);
+                setSelectedClass(null);
+              }} />
             ) : (
               <PlayerClassDetailsModal class={selectedClass} />
             )
           )}
         </Dialog>
+
+        {/* Manage Students Modal */}
+        {manageStudentsClass && (
+          <ManageStudentsModal 
+            class={manageStudentsClass}
+            isOpen={!!manageStudentsClass}
+            onClose={() => setManageStudentsClass(null)}
+          />
+        )}
       </CardContent>
     </Card>
   );
 }
 
 // Modal para administradores/profesores
-function AdminClassDetailsModal({ class: selectedClass }: { class: ScheduledClassWithTemplate }) {
+function AdminClassDetailsModal({ class: selectedClass, onManageStudents }: { 
+  class: ScheduledClassWithTemplate;
+  onManageStudents?: () => void;
+}) {
   const { t } = useTranslation();
   
   const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
@@ -392,7 +409,7 @@ function AdminClassDetailsModal({ class: selectedClass }: { class: ScheduledClas
           <Button variant="outline" size="sm" className="flex-1">
             {t('classes.edit')}
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1" onClick={onManageStudents}>
             {t('classes.manageStudentsAction')}
           </Button>
         </div>
