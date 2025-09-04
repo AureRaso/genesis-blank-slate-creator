@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,16 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Zap, UserPlus, LogIn, Mail, Lock, User } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
-
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const {
+    signIn,
+    signUp,
+    user
+  } = useAuth();
   const navigate = useNavigate();
-
   console.log('AuthPage - Current selectedClubId:', selectedClubId);
 
   // Redirect to home if user is already authenticated
@@ -29,28 +30,33 @@ export const AuthPage = () => {
       const redirectUrl = localStorage.getItem('redirectAfterLogin');
       if (redirectUrl) {
         localStorage.removeItem('redirectAfterLogin');
-        navigate(redirectUrl, { replace: true });
+        navigate(redirectUrl, {
+          replace: true
+        });
       } else {
-        navigate("/", { replace: true });
+        navigate("/", {
+          replace: true
+        });
       }
     }
   }, [user, navigate]);
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const {
+        error
+      } = await signIn(email, password);
       if (error) {
         toast({
           title: "Error al iniciar sesión",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
       } else {
         toast({
           title: "¡Bienvenido!",
-          description: "Has iniciado sesión correctamente",
+          description: "Has iniciado sesión correctamente"
         });
         // Navigation will happen automatically via useEffect when user state updates
       }
@@ -59,53 +65,51 @@ export const AuthPage = () => {
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('AuthPage - handleSignUp called with:', { 
-      email, 
-      fullName, 
+    console.log('AuthPage - handleSignUp called with:', {
+      email,
+      fullName,
       selectedClubId,
-      passwordLength: password.length 
+      passwordLength: password.length
     });
-    
     if (!email || !password || !fullName) {
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!selectedClubId) {
       toast({
         title: "Error",
         description: "Debes seleccionar un club para completar el registro.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName, selectedClubId);
+      const {
+        error
+      } = await signUp(email, password, fullName, selectedClubId);
       if (error) {
         toast({
           title: "Error al registrarse",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
       } else {
         toast({
           title: "¡Registro exitoso!",
-          description: "Cuenta creada correctamente, redirigiendo...",
+          description: "Cuenta creada correctamente, redirigiendo..."
         });
         // Navigation will happen automatically via useEffect when user state updates
       }
@@ -114,15 +118,13 @@ export const AuthPage = () => {
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="h-screen w-full bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4 overflow-hidden">
+  return <div className="h-screen w-full bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4 overflow-hidden">
       <div className="w-full max-w-md flex flex-col justify-center">
         {/* Header con logo y título */}
         <div className="text-center mb-6">
@@ -151,17 +153,11 @@ export const AuthPage = () => {
           <CardContent className="p-6">
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100">
-                <TabsTrigger 
-                  value="signin" 
-                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange"
-                >
+                <TabsTrigger value="signin" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange">
                   <LogIn className="h-4 w-4" />
                   Iniciar Sesión
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="signup" 
-                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange"
-                >
+                <TabsTrigger value="signup" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange">
                   <UserPlus className="h-4 w-4" />
                   Registrarse
                 </TabsTrigger>
@@ -175,15 +171,7 @@ export const AuthPage = () => {
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="tu@email.com"
-                        className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange"
-                        required
-                      />
+                      <Input id="signin-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange" required />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -192,33 +180,17 @@ export const AuthPage = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Tu contraseña"
-                        className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange"
-                        required
-                      />
+                      <Input id="signin-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Tu contraseña" className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange" required />
                     </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2">
+                  <Button type="submit" className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105" disabled={isLoading}>
+                    {isLoading ? <div className="flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Iniciando...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
+                      </div> : <div className="flex items-center gap-2">
                         <LogIn className="h-4 w-4" />
                         Iniciar Sesión
-                      </div>
-                    )}
+                      </div>}
                   </Button>
                 </form>
               </TabsContent>
@@ -231,15 +203,7 @@ export const AuthPage = () => {
                     </Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Tu nombre completo"
-                        className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange"
-                        required
-                      />
+                      <Input id="signup-name" type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Tu nombre completo" className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange" required />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -248,28 +212,14 @@ export const AuthPage = () => {
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="tu@email.com"
-                        className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange"
-                        required
-                      />
+                      <Input id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange" required />
                     </div>
                   </div>
 
-                  <ClubSelector
-                    value={selectedClubId}
-                    onValueChange={(value) => {
-                      console.log('🔧 ClubSelector - Value changed to:', value);
-                      setSelectedClubId(value);
-                    }}
-                    label="Club"
-                    placeholder="Selecciona tu club"
-                    required
-                  />
+                  <ClubSelector value={selectedClubId} onValueChange={value => {
+                  console.log('🔧 ClubSelector - Value changed to:', value);
+                  setSelectedClubId(value);
+                }} label="Club" placeholder="Selecciona tu club" required />
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-gray-700 font-medium">
@@ -277,33 +227,17 @@ export const AuthPage = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Elige una contraseña segura"
-                        className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange"
-                        required
-                      />
+                      <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Elige una contraseña segura" className="pl-10 h-12 border-gray-200 focus:border-playtomic-orange focus:ring-playtomic-orange" required />
                     </div>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2">
+                  <Button type="submit" className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-105" disabled={isLoading}>
+                    {isLoading ? <div className="flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Creando cuenta...
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
+                      </div> : <div className="flex items-center gap-2">
                         <UserPlus className="h-4 w-4" />
                         Crear Cuenta
-                      </div>
-                    )}
+                      </div>}
                   </Button>
                 </form>
               </TabsContent>
@@ -312,11 +246,9 @@ export const AuthPage = () => {
         </Card>
 
         <div className="text-center mt-4 text-sm text-gray-500">
-          <p>© 2024 PadeLock. Todos los derechos reservados.</p>
+          <p>© 2025 PadeLock. Todos los derechos reservados.</p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AuthPage;
