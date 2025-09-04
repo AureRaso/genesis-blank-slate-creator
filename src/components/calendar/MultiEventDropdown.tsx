@@ -23,10 +23,12 @@ export function MultiEventDropdown({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        {children}
+        <div onClick={() => console.log('MultiEventDropdown clicked with', allEvents.length, 'events')}>
+          {children}
+        </div>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-3 max-h-96 overflow-y-auto bg-background border shadow-lg" 
+        className="w-80 p-3 max-h-96 overflow-y-auto bg-background border shadow-lg z-50" 
         align="start"
         side="bottom"
         sideOffset={8}

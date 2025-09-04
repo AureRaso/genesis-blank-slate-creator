@@ -99,98 +99,78 @@ export function ClassCard({
   // For indicator cards, render without dialog to allow dropdown
   if (showAsIndicator) {
     return (
-      <div className="relative">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div 
-                className={cn(
-                  "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group",
-                  "flex flex-col justify-between",
-                  isCompact ? "p-1 text-xs" : "p-2 text-xs",
-                  getLevelColor(),
-                  "ring-2 ring-primary/20"
-                )}
-                draggable={isAdmin || isTrainer}
-                onDragStart={handleDragStart}
-              >
-                {/* Delete X button - only for admin/trainer */}
-                {(isAdmin || isTrainer) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowDeleteConfirm(true);
-                    }}
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
+      <div className="relative w-full h-full">
+        <div 
+          className={cn(
+            "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group",
+            "flex flex-col justify-between",
+            isCompact ? "p-1 text-xs" : "p-2 text-xs",
+            getLevelColor(),
+            "ring-2 ring-primary/20"
+          )}
+          draggable={isAdmin || isTrainer}
+          onDragStart={handleDragStart}
+          onClick={() => console.log('ClassCard indicator clicked:', cls.name)}
+          title={`${cls.name} - ${cls.start_time.slice(0, 5)} - ${getEndTime()} (${cls.duration_minutes} min) - ${enrolledCount} alumnos`}
+        >
+          {/* Delete X button - only for admin/trainer */}
+          {(isAdmin || isTrainer) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+              }}
+              className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
 
-                {/* Multiple events indicator */}
-                {eventCount > 1 && (
-                  <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
-                    {eventCount}
-                  </div>
-                )}
+          {/* Multiple events indicator */}
+          {eventCount > 1 && (
+            <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
+              {eventCount}
+            </div>
+          )}
 
-                <div className={cn("space-y-1", isCompact && "space-y-0")}>
-                  <div className={cn(
-                    "font-medium truncate leading-tight",
-                    isCompact ? "text-xs" : "text-sm"
-                  )}>
-                    {cls.name}
-                    {eventCount > 1 && (
-                      <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
-                    )}
-                  </div>
-                  {!isCompact && cls.club && (
-                    <div className="text-xs text-muted-foreground truncate font-medium">
-                      {cls.club.name}
-                    </div>
-                  )}
-                  {!isCompact && (
-                    <div className="text-xs text-muted-foreground truncate">
-                      {getLevelDisplay()}
-                    </div>
-                  )}
-                </div>
-                
-                {!isCompact && (
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span className="text-xs">{enrolledCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-xs">{cls.duration_minutes}min</span>
-                    </div>
-                  </div>
-                )}
+          <div className={cn("space-y-1", isCompact && "space-y-0")}>
+            <div className={cn(
+              "font-medium truncate leading-tight",
+              isCompact ? "text-xs" : "text-sm"
+            )}>
+              {cls.name}
+              {eventCount > 1 && (
+                <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
+              )}
+            </div>
+            {!isCompact && cls.club && (
+              <div className="text-xs text-muted-foreground truncate font-medium">
+                {cls.club.name}
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className="space-y-1">
-                <div className="font-medium">{cls.name}</div>
-                <div className="text-xs">
-                  {cls.start_time.slice(0, 5)} - {getEndTime()} ({cls.duration_minutes} min)
-                </div>
-                <div className="text-xs">{enrolledCount} alumnos inscritos</div>
-                <div className="text-xs">{getLevelDisplay()}</div>
-                {isAdmin && cls.trainer && (
-                  <div className="text-xs">Profesor: {cls.trainer.full_name}</div>
-                )}
-                {isAdmin && cls.created_by && (
-                  <div className="text-xs">Creado por: {cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
-                )}
+            )}
+            {!isCompact && (
+              <div className="text-xs text-muted-foreground truncate">
+                {getLevelDisplay()}
               </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            )}
+          </div>
+          
+          {!isCompact && (
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span className="text-xs">{enrolledCount}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">{cls.duration_minutes}min</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         <EditClassModal 
           class={cls}
