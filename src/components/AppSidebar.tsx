@@ -22,7 +22,7 @@ const AppSidebar = () => {
 
   // Si es trainer, mostrar panel personalizado con clases programadas
   if (isTrainer) {
-    return <Sidebar variant="inset">
+    return <Sidebar variant="inset" className="w-56">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -107,7 +107,7 @@ const AppSidebar = () => {
         icon: Building2
       }
     ];
-    return <Sidebar variant="inset">
+    return <Sidebar variant="inset" className="w-56">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -205,7 +205,7 @@ const AppSidebar = () => {
       }
     ]
   };
-  return <Sidebar variant="inset">
+  return <Sidebar variant="inset" className="w-56">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
