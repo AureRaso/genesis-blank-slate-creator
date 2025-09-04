@@ -99,7 +99,7 @@ export function ClassCard({
   // For indicator cards, render without dialog to allow dropdown
   if (showAsIndicator) {
     return (
-      <>
+      <div className="relative">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -220,7 +220,7 @@ export function ClassCard({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </>
+      </div>
     );
   }
 
