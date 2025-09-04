@@ -15,10 +15,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
+import { TrainerLegend } from "@/components/calendar/TrainerLegend";
 
 function ScheduledClassesContent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [filteredCalendarClasses, setFilteredCalendarClasses] = useState([]);
   
   const { t } = useTranslation();
   const { profile } = useAuth();
@@ -49,7 +51,7 @@ function ScheduledClassesContent() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto py-0 space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -61,7 +63,6 @@ function ScheduledClassesContent() {
             }
           </p>
         </div>
-
         <div className="flex items-center gap-2">
           {/* View mode toggle */}
           <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
@@ -80,7 +81,6 @@ function ScheduledClassesContent() {
               <List className="h-4 w-4" />
             </Button>
           </div>
-
           <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
             <DialogTrigger asChild>
               <Button>
@@ -105,13 +105,33 @@ function ScheduledClassesContent() {
         </div>
       </div>
 
-      {/* Filters */}
-      <ClassFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        groups={groups}
-        trainers={[]} // TODO: Add trainers data when available
-      />
+      {/* Filtros y leyenda solo en modo calendario */}
+      {viewMode === 'calendar' && (
+        <>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row items-start gap-4">
+              <div className="w-full max-w-lg">
+                <ClassFilters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  groups={groups}
+                  trainers={[]} // TODO: Add trainers data when available
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Filtros solo en modo listado */}
+      {viewMode === 'list' && (
+        <ClassFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          groups={groups}
+          trainers={[]} // TODO: Add trainers data when available
+        />
+      )}
 
       {/* Main content */}
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'calendar' | 'list')}>
@@ -121,18 +141,19 @@ function ScheduledClassesContent() {
         </TabsList>
 
         <TabsContent value="calendar" className="mt-0">
-          <ClassCalendarView 
-            clubId={profile?.role === 'admin' ? undefined : currentClub.id} 
+          <ClassCalendarView
+            clubId={profile?.role === 'admin' ? undefined : currentClub.id}
             clubIds={profile?.role === 'admin' ? adminClubs?.map(c => c.id) : undefined}
-            filters={filters} 
+            filters={filters}
+            onFilteredClassesChange={setFilteredCalendarClasses}
           />
         </TabsContent>
 
         <TabsContent value="list" className="mt-0">
-          <ClassListView 
+          <ClassListView
             clubId={profile?.role === 'admin' ? undefined : currentClub.id}
             clubIds={profile?.role === 'admin' ? adminClubs?.map(c => c.id) : undefined}
-            filters={filters} 
+            filters={filters}
           />
         </TabsContent>
       </Tabs>
