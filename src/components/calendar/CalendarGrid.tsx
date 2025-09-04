@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { ClassCard } from "./ClassCard";
+import { MultiEventDropdown } from "./MultiEventDropdown";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface CalendarGridProps {
@@ -129,6 +130,21 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     return matchingClasses;
   };
 
+  // Helper function to group overlapping classes and return display info
+  const getDisplayClassesForSlot = (day: Date, timeSlot: string) => {
+    const slotClasses = getClassesForDayAndTime(day, timeSlot);
+    
+    if (slotClasses.length === 0) return { displayClass: null, allClasses: [] };
+    if (slotClasses.length === 1) return { displayClass: slotClasses[0], allClasses: slotClasses };
+    
+    // For multiple classes, show the first one as indicator
+    return { 
+      displayClass: slotClasses[0], 
+      allClasses: slotClasses,
+      hasMultiple: true 
+    };
+  };
+
   const getClassHeight = (durationMinutes: number) => {
     // Each slot is 15 minutes, so height = (duration / 15) * SLOT_HEIGHT
     const slotsNeeded = durationMinutes / 15;
@@ -190,7 +206,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
             </div>
             
             {weekDays.map((day) => {
-              const dayClasses = getClassesForDayAndTime(day, timeSlot);
+              const { displayClass, allClasses, hasMultiple } = getDisplayClassesForSlot(day, timeSlot);
               const hasContinuationClasses = classes.some(cls => isClassContinuation(day, timeSlot, cls));
               
               const handleDragOver = (e: React.DragEvent) => {
@@ -201,7 +217,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
               const handleDrop = (e: React.DragEvent) => {
                 e.preventDefault();
                 const classId = e.dataTransfer.getData('text/plain');
-                if (classId && onClassDrop && dayClasses.length === 0) {
+                if (classId && onClassDrop && allClasses.length === 0) {
                   onClassDrop(classId, day, timeSlot);
                 }
               };
@@ -215,33 +231,39 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                   )}
                   style={{ minHeight: `${SLOT_HEIGHT}px` }}
                   onClick={() => {
-                    if (dayClasses.length === 0 && onTimeSlotClick) {
+                    if (allClasses.length === 0 && onTimeSlotClick) {
                       onTimeSlotClick(day, timeSlot);
                     }
                   }}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
-                  {dayClasses.map((cls) => {
-                    const overlappingGroups = detectOverlappingClasses(day, [cls]);
-                    const overlappingClasses = overlappingGroups[0] || [cls];
-                    const layout = calculateColumnLayout(cls, overlappingClasses);
-                    
-                    return (
-                      <div
-                        key={cls.id}
-                        className="absolute top-0 p-1"
-                        style={{
-                          height: `${getClassHeight(cls.duration_minutes)}px`,
-                          width: layout.width,
-                          left: layout.left,
-                          zIndex: 5 + overlappingClasses.indexOf(cls)
+                  {displayClass && !hasContinuationClasses && (
+                    <div
+                      className="absolute top-0 p-1 w-full"
+                      style={{
+                        height: `${getClassHeight(displayClass.duration_minutes)}px`,
+                        zIndex: 10
+                      }}
+                    >
+                      <MultiEventDropdown
+                        allEvents={allClasses}
+                        onEventClick={(event) => {
+                          // The dropdown items will handle their own click events via ClassCard
+                        }}
+                        onEventDragStart={(e, eventId) => {
+                          e.dataTransfer.setData('text/plain', eventId);
+                          e.dataTransfer.effectAllowed = 'move';
                         }}
                       >
-                        <ClassCard class={cls} isCompact={layout.totalColumns > 1} />
-                      </div>
-                    );
-                  })}
+                        <ClassCard 
+                          class={displayClass} 
+                          showAsIndicator={hasMultiple}
+                          eventCount={allClasses.length}
+                        />
+                      </MultiEventDropdown>
+                    </div>
+                  )}
                 </div>
               );
             })}

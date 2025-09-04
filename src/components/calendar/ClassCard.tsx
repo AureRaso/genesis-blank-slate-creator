@@ -22,9 +22,17 @@ interface ClassCardProps {
   class: ScheduledClassWithTemplate;
   onDragStart?: () => void;
   isCompact?: boolean;
+  showAsIndicator?: boolean;
+  eventCount?: number;
 }
 
-export function ClassCard({ class: cls, onDragStart, isCompact = false }: ClassCardProps) {
+export function ClassCard({ 
+  class: cls, 
+  onDragStart, 
+  isCompact = false,
+  showAsIndicator = false,
+  eventCount = 1
+}: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -101,7 +109,8 @@ export function ClassCard({ class: cls, onDragStart, isCompact = false }: ClassC
                     "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
                     "flex flex-col justify-between",
                     isCompact ? "p-1 text-xs" : "p-2 text-xs",
-                    getLevelColor()
+                    getLevelColor(),
+                    showAsIndicator && "ring-2 ring-primary/20"
                   )}
                   draggable={isAdmin || isTrainer}
                   onDragStart={handleDragStart}
@@ -121,19 +130,30 @@ export function ClassCard({ class: cls, onDragStart, isCompact = false }: ClassC
                       <X className="h-3 w-3" />
                     </Button>
                   )}
+
+                  {/* Multiple events indicator */}
+                  {showAsIndicator && eventCount > 1 && (
+                    <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
+                      {eventCount}
+                    </div>
+                  )}
+
                   <div className={cn("space-y-1", isCompact && "space-y-0")}>
                     <div className={cn(
                       "font-medium truncate leading-tight",
                       isCompact ? "text-xs" : "text-sm"
                     )}>
                       {cls.name}
+                      {showAsIndicator && eventCount > 1 && (
+                        <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
+                      )}
                     </div>
-                    {!isCompact && cls.club && (
+                    {!isCompact && cls.club && !showAsIndicator && (
                       <div className="text-xs text-muted-foreground truncate font-medium">
                         {cls.club.name}
                       </div>
                     )}
-                    {!isCompact && (
+                    {!isCompact && !showAsIndicator && (
                       <div className="text-xs text-muted-foreground truncate">
                         {getLevelDisplay()}
                       </div>
