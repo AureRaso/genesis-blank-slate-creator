@@ -102,91 +102,155 @@ export function ClassCard({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Dialog open={showDetails} onOpenChange={setShowDetails}>
-              <DialogTrigger asChild>
-                <div 
-                  className={cn(
-                    "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
-                    "flex flex-col justify-between",
-                    isCompact ? "p-1 text-xs" : "p-2 text-xs",
-                    getLevelColor(),
-                    showAsIndicator && "ring-2 ring-primary/20"
-                  )}
-                  draggable={isAdmin || isTrainer}
-                  onDragStart={handleDragStart}
-                >
-                  {/* Delete X button - only for admin/trainer */}
-                  {(isAdmin || isTrainer) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
+            {showAsIndicator ? (
+              // When showing as indicator, don't wrap in Dialog to allow dropdown to work
+              <div 
+                className={cn(
+                  "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group",
+                  "flex flex-col justify-between",
+                  isCompact ? "p-1 text-xs" : "p-2 text-xs",
+                  getLevelColor(),
+                  showAsIndicator && "ring-2 ring-primary/20"
+                )}
+                draggable={isAdmin || isTrainer}
+                onDragStart={handleDragStart}
+              >
+                {/* Delete X button - only for admin/trainer */}
+                {(isAdmin || isTrainer) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
 
-                  {/* Multiple events indicator */}
-                  {showAsIndicator && eventCount > 1 && (
-                    <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
-                      {eventCount}
-                    </div>
-                  )}
+                {/* Multiple events indicator */}
+                {showAsIndicator && eventCount > 1 && (
+                  <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
+                    {eventCount}
+                  </div>
+                )}
 
-                  <div className={cn("space-y-1", isCompact && "space-y-0")}>
-                    <div className={cn(
-                      "font-medium truncate leading-tight",
-                      isCompact ? "text-xs" : "text-sm"
-                    )}>
-                      {cls.name}
-                      {showAsIndicator && eventCount > 1 && (
-                        <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
-                      )}
-                    </div>
-                    {!isCompact && cls.club && !showAsIndicator && (
-                      <div className="text-xs text-muted-foreground truncate font-medium">
-                        {cls.club.name}
-                      </div>
-                    )}
-                    {!isCompact && !showAsIndicator && (
-                      <div className="text-xs text-muted-foreground truncate">
-                        {getLevelDisplay()}
-                      </div>
+                <div className={cn("space-y-1", isCompact && "space-y-0")}>
+                  <div className={cn(
+                    "font-medium truncate leading-tight",
+                    isCompact ? "text-xs" : "text-sm"
+                  )}>
+                    {cls.name}
+                    {showAsIndicator && eventCount > 1 && (
+                      <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
                     )}
                   </div>
-                  
-                  {!isCompact && (
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        <span className="text-xs">{enrolledCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span className="text-xs">{cls.duration_minutes}min</span>
-                      </div>
+                  {!isCompact && cls.club && !showAsIndicator && (
+                    <div className="text-xs text-muted-foreground truncate font-medium">
+                      {cls.club.name}
+                    </div>
+                  )}
+                  {!isCompact && !showAsIndicator && (
+                    <div className="text-xs text-muted-foreground truncate">
+                      {getLevelDisplay()}
                     </div>
                   )}
                 </div>
-              </DialogTrigger>
+                
+                {!isCompact && (
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      <span className="text-xs">{enrolledCount}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span className="text-xs">{cls.duration_minutes}min</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Normal behavior with dialog when not showing as indicator
+              <Dialog open={showDetails} onOpenChange={setShowDetails}>
+                <DialogTrigger asChild>
+                  <div 
+                    className={cn(
+                      "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
+                      "flex flex-col justify-between",
+                      isCompact ? "p-1 text-xs" : "p-2 text-xs",
+                      getLevelColor(),
+                      showAsIndicator && "ring-2 ring-primary/20"
+                    )}
+                    draggable={isAdmin || isTrainer}
+                    onDragStart={handleDragStart}
+                  >
+                    {/* Delete X button - only for admin/trainer */}
+                    {(isAdmin || isTrainer) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
 
-              {isAdmin || isTrainer ? (
-              <AdminClassDetailsModal 
-                class={cls} 
-                onEditClass={() => {
-                  setShowDetails(false);
-                  setShowEditModal(true);
-                }}
-              />
-              ) : (
-                <PlayerClassDetailsModal class={cls} />
-              )}
-            </Dialog>
+                    <div className={cn("space-y-1", isCompact && "space-y-0")}>
+                      <div className={cn(
+                        "font-medium truncate leading-tight",
+                        isCompact ? "text-xs" : "text-sm"
+                      )}>
+                        {cls.name}
+                      </div>
+                      {!isCompact && cls.club && (
+                        <div className="text-xs text-muted-foreground truncate font-medium">
+                          {cls.club.name}
+                        </div>
+                      )}
+                      {!isCompact && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {getLevelDisplay()}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!isCompact && (
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span className="text-xs">{enrolledCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span className="text-xs">{cls.duration_minutes}min</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </DialogTrigger>
+
+                {isAdmin || isTrainer ? (
+                <AdminClassDetailsModal 
+                  class={cls} 
+                  onEditClass={() => {
+                    setShowDetails(false);
+                    setShowEditModal(true);
+                  }}
+                />
+                ) : (
+                  <PlayerClassDetailsModal class={cls} />
+                )}
+              </Dialog>
+            )}
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
