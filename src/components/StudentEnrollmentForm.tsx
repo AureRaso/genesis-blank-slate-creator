@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserPlus, Link, Copy } from "lucide-react";
 import { useCreateStudentEnrollment, useCreateEnrollmentForm } from "@/hooks/useStudentEnrollments";
+import { useAdminClubs } from "@/hooks/useClubs";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 const enrollmentSchema = z.object({
@@ -59,7 +61,11 @@ const TIME_SLOTS = [
 const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }: StudentEnrollmentFormProps) => {
   const [enrollmentMode, setEnrollmentMode] = useState<"teacher" | "link" | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string>("");
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
   const isWindowVisible = useWindowVisibility();
+  
+  const { isAdmin } = useAuth();
+  const { data: adminClubs, isLoading: clubsLoading } = useAdminClubs();
   
   const createEnrollmentMutation = useCreateStudentEnrollment();
   const createLinkMutation = useCreateEnrollmentForm();
@@ -161,11 +167,13 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
 
   const onSubmit = (data: EnrollmentFormData) => {
     // En modo player, se usa el club_id que viene del enrollmentForm
-    // En modo teacher, se usa el club del trainer
+    // En modo teacher/admin, se usa el club seleccionado
     let clubId;
     
     if (isPlayerMode && trainerProfile?.club_id) {
       clubId = trainerProfile.club_id;
+    } else if (!isPlayerMode && isAdmin && selectedClubId) {
+      clubId = selectedClubId;
     } else if (!isPlayerMode && trainerProfile?.trainer_clubs?.[0]?.club_id) {
       clubId = trainerProfile.trainer_clubs[0].club_id;
     }
@@ -173,7 +181,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
     if (!clubId) {
       toast({
         title: "Error",
-        description: "No se pudo determinar el club",
+        description: isAdmin ? "Selecciona un club" : "No se pudo determinar el club",
         variant: "destructive",
       });
       return;
@@ -201,11 +209,18 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
   };
 
   const handleCreateLink = async () => {
-    const clubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
+    let clubId;
+    
+    if (isAdmin && selectedClubId) {
+      clubId = selectedClubId;
+    } else if (trainerProfile?.trainer_clubs?.[0]?.club_id) {
+      clubId = trainerProfile.trainer_clubs[0].club_id;
+    }
+    
     if (!clubId) {
       toast({
         title: "Error",
-        description: "No se pudo determinar el club del profesor",
+        description: isAdmin ? "Selecciona un club" : "No se pudo determinar el club del profesor",
         variant: "destructive",
       });
       return;
@@ -243,10 +258,30 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Club selector for admins */}
+          {isAdmin && (
+            <div className="space-y-2">
+              <Label htmlFor="club-select">Selecciona el club</Label>
+              <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={clubsLoading}>
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder={clubsLoading ? "Cargando clubes..." : "Selecciona un club"} />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {adminClubs?.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <Button
             onClick={() => setEnrollmentMode("teacher")}
             className="w-full h-auto p-6 flex flex-col items-center space-y-2"
             variant="outline"
+            disabled={isAdmin && !selectedClubId}
           >
             <UserPlus className="h-8 w-8" />
             <div className="text-center">
@@ -259,6 +294,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
             onClick={() => setEnrollmentMode("link")}
             className="w-full h-auto p-6 flex flex-col items-center space-y-2"
             variant="outline"
+            disabled={isAdmin && !selectedClubId}
           >
             <Link className="h-8 w-8" />
             <div className="text-center">
@@ -288,7 +324,16 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Show selected club info for admins */}
+          {isAdmin && selectedClubId && adminClubs && (
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Generando enlace para el club: <span className="font-medium">{adminClubs.find(c => c.id === selectedClubId)?.name}</span>
+              </p>
+            </div>
+          )}
+          
           <Button onClick={handleCreateLink} disabled={createLinkMutation.isPending} className="w-full">
             {createLinkMutation.isPending ? "Generando..." : "Generar Enlace"}
           </Button>
