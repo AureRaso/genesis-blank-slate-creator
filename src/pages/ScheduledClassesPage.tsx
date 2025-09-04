@@ -107,20 +107,19 @@ function ScheduledClassesContent() {
 
       {/* Filtros y leyenda solo en modo calendario */}
       {viewMode === 'calendar' && (
-        <>
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-start gap-4">
-              <div className="w-full max-w-lg">
-                <ClassFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  groups={groups}
-                  trainers={[]} // TODO: Add trainers data when available
-                />
-              </div>
-            </div>
+        <div className="flex flex-row items-start gap-4">
+          <div className="w-full max-w-lg">
+            <ClassFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              groups={groups}
+              trainers={[]} // TODO: Add trainers data when available
+            />
           </div>
-        </>
+          <div className="flex-1">
+            <TrainerLegend classes={filteredCalendarClasses} />
+          </div>
+        </div>
       )}
 
       {/* Filtros solo en modo listado */}
@@ -145,7 +144,6 @@ function ScheduledClassesContent() {
             clubId={profile?.role === 'admin' ? undefined : currentClub.id}
             clubIds={profile?.role === 'admin' ? adminClubs?.map(c => c.id) : undefined}
             filters={filters}
-            onFilteredClassesChange={setFilteredCalendarClasses}
           />
         </TabsContent>
 
