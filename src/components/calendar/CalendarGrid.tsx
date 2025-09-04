@@ -18,16 +18,13 @@ interface CalendarGridProps {
 }
 
 const TIME_SLOTS = [
-  "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
-  "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
-  "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45",
-  "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45",
-  "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45",
-  "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45",
-  "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00"
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
+  "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
-const SLOT_HEIGHT = 25; // Height in pixels for each 15-minute slot
+const SLOT_HEIGHT = 50; // Height in pixels for each 30-minute slot
 
 // Mapping of day names to standardized Spanish format (database format)
 const DAY_MAPPING: { [key: string]: string } = {
@@ -79,13 +76,13 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     
     targetClasses.forEach(targetClass => {
       const targetStart = TIME_SLOTS.indexOf(targetClass.start_time.slice(0, 5));
-      const targetEnd = targetStart + Math.ceil(targetClass.duration_minutes / 15);
+      const targetEnd = targetStart + Math.ceil(targetClass.duration_minutes / 30);
       
       const overlapping = dayClasses.filter(cls => {
         if (cls.id === targetClass.id) return true;
         
         const classStart = TIME_SLOTS.indexOf(cls.start_time.slice(0, 5));
-        const classEnd = classStart + Math.ceil(cls.duration_minutes / 15);
+        const classEnd = classStart + Math.ceil(cls.duration_minutes / 30);
         
         // Check if classes overlap
         return !(classEnd <= targetStart || classStart >= targetEnd);
@@ -153,8 +150,8 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
   };
 
   const getClassHeight = (durationMinutes: number) => {
-    // Each slot is 15 minutes, so height = (duration / 15) * SLOT_HEIGHT
-    const slotsNeeded = durationMinutes / 15;
+    // Each slot is 30 minutes, so height = (duration / 30) * SLOT_HEIGHT
+    const slotsNeeded = durationMinutes / 30;
     return slotsNeeded * SLOT_HEIGHT;
   };
 
@@ -176,7 +173,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     
     if (classStartIndex === -1 || currentSlotIndex === -1) return false;
     
-    const slotsNeeded = Math.ceil(cls.duration_minutes / 15);
+    const slotsNeeded = Math.ceil(cls.duration_minutes / 30);
     const classEndIndex = classStartIndex + slotsNeeded;
     
     return currentSlotIndex > classStartIndex && currentSlotIndex < classEndIndex;
