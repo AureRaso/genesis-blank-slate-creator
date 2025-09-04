@@ -246,22 +246,30 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                         zIndex: 10
                       }}
                     >
-                      <MultiEventDropdown
-                        allEvents={allClasses}
-                        onEventClick={(event) => {
-                          // The dropdown items will handle their own click events via ClassCard
-                        }}
-                        onEventDragStart={(e, eventId) => {
-                          e.dataTransfer.setData('text/plain', eventId);
-                          e.dataTransfer.effectAllowed = 'move';
-                        }}
-                      >
+                      {hasMultiple ? (
+                        <MultiEventDropdown
+                          allEvents={allClasses}
+                          onEventClick={(event) => {
+                            // Each event will handle its own modal through ClassCard
+                          }}
+                          onEventDragStart={(e, eventId) => {
+                            e.dataTransfer.setData('text/plain', eventId);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
+                        >
+                          <ClassCard 
+                            class={displayClass} 
+                            showAsIndicator={true}
+                            eventCount={allClasses.length}
+                          />
+                        </MultiEventDropdown>
+                      ) : (
                         <ClassCard 
                           class={displayClass} 
-                          showAsIndicator={hasMultiple}
-                          eventCount={allClasses.length}
+                          showAsIndicator={false}
+                          eventCount={1}
                         />
-                      </MultiEventDropdown>
+                      )}
                     </div>
                   )}
                 </div>
