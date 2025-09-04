@@ -53,6 +53,59 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
   const { getDateFnsLocale } = useLanguage();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  const detectOverlappingClasses = (day: Date, targetClasses: ScheduledClassWithTemplate[]) => {
+    const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
+    const normalizedDayName = DAY_MAPPING[dayName] || dayName;
+    
+    // Get all classes for this day
+    const dayClasses = classes.filter(cls => {
+      const classDays = cls.days_of_week.map(d => {
+        const normalized = d.toLowerCase().trim();
+        return DAY_MAPPING[normalized] || normalized;
+      });
+      return classDays.includes(normalizedDayName);
+    });
+    
+    // For each target class, find overlapping classes
+    const overlappingGroups: ScheduledClassWithTemplate[][] = [];
+    
+    targetClasses.forEach(targetClass => {
+      const targetStart = TIME_SLOTS.indexOf(targetClass.start_time.slice(0, 5));
+      const targetEnd = targetStart + Math.ceil(targetClass.duration_minutes / 15);
+      
+      const overlapping = dayClasses.filter(cls => {
+        if (cls.id === targetClass.id) return true;
+        
+        const classStart = TIME_SLOTS.indexOf(cls.start_time.slice(0, 5));
+        const classEnd = classStart + Math.ceil(cls.duration_minutes / 15);
+        
+        // Check if classes overlap
+        return !(classEnd <= targetStart || classStart >= targetEnd);
+      });
+      
+      // Sort by start time to ensure consistent ordering
+      overlapping.sort((a, b) => {
+        const aStart = TIME_SLOTS.indexOf(a.start_time.slice(0, 5));
+        const bStart = TIME_SLOTS.indexOf(b.start_time.slice(0, 5));
+        return aStart - bStart;
+      });
+      
+      overlappingGroups.push(overlapping);
+    });
+    
+    return overlappingGroups;
+  };
+
+  const calculateColumnLayout = (targetClass: ScheduledClassWithTemplate, overlappingClasses: ScheduledClassWithTemplate[]) => {
+    const totalColumns = overlappingClasses.length;
+    const columnIndex = overlappingClasses.findIndex(cls => cls.id === targetClass.id);
+    
+    const width = totalColumns > 1 ? `${95 / totalColumns}%` : '100%';
+    const left = totalColumns > 1 ? `${(columnIndex * 95) / totalColumns}%` : '0%';
+    
+    return { width, left, totalColumns };
+  };
+
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
     const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
     
@@ -169,18 +222,26 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
-                  {dayClasses.map((cls) => (
-                    <div
-                      key={cls.id}
-                      className="absolute inset-x-0 top-0 p-1"
-                      style={{
-                        height: `${getClassHeight(cls.duration_minutes)}px`,
-                        zIndex: 5
-                      }}
-                    >
-                      <ClassCard class={cls} />
-                    </div>
-                  ))}
+                  {dayClasses.map((cls) => {
+                    const overlappingGroups = detectOverlappingClasses(day, [cls]);
+                    const overlappingClasses = overlappingGroups[0] || [cls];
+                    const layout = calculateColumnLayout(cls, overlappingClasses);
+                    
+                    return (
+                      <div
+                        key={cls.id}
+                        className="absolute top-0 p-1"
+                        style={{
+                          height: `${getClassHeight(cls.duration_minutes)}px`,
+                          width: layout.width,
+                          left: layout.left,
+                          zIndex: 5 + overlappingClasses.indexOf(cls)
+                        }}
+                      >
+                        <ClassCard class={cls} isCompact={layout.totalColumns > 1} />
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}

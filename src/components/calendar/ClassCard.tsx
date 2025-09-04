@@ -21,9 +21,10 @@ import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
   onDragStart?: () => void;
+  isCompact?: boolean;
 }
 
-export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
+export function ClassCard({ class: cls, onDragStart, isCompact = false }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -97,8 +98,9 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
               <DialogTrigger asChild>
                 <div 
                   className={cn(
-                    "w-full h-full p-2 rounded-md text-xs cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
+                    "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
                     "flex flex-col justify-between",
+                    isCompact ? "p-1 text-xs" : "p-2 text-xs",
                     getLevelColor()
                   )}
                   draggable={isAdmin || isTrainer}
@@ -119,30 +121,37 @@ export function ClassCard({ class: cls, onDragStart }: ClassCardProps) {
                       <X className="h-3 w-3" />
                     </Button>
                   )}
-                  <div className="space-y-1">
-                    <div className="font-medium truncate text-sm leading-tight">
+                  <div className={cn("space-y-1", isCompact && "space-y-0")}>
+                    <div className={cn(
+                      "font-medium truncate leading-tight",
+                      isCompact ? "text-xs" : "text-sm"
+                    )}>
                       {cls.name}
                     </div>
-                    {cls.club && (
+                    {!isCompact && cls.club && (
                       <div className="text-xs text-muted-foreground truncate font-medium">
                         {cls.club.name}
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground truncate">
-                      {getLevelDisplay()}
-                    </div>
+                    {!isCompact && (
+                      <div className="text-xs text-muted-foreground truncate">
+                        {getLevelDisplay()}
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span className="text-xs">{enrolledCount}</span>
+                  {!isCompact && (
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        <span className="text-xs">{enrolledCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span className="text-xs">{cls.duration_minutes}min</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-xs">{cls.duration_minutes}min</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </DialogTrigger>
 
