@@ -13,6 +13,8 @@ interface CalendarGridProps {
   classes: ScheduledClassWithTemplate[];
   onTimeSlotClick?: (day: Date, timeSlot: string) => void;
   onClassDrop?: (classId: string, newDay: Date, newTimeSlot: string) => void;
+  timeRangeStart?: string;
+  timeRangeEnd?: string;
 }
 
 const TIME_SLOTS = [
@@ -49,10 +51,15 @@ const DAY_MAPPING: { [key: string]: string } = {
   'saturday': 'sabado'
 };
 
-export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop }: CalendarGridProps) {
+export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop, timeRangeStart = "08:00", timeRangeEnd = "22:00" }: CalendarGridProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Filter time slots based on the selected range
+  const filteredTimeSlots = TIME_SLOTS.filter(slot => {
+    return slot >= timeRangeStart && slot <= timeRangeEnd;
+  });
 
   const detectOverlappingClasses = (day: Date, targetClasses: ScheduledClassWithTemplate[]) => {
     const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
@@ -199,7 +206,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
 
       {/* Calendar grid */}
       <div className="flex-1 overflow-y-auto">
-        {TIME_SLOTS.map((timeSlot, index) => (
+        {filteredTimeSlots.map((timeSlot, index) => (
           <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
             <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
               {timeSlot}

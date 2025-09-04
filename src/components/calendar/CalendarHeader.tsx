@@ -1,10 +1,11 @@
 
 import { format, addWeeks, subWeeks } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Maximize2, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CalendarHeaderProps {
   currentWeek: Date;
@@ -17,6 +18,9 @@ interface CalendarHeaderProps {
   onToday: () => void;
   onFullscreen?: () => void;
   showFullscreenButton?: boolean;
+  timeRangeStart?: string;
+  timeRangeEnd?: string;
+  onTimeRangeChange?: (start: string, end: string) => void;
 }
 
 export function CalendarHeader({
@@ -29,10 +33,23 @@ export function CalendarHeader({
   onNextWeek,
   onToday,
   onFullscreen,
-  showFullscreenButton = true
+  showFullscreenButton = true,
+  timeRangeStart = "08:00",
+  timeRangeEnd = "22:00",
+  onTimeRangeChange
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  
+  const timeSlots = [
+    "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
+    "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
+    "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45",
+    "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45",
+    "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45",
+    "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45",
+    "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00"
+  ];
   
   return (
     <div className="flex items-center justify-between mb-4">
@@ -47,6 +64,36 @@ export function CalendarHeader({
           </Badge>
         )}
       </div>
+      
+      {/* Time range selectors */}
+      {onTimeRangeChange && (
+        <div className="flex items-center gap-2 mr-4">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-1 text-sm">
+            <Select value={timeRangeStart} onValueChange={(value) => onTimeRangeChange(value, timeRangeEnd)}>
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {timeSlots.map((time) => (
+                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-muted-foreground">-</span>
+            <Select value={timeRangeEnd} onValueChange={(value) => onTimeRangeChange(timeRangeStart, value)}>
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {timeSlots.map((time) => (
+                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
       
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={onPreviousWeek}>

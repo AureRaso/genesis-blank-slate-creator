@@ -17,6 +17,16 @@ import { cn } from "@/lib/utils";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 import { useClassDragDrop } from "@/hooks/useClassDragDrop";
 
+const TIME_SLOTS = [
+  "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
+  "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
+  "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45",
+  "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45",
+  "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45",
+  "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45",
+  "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00"
+];
+
 interface ClassCalendarViewProps {
   clubId?: string;
   clubIds?: string[];
@@ -28,6 +38,8 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ day: Date; time: string } | null>(null);
+  const [timeRangeStart, setTimeRangeStart] = useState("08:00");
+  const [timeRangeEnd, setTimeRangeEnd] = useState("22:00");
   const { profile, isAdmin } = useAuth();
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -50,6 +62,11 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
 
   const handleFullscreen = () => {
     setShowFullscreen(true);
+  };
+
+  const handleTimeRangeChange = (start: string, end: string) => {
+    setTimeRangeStart(start);
+    setTimeRangeEnd(end);
   };
 
   const handleTimeSlotClick = (day: Date, timeSlot: string) => {
@@ -174,6 +191,9 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         onNextWeek={goToNextWeek}
         onToday={goToToday}
         onFullscreen={handleFullscreen}
+        timeRangeStart={timeRangeStart}
+        timeRangeEnd={timeRangeEnd}
+        onTimeRangeChange={handleTimeRangeChange}
       />
       
       {/* Show trainer legend for admins when there are multiple trainers */}
@@ -187,6 +207,8 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) => 
           handleClassDrop(classId, newDay, newTimeSlot, classes || [])
         }
+        timeRangeStart={timeRangeStart}
+        timeRangeEnd={timeRangeEnd}
       />
 
       {/* Create Class Form Dialog */}
@@ -235,6 +257,9 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                 onNextWeek={goToNextWeek}
                 onToday={goToToday}
                 showFullscreenButton={false}
+                timeRangeStart={timeRangeStart}
+                timeRangeEnd={timeRangeEnd}
+                onTimeRangeChange={handleTimeRangeChange}
               />
               
               {/* Show trainer legend for admins when there are multiple trainers */}
@@ -250,11 +275,11 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                   </div>
                   {weekDays.map((day) => (
                     <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0 bg-background/90">
-                      <div className="text-sm font-medium text-muted-foreground">
+                      <div className="text-xs font-medium text-muted-foreground">
                         {format(day, "EEE", { locale: getDateFnsLocale() })}
                       </div>
                       <div className={cn(
-                        "text-lg font-semibold mt-1",
+                        "text-sm font-semibold mt-1",
                         isSameDay(day, new Date()) && "text-primary"
                       )}>
                         {format(day, "dd")}
@@ -265,15 +290,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
 
                 {/* Calendar grid with time slots */}
                 <div className="flex-1 overflow-y-auto">
-                  {[
-                    "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "09:45",
-                    "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45",
-                    "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45",
-                    "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45",
-                    "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45",
-                    "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45",
-                    "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00"
-                  ].map((timeSlot) => (
+                  {TIME_SLOTS.filter(slot => slot >= timeRangeStart && slot <= timeRangeEnd).map((timeSlot) => (
                     <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: '25px' }}>
                       <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
                         {timeSlot}
