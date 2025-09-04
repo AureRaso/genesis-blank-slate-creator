@@ -30,7 +30,7 @@ export function TrainerLegend({ classes }: TrainerLegendProps) {
   }
 
   return (
-    <Card className="mb-4">
+    <Card className="h-fit">{/* Remove mb-4 to align with filters */}
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Leyenda de colores</CardTitle>
       </CardHeader>
