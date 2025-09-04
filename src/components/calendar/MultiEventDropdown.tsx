@@ -1,6 +1,7 @@
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ClassCard } from './ClassCard';
+import { Badge } from '@/components/ui/badge';
 import type { ScheduledClassWithTemplate } from '@/hooks/useScheduledClasses';
 
 interface MultiEventDropdownProps {
@@ -20,11 +21,39 @@ export function MultiEventDropdown({
     return <>{children}</>;
   }
 
+  // Obtener clubes únicos
+  const uniqueClubs = Array.from(new Set(allEvents.map(event => event.club?.name).filter(Boolean)));
+
+  // Card indicadora personalizada
+  const IndicatorCard = () => (
+    <div className="relative group cursor-pointer">
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 hover:bg-primary/15 transition-colors">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="font-medium text-sm text-foreground">
+              {allEvents.length} clases
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {uniqueClubs.map(club => (
+                <Badge key={club} variant="secondary" className="text-xs">
+                  {club}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium">
+            {allEvents.length}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <div onClick={() => console.log('MultiEventDropdown clicked with', allEvents.length, 'events')}>
-          {children}
+          <IndicatorCard />
         </div>
       </PopoverTrigger>
       <PopoverContent 
