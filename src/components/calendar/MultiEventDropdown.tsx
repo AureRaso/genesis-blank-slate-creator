@@ -66,8 +66,14 @@ export function MultiEventDropdown({
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   <span>
-                    {format(new Date(`2000-01-01T${event.start_time}`), 'HH:mm')} - 
-                    {format(new Date(`2000-01-01T${event.end_time}`), 'HH:mm')}
+                    {event.start_time && event.end_time ? (
+                      <>
+                        {format(new Date(`2000-01-01T${event.start_time}`), 'HH:mm')} - 
+                        {format(new Date(`2000-01-01T${event.end_time}`), 'HH:mm')}
+                      </>
+                    ) : (
+                      'Horario no disponible'
+                    )}
                   </span>
                 </div>
                 
