@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { useEnrollmentFormByToken, useCompleteEnrollmentForm } from "@/hooks/useStudentEnrollments";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
+import { toast } from "@/hooks/use-toast";
 
 const StudentEnrollmentLink = () => {
   const { token } = useParams<{ token: string }>();
@@ -19,7 +20,7 @@ const StudentEnrollmentLink = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-card flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardContent className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
@@ -32,7 +33,7 @@ const StudentEnrollmentLink = () => {
 
   if (error || !enrollmentForm) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-card flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -58,7 +59,7 @@ const StudentEnrollmentLink = () => {
 
   if (enrollmentForm.status === "completed") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-card flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -86,7 +87,7 @@ const StudentEnrollmentLink = () => {
   const isExpired = new Date(enrollmentForm.expires_at) < new Date();
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-card flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -112,7 +113,7 @@ const StudentEnrollmentLink = () => {
 
   if (!showForm) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-card flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-playtomic-orange/20 flex items-center justify-center">
@@ -148,11 +149,20 @@ const StudentEnrollmentLink = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 p-4">
-      <div className="max-w-4xl mx-auto py-8">
+    <div className="min-h-screen bg-card flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
         <StudentEnrollmentForm
           isPlayerMode={true}
           onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            toast({
+              title: "¡Inscripción completada!",
+              description: "Tu inscripción ha sido enviada correctamente. Serás redirigido al login.",
+            });
+            setTimeout(() => {
+              window.location.href = "/auth";
+            }, 2000);
+          }}
           trainerProfile={{
             id: enrollmentForm.trainer_profile_id,
             club_id: enrollmentForm.club_id

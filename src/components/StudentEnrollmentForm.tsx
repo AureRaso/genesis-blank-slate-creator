@@ -41,6 +41,7 @@ interface StudentEnrollmentFormProps {
   onClose: () => void;
   trainerProfile?: any;
   isPlayerMode?: boolean;
+  onSuccess?: () => void;
 }
 
 const DAYS_OF_WEEK = [
@@ -58,7 +59,7 @@ const TIME_SLOTS = [
   "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
 
-const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }: StudentEnrollmentFormProps) => {
+const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, onSuccess }: StudentEnrollmentFormProps) => {
   const [enrollmentMode, setEnrollmentMode] = useState<"teacher" | "link" | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string>("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
@@ -69,6 +70,21 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
   
   const createEnrollmentMutation = useCreateStudentEnrollment();
   const createLinkMutation = useCreateEnrollmentForm();
+
+  // Override onSuccess behavior for player mode
+  const enhancedCreateEnrollmentMutation = {
+    ...createEnrollmentMutation,
+    mutate: (data: any) => {
+      const originalOnSuccess = createEnrollmentMutation.mutate;
+      createEnrollmentMutation.mutate(data, {
+        onSuccess: (result) => {
+          if (isPlayerMode && onSuccess) {
+            onSuccess();
+          }
+        }
+      });
+    }
+  };
 
   const {
     register,
@@ -187,7 +203,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false }
       return;
     }
 
-    createEnrollmentMutation.mutate({
+    enhancedCreateEnrollmentMutation.mutate({
       ...data,
       club_id: clubId,
     } as any);
