@@ -184,11 +184,11 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
         </div>
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0 bg-background/90">
-            <div className="text-sm font-medium text-muted-foreground">
+            <div className="text-xs font-medium text-muted-foreground">
               {format(day, "EEE", { locale: getDateFnsLocale() })}
             </div>
             <div className={cn(
-              "text-lg font-semibold mt-1",
+              "text-sm font-semibold mt-1",
               isSameDay(day, new Date()) && "text-primary"
             )}>
               {format(day, "dd")}
