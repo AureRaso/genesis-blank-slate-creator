@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Plus, Calendar, List } from "lucide-react";
+import { Plus, Calendar, List, Search, Filter } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -107,18 +109,45 @@ function ScheduledClassesContent() {
 
       {/* Filtros y leyenda solo en modo calendario */}
       {viewMode === 'calendar' && (
-        <div className="flex flex-row items-start gap-4">
-          <div className="w-full max-w-lg">
-            <ClassFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              groups={groups}
-              trainers={[]} // TODO: Add trainers data when available
-            />
-          </div>
-          <div className="flex-1">
+        <div className="space-y-4">
+          {/* Search bar and legend on same line */}
+          <div className="flex items-start gap-4">
+            <div className="flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar clases..."
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+                {Object.entries(filters).filter(([key, value]) => {
+                  if (key === 'search') return false;
+                  return value && value !== "" && value !== false && !(Array.isArray(value) && value.length === 0);
+                }).length > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                    {Object.entries(filters).filter(([key, value]) => {
+                      if (key === 'search') return false;
+                      return value && value !== "" && value !== false && !(Array.isArray(value) && value.length === 0);
+                    }).length}
+                  </Badge>
+                )}
+              </Button>
+            </div>
             <TrainerLegend classes={filteredCalendarClasses} />
           </div>
+          
+          {/* Advanced filters */}
+          <ClassFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            groups={groups}
+            trainers={[]}
+          />
         </div>
       )}
 

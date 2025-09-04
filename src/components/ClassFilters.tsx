@@ -103,33 +103,36 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
   const activeFilters = getActiveFilters();
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        {/* Search bar always visible */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('classes.searchPlaceholder')}
-              value={filters.search}
-              onChange={(e) => updateFilter("search", e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                {t('classes.filters')}
-                {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
-                    {activeFiltersCount}
-                  </Badge>
-                )}
-              </Button>
-            </CollapsibleTrigger>
-          </Collapsible>
+    <div className="space-y-4">
+      {/* Search bar and filter button */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('classes.searchPlaceholder')}
+            value={filters.search}
+            onChange={(e) => updateFilter("search", e.target.value)}
+            className="pl-10"
+          />
         </div>
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              {t('classes.filters')}
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+          </CollapsibleTrigger>
+        </Collapsible>
+      </div>
+
+      {/* Advanced filters card */}
+      <Card>
+        <CardContent className="p-4">
 
         {/* Active filters display */}
         {activeFilters.length > 0 && (
@@ -255,5 +258,6 @@ export default function ClassFilters({ filters, onFiltersChange, groups, trainer
         </Collapsible>
       </CardContent>
     </Card>
+    </div>
   );
 }
