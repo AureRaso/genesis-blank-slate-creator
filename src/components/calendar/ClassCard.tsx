@@ -102,8 +102,8 @@ export function ClassCard({
       <div className="relative w-full h-full">
         <div 
           className={cn(
-            "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group",
-            "flex flex-col justify-between",
+            "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden",
+            "flex flex-col",
             isCompact ? "p-1 text-xs" : "p-2 text-xs",
             getLevelColor(),
             "ring-2 ring-primary/20"
@@ -136,9 +136,9 @@ export function ClassCard({
             </div>
           )}
 
-          <div className={cn("space-y-1 flex-1 min-h-0", isCompact && "space-y-0")}>
+          <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
             <div className={cn(
-              "font-medium truncate leading-tight",
+              "font-medium truncate leading-tight mb-1",
               isCompact ? "text-xs" : "text-sm"
             )}>
               {cls.name}
@@ -147,29 +147,28 @@ export function ClassCard({
               )}
             </div>
             {!isCompact && cls.club && (
-              <div className="text-xs text-muted-foreground truncate font-medium">
+              <div className="text-xs text-muted-foreground truncate font-medium mb-1">
                 {cls.club.name}
               </div>
             )}
             {!isCompact && (
-              <div className="text-xs text-muted-foreground truncate">
+              <div className="text-xs text-muted-foreground truncate mb-1">
                 {getLevelDisplay()}
               </div>
             )}
+            {!isCompact && (
+              <div className="flex items-center justify-between text-xs mt-auto">
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  <span>{enrolledCount}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{cls.duration_minutes}min</span>
+                </div>
+              </div>
+            )}
           </div>
-          
-          {!isCompact && (
-            <div className="flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                <span className="text-xs">{enrolledCount}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span className="text-xs">{cls.duration_minutes}min</span>
-              </div>
-            </div>
-          )}
         </div>
 
         <EditClassModal 
@@ -214,8 +213,8 @@ export function ClassCard({
               <DialogTrigger asChild>
                 <div 
                   className={cn(
-                    "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group",
-                    "flex flex-col justify-between",
+                    "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden",
+                    "flex flex-col",
                     isCompact ? "p-1 text-xs" : "p-2 text-xs",
                     getLevelColor()
                   )}
@@ -238,37 +237,36 @@ export function ClassCard({
                     </Button>
                   )}
 
-                  <div className={cn("space-y-1 flex-1 min-h-0", isCompact && "space-y-0")}>
+                  <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
                     <div className={cn(
-                      "font-medium truncate leading-tight",
+                      "font-medium truncate leading-tight mb-1",
                       isCompact ? "text-xs" : "text-sm"
                     )}>
                       {cls.name}
                     </div>
                     {!isCompact && cls.club && (
-                      <div className="text-xs text-muted-foreground truncate font-medium">
+                      <div className="text-xs text-muted-foreground truncate font-medium mb-1">
                         {cls.club.name}
                       </div>
                     )}
                     {!isCompact && (
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="text-xs text-muted-foreground truncate mb-1">
                         {getLevelDisplay()}
                       </div>
                     )}
+                    {!isCompact && (
+                      <div className="flex items-center justify-between text-xs mt-auto">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span>{enrolledCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{cls.duration_minutes}min</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {!isCompact && (
-                    <div className="flex items-center justify-between flex-shrink-0">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        <span className="text-xs">{enrolledCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span className="text-xs">{cls.duration_minutes}min</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </DialogTrigger>
 
