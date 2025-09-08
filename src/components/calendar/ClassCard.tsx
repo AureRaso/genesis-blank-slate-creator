@@ -136,7 +136,7 @@ export function ClassCard({
             </div>
           )}
 
-          <div className={cn("space-y-1", isCompact && "space-y-0")}>
+          <div className={cn("space-y-1 flex-1 min-h-0", isCompact && "space-y-0")}>
             <div className={cn(
               "font-medium truncate leading-tight",
               isCompact ? "text-xs" : "text-sm"
@@ -159,7 +159,7 @@ export function ClassCard({
           </div>
           
           {!isCompact && (
-            <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
                 <span className="text-xs">{enrolledCount}</span>
@@ -238,7 +238,7 @@ export function ClassCard({
                     </Button>
                   )}
 
-                  <div className={cn("space-y-1", isCompact && "space-y-0")}>
+                  <div className={cn("space-y-1 flex-1 min-h-0", isCompact && "space-y-0")}>
                     <div className={cn(
                       "font-medium truncate leading-tight",
                       isCompact ? "text-xs" : "text-sm"
@@ -258,7 +258,7 @@ export function ClassCard({
                   </div>
                   
                   {!isCompact && (
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center justify-between flex-shrink-0">
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         <span className="text-xs">{enrolledCount}</span>
