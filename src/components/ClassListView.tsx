@@ -52,7 +52,7 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
   const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isTrainer } = useAuth();
   
   const { data: classes, isLoading } = useScheduledClasses({
     clubId: clubId,
@@ -246,7 +246,7 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
                               <Eye className="h-4 w-4 mr-2" />
                               {t('classes.viewDetails')}
                             </DropdownMenuItem>
-                            {isAdmin && (
+                            {(isAdmin || isTrainer) && (
                               <>
                                  <DropdownMenuItem onClick={() => setManageStudentsClass(cls)}>
                                    <UserPlus className="h-4 w-4 mr-2" />
@@ -277,7 +277,7 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
         {/* Class details modal */}
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
           {selectedClass && (
-            isAdmin ? (
+            (isAdmin || isTrainer) ? (
               <AdminClassDetailsModal class={selectedClass} onManageStudents={() => {
                 setManageStudentsClass(selectedClass);
                 setSelectedClass(null);
