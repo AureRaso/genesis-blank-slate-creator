@@ -2,75 +2,56 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  MapPin, 
-  Edit, 
-  Trash2, 
-  Eye,
-  UserPlus,
-  UserMinus,
-  MoreVertical
-} from "lucide-react";
-
+import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ManageStudentsModal } from "@/components/calendar/ManageStudentsModal";
 import { EditClassModal } from "@/components/calendar/EditClassModal";
-
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
-
 interface ClassListViewProps {
   clubId?: string;
   clubIds?: string[];
   filters: ClassFiltersData;
 }
-
-export default function ClassListView({ clubId, clubIds, filters }: ClassListViewProps) {
+export default function ClassListView({
+  clubId,
+  clubIds,
+  filters
+}: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [editingClass, setEditingClass] = useState<ScheduledClassWithTemplate | null>(null);
-  const { t } = useTranslation();
-  const { getDateFnsLocale } = useLanguage();
-  const { isAdmin, isTrainer } = useAuth();
-  
-  const { data: classes, isLoading } = useScheduledClasses({
+  const {
+    t
+  } = useTranslation();
+  const {
+    getDateFnsLocale
+  } = useLanguage();
+  const {
+    isAdmin,
+    isTrainer
+  } = useAuth();
+  const {
+    data: classes,
+    isLoading
+  } = useScheduledClasses({
     clubId: clubId,
-    clubIds: clubIds,
+    clubIds: clubIds
   });
 
   // Aplicar todos los filtros
-  const filteredClasses = classes?.filter((cls) => {
+  const filteredClasses = classes?.filter(cls => {
     // Filtro de búsqueda existente
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      const matchesSearch = 
-        cls.name.toLowerCase().includes(searchLower) ||
-        cls.participants?.some(p => 
-          p.student_enrollment?.full_name?.toLowerCase().includes(searchLower)
-        );
+      const matchesSearch = cls.name.toLowerCase().includes(searchLower) || cls.participants?.some(p => p.student_enrollment?.full_name?.toLowerCase().includes(searchLower));
       if (!matchesSearch) return false;
     }
 
@@ -90,88 +71,65 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
 
     // Filtro por días de la semana
     if (filters.weekDays.length > 0) {
-      const hasMatchingDay = cls.days_of_week.some(day => 
-        filters.weekDays.includes(day.toLowerCase())
-      );
+      const hasMatchingDay = cls.days_of_week.some(day => filters.weekDays.includes(day.toLowerCase()));
       if (!hasMatchingDay) return false;
     }
 
     // Filtro por nombre/email de alumno
     if (filters.studentName) {
       const studentNameLower = filters.studentName.toLowerCase();
-      const hasMatchingStudent = cls.participants?.some(p => 
-        p.student_enrollment?.full_name?.toLowerCase().includes(studentNameLower) ||
-        p.student_enrollment?.email?.toLowerCase().includes(studentNameLower)
-      );
+      const hasMatchingStudent = cls.participants?.some(p => p.student_enrollment?.full_name?.toLowerCase().includes(studentNameLower) || p.student_enrollment?.email?.toLowerCase().includes(studentNameLower));
       if (!hasMatchingStudent) return false;
     }
 
     // Filtro por descuentos
     if (filters.withDiscountOnly) {
-      const hasDiscount = cls.participants?.some(p => 
-        (p.discount_1 !== null && p.discount_1 > 0) ||
-        (p.discount_2 !== null && p.discount_2 > 0)
-      );
+      const hasDiscount = cls.participants?.some(p => p.discount_1 !== null && p.discount_1 > 0 || p.discount_2 !== null && p.discount_2 > 0);
       if (!hasDiscount) return false;
     }
-
     return true;
   }) || [];
-
   const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `${t('classes.level')} ${cls.level_from}` : 
-        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `${t('classes.level')} ${cls.level_from}` : `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
     }
     return t('classes.withoutLevel');
   };
-
   const getLevelColor = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
   if (isLoading) {
-    return (
-      <Card>
+    return <Card>
         <CardHeader>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardHeader>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{t('classes.classList')} ({filteredClasses.length})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {filteredClasses.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+        {filteredClasses.length === 0 ? <div className="text-center py-8 text-muted-foreground">
             {t('classes.noClassesFound')}
-          </div>
-        ) : (
-          <div className="rounded-md border">
+          </div> : <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -184,19 +142,15 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClasses.map((cls) => {
-                  const enrolledCount = cls.participants?.length || 0;
-
-                  return (
-                    <TableRow key={cls.id}>
+                {filteredClasses.map(cls => {
+              const enrolledCount = cls.participants?.length || 0;
+              return <TableRow key={cls.id}>
                        <TableCell>
                          <div className="space-y-1">
                            <div className="font-medium">{cls.name}</div>
-                           {cls.club && (
-                             <div className="text-xs text-muted-foreground">
+                           {cls.club && <div className="text-xs text-muted-foreground">
                                {cls.club.name}
-                             </div>
-                           )}
+                             </div>}
                            <div className="flex items-center gap-2">
                              <Badge className={getLevelColor(cls)}>
                                {getLevelDisplay(cls)}
@@ -248,115 +202,80 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
                               <Eye className="h-4 w-4 mr-2" />
                               {t('classes.viewDetails')}
                             </DropdownMenuItem>
-                            {(isAdmin || isTrainer) && (
-                              <>
-                                 <DropdownMenuItem onClick={() => setManageStudentsClass(cls)}>
-                                   <UserPlus className="h-4 w-4 mr-2" />
-                                   {t('classes.manageStudents')}
-                                 </DropdownMenuItem>
+                            {(isAdmin || isTrainer) && <>
+                                 
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  {t('classes.edit')}
-                                </DropdownMenuItem>
+                                
                                 <DropdownMenuItem className="text-destructive">
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   {t('classes.cancelClass')}
                                 </DropdownMenuItem>
-                              </>
-                            )}
+                              </>}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </TableRow>
-                  );
-                })}
+                    </TableRow>;
+            })}
               </TableBody>
             </Table>
-          </div>
-        )}
+          </div>}
 
         {/* Class details modal */}
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
-          {selectedClass && (
-            (isAdmin || isTrainer) ? (
-              <AdminClassDetailsModal 
-                class={selectedClass} 
-                onManageStudents={() => {
-                  setManageStudentsClass(selectedClass);
-                  setSelectedClass(null);
-                }}
-                onEditClass={() => {
-                  setEditingClass(selectedClass);
-                  setSelectedClass(null);
-                }}
-              />
-            ) : (
-              <PlayerClassDetailsModal class={selectedClass} />
-            )
-          )}
+          {selectedClass && (isAdmin || isTrainer ? <AdminClassDetailsModal class={selectedClass} onManageStudents={() => {
+          setManageStudentsClass(selectedClass);
+          setSelectedClass(null);
+        }} onEditClass={() => {
+          setEditingClass(selectedClass);
+          setSelectedClass(null);
+        }} /> : <PlayerClassDetailsModal class={selectedClass} />)}
         </Dialog>
 
         {/* Manage Students Modal */}
-        {manageStudentsClass && (
-          <ManageStudentsModal 
-            class={manageStudentsClass}
-            isOpen={!!manageStudentsClass}
-            onClose={() => setManageStudentsClass(null)}
-          />
-        )}
+        {manageStudentsClass && <ManageStudentsModal class={manageStudentsClass} isOpen={!!manageStudentsClass} onClose={() => setManageStudentsClass(null)} />}
 
         {/* Edit Class Modal */}
-        {editingClass && (
-          <EditClassModal 
-            class={editingClass}
-            isOpen={!!editingClass}
-            onClose={() => setEditingClass(null)}
-          />
-        )}
+        {editingClass && <EditClassModal class={editingClass} isOpen={!!editingClass} onClose={() => setEditingClass(null)} />}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
 
 // Modal para administradores/profesores
-function AdminClassDetailsModal({ class: selectedClass, onManageStudents, onEditClass }: { 
+function AdminClassDetailsModal({
+  class: selectedClass,
+  onManageStudents,
+  onEditClass
+}: {
   class: ScheduledClassWithTemplate;
   onManageStudents?: () => void;
   onEditClass?: () => void;
 }) {
-  const { t } = useTranslation();
-  
+  const {
+    t
+  } = useTranslation();
   const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `${t('classes.level')} ${cls.level_from}` : 
-        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `${t('classes.level')} ${cls.level_from}` : `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
     }
     return t('classes.withoutLevel');
   };
-
   const getLevelColor = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
-  return (
-    <DialogContent className="max-w-md">
+  return <DialogContent className="max-w-md">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
@@ -411,18 +330,14 @@ function AdminClassDetailsModal({ class: selectedClass, onManageStudents, onEdit
           </div>
         </div>
 
-        {selectedClass.participants && selectedClass.participants.length > 0 && (
-          <div>
+        {selectedClass.participants && selectedClass.participants.length > 0 && <div>
             <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
             <div className="space-y-1">
-              {selectedClass.participants.map((participant) => (
-                <div key={participant.id} className="text-sm p-2 bg-muted rounded">
+              {selectedClass.participants.map(participant => <div key={participant.id} className="text-sm p-2 bg-muted rounded">
                   {participant.student_enrollment.full_name}
-                </div>
-              ))}
+                </div>)}
             </div>
-          </div>
-        )}
+          </div>}
 
         <div className="flex gap-2 pt-2">
           <Button variant="outline" size="sm" className="flex-1" onClick={onEditClass}>
@@ -433,62 +348,70 @@ function AdminClassDetailsModal({ class: selectedClass, onManageStudents, onEdit
           </Button>
         </div>
       </div>
-    </DialogContent>
-  );
+    </DialogContent>;
 }
 
 // Modal para jugadores
-function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledClassWithTemplate }) {
-  const { profile } = useAuth();
-  const { t } = useTranslation();
+function PlayerClassDetailsModal({
+  class: selectedClass
+}: {
+  class: ScheduledClassWithTemplate;
+}) {
+  const {
+    profile
+  } = useAuth();
+  const {
+    t
+  } = useTranslation();
   const enrolledCount = selectedClass.participants?.length || 0;
-  
+
   // Hooks para lista de espera
-  const { data: capacity } = useClassCapacity(selectedClass.id);
-  const { data: waitlistPosition } = useUserWaitlistPosition(selectedClass.id, profile?.id);
+  const {
+    data: capacity
+  } = useClassCapacity(selectedClass.id);
+  const {
+    data: waitlistPosition
+  } = useUserWaitlistPosition(selectedClass.id, profile?.id);
   const joinWaitlist = useJoinWaitlist();
   const leaveWaitlist = useLeaveWaitlist();
-
   const handleJoinWaitlist = () => {
     if (profile?.id) {
-      joinWaitlist.mutate({ classId: selectedClass.id, userId: profile.id });
+      joinWaitlist.mutate({
+        classId: selectedClass.id,
+        userId: profile.id
+      });
     }
   };
-
   const handleLeaveWaitlist = () => {
     if (profile?.id) {
-      leaveWaitlist.mutate({ classId: selectedClass.id, userId: profile.id });
+      leaveWaitlist.mutate({
+        classId: selectedClass.id,
+        userId: profile.id
+      });
     }
   };
-
   const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `${t('classes.level')} ${cls.level_from}` : 
-        `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `${t('classes.level')} ${cls.level_from}` : `${t('classes.level')} ${cls.level_from}-${cls.level_to}`;
     }
     return t('classes.withoutLevel');
   };
-
   const getLevelColor = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
   const getEndTime = () => {
     const [hours, minutes] = selectedClass.start_time.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -497,17 +420,13 @@ function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledCla
     const endMins = endMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
-
   const actualCapacity = {
     current: capacity?.currentParticipants || enrolledCount,
     max: capacity?.maxParticipants || selectedClass.max_participants || 8,
     waitlistCount: capacity?.waitlistCount || 0
   };
-
   const hasAvailableSpots = actualCapacity.current < actualCapacity.max;
-
-  return (
-    <DialogContent className="max-w-2xl">
+  return <DialogContent className="max-w-2xl">
       <DialogHeader>
         <DialogTitle className="flex items-center justify-between">
           <span>Detalles de la Clase</span>
@@ -536,11 +455,9 @@ function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledCla
             <div>
               <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
               <div className="flex flex-wrap gap-1">
-                {selectedClass.days_of_week.map((day) => (
-                  <Badge key={day} variant="outline" className="text-xs">
+                {selectedClass.days_of_week.map(day => <Badge key={day} variant="outline" className="text-xs">
                     {day}
-                  </Badge>
-                ))}
+                  </Badge>)}
               </div>
             </div>
 
@@ -558,11 +475,9 @@ function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledCla
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{actualCapacity.current}/{actualCapacity.max} alumnos</span>
-                {actualCapacity.waitlistCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
+                {actualCapacity.waitlistCount > 0 && <Badge variant="secondary" className="text-xs">
                     +{actualCapacity.waitlistCount} en lista de espera
-                  </Badge>
-                )}
+                  </Badge>}
               </div>
             </div>
 
@@ -577,55 +492,34 @@ function PlayerClassDetailsModal({ class: selectedClass }: { class: ScheduledCla
         <div className="border-t pt-4">
           <div className="space-y-4">
             <div className="text-center">
-              {hasAvailableSpots ? (
-                <div className="text-sm text-green-600 font-medium mb-2">
+              {hasAvailableSpots ? <div className="text-sm text-green-600 font-medium mb-2">
                   ¡Plazas disponibles!
-                </div>
-              ) : (
-                <div className="text-sm text-amber-600 font-medium mb-2">
+                </div> : <div className="text-sm text-amber-600 font-medium mb-2">
                   Clase completa
-                </div>
-              )}
+                </div>}
             </div>
             
             {/* Botones de lista de espera - siempre disponibles */}
             <div className="flex justify-center">
-              {waitlistPosition ? (
-                <div className="text-center space-y-3 w-full">
+              {waitlistPosition ? <div className="text-center space-y-3 w-full">
                   <Badge variant="outline" className="text-sm">
                     Posición {waitlistPosition.position} en lista de espera
                   </Badge>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleLeaveWaitlist}
-                    disabled={leaveWaitlist.isPending}
-                    className="w-full"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleLeaveWaitlist} disabled={leaveWaitlist.isPending} className="w-full">
                     <UserMinus className="h-4 w-4 mr-2" />
                     {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
                   </Button>
-                </div>
-              ) : (
-                <Button 
-                  onClick={handleJoinWaitlist}
-                  disabled={joinWaitlist.isPending}
-                  className="w-full"
-                >
+                </div> : <Button onClick={handleJoinWaitlist} disabled={joinWaitlist.isPending} className="w-full">
                   <UserPlus className="h-4 w-4 mr-2" />
                   {joinWaitlist.isPending ? "Uniéndose..." : "Reservar en lista de espera"}
-                </Button>
-              )}
+                </Button>}
             </div>
             
-            {hasAvailableSpots && (
-              <div className="text-xs text-center text-muted-foreground">
+            {hasAvailableSpots && <div className="text-xs text-center text-muted-foreground">
                 También puedes contactar directamente con el club para inscribirte
-              </div>
-            )}
+              </div>}
           </div>
         </div>
       </div>
-    </DialogContent>
-  );
+    </DialogContent>;
 }
