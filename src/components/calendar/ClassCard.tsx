@@ -16,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
-
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
   onDragStart?: () => void;
@@ -24,10 +23,9 @@ interface ClassCardProps {
   showAsIndicator?: boolean;
   eventCount?: number;
 }
-
-export function ClassCard({ 
-  class: cls, 
-  onDragStart, 
+export function ClassCard({
+  class: cls,
+  onDragStart,
   isCompact = false,
   showAsIndicator = false,
   eventCount = 1
@@ -35,45 +33,41 @@ export function ClassCard({
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { isAdmin, isTrainer, profile } = useAuth();
+  const {
+    isAdmin,
+    isTrainer,
+    profile
+  } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
-  
   const enrolledCount = cls.participants?.length || 0;
-
   const getLevelDisplay = () => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `Nivel ${cls.level_from}` : 
-        `Nivel ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `Nivel ${cls.level_from}` : `Nivel ${cls.level_from}-${cls.level_to}`;
     }
     return 'Sin nivel';
   };
-
   const getLevelColor = () => {
     // For admins, use the new class color system that distinguishes creator vs trainer
     if (isAdmin) {
       return getClassColor(cls.created_by, cls.trainer_profile_id, profile?.id || null);
     }
-    
+
     // For trainers and players, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
   const getEndTime = () => {
     const [hours, minutes] = cls.start_time.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -82,7 +76,6 @@ export function ClassCard({
     const endMins = endMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
-
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/plain', cls.id);
     e.dataTransfer.effectAllowed = 'move';
@@ -90,7 +83,6 @@ export function ClassCard({
       onDragStart();
     }
   };
-
   const handleDeleteClass = () => {
     deleteClassMutation.mutate(cls.id);
     setShowDeleteConfirm(false);
@@ -98,66 +90,34 @@ export function ClassCard({
 
   // For indicator cards, render without dialog to allow dropdown
   if (showAsIndicator) {
-    return (
-      <div className="relative w-full h-full">
-        <div 
-          className={cn(
-            "w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden",
-            "flex flex-col",
-            isCompact ? "p-1 text-xs" : "p-2 text-xs",
-            getLevelColor(),
-            "ring-2 ring-primary/20"
-          )}
-          draggable={isAdmin || isTrainer}
-          onDragStart={handleDragStart}
-          onClick={() => console.log('ClassCard indicator clicked:', cls.name)}
-          title={`${cls.name} - ${cls.start_time.slice(0, 5)} - ${getEndTime()} (${cls.duration_minutes} min) - ${enrolledCount} alumnos`}
-        >
+    return <div className="relative w-full h-full">
+        <div className={cn("w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", isCompact ? "p-1 text-xs" : "p-2 text-xs", getLevelColor(), "ring-2 ring-primary/20")} draggable={isAdmin || isTrainer} onDragStart={handleDragStart} onClick={() => console.log('ClassCard indicator clicked:', cls.name)} title={`${cls.name} - ${cls.start_time.slice(0, 5)} - ${getEndTime()} (${cls.duration_minutes} min) - ${enrolledCount} alumnos`}>
           {/* Delete X button - only for admin/trainer */}
-          {(isAdmin || isTrainer) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowDeleteConfirm(true);
-              }}
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            >
+          {(isAdmin || isTrainer) && <Button variant="ghost" size="sm" onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowDeleteConfirm(true);
+        }} className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
               <X className="h-3 w-3" />
-            </Button>
-          )}
+            </Button>}
 
           {/* Multiple events indicator */}
-          {eventCount > 1 && (
-            <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
+          {eventCount > 1 && <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
               {eventCount}
-            </div>
-          )}
+            </div>}
 
           <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
-            <div className={cn(
-              "font-medium truncate leading-none",
-              isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5"
-            )}>
+            <div className={cn("font-medium truncate leading-none", isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5")}>
               {cls.name}
-              {eventCount > 1 && (
-                <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>
-              )}
+              {eventCount > 1 && <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>}
             </div>
-            {!isCompact && cls.club && (
-              <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
+            {!isCompact && cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
                 {cls.club.name}
-              </div>
-            )}
-            {!isCompact && (
-              <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
+              </div>}
+            {!isCompact && <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
                 {getLevelDisplay()}
-              </div>
-            )}
-            {!isCompact && (
-              <div className="flex items-center justify-between text-xs mt-1">
+              </div>}
+            {!isCompact && <div className="flex items-center justify-between text-xs mt-1">
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   <span>{enrolledCount}</span>
@@ -166,16 +126,11 @@ export function ClassCard({
                   <Clock className="h-3 w-3" />
                   <span>{cls.duration_minutes}min</span>
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </div>
 
-        <EditClassModal 
-          class={cls}
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-        />
+        <EditClassModal class={cls} isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
 
         {/* Delete Confirmation AlertDialog for calendar card */}
         <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
@@ -189,73 +144,43 @@ export function ClassCard({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>No, mantener</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteClass}
-                disabled={deleteClassMutation.isPending}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
+              <AlertDialogAction onClick={handleDeleteClass} disabled={deleteClassMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    );
+      </div>;
   }
 
   // Normal behavior with dialog when not showing as indicator
-  return (
-    <>
+  return <>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Dialog open={showDetails} onOpenChange={setShowDetails}>
               <DialogTrigger asChild>
-                <div 
-                  className={cn(
-                    "w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden",
-                    "flex flex-col",
-                    isCompact ? "p-1 text-xs" : "p-2 text-xs",
-                    getLevelColor()
-                  )}
-                  draggable={isAdmin || isTrainer}
-                  onDragStart={handleDragStart}
-                >
+                <div className={cn("w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", isCompact ? "p-1 text-xs" : "p-2 text-xs", getLevelColor())} draggable={isAdmin || isTrainer} onDragStart={handleDragStart}>
                   {/* Delete X button - only for admin/trainer */}
-                  {(isAdmin || isTrainer) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowDeleteConfirm(true);
-                      }}
-                      className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    >
+                  {(isAdmin || isTrainer) && <Button variant="ghost" size="sm" onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }} className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <X className="h-3 w-3" />
-                    </Button>
-                  )}
+                    </Button>}
 
                   <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
-                    <div className={cn(
-                      "font-medium truncate leading-none",
-                      isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5"
-                    )}>
+                    <div className={cn("font-medium truncate leading-none", isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5")}>
                       {cls.name}
                     </div>
-                    {!isCompact && cls.club && (
-                      <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
+                    {!isCompact && cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5 my-0">
                         {cls.club.name}
-                      </div>
-                    )}
-                    {!isCompact && (
-                      <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
+                      </div>}
+                    {!isCompact && <div className="text-xs text-muted-foreground truncate leading-none mb-0.5 my-[8px]">
                         {getLevelDisplay()}
-                      </div>
-                    )}
-                    {!isCompact && (
-                      <div className="flex items-center justify-between text-xs mt-1">
+                      </div>}
+                    {!isCompact && <div className="flex items-center justify-between text-xs mt-1">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           <span>{enrolledCount}</span>
@@ -264,23 +189,15 @@ export function ClassCard({
                           <Clock className="h-3 w-3" />
                           <span>{cls.duration_minutes}min</span>
                         </div>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </div>
               </DialogTrigger>
 
-              {isAdmin || isTrainer ? (
-              <AdminClassDetailsModal 
-                class={cls} 
-                onEditClass={() => {
-                  setShowDetails(false);
-                  setShowEditModal(true);
-                }}
-              />
-              ) : (
-                <PlayerClassDetailsModal class={cls} />
-              )}
+              {isAdmin || isTrainer ? <AdminClassDetailsModal class={cls} onEditClass={() => {
+              setShowDetails(false);
+              setShowEditModal(true);
+            }} /> : <PlayerClassDetailsModal class={cls} />}
             </Dialog>
           </TooltipTrigger>
           <TooltipContent>
@@ -291,22 +208,14 @@ export function ClassCard({
               </div>
               <div className="text-xs">{enrolledCount} alumnos inscritos</div>
               <div className="text-xs">{getLevelDisplay()}</div>
-              {isAdmin && cls.trainer && (
-                <div className="text-xs">Profesor: {cls.trainer.full_name}</div>
-              )}
-              {isAdmin && cls.created_by && (
-                <div className="text-xs">Creado por: {cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>
-              )}
+              {isAdmin && cls.trainer && <div className="text-xs">Profesor: {cls.trainer.full_name}</div>}
+              {isAdmin && cls.created_by && <div className="text-xs">Creado por: {cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>}
             </div>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
-      <EditClassModal 
-        class={cls}
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-      />
+      <EditClassModal class={cls} isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
 
       {/* Delete Confirmation AlertDialog for calendar card */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
@@ -320,66 +229,58 @@ export function ClassCard({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>No, mantener</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteClass}
-              disabled={deleteClassMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteClass} disabled={deleteClassMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
-  );
+    </>;
 }
-
 interface AdminClassDetailsModalProps {
   class: ScheduledClassWithTemplate;
   onEditClass: () => void;
 }
-
-function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsModalProps) {
+function AdminClassDetailsModal({
+  class: cls,
+  onEditClass
+}: AdminClassDetailsModalProps) {
   const enrolledCount = cls.participants?.length || 0;
-  const { isAdmin, profile } = useAuth();
+  const {
+    isAdmin,
+    profile
+  } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
-
   const getLevelDisplay = () => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `Nivel ${cls.level_from}` : 
-        `Nivel ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `Nivel ${cls.level_from}` : `Nivel ${cls.level_from}-${cls.level_to}`;
     }
     return 'Sin nivel';
   };
-
   const getLevelColor = () => {
     // For admins, use the new class color system that distinguishes creator vs trainer
     if (isAdmin) {
       return getClassColor(cls.created_by, cls.trainer_profile_id, profile?.id || null);
     }
-    
+
     // For trainers and players, use traditional level colors
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
   const getEndTime = () => {
     const [hours, minutes] = cls.start_time.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -388,14 +289,11 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
     const endMins = endMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
-
   const handleDeleteClass = () => {
     deleteClassMutation.mutate(cls.id);
     setShowDeleteConfirm(false);
   };
-
-  return (
-    <DialogContent className="max-w-4xl">
+  return <DialogContent className="max-w-4xl">
       <DialogHeader className="relative">
         <DialogTitle className="flex items-center justify-between pr-20">
           <div className="flex items-center gap-3">
@@ -411,20 +309,10 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
         
         {/* Action buttons positioned absolutely */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEditClass}
-            className="h-9 w-9 p-0 rounded-full hover:bg-muted"
-          >
+          <Button variant="ghost" size="sm" onClick={onEditClass} className="h-9 w-9 p-0 rounded-full hover:bg-muted">
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(true)} className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 text-destructive">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -433,17 +321,11 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
       <div className="mt-6">
         <Tabs defaultValue="information" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 bg-muted rounded-lg p-1">
-            <TabsTrigger 
-              value="information" 
-              className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium"
-            >
+            <TabsTrigger value="information" className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium">
               <Clock className="h-4 w-4 mr-2" />
               Información
             </TabsTrigger>
-            <TabsTrigger 
-              value="students"
-              className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium"
-            >
+            <TabsTrigger value="students" className="h-10 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm font-medium">
               <Users className="h-4 w-4 mr-2" />
               Alumnos ({enrolledCount})
             </TabsTrigger>
@@ -474,11 +356,9 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                   DÍAS DE LA SEMANA
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {cls.days_of_week.map((day) => (
-                    <Badge key={day} variant="secondary" className="text-sm px-3 py-1 capitalize">
+                  {cls.days_of_week.map(day => <Badge key={day} variant="secondary" className="text-sm px-3 py-1 capitalize">
                       {day}
-                    </Badge>
-                  ))}
+                    </Badge>)}
                 </div>
               </div>
 
@@ -520,18 +400,14 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                     <span className="text-sm text-muted-foreground">Recurrencia</span>
                     <span className="font-medium capitalize">{cls.recurrence_type}</span>
                   </div>
-                  {isAdmin && cls.trainer && (
-                    <div className="flex items-center justify-between">
+                  {isAdmin && cls.trainer && <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Profesor</span>
                       <span className="font-medium">{cls.trainer.full_name}</span>
-                    </div>
-                  )}
-                  {isAdmin && cls.created_by && (
-                    <div className="flex items-center justify-between">
+                    </div>}
+                  {isAdmin && cls.created_by && <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Creado por</span>
                       <span className="font-medium">{cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</span>
-                    </div>
-                  )}
+                    </div>}
                 </div>
               </div>
             </div>
@@ -539,8 +415,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
 
           <TabsContent value="students" className="mt-6">
             <div className="bg-muted/30 rounded-xl p-6">
-              {cls.participants && cls.participants.length > 0 ? (
-                <div className="space-y-4">
+              {cls.participants && cls.participants.length > 0 ? <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg">Lista de alumnos</h3>
                     <Badge variant="secondary" className="text-sm">
@@ -549,11 +424,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                   </div>
                   
                   <div className="grid gap-3 max-h-80 overflow-y-auto">
-                    {cls.participants.map((participant) => (
-                      <div 
-                        key={participant.id} 
-                        className="flex items-center justify-between p-4 bg-background rounded-lg border hover:bg-muted/50 transition-colors"
-                      >
+                    {cls.participants.map(participant => <div key={participant.id} className="flex items-center justify-between p-4 bg-background rounded-lg border hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <Users className="h-4 w-4 text-primary" />
@@ -567,19 +438,12 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                             </div>
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
                           <UserMinus className="h-4 w-4" />
                         </Button>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
+                </div> : <div className="text-center py-12">
                   <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                     <Users className="h-8 w-8 text-muted-foreground" />
                   </div>
@@ -591,21 +455,14 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
                     <UserPlus className="h-4 w-4" />
                     Añadir primer alumno
                   </Button>
-                </div>
-              )}
+                </div>}
               
-              {cls.participants && cls.participants.length > 0 && (
-                <div className="pt-6 border-t mt-6">
-                  <Button 
-                    variant="outline" 
-                    className="gap-2"
-                    onClick={() => setShowManageStudents(true)}
-                  >
+              {cls.participants && cls.participants.length > 0 && <div className="pt-6 border-t mt-6">
+                  <Button variant="outline" className="gap-2" onClick={() => setShowManageStudents(true)}>
                     <UserPlus className="h-4 w-4" />
                     Añadir Alumno
                   </Button>
-                </div>
-              )}
+                </div>}
             </div>
           </TabsContent>
         </Tabs>
@@ -623,11 +480,7 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>No, mantener</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteClass}
-              disabled={deleteClassMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteClass} disabled={deleteClassMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -635,45 +488,51 @@ function AdminClassDetailsModal({ class: cls, onEditClass }: AdminClassDetailsMo
       </AlertDialog>
 
       {/* Manage Students Modal */}
-      <ManageStudentsModal 
-        class={cls}
-        isOpen={showManageStudents}
-        onClose={() => setShowManageStudents(false)}
-      />
-    </DialogContent>
-  );
+      <ManageStudentsModal class={cls} isOpen={showManageStudents} onClose={() => setShowManageStudents(false)} />
+    </DialogContent>;
 }
-
 interface PlayerClassDetailsModalProps {
   class: ScheduledClassWithTemplate;
 }
-
-function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
-  const { profile } = useAuth();
-  const { t } = useTranslation();
+function PlayerClassDetailsModal({
+  class: cls
+}: PlayerClassDetailsModalProps) {
+  const {
+    profile
+  } = useAuth();
+  const {
+    t
+  } = useTranslation();
   const enrolledCount = cls.participants?.length || 0;
-  
+
   // Hooks para lista de espera
-  const { data: capacity } = useClassCapacity(cls.id);
-  const { data: waitlistPosition } = useUserWaitlistPosition(cls.id, profile?.id);
+  const {
+    data: capacity
+  } = useClassCapacity(cls.id);
+  const {
+    data: waitlistPosition
+  } = useUserWaitlistPosition(cls.id, profile?.id);
   const joinWaitlist = useJoinWaitlist();
   const leaveWaitlist = useLeaveWaitlist();
-  
+
   // Hook para pagos
   const createPayment = useCreateClassPayment();
-
   const handleJoinWaitlist = () => {
     if (profile?.id) {
-      joinWaitlist.mutate({ classId: cls.id, userId: profile.id });
+      joinWaitlist.mutate({
+        classId: cls.id,
+        userId: profile.id
+      });
     }
   };
-
   const handleLeaveWaitlist = () => {
     if (profile?.id) {
-      leaveWaitlist.mutate({ classId: cls.id, userId: profile.id });
+      leaveWaitlist.mutate({
+        classId: cls.id,
+        userId: profile.id
+      });
     }
   };
-
   const handleEnrollWithPayment = () => {
     createPayment.mutate({
       classId: cls.id,
@@ -682,35 +541,28 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
       monthlyPrice: cls.monthly_price
     });
   };
-
   const getLevelDisplay = () => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
     }
     if (cls.level_from && cls.level_to) {
-      return cls.level_from === cls.level_to ? 
-        `Nivel ${cls.level_from}` : 
-        `Nivel ${cls.level_from}-${cls.level_to}`;
+      return cls.level_from === cls.level_to ? `Nivel ${cls.level_from}` : `Nivel ${cls.level_from}-${cls.level_to}`;
     }
     return 'Sin nivel';
   };
-
   const getLevelColor = () => {
     if (cls.custom_level) {
       if (cls.custom_level.includes('primera')) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.custom_level.includes('segunda')) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       if (cls.custom_level.includes('tercera')) return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     if (cls.level_from) {
       if (cls.level_from <= 3) return 'bg-green-100 text-green-800 border-green-200';
       if (cls.level_from <= 6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       return 'bg-red-100 text-red-800 border-red-200';
     }
-    
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-
   const getEndTime = () => {
     const [hours, minutes] = cls.start_time.split(':').map(Number);
     const startMinutes = hours * 60 + minutes;
@@ -719,17 +571,13 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
     const endMins = endMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
-
   const actualCapacity = {
     current: capacity?.currentParticipants || enrolledCount,
     max: capacity?.maxParticipants || cls.max_participants || 8,
     waitlistCount: capacity?.waitlistCount || 0
   };
-
   const hasAvailableSpots = actualCapacity.current < actualCapacity.max;
-
-  return (
-    <DialogContent className="max-w-2xl">
+  return <DialogContent className="max-w-2xl">
       <DialogHeader>
         <DialogTitle className="flex items-center justify-between">
           <span>Detalles de la Clase</span>
@@ -758,11 +606,9 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
             <div>
               <div className="text-sm text-muted-foreground mb-1">Días de la semana</div>
               <div className="flex flex-wrap gap-1">
-                {cls.days_of_week.map((day) => (
-                  <Badge key={day} variant="outline" className="text-xs">
+                {cls.days_of_week.map(day => <Badge key={day} variant="outline" className="text-xs">
                     {day}
-                  </Badge>
-                ))}
+                  </Badge>)}
               </div>
             </div>
 
@@ -780,11 +626,9 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{actualCapacity.current}/{actualCapacity.max} alumnos</span>
-                {actualCapacity.waitlistCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
+                {actualCapacity.waitlistCount > 0 && <Badge variant="secondary" className="text-xs">
                     +{actualCapacity.waitlistCount} en lista de espera
-                  </Badge>
-                )}
+                  </Badge>}
               </div>
             </div>
 
@@ -799,82 +643,48 @@ function PlayerClassDetailsModal({ class: cls }: PlayerClassDetailsModalProps) {
         <div className="border-t pt-4">
           <div className="space-y-4">
             <div className="text-center">
-              {hasAvailableSpots ? (
-                <div className="text-sm text-green-600 font-medium mb-2">
+              {hasAvailableSpots ? <div className="text-sm text-green-600 font-medium mb-2">
                   ¡Plazas disponibles!
-                </div>
-              ) : (
-                <div className="text-sm text-amber-600 font-medium mb-2">
+                </div> : <div className="text-sm text-amber-600 font-medium mb-2">
                   Clase completa
-                </div>
-              )}
+                </div>}
             </div>
             
             <div className="flex justify-center">
-              {hasAvailableSpots ? (
-                // Si hay plazas disponibles, mostrar botón de pago
-                <div className="space-y-3 w-full">
-                  {cls.monthly_price > 0 && (
-                    <div className="text-center">
+              {hasAvailableSpots ?
+            // Si hay plazas disponibles, mostrar botón de pago
+            <div className="space-y-3 w-full">
+                  {cls.monthly_price > 0 && <div className="text-center">
                       <div className="text-lg font-semibold text-green-600 mb-2">
                         {cls.monthly_price}€/mes
                       </div>
-                    </div>
-                  )}
-                  <Button 
-                    onClick={handleEnrollWithPayment}
-                    disabled={createPayment.isPending}
-                    className="w-full bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
-                  >
+                    </div>}
+                  <Button onClick={handleEnrollWithPayment} disabled={createPayment.isPending} className="w-full bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange">
                     {createPayment.isPending ? "Procesando..." : cls.monthly_price > 0 ? "Pagar e Inscribirse" : "Inscribirse"}
                   </Button>
                   
                   {/* También mostrar opción de lista de espera como alternativa */}
-                  {!waitlistPosition && (
-                    <Button 
-                      variant="outline"
-                      onClick={handleJoinWaitlist}
-                      disabled={joinWaitlist.isPending}
-                      className="w-full"
-                    >
+                  {!waitlistPosition && <Button variant="outline" onClick={handleJoinWaitlist} disabled={joinWaitlist.isPending} className="w-full">
                       <UserPlus className="h-4 w-4 mr-2" />
                       {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                // Si no hay plazas, solo mostrar lista de espera
-                waitlistPosition ? (
-                  <div className="text-center space-y-3 w-full">
+                    </Button>}
+                </div> :
+            // Si no hay plazas, solo mostrar lista de espera
+            waitlistPosition ? <div className="text-center space-y-3 w-full">
                     <Badge variant="outline" className="text-sm">
                       Posición {waitlistPosition.position} en lista de espera
                     </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleLeaveWaitlist}
-                      disabled={leaveWaitlist.isPending}
-                      className="w-full"
-                    >
+                    <Button variant="outline" size="sm" onClick={handleLeaveWaitlist} disabled={leaveWaitlist.isPending} className="w-full">
                       <UserMinus className="h-4 w-4 mr-2" />
                       {leaveWaitlist.isPending ? "Saliendo..." : "Salir de lista de espera"}
                     </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={handleJoinWaitlist}
-                    disabled={joinWaitlist.isPending}
-                    className="w-full"
-                  >
+                  </div> : <Button onClick={handleJoinWaitlist} disabled={joinWaitlist.isPending} className="w-full">
                     <UserPlus className="h-4 w-4 mr-2" />
                     {joinWaitlist.isPending ? "Uniéndose..." : "Unirse a lista de espera"}
-                  </Button>
-                )
-              )}
+                  </Button>}
             </div>
           </div>
         </div>
       </div>
-    </DialogContent>
-  );
+    </DialogContent>;
 }
