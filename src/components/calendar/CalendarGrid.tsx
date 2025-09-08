@@ -24,7 +24,7 @@ const TIME_SLOTS = [
   "20:00", "20:30", "21:00", "21:30", "22:00"
 ];
 
-const SLOT_HEIGHT = 50; // Height in pixels for each 30-minute slot
+const SLOT_HEIGHT = 40; // Height in pixels for each 30-minute slot - reduced for mobile
 
 // Mapping of day names to standardized Spanish format (database format)
 const DAY_MAPPING: { [key: string]: string } = {
@@ -183,16 +183,16 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     <div className="border rounded-lg overflow-hidden bg-card h-full flex flex-col">
       {/* Header with days */}
       <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90">
-        <div className="p-3 text-sm font-medium text-muted-foreground border-r bg-background/90">
+        <div className="p-1 md:p-3 text-xs md:text-sm font-medium text-muted-foreground border-r bg-background/90">
           {t('classes.hour')}
         </div>
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0 bg-background/90">
+          <div key={day.toISOString()} className="p-1 md:p-3 text-center border-r last:border-r-0 bg-background/90">
             <div className="text-xs font-medium text-muted-foreground">
               {format(day, "EEE", { locale: getDateFnsLocale() })}
             </div>
             <div className={cn(
-              "text-sm font-semibold mt-1",
+              "text-xs md:text-sm font-semibold mt-1",
               isSameDay(day, new Date()) && "text-primary"
             )}>
               {format(day, "dd")}
@@ -202,10 +202,10 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-x-auto overflow-y-auto">
         {filteredTimeSlots.map((timeSlot, index) => (
           <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
-            <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
+            <div className="p-1 md:p-2 text-xs md:text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
               {timeSlot}
             </div>
             

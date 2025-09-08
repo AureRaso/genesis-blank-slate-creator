@@ -49,11 +49,11 @@ export function CalendarHeader({
   ];
   
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">{t('classes.calendarTitle')}</h2>
+          <h2 className="text-lg lg:text-xl font-semibold">{t('classes.calendarTitle')}</h2>
         </div>
         {filteredClassesCount !== totalClasses && (
           <Badge variant="secondary">
@@ -62,9 +62,9 @@ export function CalendarHeader({
         )}
       </div>
       
-      {/* Time range selectors */}
+      {/* Time range selectors - hidden on mobile */}
       {onTimeRangeChange && (
-        <div className="flex items-center gap-2 mr-4">
+        <div className="hidden md:flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <div className="flex items-center gap-1 text-sm">
             <Select value={timeRangeStart} onValueChange={(value) => onTimeRangeChange(value, timeRangeEnd)}>
@@ -92,26 +92,30 @@ export function CalendarHeader({
         </div>
       )}
       
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onPreviousWeek}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <Button variant="outline" size="sm" onClick={onToday}>
-          {t('classes.today')}
-        </Button>
-        
-        <Button variant="outline" size="sm" onClick={onNextWeek}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        {showFullscreenButton && onFullscreen && (
-          <Button variant="outline" size="sm" onClick={onFullscreen}>
-            <Maximize2 className="h-4 w-4" />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onPreviousWeek} className="flex-1 sm:flex-none">
+            <ChevronLeft className="h-4 w-4" />
+            <span className="ml-1 sm:hidden">Anterior</span>
           </Button>
-        )}
+          
+          <Button variant="outline" size="sm" onClick={onToday} className="flex-1 sm:flex-none">
+            {t('classes.today')}
+          </Button>
+          
+          <Button variant="outline" size="sm" onClick={onNextWeek} className="flex-1 sm:flex-none">
+            <ChevronRight className="h-4 w-4" />
+            <span className="mr-1 sm:hidden">Siguiente</span>
+          </Button>
+
+          {showFullscreenButton && onFullscreen && (
+            <Button variant="outline" size="sm" onClick={onFullscreen} className="hidden sm:flex">
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         
-        <div className="text-sm font-medium ml-4 min-w-[200px] text-right">
+        <div className="text-sm font-medium text-center sm:text-right sm:min-w-[200px]">
           {format(weekStart, "dd MMM", { locale: getDateFnsLocale() })} - {format(weekEnd, "dd MMM yyyy", { locale: getDateFnsLocale() })}
         </div>
       </div>

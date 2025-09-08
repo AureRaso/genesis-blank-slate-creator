@@ -211,7 +211,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
       {/* Create Class Form Dialog */}
       {isAdmin && (
         <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] md:w-full">
             <DialogHeader className="sr-only">
               <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
               <DialogDescription>
@@ -235,14 +235,14 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
 
       {/* Fullscreen Calendar Modal */}
       <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>
-        <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-4 flex flex-col">
+        <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-2 md:p-4 flex flex-col">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-sm md:text-base">
+              <Calendar className="h-4 w-4 md:h-5 md:w-5" />
               {t('classes.calendarTitle')} - Pantalla completa
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 flex flex-col gap-4">
+          <div className="flex-1 min-h-0 flex flex-col gap-2 md:gap-4">
             <div className="flex-shrink-0">
               <CalendarHeader
                 currentWeek={currentWeek}
@@ -264,89 +264,17 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
             </div>
             
             <div className="flex-1 min-h-0">
-              <div className="border rounded-lg overflow-hidden bg-card h-full flex flex-col">
-                {/* Header with days */}
-                <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90 flex-shrink-0">
-                  <div className="p-3 text-sm font-medium text-muted-foreground border-r bg-background/90">
-                    {t('classes.hour')}
-                  </div>
-                  {weekDays.map((day) => (
-                    <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0 bg-background/90">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        {format(day, "EEE", { locale: getDateFnsLocale() })}
-                      </div>
-                      <div className={cn(
-                        "text-sm font-semibold mt-1",
-                        isSameDay(day, new Date()) && "text-primary"
-                      )}>
-                        {format(day, "dd")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar grid with time slots */}
-                <div className="flex-1 overflow-y-auto">
-                  {TIME_SLOTS.filter(slot => slot >= timeRangeStart && slot <= timeRangeEnd).map((timeSlot) => (
-                    <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: '50px' }}>
-                      <div className="p-2 text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
-                        {timeSlot}
-                      </div>
-                        
-                        {weekDays.map((day) => {
-                          const dayClasses = filteredClasses.filter(cls => {
-                            const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
-                            const dayMap: Record<string, string> = {
-                              'sunday': 'domingo', 'monday': 'lunes', 'tuesday': 'martes',
-                              'wednesday': 'miercoles', 'thursday': 'jueves', 'friday': 'viernes', 'saturday': 'sabado'
-                            };
-                            const normalizedDayName = dayMap[dayName] || dayName;
-                            const classDays = cls.days_of_week.map(d => d.toLowerCase().trim());
-                            const classTime = cls.start_time.slice(0, 5);
-                            return classDays.includes(normalizedDayName) && classTime === timeSlot;
-                          });
-
-                          return (
-                            <div 
-                              key={`${day.toISOString()}-${timeSlot}`} 
-                              className="border-r last:border-r-0 relative cursor-pointer hover:bg-muted/50 transition-colors"
-                          style={{ minHeight: '50px' }}
-                              onClick={() => {
-                                if (dayClasses.length === 0 && isAdmin) {
-                                  handleTimeSlotClick(day, timeSlot);
-                                }
-                              }}
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                e.dataTransfer.dropEffect = 'move';
-                              }}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                const classId = e.dataTransfer.getData('text/plain');
-                                if (classId && dayClasses.length === 0) {
-                                  handleClassDrop(classId, day, timeSlot, classes || []);
-                                }
-                              }}
-                            >
-                              {dayClasses.map((cls) => (
-                                <div
-                                  key={cls.id}
-                                  className="absolute inset-x-0 top-0 p-1"
-                                  style={{
-                                    height: `${Math.ceil(cls.duration_minutes / 30) * 50}px`,
-                                    zIndex: 5
-                                  }}
-                                >
-                                  <ClassCard class={cls} />
-                                </div>
-                              ))}
-                            </div>
-                          );
-                         })}
-                       </div>
-                     ))}
-                 </div>
-              </div>
+              <CalendarGrid
+                weekStart={weekStart}
+                weekEnd={weekEnd}
+                classes={filteredClasses}
+                onTimeSlotClick={handleTimeSlotClick}
+                onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) => 
+                  handleClassDrop(classId, newDay, newTimeSlot, classes || [])
+                }
+                timeRangeStart={timeRangeStart}
+                timeRangeEnd={timeRangeEnd}
+              />
             </div>
           </div>
         </DialogContent>
