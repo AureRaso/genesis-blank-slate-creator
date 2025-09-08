@@ -2,38 +2,23 @@ import { Check, Star, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const plans = [
-  {
-    name: "Básico",
-    description: "Solución completa para gestionar tu club de pádel",
-    price: "50",
-    period: "mes",
-    badge: "30 días gratis",
-    features: [
-      "Entrenadores ilimitados",
-      "Gestión completa de clases",
-      "Notificaciones WhatsApp automáticas",
-      "Dashboard administrativo",
-      "Sistema de listas de espera",
-      "Control de precios y descuentos",
-      "Múltiples pistas",
-      "Analytics y reportes",
-      "Calendario con drag & drop",
-      "Soporte técnico incluido"
-    ],
-    cta: "Probar 30 días gratis",
-    popular: true,
-  },
-];
-
+const plans = [{
+  name: "Básico",
+  description: "Solución completa para gestionar tu club de pádel",
+  price: "50",
+  period: "mes",
+  badge: "30 días gratis",
+  features: ["Entrenadores ilimitados", "Gestión completa de clases", "Notificaciones WhatsApp automáticas", "Dashboard administrativo", "Sistema de listas de espera", "Control de precios y descuentos", "Múltiples pistas", "Analytics y reportes", "Calendario con drag & drop", "Soporte técnico incluido"],
+  cta: "Probar 30 días gratis",
+  popular: true
+}];
 export const PricingSection = () => {
   const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('contact')?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
-  return (
-    <section id="pricing" className="py-20">
+  return <section id="pricing" className="py-20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
@@ -53,19 +38,13 @@ export const PricingSection = () => {
         </div>
 
         <div className="flex justify-center max-w-2xl mx-auto">
-          {plans.map((plan, index) => (
-            <Card 
-              key={index} 
-              className="relative transition-all duration-300 hover:shadow-xl border-primary shadow-lg max-w-md mx-auto"
-            >
-              {plan.badge && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          {plans.map((plan, index) => <Card key={index} className="relative transition-all duration-300 hover:shadow-xl border-primary shadow-lg max-w-md mx-auto">
+              {plan.badge && <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <Badge className="bg-primary text-primary-foreground">
                     <Star className="h-3 w-3 mr-1" />
                     {plan.badge}
                   </Badge>
-                </div>
-              )}
+                </div>}
               
               <CardHeader className="text-center pb-8">
                 <div className="space-y-4">
@@ -74,7 +53,7 @@ export const PricingSection = () => {
                   
                   <div className="space-y-2">
                     <div className="flex items-baseline justify-center space-x-1">
-                      <span className="text-4xl font-bold">{plan.price}€</span>
+                      
                       <span className="text-muted-foreground">/{plan.period}</span>
                     </div>
                   </div>
@@ -83,24 +62,17 @@ export const PricingSection = () => {
 
               <CardContent className="space-y-6">
                 <div className="space-y-3">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center space-x-3">
+                  {plan.features.map((feature, featureIndex) => <div key={featureIndex} className="flex items-center space-x-3">
                       <Check className="h-4 w-4 text-primary flex-shrink-0" />
                       <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  size="lg"
-                  onClick={scrollToContact}
-                >
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg" onClick={scrollToContact}>
                   {plan.cta}
                 </Button>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
         {/* Additional Info */}
@@ -122,15 +94,11 @@ export const PricingSection = () => {
 
           <div className="text-sm text-muted-foreground">
             ¿Necesitas algo personalizado? 
-            <button 
-              onClick={scrollToContact}
-              className="text-primary hover:underline ml-1"
-            >
+            <button onClick={scrollToContact} className="text-primary hover:underline ml-1">
               Hablemos
             </button>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
