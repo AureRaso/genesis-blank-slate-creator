@@ -1,9 +1,7 @@
 import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 export const Footer = () => {
-  return (
-    <footer className="bg-card border-t">
+  return <footer className="bg-card border-t">
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand Column */}
@@ -63,11 +61,11 @@ export const Footer = () => {
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Phone className="h-4 w-4" />
-                <span>+34 900 123 456</span>
+                <span>+34 605 669 244</span>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>Madrid, España</span>
+                <span>Sevilla, España</span>
               </div>
             </div>
           </div>
@@ -87,6 +85,5 @@ export const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
