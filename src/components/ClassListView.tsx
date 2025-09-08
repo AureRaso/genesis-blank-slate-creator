@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ManageStudentsModal } from "@/components/calendar/ManageStudentsModal";
+import { EditClassModal } from "@/components/calendar/EditClassModal";
 
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
@@ -50,6 +51,7 @@ interface ClassListViewProps {
 export default function ClassListView({ clubId, clubIds, filters }: ClassListViewProps) {
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
+  const [editingClass, setEditingClass] = useState<ScheduledClassWithTemplate | null>(null);
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const { isAdmin, isTrainer } = useAuth();
@@ -278,10 +280,17 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
           {selectedClass && (
             (isAdmin || isTrainer) ? (
-              <AdminClassDetailsModal class={selectedClass} onManageStudents={() => {
-                setManageStudentsClass(selectedClass);
-                setSelectedClass(null);
-              }} />
+              <AdminClassDetailsModal 
+                class={selectedClass} 
+                onManageStudents={() => {
+                  setManageStudentsClass(selectedClass);
+                  setSelectedClass(null);
+                }}
+                onEditClass={() => {
+                  setEditingClass(selectedClass);
+                  setSelectedClass(null);
+                }}
+              />
             ) : (
               <PlayerClassDetailsModal class={selectedClass} />
             )
@@ -296,15 +305,25 @@ export default function ClassListView({ clubId, clubIds, filters }: ClassListVie
             onClose={() => setManageStudentsClass(null)}
           />
         )}
+
+        {/* Edit Class Modal */}
+        {editingClass && (
+          <EditClassModal 
+            class={editingClass}
+            isOpen={!!editingClass}
+            onClose={() => setEditingClass(null)}
+          />
+        )}
       </CardContent>
     </Card>
   );
 }
 
 // Modal para administradores/profesores
-function AdminClassDetailsModal({ class: selectedClass, onManageStudents }: { 
+function AdminClassDetailsModal({ class: selectedClass, onManageStudents, onEditClass }: { 
   class: ScheduledClassWithTemplate;
   onManageStudents?: () => void;
+  onEditClass?: () => void;
 }) {
   const { t } = useTranslation();
   
@@ -406,7 +425,7 @@ function AdminClassDetailsModal({ class: selectedClass, onManageStudents }: {
         )}
 
         <div className="flex gap-2 pt-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1" onClick={onEditClass}>
             {t('classes.edit')}
           </Button>
           <Button variant="outline" size="sm" className="flex-1" onClick={onManageStudents}>
