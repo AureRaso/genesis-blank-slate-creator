@@ -138,8 +138,8 @@ export function ClassCard({
 
           <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
             <div className={cn(
-              "font-medium truncate leading-tight mb-1",
-              isCompact ? "text-xs" : "text-sm"
+              "font-medium truncate leading-none",
+              isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5"
             )}>
               {cls.name}
               {eventCount > 1 && (
@@ -147,17 +147,17 @@ export function ClassCard({
               )}
             </div>
             {!isCompact && cls.club && (
-              <div className="text-xs text-muted-foreground truncate font-medium mb-1">
+              <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
                 {cls.club.name}
               </div>
             )}
             {!isCompact && (
-              <div className="text-xs text-muted-foreground truncate mb-1">
+              <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
                 {getLevelDisplay()}
               </div>
             )}
             {!isCompact && (
-              <div className="flex items-center justify-between text-xs mt-auto">
+              <div className="flex items-center justify-between text-xs mt-1">
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   <span>{enrolledCount}</span>
@@ -239,23 +239,23 @@ export function ClassCard({
 
                   <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
                     <div className={cn(
-                      "font-medium truncate leading-tight mb-1",
-                      isCompact ? "text-xs" : "text-sm"
+                      "font-medium truncate leading-none",
+                      isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5"
                     )}>
                       {cls.name}
                     </div>
                     {!isCompact && cls.club && (
-                      <div className="text-xs text-muted-foreground truncate font-medium mb-1">
+                      <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
                         {cls.club.name}
                       </div>
                     )}
                     {!isCompact && (
-                      <div className="text-xs text-muted-foreground truncate mb-1">
+                      <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
                         {getLevelDisplay()}
                       </div>
                     )}
                     {!isCompact && (
-                      <div className="flex items-center justify-between text-xs mt-auto">
+                      <div className="flex items-center justify-between text-xs mt-1">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           <span>{enrolledCount}</span>
