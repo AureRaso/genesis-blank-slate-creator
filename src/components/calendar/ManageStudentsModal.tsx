@@ -38,22 +38,16 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   
   console.log('🔵 User role check:', { isAdmin, profileRole: profile?.role, profileId: profile?.id });
   
-  // Use different hooks based on user role
-  const { data: trainerStudents, isLoading: trainerStudentsLoading, error: trainerError } = useStudentEnrollments();
-  const { data: adminStudents, isLoading: adminStudentsLoading, error: adminError } = useAdminStudentEnrollments();
+  // Use student enrollments hook (works for both trainers and admins)
+  const { data: allStudents, isLoading: studentsLoading, error: studentsError } = useStudentEnrollments();
   
   console.log('🔵 Hook results:', {
-    trainerStudentsCount: trainerStudents?.length || 0,
-    adminStudentsCount: adminStudents?.length || 0,
-    trainerError: trainerError?.message,
-    adminError: adminError?.message,
-    trainerLoading: trainerStudentsLoading,
-    adminLoading: adminStudentsLoading
+    allStudentsCount: allStudents?.length || 0,
+    studentsError: studentsError?.message,
+    studentsLoading,
+    isAdmin,
+    profileRole: profile?.role
   });
-  
-  // Select the correct data source based on role
-  const allStudents = isAdmin ? adminStudents : trainerStudents;
-  const studentsLoading = isAdmin ? adminStudentsLoading : trainerStudentsLoading;
   
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const bulkUpdateMutation = useBulkUpdateClassParticipants();
