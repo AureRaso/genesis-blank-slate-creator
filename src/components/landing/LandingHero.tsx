@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Smartphone, Monitor } from "lucide-react";
+import { ArrowRight, Play, Smartphone, Monitor, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 export const LandingHero = () => {
+  const navigate = useNavigate();
+  
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({
       behavior: 'smooth'
@@ -10,6 +13,10 @@ export const LandingHero = () => {
     document.getElementById('workflow')?.scrollIntoView({
       behavior: 'smooth'
     });
+  };
+  
+  const goToAuth = () => {
+    navigate('/auth');
   };
   return <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/5 py-20 lg:py-32">
       <div className="container mx-auto px-4">
@@ -59,6 +66,10 @@ export const LandingHero = () => {
               <Button variant="outline" size="lg" onClick={scrollToDemo}>
                 <Play className="mr-2 h-4 w-4" />
                 Ver Cómo Funciona
+              </Button>
+              <Button variant="secondary" size="lg" onClick={goToAuth}>
+                <LogIn className="mr-2 h-4 w-4" />
+                Acceder al Panel
               </Button>
             </div>
 

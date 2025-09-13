@@ -120,7 +120,7 @@ function App() {
   return (
     <Router>
         <Routes>
-              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/logout" element={<LogoutPage />} />
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
@@ -128,7 +128,7 @@ function App() {
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
               <Route path="/payment-control" element={<PaymentControlPage />} />
-        <Route path="/*" element={
+        <Route path="/dashboard/*" element={
           <ProtectedRoute>
             <AppLayout>
               <Routes>
@@ -145,6 +145,7 @@ function App() {
                   // Rutas para otros roles (admin y player) con feature flags
                   <>
                     <Route path="/" element={<Index />} />
+                    <Route path="/dashboard" element={<Index />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
                     {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
