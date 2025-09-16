@@ -132,24 +132,6 @@ export const WorkflowDiagram = () => {
             </div>
           </div>
         </div>
-
-        {/* WhatsApp Integration Highlight */}
-        <div className="mt-16 text-center max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-green-500/10 to-green-600/10 border-green-200">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-center space-x-4 mb-4">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <Bell className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold">Automatización WhatsApp</h3>
-              </div>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Todos los avisos son completamente automáticos. Tus clientes reciben notificaciones instantáneas 
-                cuando se libera una plaza, con enlaces directos para inscribirse en segundos.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </section>
   );
