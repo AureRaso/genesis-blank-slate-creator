@@ -44,10 +44,6 @@ const VideoDemoSection = () => {
                   <div className="text-center">
                     <Play className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   </div>
-                  
-                  
-                  
-                  Para YouTube:
                   <iframe
                     className="w-full h-full rounded-lg"
                     src="https://www.youtube.com/embed/bCmQ-2syyoE?autoplay=1"
