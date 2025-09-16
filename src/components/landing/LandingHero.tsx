@@ -36,10 +36,6 @@ export const LandingHero = () => {
           {/* Left Column - Content */}
           <div className="space-y-6">
             <div className="space-y-4">
-              <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-2">
-                <span className="mr-2">🎾</span> La plataforma todo-en-uno para clubes de pádel
-              </div>
-              
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
                 <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   PadeLock
