@@ -1,15 +1,14 @@
 import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Facebook, ArrowRight, Calendar, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
-  
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
-  
-  return (
-    <footer className="bg-card border-t">
+  return <footer className="bg-card border-t">
       <div className="container mx-auto px-4">
         {/* Main Footer Content */}
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 py-16">
@@ -49,11 +48,7 @@ export const Footer = () => {
                 <span>Suscríbete a nuestra newsletter</span>
               </div>
               <div className="flex space-x-2">
-                <Input 
-                  type="email" 
-                  placeholder="Tu email" 
-                  className="flex-1 text-sm"
-                />
+                <Input type="email" placeholder="Tu email" className="flex-1 text-sm" />
                 <Button size="sm" className="shrink-0">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -149,7 +144,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-start space-x-3 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Madrid, España</span>
+                <span>Sevilla, España</span>
               </div>
             </div>
             
@@ -180,27 +175,19 @@ export const Footer = () => {
               <a href="#" className="hover:text-primary transition-colors">Cookies</a>
             </div>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={scrollToTop}
-              className="text-muted-foreground hover:text-primary"
-            >
+            <Button variant="ghost" size="sm" onClick={scrollToTop} className="text-muted-foreground hover:text-primary">
               Volver arriba
             </Button>
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
 
 // Componente Input para el newsletter (añadir al import si es necesario)
-const Input = ({ className, ...props }) => {
-  return (
-    <input
-      className={`flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      {...props}
-    />
-  );
+const Input = ({
+  className,
+  ...props
+}) => {
+  return <input className={`flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`} {...props} />;
 };
