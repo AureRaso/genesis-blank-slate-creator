@@ -8,43 +8,19 @@ const pricingTiers = [
     range: "1-10 clubes",
     price: "50",
     description: "Primeros pasos",
-    isActive: true,
-    features: [
-      "Gestión completa de clases y horarios",
-      "Panel para jugadores y entrenadores",
-      "Sistema de reservas automático",
-      "Notificaciones automáticas por WhatsApp",
-      "Pagos integrados con Stripe"
-    ]
+    isActive: true
   },
   {
     range: "11-50 clubes", 
     price: "100",
     description: "Crecimiento",
-    isActive: false,
-    features: [
-      "Todo lo anterior +",
-      "Apps móviles nativas iOS/Android",
-      "Sistema de listas de espera inteligente",
-      "Reportes y analytics avanzados",
-      "Gestión de torneos y ligas",
-      "Soporte técnico prioritario"
-    ]
+    isActive: false
   },
   {
     range: "51+ clubes",
     price: "200",
     description: "Expansión",
-    isActive: false,
-    features: [
-      "Todo lo anterior +",
-      "Personalización completa de marca",
-      "Integraciones API avanzadas",
-      "Dashboard ejecutivo multiclub",
-      "Migración y configuración incluida",
-      "Soporte 24/7 dedicado",
-      "Entrenamiento personalizado del equipo"
-    ]
+    isActive: false
   }
 ];
 
@@ -153,15 +129,6 @@ export const PricingSection = () => {
                   </CardHeader>
                   
                   <CardContent>
-                    <div className="space-y-4 mb-6">
-                      {tier.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-start space-x-3">
-                          <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                          <span className="text-sm">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                    
                     <Button 
                       className={`w-full ${tier.isActive ? 'bg-primary hover:bg-primary/90' : 'bg-secondary hover:bg-secondary/90'}`}
                       onClick={scrollToContact}
