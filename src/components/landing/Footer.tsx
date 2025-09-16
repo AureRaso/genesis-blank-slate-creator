@@ -75,7 +75,7 @@ export const Footer = () => {
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © 2024 PadelLock. Todos los derechos reservados.
+              © 2025 PadelLock. Todos los derechos reservados.
             </div>
             <div className="flex space-x-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-primary transition-colors">Política de Privacidad</a>
