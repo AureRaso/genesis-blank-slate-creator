@@ -17,9 +17,6 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">PL</span>
-                </div>
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   PadeLock
                 </h3>
