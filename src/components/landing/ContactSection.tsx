@@ -89,7 +89,7 @@ export const ContactSection = () => {
   }
 
   return (
-    <section id="contact" className="py-20 bg-gradient-to-br from-primary/5 to-accent/5">
+    <section id="contact" className="py-2 bg-gradient-to-br from-primary/5 to-accent/5">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
