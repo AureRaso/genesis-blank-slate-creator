@@ -41,9 +41,6 @@ const VideoDemoSection = () => {
                 
                 <div className="aspect-video w-full bg-muted rounded-lg flex items-center justify-center">
                   {/* Placeholder para el video - puedes reemplazar con tu URL de video */}
-                  <div className="text-center">
-                    <Play className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  </div>
                   <iframe
                     className="w-full h-full rounded-lg"
                     src="https://www.youtube.com/embed/bCmQ-2syyoE?autoplay=1"
