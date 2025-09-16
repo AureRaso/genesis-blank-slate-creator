@@ -1,4 +1,5 @@
 import { LandingHero } from "@/components/landing/LandingHero";
+import VideoDemoSection from "@/components/landing/VideoDemoSection";
 import { FeatureSections } from "@/components/landing/FeatureSections";
 import { WorkflowDiagram } from "@/components/landing/WorkflowDiagram";
 import { BenefitsSection } from "@/components/landing/BenefitsSection";
@@ -11,6 +12,7 @@ const LandingPage = () => {
     <div className="min-h-screen w-full overflow-x-hidden">
       <div className="w-full space-y-8">
         <LandingHero />
+        <VideoDemoSection />
         <FeatureSections />
         <WorkflowDiagram />
         <BenefitsSection />
