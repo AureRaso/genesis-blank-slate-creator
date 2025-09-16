@@ -5,39 +5,90 @@ import { useNavigate } from "react-router-dom";
 export const LandingHero = () => {
   const navigate = useNavigate();
   
-  const scrollToContact = () => {
-    console.log('Scrolling to contact section...');
+  const scrollToContact = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    console.log('Button clicked: Scrolling to contact section...');
+    
     setTimeout(() => {
       const contactSection = document.getElementById('contact');
+      console.log('Contact section found:', !!contactSection);
+      
       if (contactSection) {
-        contactSection.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
+        // Try scrollIntoView first
+        try {
+          contactSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          console.log('ScrollIntoView executed successfully');
+        } catch (error) {
+          // Fallback to window.scrollTo
+          console.warn('ScrollIntoView failed, using fallback:', error);
+          const rect = contactSection.getBoundingClientRect();
+          const scrollTop = window.pageYOffset + rect.top - 100;
+          window.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }
       } else {
-        console.warn('Contact section not found');
+        console.error('Contact section not found in DOM');
       }
-    }, 100);
+    }, 500);
   };
   
-  const scrollToDemo = () => {
-    console.log('Scrolling to workflow section...');
+  const scrollToDemo = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    console.log('Button clicked: Scrolling to workflow section...');
+    
     setTimeout(() => {
       const workflowSection = document.getElementById('workflow');
+      console.log('Workflow section found:', !!workflowSection);
+      
       if (workflowSection) {
-        workflowSection.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
+        // Try scrollIntoView first
+        try {
+          workflowSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          console.log('ScrollIntoView executed successfully');
+        } catch (error) {
+          // Fallback to window.scrollTo
+          console.warn('ScrollIntoView failed, using fallback:', error);
+          const rect = workflowSection.getBoundingClientRect();
+          const scrollTop = window.pageYOffset + rect.top - 100;
+          window.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }
       } else {
-        console.warn('Workflow section not found');
+        console.error('Workflow section not found in DOM');
       }
-    }, 100);
+    }, 500);
   };
   
-  const goToAuth = () => {
-    console.log('Navigating to auth...');
-    navigate('/auth');
+  const goToAuth = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    console.log('Button clicked: Navigating to auth...');
+    
+    try {
+      navigate('/auth');
+      console.log('Navigation executed successfully');
+    } catch (error) {
+      console.warn('Navigate failed, using fallback:', error);
+      window.location.href = '/auth';
+    }
   };
   
   return (
@@ -82,16 +133,30 @@ export const LandingHero = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={scrollToContact}>
+            <div className="flex flex-col sm:flex-row gap-4 relative z-20">
+              <Button 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 relative z-10 pointer-events-auto" 
+                onClick={(e) => scrollToContact(e)}
+              >
                 Solicitar Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button variant="outline" size="lg" onClick={scrollToDemo} className="border-2">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={(e) => scrollToDemo(e)} 
+                className="border-2 relative z-10 pointer-events-auto"
+              >
                 <Play className="mr-2 h-4 w-4" />
                 Ver Funcionalidades
               </Button>
-              <Button variant="ghost" size="lg" onClick={goToAuth} className="text-primary hover:text-primary/80">
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                onClick={(e) => goToAuth(e)} 
+                className="text-primary hover:text-primary/80 relative z-10 pointer-events-auto"
+              >
                 <LogIn className="mr-2 h-4 w-4" />
                 Acceder al Panel
               </Button>
