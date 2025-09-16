@@ -3,46 +3,40 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const plans = [
+const pricingTiers = [
   {
-    name: "Starter",
+    range: "1-10 clubes",
     price: "50",
-    description: "Para comenzar a digitalizar tu academia",
-    features: [
-      "Gestión completa de clases y horarios",
-      "Panel para jugadores y entrenadores", 
-      "Sistema de reservas automático",
-      "Notificaciones por WhatsApp",
-      "Pagos integrados con Stripe"
-    ],
-    isPopular: false
+    description: "Primeros pasos",
+    isActive: true
   },
   {
-    name: "Professional", 
+    range: "11-50 clubes", 
     price: "100",
-    description: "La solución completa para tu academia",
-    features: [
-      "Todo lo del plan Starter",
-      "Apps móviles nativas",
-      "Reportes y analytics avanzados",
-      "Sistema de listas de espera inteligente",
-      "Soporte técnico prioritario"
-    ],
-    isPopular: true
+    description: "Crecimiento",
+    isActive: false
   },
   {
-    name: "Enterprise",
-    price: "200", 
-    description: "Para academias que buscan la excelencia",
-    features: [
-      "Todo lo del plan Professional",
-      "Personalización completa de marca",
-      "Integraciones API avanzadas",
-      "Migración y configuración incluida",
-      "Soporte 24/7 dedicado"
-    ],
-    isPopular: false
+    range: "51+ clubes",
+    price: "200",
+    description: "Expansión",
+    isActive: false
   }
+];
+
+const allFeatures = [
+  "Gestión completa de clases y horarios",
+  "Panel para jugadores y entrenadores",
+  "Sistema de reservas automático",
+  "Notificaciones automáticas por WhatsApp",
+  "Pagos integrados con Stripe",
+  "Apps móviles nativas",
+  "Sistema de listas de espera inteligente",
+  "Reportes y analytics avanzados",
+  "Soporte técnico incluido",
+  "Configuración y migración gratuita",
+  "Almacenamiento en la nube",
+  "Entrenadores ilimitados"
 ];
 
 const includedFeatures = [
@@ -80,15 +74,15 @@ export const PricingSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
-            <CreditCard className="h-4 w-4 mr-2" /> Precios simples y transparentes
+            <CreditCard className="h-4 w-4 mr-2" /> Precio escalado según crecimiento
           </div>
           
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            Elige el plan perfecto para ti
+            Un precio que crece contigo
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
-            Digitaliza tu academia de pádel con nuestras soluciones completas. 
-            Todos los planes incluyen 30 días de prueba gratuita.
+            Todas las funcionalidades incluidas desde el primer día. 
+            Solo pagas más a medida que creces y tenemos más clientes.
           </p>
           
           <div className="inline-flex items-center space-x-2 bg-muted/50 rounded-full px-4 py-2 border">
@@ -100,72 +94,73 @@ export const PricingSection = () => {
           </div>
         </div>
 
-        {/* Pricing Plans */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
-          {plans.map((plan, index) => (
-            <Card 
-              key={index} 
-              className={`relative transition-all duration-300 hover:shadow-xl ${plan.isPopular ? 'border-2 border-primary shadow-lg scale-105' : 'border border-border'}`}
-            >
-              {plan.isPopular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                    <Star className="h-3 w-3 mr-1" />
-                    Más Popular
-                  </Badge>
-                </div>
-              )}
-              
-              <CardHeader className="text-center pb-6 pt-8">
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold">{plan.name}</h3>
-                  <p className="text-muted-foreground">{plan.description}</p>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-baseline justify-center space-x-1">
-                      <span className="text-4xl font-bold">€{plan.price}</span>
-                      <span className="text-muted-foreground">/mes</span>
+        {/* Pricing Path */}
+        <div className="max-w-6xl mx-auto mb-16">
+          <div className="relative">
+            {/* Connection Line */}
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20 transform -translate-y-1/2"></div>
+            
+            {/* Pricing Tiers */}
+            <div className="grid md:grid-cols-3 gap-8 relative z-10">
+              {pricingTiers.map((tier, index) => (
+                <Card 
+                  key={index} 
+                  className={`relative transition-all duration-300 hover:shadow-xl text-center ${tier.isActive ? 'border-2 border-primary shadow-lg bg-primary/5' : 'border border-border bg-background'}`}
+                >
+                  {/* Step Number */}
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${tier.isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {index + 1}
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-start space-x-3">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
+                  
+                  <CardHeader className="pb-4 pt-8">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-bold">{tier.range}</h3>
+                      <p className="text-sm text-muted-foreground">{tier.description}</p>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-baseline justify-center space-x-1">
+                          <span className="text-3xl font-bold">€{tier.price}</span>
+                          <span className="text-sm text-muted-foreground">/mes total</span>
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-
-                <Button 
-                  className={`w-full ${plan.isPopular ? 'bg-primary hover:bg-primary/90' : 'bg-secondary hover:bg-secondary/90'}`} 
-                  size="lg"
-                  onClick={scrollToContact}
-                >
-                  Comenzar prueba gratuita
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <Button 
+                      className={`w-full ${tier.isActive ? 'bg-primary hover:bg-primary/90' : 'bg-secondary hover:bg-secondary/90'}`}
+                      onClick={scrollToContact}
+                    >
+                      Comenzar
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Included in all plans */}
-        <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold mb-6">Incluido en todos los planes</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {includedFeatures.map((feature, index) => (
-              <div key={index} className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/30">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3">
-                  <feature.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h4 className="font-semibold mb-1">{feature.title}</h4>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
+        {/* All Features Included */}
+        <div className="max-w-4xl mx-auto mb-16">
+          <Card className="border-2 border-primary/20 shadow-lg">
+            <CardHeader className="text-center pb-6">
+              <h3 className="text-2xl font-bold">Todas las funcionalidades incluidas</h3>
+              <p className="text-muted-foreground">Sin restricciones en ningún nivel de precio</p>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Additional Info */}
