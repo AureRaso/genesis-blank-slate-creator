@@ -6,26 +6,37 @@ export const LandingHero = () => {
   const navigate = useNavigate();
   
   const scrollToContact = () => {
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
+    console.log('Scrolling to contact section...');
+    setTimeout(() => {
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      } else {
+        console.warn('Contact section not found');
+      }
+    }, 100);
   };
   
   const scrollToDemo = () => {
-    const workflowSection = document.getElementById('workflow');
-    if (workflowSection) {
-      workflowSection.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
+    console.log('Scrolling to workflow section...');
+    setTimeout(() => {
+      const workflowSection = document.getElementById('workflow');
+      if (workflowSection) {
+        workflowSection.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      } else {
+        console.warn('Workflow section not found');
+      }
+    }, 100);
   };
   
   const goToAuth = () => {
+    console.log('Navigating to auth...');
     navigate('/auth');
   };
   
