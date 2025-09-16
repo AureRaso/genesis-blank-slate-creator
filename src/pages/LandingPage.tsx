@@ -8,14 +8,16 @@ import { Footer } from "@/components/landing/Footer";
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden">
-      <LandingHero />
-      <FeatureSections />
-      <WorkflowDiagram />
-      <BenefitsSection />
-      <PricingSection />
-      <ContactSection />
-      <Footer />
+    <div className="min-h-screen w-full overflow-x-hidden">
+      <div className="w-full space-y-8">
+        <LandingHero />
+        <FeatureSections />
+        <WorkflowDiagram />
+        <BenefitsSection />
+        <PricingSection />
+        <ContactSection />
+        <Footer />
+      </div>
     </div>
   );
 };

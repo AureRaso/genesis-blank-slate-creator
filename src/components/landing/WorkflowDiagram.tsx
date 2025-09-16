@@ -42,8 +42,8 @@ const workflowSteps = [
 
 export const WorkflowDiagram = () => {
   return (
-    <section id="workflow" className="py-20">
-      <div className="container mx-auto px-4">
+    <section id="workflow" className="py-16 w-full">
+      <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
             ¿Cómo funciona PadelLock?

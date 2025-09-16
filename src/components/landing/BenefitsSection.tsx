@@ -54,8 +54,8 @@ const benefits = [
 
 export const BenefitsSection = () => {
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/30">
-      <div className="container mx-auto px-4">
+    <section className="py-16 bg-gradient-to-b from-background to-muted/30 w-full">
+      <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="text-center mb-16">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
             <Zap className="h-4 w-4 mr-2" /> Beneficios medibles

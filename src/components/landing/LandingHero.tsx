@@ -22,9 +22,9 @@ export const LandingHero = () => {
   };
   
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 lg:py-20">
-      <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 lg:py-20">
+      <div className="container max-w-7xl mx-auto px-4 w-full">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           {/* Left Column - Content */}
           <div className="space-y-6">
             <div className="space-y-4">
@@ -100,8 +100,8 @@ export const LandingHero = () => {
           </div>
 
           {/* Right Column - Visual */}
-          <div className="relative">
-            <div className="relative mx-auto max-w-md lg:max-w-lg">
+          <div className="relative w-full max-w-full">
+            <div className="relative mx-auto max-w-md lg:max-w-lg w-full">
               {/* Main Dashboard Card */}
               <div className="relative z-10 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                 <div className="bg-card rounded-2xl p-5 shadow-2xl border border-border/50">
