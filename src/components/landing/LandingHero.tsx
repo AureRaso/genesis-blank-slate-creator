@@ -6,15 +6,23 @@ export const LandingHero = () => {
   const navigate = useNavigate();
   
   const scrollToContact = () => {
-    document.getElementById('contact')?.scrollIntoView({
-      behavior: 'smooth'
-    });
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   };
   
   const scrollToDemo = () => {
-    document.getElementById('workflow')?.scrollIntoView({
-      behavior: 'smooth'
-    });
+    const workflowSection = document.getElementById('workflow');
+    if (workflowSection) {
+      workflowSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   };
   
   const goToAuth = () => {
