@@ -11,7 +11,6 @@ const LandingPage = () => {
     <div className="min-h-screen">
       <LandingHero />
       <FeatureSections />
-      <WorkflowDiagram />
       <BenefitsSection />
       <PricingSection />
       <ContactSection />
