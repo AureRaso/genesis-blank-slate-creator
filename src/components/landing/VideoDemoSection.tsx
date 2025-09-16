@@ -43,13 +43,6 @@ const VideoDemoSection = () => {
                   {/* Placeholder para el video - puedes reemplazar con tu URL de video */}
                   <div className="text-center">
                     <Play className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Aquí va tu video demo
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Sustituye esta sección con tu iframe de YouTube/Vimeo<br />
-                      o elemento de video
-                    </p>
                   </div>
                   
                   
