@@ -11,10 +11,10 @@ const VideoDemoSection = () => {
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            Ve PadelManager en Acción
+            Ve PadeLock en Acción
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Descubre cómo PadelManager transforma la gestión de tu club de pádel 
+            Descubre cómo PadeLock transforma la gestión de tu club de pádel 
             con nuestra demostración interactiva
           </p>
           
@@ -52,25 +52,19 @@ const VideoDemoSection = () => {
                     </p>
                   </div>
                   
-                  {/* Descomenta y personaliza según tu video:
+                  
                   
                   Para YouTube:
                   <iframe
                     className="w-full h-full rounded-lg"
-                    src="https://www.youtube.com/embed/TU_VIDEO_ID?autoplay=1"
+                    src="https://www.youtube.com/embed/bCmQ-2syyoE?autoplay=1"
                     title="PadelManager Demo"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
                   
-                  Para Vimeo:
-                  <iframe
-                    className="w-full h-full rounded-lg"
-                    src="https://player.vimeo.com/video/TU_VIDEO_ID?autoplay=1"
-                    title="PadelManager Demo"
-                    allow="autoplay; fullscreen"
-                    allowFullScreen
-                  />
+                  {/* Descomenta y personaliza según tu video:
+                  
                   
                   Para archivo local:
                   <video
