@@ -8,9 +8,10 @@ import { Footer } from "@/components/landing/Footer";
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen max-w-full overflow-x-hidden">
       <LandingHero />
       <FeatureSections />
+      <WorkflowDiagram />
       <BenefitsSection />
       <PricingSection />
       <ContactSection />
