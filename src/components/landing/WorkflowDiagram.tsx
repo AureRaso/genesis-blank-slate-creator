@@ -42,7 +42,7 @@ const workflowSteps = [
 
 export const WorkflowDiagram = () => {
   return (
-    <section id="workflow" className="py-16 w-full">
+    <section id="workflow">
       <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
