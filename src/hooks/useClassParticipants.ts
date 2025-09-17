@@ -221,6 +221,7 @@ export const useBulkUpdateClassParticipants = () => {
     onSuccess: (_, { classId }) => {
       queryClient.invalidateQueries({ queryKey: ["class-participants", classId] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
       toast({
         title: "Alumnos actualizados",
         description: "Los cambios se han guardado correctamente."
