@@ -260,12 +260,7 @@ export const ContactSection = () => {
               <Phone className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Llámanos</h3>
-            <a 
-              href="https://wa.me/34662632906" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
+            <a href="https://wa.me/34662632906" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors">
               Contáctanos por WhatsApp
             </a>
             <p className="text-sm text-muted-foreground mt-1">Lun-Vie, 9:00-18:00</p>
@@ -285,7 +280,7 @@ export const ContactSection = () => {
               <MapPin className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Visítanos</h3>
-            <p className="text-muted-foreground">Madrid, España</p>
+            <p className="text-muted-foreground">Sevilla, España</p>
             <p className="text-sm text-muted-foreground mt-1">Cita previa</p>
           </div>
         </div>
