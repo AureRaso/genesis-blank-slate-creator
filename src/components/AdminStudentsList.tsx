@@ -22,7 +22,7 @@ const AdminStudentsList = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
 
-  const { data: students = [], isLoading } = useAdminStudentEnrollments();
+  const { data: students = [], isLoading } = useAdminStudentEnrollments(); // No club filtering needed here
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -105,9 +105,9 @@ export const useStudentEnrollments = () => {
   });
 };
 
-export const useAdminStudentEnrollments = () => {
+export const useAdminStudentEnrollments = (clubId?: string) => {
   return useQuery({
-    queryKey: ["admin-student-enrollments"],
+    queryKey: ["admin-student-enrollments", clubId],
     queryFn: async () => {
       console.log('Fetching admin student enrollments...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -115,10 +115,17 @@ export const useAdminStudentEnrollments = () => {
       if (!userData.user) throw new Error('Usuario no autenticado');
 
       // First, get clubs created by this admin
-      const { data: adminClubs, error: clubsError } = await supabase
+      let clubQuery = supabase
         .from('clubs')
         .select('id')
         .eq('created_by_profile_id', userData.user.id);
+
+      // If clubId is provided, filter by it
+      if (clubId) {
+        clubQuery = clubQuery.eq('id', clubId);
+      }
+
+      const { data: adminClubs, error: clubsError } = await clubQuery;
 
       if (clubsError) throw clubsError;
       
@@ -143,10 +150,17 @@ export const useAdminStudentEnrollments = () => {
       const trainerProfileIds = [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))];
 
       // Get student enrollments created by these trainers
-      const { data: students, error: studentsError } = await supabase
+      let studentsQuery = supabase
         .from('student_enrollments')
         .select('*')
-        .in('trainer_profile_id', trainerProfileIds)
+        .in('trainer_profile_id', trainerProfileIds);
+
+      // If clubId is provided, also filter by club_id
+      if (clubId) {
+        studentsQuery = studentsQuery.eq('club_id', clubId);
+      }
+
+      const { data: students, error: studentsError } = await studentsQuery
         .order('created_at', { ascending: false });
 
       if (studentsError) throw studentsError;

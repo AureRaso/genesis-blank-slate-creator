@@ -128,9 +128,7 @@ export default function ScheduledClassForm({
   const {
     data: groups
   } = isAdmin ? useAdminClassGroups() : useClassGroups(trainerClubId); // Use admin hook for admins
-  const {
-    data: students
-  } = isAdmin ? useAdminStudentEnrollments() : useStudentEnrollments(); // Use admin hook for admins
+  
   const {
     data: allTrainers
   } = isAdmin ? useAdminTrainers() : useTrainers(); // Use admin hook for admins
@@ -168,6 +166,13 @@ export default function ScheduledClassForm({
       end_date: initialData?.end_date || new Date(Date.now() + (90 * 24 * 60 * 60 * 1000))
     }
   });
+  
+  // Watch for club_id changes to filter students
+  const selectedClubId = form.watch('club_id');
+  
+  const {
+    data: students
+  } = isAdmin ? useAdminStudentEnrollments(selectedClubId) : useStudentEnrollments(); // Use admin hook for admins with club filtering
   const watchedValues = form.watch();
 
   // Generate preview dates when recurrence settings change
@@ -182,6 +187,13 @@ export default function ScheduledClassForm({
     }
     setConflicts(newConflicts);
   }, [watchedValues.selected_days, watchedValues.start_date, watchedValues.end_date, watchedValues.recurrence_type]);
+
+  // Clear selected students when club changes (for admins only)
+  useEffect(() => {
+    if (isAdmin && selectedClubId) {
+      form.setValue("selected_students", []);
+    }
+  }, [selectedClubId, isAdmin, form]);
   const generatePreview = () => {
     const {
       selected_days,
@@ -662,23 +674,36 @@ export default function ScheduledClassForm({
                 {/* Student Selection - Only when selection_type is "individual" */}
                 {watchedValues.selection_type === "individual" && <div className="space-y-4">
                   <FormLabel>Seleccionar alumnos</FormLabel>
-                  <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                    {students && students.length > 0 ? <div className="space-y-3">
-                        {students.map(student => <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
-                            <Checkbox id={`student-${student.id}`} checked={watchedValues.selected_students.includes(student.id)} onCheckedChange={checked => handleStudentSelection(student.id, checked as boolean)} />
-                            <div className="flex-1">
-                              <label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
-                                {student.full_name}
-                              </label>
-                              <div className="text-xs text-muted-foreground">
-                                Nivel {student.level} • {student.email}
+                  
+                  {/* Show message if admin hasn't selected a club yet */}
+                  {isAdmin && !selectedClubId && (
+                    <div className="border rounded-lg p-4 bg-muted/50">
+                      <div className="text-center py-4 text-muted-foreground">
+                        Primero selecciona un club en el paso anterior para ver los alumnos disponibles
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show students when club is selected or for non-admin users */}
+                  {(!isAdmin || selectedClubId) && (
+                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                      {students && students.length > 0 ? <div className="space-y-3">
+                          {students.map(student => <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
+                              <Checkbox id={`student-${student.id}`} checked={watchedValues.selected_students.includes(student.id)} onCheckedChange={checked => handleStudentSelection(student.id, checked as boolean)} />
+                              <div className="flex-1">
+                                <label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
+                                  {student.full_name}
+                                </label>
+                                <div className="text-xs text-muted-foreground">
+                                  Nivel {student.level} • {student.email}
+                                </div>
                               </div>
-                            </div>
-                          </div>)}
-                      </div> : <div className="text-center py-4 text-muted-foreground">
-                        No hay alumnos disponibles
-                      </div>}
-                  </div>
+                            </div>)}
+                        </div> : <div className="text-center py-4 text-muted-foreground">
+                          {isAdmin ? "No hay alumnos en este club" : "No hay alumnos disponibles"}
+                        </div>}
+                    </div>
+                  )}
                   
                   {watchedValues.selected_students.length > 0 && <div className="text-sm text-muted-foreground">
                       {watchedValues.selected_students.length} alumno(s) seleccionado(s)
