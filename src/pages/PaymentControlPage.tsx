@@ -26,7 +26,6 @@ import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import AppLayout from "@/components/AppLayout";
 
 const PaymentControlPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,8 +110,7 @@ const PaymentControlPage = () => {
   );
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Total esperado card */}
         <Card className="w-fit ml-auto">
           <CardContent className="p-4">
@@ -395,8 +393,7 @@ const PaymentControlPage = () => {
           )}
         </CardContent>
       </Card>
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 
