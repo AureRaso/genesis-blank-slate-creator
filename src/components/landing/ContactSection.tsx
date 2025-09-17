@@ -89,10 +89,7 @@ export const ContactSection = () => {
           </div>
           
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">¿Listo para transformar tu academia?</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Solicita una demo personalizada y descubre cómo PadeLock puede 
-            optimizar la gestión de tu club y mejorar la experiencia para todos.
-          </p>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">Solicita una demo personalizada y descubre cómo PadeLock puede optimizar la gestión de tu academia y mejorar la experiencia para todos.</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
@@ -100,10 +97,7 @@ export const ContactSection = () => {
           <div className="space-y-8">
             <div className="space-y-4">
               <h3 className="text-2xl font-bold">Demo personalizada</h3>
-              <p className="text-muted-foreground">
-                Nuestros especialistas te mostrarán cómo PadeLock se adapta a las 
-                necesidades específicas de tu club de pádel.
-              </p>
+              <p className="text-muted-foreground">Nuestros especialistas te mostrarán cómo PadeLock se adapta a las necesidades específicas de tu academia de pádel.</p>
             </div>
 
             <div className="space-y-6">
@@ -271,7 +265,7 @@ export const ContactSection = () => {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Escríbenos</h3>
-            <p className="text-muted-foreground">hola@padelock.com</p>
+            <p className="text-muted-foreground">sefaca24@gmail.com</p>
             <p className="text-sm text-muted-foreground mt-1">Respuesta en 24h</p>
           </div>
 
