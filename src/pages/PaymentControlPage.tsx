@@ -113,24 +113,18 @@ const PaymentControlPage = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Control de Pagos</h1>
-          <p className="text-muted-foreground">
-            Gestiona los pagos de las clases programadas
-          </p>
-        </div>
-        
-        <Card className="p-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">Total esperado</p>
-            <p className="text-2xl font-bold flex items-center justify-center">
-              <Euro className="h-5 w-5 mr-1" />
-              {totalAmount.toFixed(2)}
-            </p>
-          </div>
+        {/* Total esperado card */}
+        <Card className="w-fit ml-auto">
+          <CardContent className="p-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Total esperado</p>
+              <p className="text-2xl font-bold flex items-center justify-center">
+                <Euro className="h-5 w-5 mr-1" />
+                {totalAmount.toFixed(2)}
+              </p>
+            </div>
+          </CardContent>
         </Card>
-      </div>
 
       {/* Filters */}
       <Card>
