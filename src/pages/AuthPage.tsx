@@ -136,9 +136,7 @@ export const AuthPage = () => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
             PadeLock
           </h1>
-          <p className="text-gray-600 mt-2">
-            Gestiona tu club de pádel profesionalmente
-          </p>
+          <p className="text-gray-600 mt-2">Gestiona tu academia de pádel profesionalmente</p>
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
