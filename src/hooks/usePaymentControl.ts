@@ -91,7 +91,7 @@ export const usePaymentRecords = (filters?: {
       let filteredData = data as PaymentRecord[];
       if (filters?.clubId && filters.clubId !== 'all') {
         filteredData = filteredData.filter(record => 
-          record.student_enrollment.club_id === filters.clubId
+          record.programmed_class.club.id === filters.clubId
         );
       }
 
