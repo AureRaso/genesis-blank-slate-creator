@@ -20,10 +20,7 @@ export const Footer = () => {
                   PadeLock
                 </h3>
               </div>
-              <p className="text-muted-foreground max-w-md">
-                La plataforma todo-en-uno para la gestión digital de clubes de pádel. 
-                Diseñada para optimizar operaciones y mejorar la experiencia de entrenadores y jugadores.
-              </p>
+              <p className="text-muted-foreground max-w-md">La plataforma todo-en-uno para la gestión digital de academias de pádel. Diseñada para optimizar operaciones y mejorar la experiencia de entrenadores y jugadores.</p>
             </div>
             
             <div className="flex space-x-4">
