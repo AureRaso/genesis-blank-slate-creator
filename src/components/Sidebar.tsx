@@ -51,7 +51,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
           </div>
           <div>
             <h2 className="text-lg font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-              PadelApp
+              PadeLock
             </h2>
             <p className="text-xs text-muted-foreground">Liga de Pádel</p>
           </div>
