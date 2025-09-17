@@ -1,60 +1,50 @@
 import { Clock, TrendingUp, MessageCircle, Shield, Smartphone, Zap, Users, Calendar, CreditCard, BarChart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-
-const benefits = [
-  {
-    icon: Clock,
-    title: "Ahorro de tiempo",
-    description: "Automatización completa que elimina tareas manuales repetitivas",
-    metric: "80% menos tiempo administrativo",
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10"
-  },
-  {
-    icon: TrendingUp,
-    title: "Mayor ocupación",
-    description: "Sistema de lista de espera optimiza el llenado de clases",
-    metric: "25% más ocupación promedio",
-    color: "text-green-500",
-    bgColor: "bg-green-500/10"
-  },
-  {
-    icon: Users,
-    title: "Gestión centralizada",
-    description: "Control completo de clubes, entrenadores y alumnos en una plataforma",
-    metric: "100% integrado",
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10"
-  },
-  {
-    icon: Shield,
-    title: "Seguridad garantizada",
-    description: "Protección de datos y transacciones con encriptación avanzada",
-    metric: "Datos 100% seguros",
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10"
-  },
-  {
-    icon: Smartphone,
-    title: "Multi-dispositivo",
-    description: "Acceso completo desde móvil, tablet y ordenador",
-    metric: "Disponible 24/7",
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10"
-  },
-  {
-    icon: Zap,
-    title: "Implementación rápida",
-    description: "Configuración completa en menos de 24 horas",
-    metric: "Funcionando en 1 día",
-    color: "text-primary",
-    bgColor: "bg-primary/10"
-  }
-];
-
+const benefits = [{
+  icon: Clock,
+  title: "Ahorro de tiempo",
+  description: "Automatización completa que elimina tareas manuales repetitivas",
+  metric: "80% menos tiempo administrativo",
+  color: "text-blue-500",
+  bgColor: "bg-blue-500/10"
+}, {
+  icon: TrendingUp,
+  title: "Mayor ocupación",
+  description: "Sistema de lista de espera optimiza el llenado de clases",
+  metric: "25% más ocupación promedio",
+  color: "text-green-500",
+  bgColor: "bg-green-500/10"
+}, {
+  icon: Users,
+  title: "Gestión centralizada",
+  description: "Control completo de clubes, entrenadores y alumnos en una plataforma",
+  metric: "100% integrado",
+  color: "text-purple-500",
+  bgColor: "bg-purple-500/10"
+}, {
+  icon: Shield,
+  title: "Seguridad garantizada",
+  description: "Protección de datos y transacciones con encriptación avanzada",
+  metric: "Datos 100% seguros",
+  color: "text-amber-500",
+  bgColor: "bg-amber-500/10"
+}, {
+  icon: Smartphone,
+  title: "Multi-dispositivo",
+  description: "Acceso completo desde móvil, tablet y ordenador",
+  metric: "Disponible 24/7",
+  color: "text-orange-500",
+  bgColor: "bg-orange-500/10"
+}, {
+  icon: Zap,
+  title: "Implementación rápida",
+  description: "Configuración completa en menos de 24 horas",
+  metric: "Funcionando en 1 día",
+  color: "text-primary",
+  bgColor: "bg-primary/10"
+}];
 export const BenefitsSection = () => {
-  return (
-    <section className="py-2 bg-gradient-to-b from-background to-muted/30 w-full">
+  return <section className="py-2 bg-gradient-to-b from-background to-muted/30 w-full">
       <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="text-center mb-16">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
@@ -64,15 +54,11 @@ export const BenefitsSection = () => {
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
             ¿Por qué elegir PadeLock?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Resultados tangibles que transforman la gestión de tu club de pádel y mejoran 
-            la experiencia para todos
-          </p>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">Resultados tangibles que transforman la gestión de tu academia de pádel y mejoran la experiencia para todos</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {benefits.map((benefit, index) => (
-            <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 bg-gradient-to-br from-card to-card/90 shadow-md">
+          {benefits.map((benefit, index) => <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 bg-gradient-to-br from-card to-card/90 shadow-md">
               <CardContent className="p-6 space-y-5">
                 <div className={`w-16 h-16 mx-auto rounded-2xl ${benefit.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <benefit.icon className={`h-8 w-8 ${benefit.color}`} />
@@ -89,8 +75,7 @@ export const BenefitsSection = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
         {/* Key Statistics */}
@@ -157,6 +142,5 @@ export const BenefitsSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
