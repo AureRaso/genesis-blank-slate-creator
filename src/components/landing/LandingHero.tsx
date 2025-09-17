@@ -107,8 +107,8 @@ export const LandingHero = () => {
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                La solución integral para gestionar academias, entrenadores y jugadores. 
-                Optimiza la organización de clases, gestiona alumnos y simplifica los pagos.
+                Software pensado por y para academias de pádel, entrenadores y clientes. 
+                Ahorra tiempo y dinero en tu academia.
               </p>
             </div>
 
