@@ -541,6 +541,79 @@ export default function ScheduledClassForm({
                       </Alert>}
                   </div>
                 </div>
+
+                {/* Admin-only club and trainer assignment */}
+                {isAdmin && <div className="border-t pt-6 space-y-6">
+                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Configuración Avanzada (Admin)
+                    </h4>
+                    
+                    {/* Club assignment */}
+                    <FormField control={form.control} name="club_id" render={({
+                  field
+                }) => <FormItem>
+                          <FormLabel>Asignar a Club</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar club" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                               {adminClubs && adminClubs.length > 0 ? (
+                                 adminClubs.map(club => (
+                                     <SelectItem key={club.id} value={club.id}>
+                                       {club.name}
+                                     </SelectItem>
+                                   ))
+                              ) : (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No tienes clubes creados
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Selecciona en qué club se creará esta clase programada.
+                          </p>
+                        </FormItem>} />
+                    
+                    {/* Trainer assignment */}
+                    <FormField control={form.control} name="assigned_trainer_id" render={({
+                  field
+                }) => <FormItem>
+                          <FormLabel>Asignar clase a otro profesor (Opcional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar profesor (opcional)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="unassigned">Sin asignar (permanece como mi clase)</SelectItem>
+                               {availableTrainers && availableTrainers.length > 0 ? (
+                                 availableTrainers
+                                   .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
+                                   .map(trainer => (
+                                     <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                                       {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
+                                     </SelectItem>
+                                   ))
+                              ) : (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No hay otros profesores disponibles
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Si seleccionas un profesor, la clase aparecerá en su calendario como si él la hubiera creado.
+                          </p>
+                        </FormItem>} />
+                  </div>}
               </div>}
 
             {/* Step 2: Group and Students */}
@@ -689,79 +762,6 @@ export default function ScheduledClassForm({
                         </p>
                       </FormItem>} />
                 </div>
-
-                 {/* Admin-only club and trainer assignment */}
-                {isAdmin && <div className="border-t pt-6 space-y-6">
-                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Configuración Avanzada (Admin)
-                    </h4>
-                    
-                    {/* Club assignment */}
-                    <FormField control={form.control} name="club_id" render={({
-                  field
-                }) => <FormItem>
-                          <FormLabel>Asignar a Club</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar club" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                               {adminClubs && adminClubs.length > 0 ? (
-                                 adminClubs.map(club => (
-                                     <SelectItem key={club.id} value={club.id}>
-                                       {club.name}
-                                     </SelectItem>
-                                   ))
-                              ) : (
-                                <div className="p-2 text-sm text-muted-foreground">
-                                  No tienes clubes creados
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Selecciona en qué club se creará esta clase programada.
-                          </p>
-                        </FormItem>} />
-                    
-                    {/* Trainer assignment */}
-                    <FormField control={form.control} name="assigned_trainer_id" render={({
-                  field
-                }) => <FormItem>
-                          <FormLabel>Asignar clase a otro profesor (Opcional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar profesor (opcional)" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="unassigned">Sin asignar (permanece como mi clase)</SelectItem>
-                               {availableTrainers && availableTrainers.length > 0 ? (
-                                 availableTrainers
-                                   .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
-                                   .map(trainer => (
-                                     <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
-                                       {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
-                                     </SelectItem>
-                                   ))
-                              ) : (
-                                <div className="p-2 text-sm text-muted-foreground">
-                                  No hay otros profesores disponibles
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Si seleccionas un profesor, la clase aparecerá en su calendario como si él la hubiera creado.
-                          </p>
-                        </FormItem>} />
-                  </div>}
 
                 {/* Summary */}
                 <div className="bg-muted p-4 rounded-lg">
