@@ -451,7 +451,7 @@ function AdminClassDetailsModal({
                   <p className="text-sm text-muted-foreground mb-6">
                     Esta clase aún no tiene estudiantes registrados
                   </p>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => setShowManageStudents(true)}>
                     <UserPlus className="h-4 w-4" />
                     Añadir primer alumno
                   </Button>
