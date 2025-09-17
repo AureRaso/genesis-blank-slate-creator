@@ -22,7 +22,14 @@ const AdminStudentsList = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
 
-  const { data: students = [], isLoading } = useAdminStudentEnrollments(); // No club filtering needed here
+  const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
+  
+  console.log('📋 AdminStudentsList Data:', {
+    studentsCount: students.length,
+    isLoading,
+    error: error?.message,
+    firstFewStudents: students.slice(0, 3).map(s => ({ id: s.id, name: s.full_name, club_id: s.club_id }))
+  });
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

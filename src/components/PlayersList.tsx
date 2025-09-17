@@ -7,11 +7,19 @@ import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PlayersList = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   const { data: players, isLoading, error } = usePlayers();
   const deletePlayerMutation = useDeletePlayer();
 
-  console.log('PlayersList - isLoading:', isLoading, 'error:', error, 'players:', players);
+  console.log('👥 PlayersList Debug:', {
+    isAdmin,
+    profileId: profile?.id,
+    profileRole: profile?.role,
+    isLoading,
+    error: error?.message,
+    playersCount: players?.length || 0,
+    firstFewPlayers: players?.slice(0, 3).map(p => ({ id: p.id, name: p.name, club_id: p.club_id })) || []
+  });
 
   if (isLoading) {
     return (

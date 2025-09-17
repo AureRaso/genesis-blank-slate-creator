@@ -8,8 +8,16 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 
 const PlayersPage = () => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, profile } = useAuth();
   const [showStudentForm, setShowStudentForm] = useState(false);
+  
+  console.log('🏠 PlayersPage Auth Check:', {
+    isAdmin,
+    loading,
+    profileId: profile?.id,
+    profileRole: profile?.role,
+    profileClubId: profile?.club_id
+  });
 
   if (loading) {
     return (
