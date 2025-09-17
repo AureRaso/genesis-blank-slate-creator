@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Phone, MapPin, Send, CheckCircle, Calendar, Clock, User, Users, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -15,30 +16,32 @@ export const ContactSection = () => {
     clubName: "",
     clubSize: "",
     role: "",
-    message: ""
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 2000));
+
     setIsSubmitting(false);
     setIsSubmitted(true);
+    
     toast({
       title: "¡Solicitud enviada!",
-      description: "Nos pondremos en contacto contigo en las próximas 24 horas."
+      description: "Nos pondremos en contacto contigo en las próximas 24 horas.",
     });
 
     // Reset form after 3 seconds
@@ -51,12 +54,14 @@ export const ContactSection = () => {
         clubName: "",
         clubSize: "",
         role: "",
-        message: ""
+        message: "",
       });
     }, 3000);
   };
+
   if (isSubmitted) {
-    return <section id="contact" className="py-20 bg-gradient-to-br from-primary/5 to-accent/5">
+    return (
+      <section id="contact" className="py-20 bg-gradient-to-br from-primary/5 to-accent/5">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
             <Card className="border-primary/20 shadow-lg">
@@ -79,16 +84,21 @@ export const ContactSection = () => {
             </Card>
           </div>
         </div>
-      </section>;
+      </section>
+    );
   }
-  return <section id="contact" className="py-2 bg-gradient-to-br from-primary/5 to-accent/5">
+
+  return (
+    <section id="contact" className="py-2 bg-gradient-to-br from-primary/5 to-accent/5">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
             <Calendar className="h-4 w-4 mr-2" /> Agenda una demo
           </div>
           
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">¿Listo para transformar tu academia?</h2>
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+            ¿Listo para transformar tu club?
+          </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Solicita una demo personalizada y descubre cómo PadeLock puede 
             optimizar la gestión de tu club y mejorar la experiencia para todos.
@@ -171,14 +181,25 @@ export const ContactSection = () => {
                       <User className="h-4 w-4 mr-1" />
                       Nombre *
                     </Label>
-                    <Input id="name" value={formData.name} onChange={e => handleInputChange("name", e.target.value)} placeholder="Tu nombre completo" required />
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Tu nombre completo"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="flex items-center">
                       <Phone className="h-4 w-4 mr-1" />
                       Teléfono
                     </Label>
-                    <Input id="phone" value={formData.phone} onChange={e => handleInputChange("phone", e.target.value)} placeholder="+34 600 000 000" />
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      placeholder="+34 600 000 000"
+                    />
                   </div>
                 </div>
 
@@ -187,7 +208,14 @@ export const ContactSection = () => {
                     <Mail className="h-4 w-4 mr-1" />
                     Email *
                   </Label>
-                  <Input id="email" type="email" value={formData.email} onChange={e => handleInputChange("email", e.target.value)} placeholder="tu@email.com" required />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="tu@email.com"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -195,13 +223,18 @@ export const ContactSection = () => {
                     <Building className="h-4 w-4 mr-1" />
                     Nombre del Club
                   </Label>
-                  <Input id="clubName" value={formData.clubName} onChange={e => handleInputChange("clubName", e.target.value)} placeholder="Club de Pádel XYZ" />
+                  <Input
+                    id="clubName"
+                    value={formData.clubName}
+                    onChange={(e) => handleInputChange("clubName", e.target.value)}
+                    placeholder="Club de Pádel XYZ"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="clubSize">Tamaño del Club</Label>
-                    <Select value={formData.clubSize} onValueChange={value => handleInputChange("clubSize", value)}>
+                    <Select value={formData.clubSize} onValueChange={(value) => handleInputChange("clubSize", value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona" />
                       </SelectTrigger>
@@ -215,7 +248,7 @@ export const ContactSection = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="role">Tu Rol</Label>
-                    <Select value={formData.role} onValueChange={value => handleInputChange("role", value)}>
+                    <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona" />
                       </SelectTrigger>
@@ -231,17 +264,32 @@ export const ContactSection = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="message">Mensaje (Opcional)</Label>
-                  <Textarea id="message" value={formData.message} onChange={e => handleInputChange("message", e.target.value)} placeholder="Cuéntanos sobre tu club y qué te gustaría mejorar..." rows={4} />
+                  <Textarea
+                    id="message"
+                    value={formData.message}
+                    onChange={(e) => handleInputChange("message", e.target.value)}
+                    placeholder="Cuéntanos sobre tu club y qué te gustaría mejorar..."
+                    rows={4}
+                  />
                 </div>
 
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 shadow-md shadow-primary/25" size="lg" disabled={isSubmitting}>
-                  {isSubmitting ? <>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary hover:bg-primary/90 shadow-md shadow-primary/25" 
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Enviando...
-                    </> : <>
+                    </>
+                  ) : (
+                    <>
                       Solicitar Demo Gratuita
                       <Send className="ml-2 h-4 w-4" />
-                    </>}
+                    </>
+                  )}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
@@ -260,14 +308,7 @@ export const ContactSection = () => {
               <Phone className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Llámanos</h3>
-            <a 
-              href="https://wa.me/34662632906" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              Contáctanos por WhatsApp
-            </a>
+            <p className="text-muted-foreground">+34 900 123 456</p>
             <p className="text-sm text-muted-foreground mt-1">Lun-Vie, 9:00-18:00</p>
           </div>
 
@@ -276,7 +317,7 @@ export const ContactSection = () => {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Escríbenos</h3>
-            <p className="text-muted-foreground">hola@padelock.com</p>
+            <p className="text-muted-foreground">sefaca24@gmail.com</p>
             <p className="text-sm text-muted-foreground mt-1">Respuesta en 24h</p>
           </div>
 
@@ -285,10 +326,11 @@ export const ContactSection = () => {
               <MapPin className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Visítanos</h3>
-            <p className="text-muted-foreground">Madrid, España</p>
+            <p className="text-muted-foreground">Sevilla, España</p>
             <p className="text-sm text-muted-foreground mt-1">Cita previa</p>
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
