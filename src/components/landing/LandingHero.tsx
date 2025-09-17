@@ -103,12 +103,12 @@ export const LandingHero = () => {
                   PadeLock
                 </span>
                 <br />
-                <span className="text-foreground">Digitaliza tu club de pádel</span>
+                <span className="text-foreground">Digitaliza tu academia de pádel</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Software pensado por y para academias de pádel, entrenadores y clientes. 
-                Ahorra tiempo y dinero en tu academia.
+                La solución integral para gestionar clubes, entrenadores y jugadores. 
+                Optimiza la organización de clases, gestiona alumnos y simplifica los pagos.
               </p>
             </div>
 
