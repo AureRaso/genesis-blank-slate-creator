@@ -127,7 +127,6 @@ function App() {
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
-              <Route path="/payment-control" element={<PaymentControlPage />} />
         <Route path="/dashboard/*" element={
           <ProtectedRoute>
             <AppLayout>
@@ -154,6 +153,7 @@ function App() {
                      <Route path="/clubs/new" element={<ClubFormPage />} />
                      <Route path="/clubs/edit/:id" element={<ClubFormPage />} />
                      <Route path="/trainers" element={<TrainersPage />} />
+                     <Route path="/payment-control" element={<PaymentControlPage />} />
                      <Route path="/scheduled-classes" element={
                        isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
                      } />
