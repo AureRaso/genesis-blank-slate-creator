@@ -22,7 +22,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { usePaymentRecords, useUpdatePaymentStatus } from "@/hooks/usePaymentControl";
-import { useActiveClubs } from "@/hooks/useActiveClubs";
+import { useAdminClubs } from "@/hooks/useClubs";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -40,7 +40,7 @@ const PaymentControlPage = () => {
     paymentNotes: ""
   });
 
-  const { data: clubs = [] } = useActiveClubs();
+  const { data: clubs = [] } = useAdminClubs();
   const { data: payments = [], isLoading } = usePaymentRecords({
     clubId: selectedClub,
     paymentStatus: statusFilter,
@@ -111,26 +111,13 @@ const PaymentControlPage = () => {
 
   return (
     <div className="space-y-6">
-        {/* Total esperado card */}
-        <Card className="w-fit ml-auto">
-          <CardContent className="p-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Total esperado</p>
-              <p className="text-2xl font-bold flex items-center justify-center">
-                <Euro className="h-5 w-5 mr-1" />
-                {totalAmount.toFixed(2)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
       {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -178,6 +165,20 @@ const PaymentControlPage = () => {
 
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>Total: {filteredPayments.length} registros</span>
+            </div>
+          </div>
+          
+          {/* Total esperado integrado en la misma card */}
+          <div className="flex justify-between items-center pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Filtrando {filteredPayments.length} de {payments.length} registros
+            </div>
+            <div className="flex items-center space-x-2 bg-muted px-4 py-2 rounded-lg">
+              <span className="text-sm text-muted-foreground">Total esperado:</span>
+              <div className="flex items-center font-bold text-lg">
+                <Euro className="h-4 w-4 mr-1" />
+                {totalAmount.toFixed(2)}
+              </div>
             </div>
           </div>
         </CardContent>
