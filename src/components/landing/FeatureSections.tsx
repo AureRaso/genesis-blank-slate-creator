@@ -1,77 +1,36 @@
 import { Building2, GraduationCap, User, CreditCard, BarChart3, Clock, Shield, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-
-const features = [
-  {
-    icon: Building2,
-    title: "Gestión Completa del Club",
-    description: "Administra todos los aspectos de tu club desde un único panel centralizado.",
-    items: [
-      "Control de múltiples pistas y ubicaciones",
-      "Gestión de horarios y disponibilidad",
-      "Sistema de precios flexible y descuentos",
-      "Estadísticas y reportes en tiempo real",
-      "Dashboard administrativo completo"
-    ]
-  },
-  {
-    icon: GraduationCap,
-    title: "Panel para Entrenadores",
-    description: "Herramientas especializadas para que los entrenadores gestionen sus clases eficientemente.",
-    items: [
-      "Dashboard personal para cada entrenador",
-      "Creación de clases programadas y recurrentes",
-      "Gestión de grupos por niveles",
-      "Calendario interactivo con drag & drop",
-      "Control de inscripciones y listas de espera"
-    ]
-  },
-  {
-    icon: User,
-    title: "Experiencia para Jugadores",
-    description: "Interfaz simplificada para que los jugadores gestionen sus reservas y clases.",
-    items: [
-      "Dashboard personal del jugador",
-      "Inscripción sencilla a clases disponibles",
-      "Visualización del calendario del club",
-      "Sistema de reservas automático",
-      "Historial completo de clases"
-    ]
-  },
-  {
-    icon: CreditCard,
-    title: "Sistema de Pagos",
-    description: "Gestión flexible de pagos y control financiero integrado.",
-    items: [
-      "Múltiples métodos de pago",
-      "Configuración de precios por clase",
-      "Sistema de descuentos y promociones",
-      "Gestión de abonos y paquetes",
-      "Control de transacciones y validaciones"
-    ]
-  },
-  {
-    icon: BarChart3,
-    title: "Analíticas y Reportes",
-    description: "Toma decisiones basadas en datos con reportes detallados de tu club.",
-    items: [
-      "Métricas de ocupación y rendimiento",
-      "Estadísticas financieras",
-      "Seguimiento de progreso de alumnos",
-      "Reportes personalizables",
-      "Exportación de datos"
-    ]
-  }
-];
-
+const features = [{
+  icon: Building2,
+  title: "Gestión Completa del Club",
+  description: "Administra todos los aspectos de tu club desde un único panel centralizado.",
+  items: ["Control de múltiples pistas y ubicaciones", "Gestión de horarios y disponibilidad", "Sistema de precios flexible y descuentos", "Estadísticas y reportes en tiempo real", "Dashboard administrativo completo"]
+}, {
+  icon: GraduationCap,
+  title: "Panel para Entrenadores",
+  description: "Herramientas especializadas para que los entrenadores gestionen sus clases eficientemente.",
+  items: ["Dashboard personal para cada entrenador", "Creación de clases programadas y recurrentes", "Gestión de grupos por niveles", "Calendario interactivo con drag & drop", "Control de inscripciones y listas de espera"]
+}, {
+  icon: User,
+  title: "Experiencia para Jugadores",
+  description: "Interfaz simplificada para que los jugadores gestionen sus reservas y clases.",
+  items: ["Dashboard personal del jugador", "Inscripción sencilla a clases disponibles", "Visualización del calendario del club", "Sistema de reservas automático", "Historial completo de clases"]
+}, {
+  icon: CreditCard,
+  title: "Sistema de Pagos",
+  description: "Gestión flexible de pagos y control financiero integrado.",
+  items: ["Múltiples métodos de pago", "Configuración de precios por clase", "Sistema de descuentos y promociones", "Gestión de abonos y paquetes", "Control de transacciones y validaciones"]
+}, {
+  icon: BarChart3,
+  title: "Analíticas y Reportes",
+  description: "Toma decisiones basadas en datos con reportes detallados de tu club.",
+  items: ["Métricas de ocupación y rendimiento", "Estadísticas financieras", "Seguimiento de progreso de alumnos", "Reportes personalizables", "Exportación de datos"]
+}];
 export const FeatureSections = () => {
-  return (
-    <section id="features">
+  return <section id="features">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Todo lo que necesitas para tu club
-          </h2>
+          <h2 className="text-3xl lg:text-4xl font-bold mb-4">Todo lo que necesitas para tu academia</h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Una plataforma completa que centraliza la gestión, automatiza procesos y mejora 
             la experiencia para administradores, entrenadores y jugadores.
@@ -79,8 +38,7 @@ export const FeatureSections = () => {
         </div>
 
         <div className="grid gap-6 max-w-5xl mx-auto">
-          {features.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary hover:border-l-primary/80 overflow-hidden">
+          {features.map((feature, index) => <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary hover:border-l-primary/80 overflow-hidden">
               <CardContent className="p-0">
                 <div className="grid lg:grid-cols-5 gap-6 items-start">
                   <div className="lg:col-span-2 bg-gradient-to-br from-primary/5 to-accent/5 p-6 h-full">
@@ -101,18 +59,15 @@ export const FeatureSections = () => {
                   
                   <div className="lg:col-span-3 p-6">
                     <div className="grid sm:grid-cols-2 gap-3">
-                      {feature.items.map((item, itemIndex) => (
-                        <div key={itemIndex} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
+                      {feature.items.map((item, itemIndex) => <div key={itemIndex} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
                           <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></div>
                           <span className="text-sm">{item}</span>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
         {/* Additional Benefits */}
@@ -154,6 +109,5 @@ export const FeatureSections = () => {
           </Card>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
