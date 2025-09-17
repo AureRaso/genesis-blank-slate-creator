@@ -38,8 +38,10 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   
   console.log('🔵 User role check:', { isAdmin, profileRole: profile?.role, profileId: profile?.id });
   
-  // Use student enrollments hook (works for both trainers and admins)
-  const { data: allStudents, isLoading: studentsLoading, error: studentsError } = useStudentEnrollments();
+  // Use appropriate hook based on user role
+  const { data: allStudents, isLoading: studentsLoading, error: studentsError } = isAdmin 
+    ? useAdminStudentEnrollments(cls.club_id) 
+    : useStudentEnrollments();
   
   console.log('🔵 Hook results:', {
     allStudentsCount: allStudents?.length || 0,
