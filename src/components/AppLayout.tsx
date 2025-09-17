@@ -60,7 +60,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink asChild>
                     <Link to="/dashboard">
-                      PadelApp
+                      PadeLock
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
