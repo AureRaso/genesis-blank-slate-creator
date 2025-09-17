@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -45,6 +45,16 @@ export default function ClassListView({
     clubId: clubId,
     clubIds: clubIds
   });
+
+  // Sync selectedClass with fresh query data when it updates
+  useEffect(() => {
+    if (selectedClass && classes) {
+      const updatedClass = classes.find(cls => cls.id === selectedClass.id);
+      if (updatedClass) {
+        setSelectedClass(updatedClass);
+      }
+    }
+  }, [classes, selectedClass?.id]);
 
   // Aplicar todos los filtros
   const filteredClasses = classes?.filter(cls => {
