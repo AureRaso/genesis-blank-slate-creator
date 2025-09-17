@@ -7,9 +7,7 @@ const VideoDemoSection = () => {
   return <section className="w-full py-20 bg-gradient-to-br from-background via-accent/5 to-background">
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            Ve PadeLock en Acción
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">Descubre cómo PadeLock transforma la gestión de tu academia de pádel con nuestra demostración interactiva</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
             Descubre cómo PadeLock transforma la gestión de tu club de pádel 
             con nuestra demostración interactiva
