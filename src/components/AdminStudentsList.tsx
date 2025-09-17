@@ -13,7 +13,8 @@ import {
   Euro,
   CreditCard,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment } from "@/hooks/useStudentEnrollments";
 
@@ -190,6 +191,16 @@ const AdminStudentsList = () => {
                   <div className="flex items-center text-muted-foreground">
                     <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{student.phone}</span>
+                  </div>
+
+                  <div className="flex items-center text-muted-foreground">
+                    <Building2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span>{student.club_name}</span>
+                    {student.club_status && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {student.club_status}
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center text-muted-foreground">

@@ -25,6 +25,9 @@ export interface StudentEnrollment {
   status: string;
   created_at: string;
   updated_at: string;
+  // Club information
+  club_name?: string;
+  club_status?: string;
 }
 
 export interface EnrollmentForm {
@@ -150,7 +153,10 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
       // 2. Students created directly by the admin in their clubs
       let studentsQuery = supabase
         .from('student_enrollments')
-        .select('*');
+        .select(`
+          *,
+          clubs(name, status)
+        `);
 
       // Create conditions for both cases
       if (trainerProfileIds.length > 0) {
@@ -174,8 +180,15 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
 
       if (studentsError) throw studentsError;
 
-      console.log('Admin student enrollments fetched:', students);
-      return students as StudentEnrollment[];
+      // Transform data to include club information
+      const studentsWithClubs = (students || []).map(student => ({
+        ...student,
+        club_name: student.clubs?.name || 'Club desconocido',
+        club_status: student.clubs?.status || null,
+      }));
+
+      console.log('Admin student enrollments fetched:', studentsWithClubs);
+      return studentsWithClubs as StudentEnrollment[];
     },
   });
 };

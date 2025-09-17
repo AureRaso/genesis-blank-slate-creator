@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Users } from "lucide-react";
+import { Trash2, Users, Building2 } from "lucide-react";
 import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -106,6 +106,15 @@ const PlayersList = () => {
                 <div className="flex-1">
                   <h3 className="font-medium">{player.name}</h3>
                   <p className="text-sm text-muted-foreground">{player.email}</p>
+                  <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                    <Building2 className="h-4 w-4 mr-1" />
+                    <span>{player.club_name}</span>
+                    {player.club_status && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {player.club_status}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className={getLevelColor(player.level)}>
