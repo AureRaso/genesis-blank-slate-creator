@@ -378,6 +378,8 @@ export const useDeleteStudentEnrollment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["players"] });
       toast({
         title: "Alumno eliminado",
         description: "La inscripción del alumno ha sido eliminada correctamente.",
@@ -407,6 +409,8 @@ export const useUpdateStudentEnrollment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["players"] });
       toast({
         title: "Alumno actualizado",
         description: "Los datos del alumno han sido actualizados correctamente.",
