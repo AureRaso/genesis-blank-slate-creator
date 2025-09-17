@@ -107,7 +107,7 @@ export const LandingHero = () => {
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                La solución integral para gestionar clubes, entrenadores y jugadores. 
+                La solución integral para gestionar academias, entrenadores y jugadores. 
                 Optimiza la organización de clases, gestiona alumnos y simplifica los pagos.
               </p>
             </div>
