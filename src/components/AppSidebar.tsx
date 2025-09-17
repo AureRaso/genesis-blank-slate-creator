@@ -46,31 +46,31 @@ const AppSidebar = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/">
-                    <GraduationCap />
-                    <span>{t('sidebar.dashboard')}</span>
-                  </Link>
+                <Link to="/dashboard">
+                  <GraduationCap />
+                  <span>{t('sidebar.dashboard')}</span>
+                </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/scheduled-classes">
-                    <Calendar />
-                    <span>{t('sidebar.scheduledClasses')}</span>
-                  </Link>
+                <Link to="/dashboard/scheduled-classes">
+                  <Calendar />
+                  <span>{t('sidebar.scheduledClasses')}</span>
+                </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/waitlist-notifications">
-                    <Bell className="h-4 w-4" />
-                    <span>{t('sidebar.waitlistNotifications')}</span>
-                    {waitlistCount > 0 && (
-                      <Badge variant="destructive" className="ml-2 text-xs">
-                        {waitlistCount}
-                      </Badge>
-                    )}
-                  </Link>
+                <Link to="/dashboard/waitlist-notifications">
+                  <Bell className="h-4 w-4" />
+                  <span>{t('sidebar.waitlistNotifications')}</span>
+                  {waitlistCount > 0 && (
+                    <Badge variant="destructive" className="ml-2 text-xs">
+                      {waitlistCount}
+                    </Badge>
+                  )}
+                </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -87,23 +87,23 @@ const AppSidebar = () => {
     const playerNavItems = [
       {
         title: t('sidebar.dashboard'),
-        url: "/",
+        url: "/dashboard",
         icon: SquareTerminal,
         isActive: true
       },
       ...(leaguesEnabled ? [{
         title: t('sidebar.leagues'),
-        url: "/leagues",
+        url: "/dashboard/leagues",
         icon: Trophy
       }] : []),
       {
         title: t('sidebar.scheduledClasses'),
-        url: "/scheduled-classes",
+        url: "/dashboard/scheduled-classes",
         icon: Calendar
       },
       {
         title: t('sidebar.clubs'),
-        url: "/clubs",
+        url: "/dashboard/clubs",
         icon: Building2
       }
     ];
@@ -164,43 +164,43 @@ const AppSidebar = () => {
     navMain: [
       {
         title: t('sidebar.dashboard'),
-        url: "/",
+        url: "/dashboard",
         icon: SquareTerminal,
         isActive: true
       },
       ...(leaguesEnabled ? [{
         title: t('sidebar.leagues'),
-        url: "/leagues",
+        url: "/dashboard/leagues",
         icon: Trophy
       }] : []),
       ...(matchesEnabled ? [{
         title: t('sidebar.matches'),
-        url: "/matches",
+        url: "/dashboard/matches",
         icon: Zap
       }] : []),
       {
         title: t('sidebar.scheduledClasses'),
-        url: "/scheduled-classes",
+        url: "/dashboard/scheduled-classes",
         icon: Calendar
       },
       {
         title: "Control de Pagos",
-        url: "/payment-control",
+        url: "/dashboard/payment-control",
         icon: CreditCard
       },
       {
         title: t('sidebar.players'),
-        url: "/players",
+        url: "/dashboard/players",
         icon: Users
       },
       {
         title: t('sidebar.trainers'),
-        url: "/trainers",
+        url: "/dashboard/trainers",
         icon: UserCheck
       },
       {
         title: t('sidebar.clubs'),
-        url: "/clubs",
+        url: "/dashboard/clubs",
         icon: Building2
       }
     ]

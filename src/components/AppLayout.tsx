@@ -15,26 +15,33 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const getBreadcrumbInfo = () => {
     const path = location.pathname;
     switch (path) {
-      case "/":
-        return { title: "Dashboard", path: "/" };
-      case "/players":
-        return { title: "Jugadores", path: "/players" };
-      case "/clubs":
-        return { title: "Clubs", path: "/clubs" };
-      case "/classes":
-        return { title: "Clases", path: "/classes" };
-      case "/leagues":
-        return { title: "Ligas", path: "/leagues" };
-      case "/matches":
-        return { title: "Partidos", path: "/matches" };
-      case "/standings":
-        return { title: "Clasificaciones", path: "/standings" };
-      case "/league-players":
-        return { title: "Inscripciones", path: "/league-players" };
-      case "/payment-control":
-        return { title: "Control de Pagos", path: "/payment-control" };
+      case "/dashboard":
+      case "/dashboard/":
+        return { title: "Dashboard", path: "/dashboard" };
+      case "/dashboard/players":
+        return { title: "Jugadores", path: "/dashboard/players" };
+      case "/dashboard/clubs":
+        return { title: "Clubs", path: "/dashboard/clubs" };
+      case "/dashboard/classes":
+        return { title: "Clases", path: "/dashboard/classes" };
+      case "/dashboard/leagues":
+        return { title: "Ligas", path: "/dashboard/leagues" };
+      case "/dashboard/matches":
+        return { title: "Partidos", path: "/dashboard/matches" };
+      case "/dashboard/standings":
+        return { title: "Clasificaciones", path: "/dashboard/standings" };
+      case "/dashboard/league-players":
+        return { title: "Inscripciones", path: "/dashboard/league-players" };
+      case "/dashboard/payment-control":
+        return { title: "Control de Pagos", path: "/dashboard/payment-control" };
+      case "/dashboard/scheduled-classes":
+        return { title: "Clases Programadas", path: "/dashboard/scheduled-classes" };
+      case "/dashboard/trainers":
+        return { title: "Profesores", path: "/dashboard/trainers" };
+      case "/dashboard/waitlist-notifications":
+        return { title: "Notificaciones", path: "/dashboard/waitlist-notifications" };
       default:
-        return { title: "Dashboard", path: "/" };
+        return { title: "Dashboard", path: "/dashboard" };
     }
   };
 
@@ -52,7 +59,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink asChild>
-                    <Link to="/">
+                    <Link to="/dashboard">
                       PadelApp
                     </Link>
                   </BreadcrumbLink>
