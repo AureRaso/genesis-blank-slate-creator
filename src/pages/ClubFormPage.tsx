@@ -20,7 +20,7 @@ const ClubFormPage = () => {
   }, [id, clubs]);
 
   const handleClose = () => {
-    navigate("/clubs");
+    navigate("/dashboard/clubs");
   };
 
   return (

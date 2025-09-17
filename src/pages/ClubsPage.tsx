@@ -12,11 +12,11 @@ const ClubsPage = () => {
   const { isAdmin, isPlayer } = useAuth();
 
   const handleEditClub = (club: Club) => {
-    navigate(`/clubs/edit/${club.id}`);
+    navigate(`/dashboard/clubs/edit/${club.id}`);
   };
 
   const handleCreateNewClub = () => {
-    navigate("/clubs/new");
+    navigate("/dashboard/clubs/new");
   };
 
   return (

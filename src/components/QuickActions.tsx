@@ -16,25 +16,25 @@ const QuickActions = () => {
       title: "Crear Liga",
       description: "Configura una nueva liga de pádel",
       icon: Plus,
-      action: () => navigate("/leagues")
+      action: () => navigate("/dashboard/leagues")
     }] : []),
     {
       title: "Gestionar Jugadores",
       description: "Ver y administrar jugadores registrados",
       icon: Users,
-      action: () => navigate("/players")
+      action: () => navigate("/dashboard/players")
     },
     {
       title: "Gestionar Entrenadores",
       description: "Ver y administrar entrenadores del club",
       icon: UserCheck,
-      action: () => navigate("/trainers")
+      action: () => navigate("/dashboard/trainers")
     },
     {
       title: "Programar Clases",
       description: "Configurar clases de entrenamiento",
       icon: GraduationCap,
-      action: () => navigate("/scheduled-classes")
+      action: () => navigate("/dashboard/scheduled-classes")
     }
   ];
 
@@ -43,19 +43,19 @@ const QuickActions = () => {
       title: "Crear Liga",
       description: "Configura una nueva liga de pádel",
       icon: Plus,
-      action: () => navigate("/leagues")
+      action: () => navigate("/dashboard/leagues")
     }] : []),
     {
       title: "Ver Jugadores",
       description: "Ver jugadores del club",
       icon: Users,
-      action: () => navigate("/players")
+      action: () => navigate("/dashboard/players")
     },
     {
       title: "Mis Clases",
       description: "Ver mis clases programadas",
       icon: GraduationCap,
-      action: () => navigate("/scheduled-classes")
+      action: () => navigate("/dashboard/scheduled-classes")
     }
   ];
 
