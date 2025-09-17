@@ -71,14 +71,13 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
   const createEnrollmentMutation = useCreateStudentEnrollment();
   const createLinkMutation = useCreateEnrollmentForm();
 
-  // Override onSuccess behavior for player mode
+  // Override onSuccess behavior 
   const enhancedCreateEnrollmentMutation = {
     ...createEnrollmentMutation,
     mutate: (data: any) => {
-      const originalOnSuccess = createEnrollmentMutation.mutate;
       createEnrollmentMutation.mutate(data, {
         onSuccess: (result) => {
-          if (isPlayerMode && onSuccess) {
+          if (onSuccess) {
             onSuccess();
           }
         }

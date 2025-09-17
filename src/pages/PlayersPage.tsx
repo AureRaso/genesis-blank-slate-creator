@@ -22,7 +22,10 @@ const PlayersPage = () => {
   if (showStudentForm) {
     return (
       <div className="space-y-6">
-        <StudentEnrollmentForm onClose={() => setShowStudentForm(false)} />
+        <StudentEnrollmentForm 
+          onClose={() => setShowStudentForm(false)}
+          onSuccess={() => setShowStudentForm(false)}
+        />
       </div>
     );
   }

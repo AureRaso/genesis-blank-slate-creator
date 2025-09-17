@@ -220,6 +220,7 @@ export const useCreateStudentEnrollment = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["admin-student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["players"] });
       toast({
         title: "Inscripción creada",
         description: `${data.full_name} ha sido inscrito correctamente. Puede acceder con su email y contraseña: 123456`,
