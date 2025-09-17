@@ -38,9 +38,9 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   
   console.log('🔵 User role check:', { isAdmin, profileRole: profile?.role, profileId: profile?.id });
   
-  // Use appropriate hook based on user role
+  // Use appropriate hook based on user role - show ALL students for admin
   const { data: allStudents, isLoading: studentsLoading, error: studentsError } = isAdmin 
-    ? useAdminStudentEnrollments(cls.club_id) 
+    ? useAdminStudentEnrollments() 
     : useStudentEnrollments();
   
   console.log('🔵 Hook results:', {
@@ -54,9 +54,8 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const bulkUpdateMutation = useBulkUpdateClassParticipants();
 
-  // Filter students by club and search term
+  // Filter students by search term and exclude current participants
   const availableStudents = allStudents?.filter(student => 
-    student.club_id === cls.club_id &&
     !currentParticipants?.some(p => p.student_enrollment_id === student.id) &&
     student.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
