@@ -117,7 +117,7 @@ export const BenefitsSection = () => {
                     <div className="text-sm text-muted-foreground">Clases gestionadas semanalmente</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-foreground">98%</div>
+                    <div className="text-2xl font-bold text-foreground">"PadeLock ha transformado completamente la gestión de nuestra academia. Ahora dedicamos más tiempo a entrenar y menos a administrar."</div>
                     <div className="text-sm text-muted-foreground">Disponibilidad del sistema</div>
                   </div>
                   <div className="text-center">
