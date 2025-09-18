@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClubs } from '@/hooks/useClubs';
+import { useChangePassword } from '@/hooks/useChangePassword';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, Key, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -24,9 +25,17 @@ interface ClubWithStripe {
 const SettingsPage = () => {
   const { profile, isAdmin } = useAuth();
   const { data: clubs } = useClubs();
+  const { changePassword, loading: changePasswordLoading } = useChangePassword();
   const [loading, setLoading] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>('');
   const [testStripeUrl, setTestStripeUrl] = useState<string>('');
+  
+  // Password change form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0 
@@ -104,27 +113,30 @@ const SettingsPage = () => {
 
   const isStripeConnected = club?.stripe_account_id && club?.stripe_onboarding_completed;
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
-        <div className="max-w-2xl mx-auto pt-20">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Acceso Denegado
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Solo los administradores pueden acceder a la configuración.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('La nueva contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    const result = await changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+    if (result.success) {
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    }
+  };
+
+  const isDefaultPassword = passwordForm.newPassword === '123456';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
@@ -138,13 +150,118 @@ const SettingsPage = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="payments">Pagos</TabsTrigger>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Perfil y Seguridad</TabsTrigger>
+            {isAdmin && <TabsTrigger value="payments">Pagos</TabsTrigger>}
             <TabsTrigger value="general">General</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="payments" className="space-y-6">
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Información del Perfil
+                </CardTitle>
+                <CardDescription>
+                  Tu información básica de usuario
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Nombre completo</Label>
+                  <Input value={profile?.full_name || ''} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={profile?.email || ''} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>Rol</Label>
+                  <Badge className="ml-2">
+                    {profile?.role === 'admin' ? 'Administrador' : 
+                     profile?.role === 'trainer' ? 'Entrenador' : 'Jugador'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  Cambiar Contraseña
+                </CardTitle>
+                <CardDescription>
+                  {isDefaultPassword && (
+                    <span className="text-amber-600 font-medium">
+                      ⚠️ Se detectó que estás usando una contraseña predeterminada. Te recomendamos cambiarla por seguridad.
+                    </span>
+                  )}
+                  {!isDefaultPassword && 'Actualiza tu contraseña para mantener tu cuenta segura'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div>
+                    <Label htmlFor="current-password">Contraseña actual</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm(prev => ({
+                        ...prev,
+                        currentPassword: e.target.value
+                      }))}
+                      required
+                      placeholder="Introduce tu contraseña actual"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-password">Nueva contraseña</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm(prev => ({
+                        ...prev,
+                        newPassword: e.target.value
+                      }))}
+                      required
+                      minLength={6}
+                      placeholder="Introduce una nueva contraseña (mínimo 6 caracteres)"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm-password">Confirmar nueva contraseña</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm(prev => ({
+                        ...prev,
+                        confirmPassword: e.target.value
+                      }))}
+                      required
+                      minLength={6}
+                      placeholder="Repite la nueva contraseña"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    disabled={changePasswordLoading || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                    className="w-full"
+                  >
+                    {changePasswordLoading ? 'Cambiando contraseña...' : 'Cambiar contraseña'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="payments" className="space-y-6">
             {!club ? (
               <Card>
                 <CardHeader>
@@ -303,7 +420,8 @@ const SettingsPage = () => {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
+            </TabsContent>
+          )}
 
           <TabsContent value="general" className="space-y-6">
             <Card>
