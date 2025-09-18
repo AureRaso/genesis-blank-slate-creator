@@ -62,8 +62,6 @@ const PaymentControlPage = () => {
     switch (status) {
       case "paid":
         return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Pagado</Badge>;
-      case "verified":
-        return <Badge variant="default" className="bg-blue-100 text-blue-800"><CheckCircle className="h-3 w-3 mr-1" />Verificado</Badge>;
       case "pending":
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pendiente</Badge>;
       default:
@@ -148,7 +146,6 @@ const PaymentControlPage = () => {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendiente</SelectItem>
                 <SelectItem value="paid">Pagado</SelectItem>
-                <SelectItem value="verified">Verificado</SelectItem>
               </SelectContent>
             </Select>
 
@@ -263,7 +260,7 @@ const PaymentControlPage = () => {
                                 <SelectContent>
                                   <SelectItem value="pending">Pendiente</SelectItem>
                                   <SelectItem value="paid">Pagado</SelectItem>
-                                  <SelectItem value="verified">Verificado</SelectItem>
+                                  
                                 </SelectContent>
                               </Select>
                             </div>
