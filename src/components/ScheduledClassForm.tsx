@@ -119,7 +119,12 @@ export default function ScheduledClassForm({
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
   const [isMultipleClasses, setIsMultipleClasses] = useState(false);
-  const [creationProgress, setCreationProgress] = useState({ current: 0, total: 0, isCreating: false });
+  const [creationProgress, setCreationProgress] = useState<{ 
+    current: number; 
+    total: number; 
+    isCreating: boolean; 
+    currentClass?: string; 
+  }>({ current: 0, total: 0, isCreating: false });
   
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
@@ -312,31 +317,39 @@ export default function ScheduledClassForm({
         };
         await createMutation.mutateAsync(submitData);
       } else {
-        // Multiple classes creation - Sequential processing
+        // Multiple classes creation - Optimized sequential processing
         if (!data.individual_classes) {
           throw new Error("Individual class configurations are required for multiple courts");
         }
 
         setCreationProgress({ current: 0, total: data.individual_classes.length, isCreating: true });
         
-        // Create each class sequentially with robust error handling
+        // Create each class with optimized spacing and robust error handling
         const successfulClasses: string[] = [];
         const failedClasses: { name: string; error: string }[] = [];
         const createdClassIds: string[] = [];
+        let isCancelled = false;
         
-        for (let i = 0; i < data.individual_classes.length; i++) {
+        // Add cancellation mechanism
+        const cancelCreation = () => {
+          isCancelled = true;
+          console.log('🛑 Class creation cancelled by user');
+        };
+        
+        for (let i = 0; i < data.individual_classes.length && !isCancelled; i++) {
           const classData = data.individual_classes[i];
           
           setCreationProgress({ 
-            current: i + 1, 
+            current: i, 
             total: data.individual_classes.length, 
-            isCreating: true 
+            isCreating: true,
+            currentClass: `Pista ${classData.court_number} - ${classData.name}`
           });
           
           try {
-            console.log(`Creating class ${i + 1}/${data.individual_classes.length}:`, classData);
+            console.log(`📝 Creating class ${i + 1}/${data.individual_classes.length}: ${classData.name}`);
             
-            // Validate class data before attempting creation
+            // Comprehensive validation
             if (!classData.name?.trim()) {
               throw new Error('El nombre de la clase es obligatorio');
             }
@@ -367,22 +380,44 @@ export default function ScheduledClassForm({
               max_participants: data.max_participants
             };
             
-            const result = await createMutation.mutateAsync(submitData);
-            createdClassIds.push(result.class_id);
-            successfulClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
+            // Create with timeout protection
+            const createPromise = createMutation.mutateAsync(submitData);
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout: La clase tardó demasiado en crearse')), 15000)
+            );
             
-            // Small delay between creations to avoid database conflicts
-            if (i < data.individual_classes.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 200));
+            const result = await Promise.race([createPromise, timeoutPromise]) as { success: true; class_id: string };
+            
+            if (!isCancelled) {
+              createdClassIds.push(result.class_id);
+              successfulClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
+              console.log(`✅ Created: ${classData.name}`);
+              
+              // Progressive delay to avoid database overload: 500ms, 1s, 1.5s, etc.
+              if (i < data.individual_classes.length - 1) {
+                const delay = Math.min(500 + (i * 250), 2000); // Max 2s delay
+                console.log(`⏳ Waiting ${delay}ms before next creation`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+              }
             }
             
           } catch (error: any) {
-            console.error(`Error creating class for court ${classData.court_number}:`, error);
-            const errorMessage = error.message || 'Error desconocido';
-            failedClasses.push({ 
-              name: `Pista ${classData.court_number} - ${classData.name}`, 
-              error: errorMessage 
-            });
+            if (!isCancelled) {
+              console.error(`❌ Error creating class for court ${classData.court_number}:`, error);
+              let errorMessage = error.message || 'Error desconocido';
+              
+              // Provide more specific error messages
+              if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+                errorMessage = 'Timeout: La operación tardó demasiado tiempo';
+              } else if (errorMessage.includes('network')) {
+                errorMessage = 'Error de red: Verifica tu conexión';
+              }
+              
+              failedClasses.push({ 
+                name: `Pista ${classData.court_number} - ${classData.name}`, 
+                error: errorMessage 
+              });
+            }
           }
         }
 
@@ -474,7 +509,8 @@ export default function ScheduledClassForm({
       form.setValue("selected_days", currentDays.filter(d => d !== day));
     }
   };
-  return <Card className="w-full max-w-4xl mx-auto">
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
@@ -1219,22 +1255,37 @@ export default function ScheduledClassForm({
                 </Button>}
             </div>
 
-            {/* Progress indicator for multiple class creation */}
+            {/* Enhanced progress indicator for multiple class creation */}
             {creationProgress.isCreating && (
-              <div className="mt-4 space-y-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>
+                    Creando clase {creationProgress.current + 1} de {creationProgress.total}
+                    {creationProgress.currentClass && (
+                      <span className="block font-medium text-foreground mt-1">
+                        {creationProgress.currentClass}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium">
+                    {Math.round(((creationProgress.current) / creationProgress.total) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full bg-secondary rounded-full h-2">
                   <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300 ease-out" 
+                    className="bg-primary h-2 rounded-full transition-all duration-500 ease-out" 
                     style={{ width: `${(creationProgress.current / creationProgress.total) * 100}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  Creando clase {creationProgress.current} de {creationProgress.total}...
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <span>Procesando... Esto puede tomar unos minutos</span>
+                </div>
               </div>
             )}
           </form>
         </Form>
       </CardContent>
-    </Card>;
-}
+    </Card>
+  );
+};
