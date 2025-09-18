@@ -29,6 +29,18 @@ import { useMyTrainerProfile, useTrainers, useAdminTrainers } from "@/hooks/useT
 import { useAdminClubs } from "@/hooks/useClubs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+// Interface for individual class configuration
+const individualClassSchema = z.object({
+  court_number: z.number(),
+  name: z.string().min(1, "Name is required"),
+  level_format: z.enum(["numeric", "levante"]).default("numeric"),
+  level_from: z.number().min(1.0).max(10.0).optional(),
+  level_to: z.number().min(1.0).max(10.0).optional(),
+  custom_level: z.enum(["primera_alta", "primera_media", "primera_baja", "segunda_alta", "segunda_media", "segunda_baja", "tercera_alta", "tercera_media", "tercera_baja"]).optional(),
+  trainer_profile_id: z.string().min(1, "Trainer is required"),
+  monthly_price: z.number().min(0, "El precio debe ser mayor o igual a 0")
+});
+
 const formSchema = z.object({
   // Step 1: Basic Info
   name: z.string().min(1, "Name is required"),
@@ -57,22 +69,31 @@ const formSchema = z.object({
   trainer_profile_id: z.string().min(1, "Trainer is required"),
   club_id: z.string().min(1, "Club is required"),
   objective: z.string().optional(),
-  court_number: z.number().min(1).max(7, "Select a court from 1 to 7"),
+  // Modified court selection to support multiple courts
+  selected_courts: z.array(z.number().min(1).max(7)).min(1, "Select at least one court"),
+  // Individual class configurations (when multiple courts selected)
+  individual_classes: z.array(individualClassSchema).optional(),
   // Optional trainer assignment for admins
   assigned_trainer_id: z.string().optional(),
   // Precio mensual
   monthly_price: z.number().min(0, "El precio debe ser mayor o igual a 0")
 }).refine(data => {
+  // If multiple courts selected, validate individual classes
+  if (data.selected_courts.length > 1) {
+    return data.individual_classes && data.individual_classes.length === data.selected_courts.length;
+  }
+  // Single court validation
   if (data.level_format === "numeric") {
     return data.level_from && data.level_to && data.level_from <= data.level_to;
   } else {
     return !!data.custom_level;
   }
 }, {
-  message: "Configure the level correctly",
+  message: "Configure the level correctly or individual classes for multiple courts",
   path: ["level_from"]
 });
 type FormData = z.infer<typeof formSchema>;
+type IndividualClassData = z.infer<typeof individualClassSchema>;
 interface ScheduledClassFormProps {
   onClose: () => void;
   clubId: string;
@@ -97,6 +118,7 @@ export default function ScheduledClassForm({
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
+  const [isMultipleClasses, setIsMultipleClasses] = useState(false);
   
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
@@ -160,6 +182,8 @@ export default function ScheduledClassForm({
       level_from: 1.0,
       level_to: 10.0,
       selected_days: initialData?.selected_days || [],
+      selected_courts: [],
+      individual_classes: [],
       monthly_price: 0,
       start_time: initialData?.start_time || "",
       start_date: initialData?.start_date || new Date(),
@@ -169,6 +193,31 @@ export default function ScheduledClassForm({
   
   // Watch for club_id changes to filter students
   const selectedClubId = form.watch('club_id');
+  const selectedCourts = form.watch('selected_courts');
+  
+  // Update multiple classes flag and generate individual class configs
+  useEffect(() => {
+    const isMultiple = selectedCourts.length > 1;
+    setIsMultipleClasses(isMultiple);
+    
+    if (isMultiple) {
+      const currentIndividualClasses = form.getValues('individual_classes') || [];
+      const newIndividualClasses = selectedCourts.map((court, index) => {
+        const existing = currentIndividualClasses[index];
+        return existing || {
+          court_number: court,
+          name: `${form.getValues('name') || 'Clase'} - Pista ${court}`,
+          level_format: form.getValues('level_format'),
+          level_from: form.getValues('level_from'),
+          level_to: form.getValues('level_to'),
+          custom_level: form.getValues('custom_level'),
+          trainer_profile_id: form.getValues('trainer_profile_id'),
+          monthly_price: form.getValues('monthly_price')
+        };
+      });
+      form.setValue('individual_classes', newIndividualClasses);
+    }
+  }, [selectedCourts, form]);
   
   const {
     data: students
@@ -240,30 +289,72 @@ export default function ScheduledClassForm({
   };
   const onSubmit = async (data: FormData) => {
     try {
-      const submitData = {
-        name: data.name,
-        level_from: data.level_format === "numeric" ? data.level_from : undefined,
-        level_to: data.level_format === "numeric" ? data.level_to : undefined,
-        custom_level: data.level_format === "levante" ? data.custom_level : undefined,
-        duration_minutes: data.duration_minutes,
-        start_time: data.start_time,
-        days_of_week: data.selected_days,
-        start_date: format(data.start_date, 'yyyy-MM-dd'),
-        end_date: format(data.end_date, 'yyyy-MM-dd'),
-        recurrence_type: data.recurrence_type,
-        // Use assigned trainer if admin selected one, otherwise use current trainer
-        trainer_profile_id: (isAdmin && data.assigned_trainer_id && data.assigned_trainer_id !== "unassigned") ? data.assigned_trainer_id : data.trainer_profile_id,
-        club_id: data.club_id,
-        court_number: data.court_number,
-        // Only include the appropriate field based on selection type
-        group_id: data.selection_type === "group" ? data.group_id : undefined,
-        selected_students: data.selection_type === "individual" ? data.selected_students : [],
-        monthly_price: data.monthly_price
-      };
-      await createMutation.mutateAsync(submitData);
+      if (data.selected_courts.length === 1) {
+        // Single class creation
+        const submitData = {
+          name: data.name,
+          level_from: data.level_format === "numeric" ? data.level_from : undefined,
+          level_to: data.level_format === "numeric" ? data.level_to : undefined,
+          custom_level: data.level_format === "levante" ? data.custom_level : undefined,
+          duration_minutes: data.duration_minutes,
+          start_time: data.start_time,
+          days_of_week: data.selected_days,
+          start_date: format(data.start_date, 'yyyy-MM-dd'),
+          end_date: format(data.end_date, 'yyyy-MM-dd'),
+          recurrence_type: data.recurrence_type,
+          trainer_profile_id: (isAdmin && data.assigned_trainer_id && data.assigned_trainer_id !== "unassigned") ? data.assigned_trainer_id : data.trainer_profile_id,
+          club_id: data.club_id,
+          court_number: data.selected_courts[0],
+          group_id: data.selection_type === "group" ? data.group_id : undefined,
+          selected_students: data.selection_type === "individual" ? data.selected_students : [],
+          monthly_price: data.monthly_price
+        };
+        await createMutation.mutateAsync(submitData);
+      } else {
+        // Multiple classes creation
+        if (!data.individual_classes) {
+          throw new Error("Individual class configurations are required for multiple courts");
+        }
+
+        const promises = data.individual_classes.map((classData) => {
+          const submitData = {
+            name: classData.name,
+            level_from: classData.level_format === "numeric" ? classData.level_from : undefined,
+            level_to: classData.level_format === "numeric" ? classData.level_to : undefined,
+            custom_level: classData.level_format === "levante" ? classData.custom_level : undefined,
+            duration_minutes: data.duration_minutes,
+            start_time: data.start_time,
+            days_of_week: data.selected_days,
+            start_date: format(data.start_date, 'yyyy-MM-dd'),
+            end_date: format(data.end_date, 'yyyy-MM-dd'),
+            recurrence_type: data.recurrence_type,
+            trainer_profile_id: classData.trainer_profile_id,
+            club_id: data.club_id,
+            court_number: classData.court_number,
+            group_id: data.selection_type === "group" ? data.group_id : undefined,
+            selected_students: data.selection_type === "individual" ? data.selected_students : [],
+            monthly_price: classData.monthly_price,
+            max_participants: data.max_participants
+          };
+          return createMutation.mutateAsync(submitData);
+        });
+
+        await Promise.all(promises);
+        
+        toast({
+          title: "Clases creadas",
+          description: `Se han creado ${data.individual_classes.length} clases simultáneas correctamente.`,
+        });
+      }
+      
       onClose();
     } catch (error) {
       console.error("Error creating programmed class:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron crear las clases. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
   const nextStep = () => {
@@ -297,6 +388,7 @@ export default function ScheduledClassForm({
       form.setValue("selected_students", currentStudents.filter(id => id !== studentId));
     }
   };
+  
   const handleDaySelection = (day: string, checked: boolean) => {
     const currentDays = form.getValues().selected_days;
     if (checked) {
@@ -749,57 +841,251 @@ export default function ScheduledClassForm({
             {/* Step 3: Final Configuration */}
             {currentStep === 3 && <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <FormField control={form.control} name="court_number" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>{t('classes.court')}</FormLabel>
-                        <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('classes.selectCourt')} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-background border shadow-md z-50">
-                            {[1, 2, 3, 4, 5, 6, 7].map(court => <SelectItem key={court} value={court.toString()}>
-                                {t('classes.court')} {court}
-                              </SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>} />
+                   {/* Court Selection */}
+                   <FormField control={form.control} name="selected_courts" render={({field}) => (
+                     <FormItem>
+                       <FormLabel>{t('classes.courts')} <span className="text-sm text-muted-foreground">(Selecciona una o varias pistas)</span></FormLabel>
+                       <div className="grid grid-cols-4 gap-2">
+                         {[1, 2, 3, 4, 5, 6, 7].map(court => (
+                           <div key={court} className="flex items-center space-x-2">
+                             <Checkbox
+                               id={`court-${court}`}
+                               checked={field.value?.includes(court) || false}
+                               onCheckedChange={(checked) => {
+                                 const currentCourts = field.value || [];
+                                 if (checked) {
+                                   field.onChange([...currentCourts, court]);
+                                 } else {
+                                   field.onChange(currentCourts.filter(c => c !== court));
+                                 }
+                               }}
+                             />
+                             <label htmlFor={`court-${court}`} className="text-sm font-medium">
+                               Pista {court}
+                             </label>
+                           </div>
+                         ))}
+                       </div>
+                       <FormMessage />
+                     </FormItem>
+                   )} />
 
-                  <FormField control={form.control} name="objective" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>Objetivo de la clase (opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
+                   <FormField control={form.control} name="objective" render={({
+                 field
+               }) => <FormItem>
+                         <FormLabel>Objetivo de la clase (opcional)</FormLabel>
+                         <FormControl>
+                           <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
+                         </FormControl>
+                         <FormMessage />
+                       </FormItem>} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="monthly_price" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>Precio mensual (€)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            step="0.01" 
-                            placeholder="0.00" 
-                            {...field} 
-                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                        <p className="text-sm text-muted-foreground">
-                          Si es 0, la clase será gratuita. Si tiene precio, los jugadores deberán pagar para inscribirse.
-                        </p>
-                      </FormItem>} />
+                  {!isMultipleClasses && (
+                    <FormField control={form.control} name="monthly_price" render={({
+                    field
+                  }) => <FormItem>
+                            <FormLabel>Precio mensual (€)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="0" 
+                                step="0.01" 
+                                placeholder="0.00" 
+                                {...field} 
+                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                            <p className="text-sm text-muted-foreground">
+                              Si es 0, la clase será gratuita. Si tiene precio, los jugadores deberán pagar para inscribirse.
+                            </p>
+                          </FormItem>} />
+                  )}
                 </div>
+
+                {/* Individual Class Configuration for Multiple Courts */}
+                {isMultipleClasses && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Target className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">Configuración individual por pista</h3>
+                    </div>
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Personaliza cada clase para cada pista seleccionada. Puedes cambiar el nombre, nivel, entrenador y precio de cada una.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-4">
+                      {watchedValues.individual_classes?.map((classData, index) => (
+                        <Card key={index} className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="outline">Pista {classData.court_number}</Badge>
+                            <h4 className="font-medium">Clase {index + 1}</h4>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField 
+                              control={form.control} 
+                              name={`individual_classes.${index}.name`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nombre de la clase</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Ej: Clase Avanzada - Pista 1" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )} 
+                            />
+
+                            <FormField 
+                              control={form.control} 
+                              name={`individual_classes.${index}.trainer_profile_id`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Entrenador</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar entrenador" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {availableTrainers?.map(trainer => (
+                                        <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                                          {trainer.profiles?.full_name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )} 
+                            />
+
+                            <FormField 
+                              control={form.control} 
+                              name={`individual_classes.${index}.level_format`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Formato de nivel</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="numeric">Numérico (1.0 - 10.0)</SelectItem>
+                                      <SelectItem value="levante">Categorías Levante</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )} 
+                            />
+
+                            <FormField 
+                              control={form.control} 
+                              name={`individual_classes.${index}.monthly_price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Precio mensual (€)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      min="0" 
+                                      step="0.01" 
+                                      {...field} 
+                                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )} 
+                            />
+
+                            {/* Level configuration based on format */}
+                            {watchedValues.individual_classes?.[index]?.level_format === "numeric" ? (
+                              <>
+                                <FormField 
+                                  control={form.control} 
+                                  name={`individual_classes.${index}.level_from`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Nivel desde</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          type="number" 
+                                          min="1.0" 
+                                          max="10.0" 
+                                          step="0.1" 
+                                          {...field} 
+                                          onChange={e => field.onChange(parseFloat(e.target.value))} 
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )} 
+                                />
+
+                                <FormField 
+                                  control={form.control} 
+                                  name={`individual_classes.${index}.level_to`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Nivel hasta</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          type="number" 
+                                          min="1.0" 
+                                          max="10.0" 
+                                          step="0.1" 
+                                          {...field} 
+                                          onChange={e => field.onChange(parseFloat(e.target.value))} 
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )} 
+                                />
+                              </>
+                            ) : (
+                              <FormField 
+                                control={form.control} 
+                                name={`individual_classes.${index}.custom_level`}
+                                render={({ field }) => (
+                                  <FormItem className="md:col-span-2">
+                                    <FormLabel>Categoría</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Seleccionar categoría" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {LEVANTE_LEVELS.map(level => (
+                                          <SelectItem key={level.value} value={level.value}>
+                                            {level.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )} 
+                              />
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Summary */}
                 <div className="bg-muted p-4 rounded-lg">
@@ -818,7 +1104,8 @@ export default function ScheduledClassForm({
                       return selectedGroup ? <div>• Grupo: {selectedGroup.name} ({selectedGroup.members.length} miembros)</div> : null;
                     })()}
                      <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
-                     <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
+                     <div>• Pistas: {watchedValues.selected_courts?.length ? watchedValues.selected_courts.map(court => `Pista ${court}`).join(", ") : "No seleccionadas"}</div>
+                     {isMultipleClasses && <div className="text-sm text-amber-600">• Se crearán {watchedValues.selected_courts?.length || 0} clases simultáneas</div>}
                      {isAdmin && (() => {
                        const selectedClub = adminClubs?.find(c => c.id === watchedValues.club_id);
                        return selectedClub ? <div>• Club: {selectedClub.name}</div> : null;
