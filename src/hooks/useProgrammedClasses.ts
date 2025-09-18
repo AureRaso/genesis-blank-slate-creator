@@ -53,6 +53,7 @@ export interface CreateProgrammedClassData {
   group_id?: string;
   selected_students?: string[];
   max_participants?: number;
+  monthly_price?: number;
 }
 
 export const useProgrammedClasses = (clubId?: string) => {
@@ -100,57 +101,28 @@ export const useCreateProgrammedClass = () => {
 
   return useMutation({
     mutationFn: async (data: CreateProgrammedClassData) => {
-      const { selected_students, group_id, ...classData } = data;
+      console.log('Creating programmed class via edge function...');
+      
+      // Call the edge function for better performance and reliability
+      const { data: result, error } = await supabase.functions.invoke('create-programmed-classes', {
+        body: data
+      });
 
-      // Create the programmed class with default max_participants of 4
-      const { data: createdClass, error: classError } = await supabase
-        .from("programmed_classes")
-        .insert([{ ...classData, group_id, max_participants: data.max_participants || 4 }])
-        .select()
-        .single();
-
-      if (classError) throw classError;
-
-      // Handle participants based on whether a group or individual students were selected
-      let participantsData: any[] = [];
-
-      if (group_id) {
-        // If a group was selected, get all group members
-        const { data: groupMembers, error: groupError } = await supabase
-          .from("group_members")
-          .select("student_enrollment_id")
-          .eq("group_id", group_id)
-          .eq("is_active", true);
-
-        if (groupError) throw groupError;
-
-        participantsData = groupMembers.map(member => ({
-          class_id: createdClass.id,
-          student_enrollment_id: member.student_enrollment_id,
-          status: 'active'
-        }));
-      } else if (selected_students && selected_students.length > 0) {
-        // If individual students were selected
-        participantsData = selected_students.map(studentId => ({
-          class_id: createdClass.id,
-          student_enrollment_id: studentId,
-          status: 'active'
-        }));
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
 
-      // Create class participants if there are any
-      if (participantsData.length > 0) {
-        const { error: participantsError } = await supabase
-          .from("class_participants")
-          .insert(participantsData);
-
-        if (participantsError) throw participantsError;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to create programmed class');
       }
 
-      return createdClass;
+      console.log('Successfully created programmed class:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
       toast({
         title: "Clase creada",
         description: "La clase programada se ha creado correctamente.",
@@ -158,9 +130,20 @@ export const useCreateProgrammedClass = () => {
     },
     onError: (error: any) => {
       console.error("Error creating programmed class:", error);
+      
+      // Provide better error messages for timeout and common errors
+      let errorMessage = error.message;
+      if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+        errorMessage = "La operación tardó demasiado tiempo. Por favor, intenta crear la clase con menos días o estudiantes.";
+      } else if (error.message?.includes('FunctionsHttpError') || error.code === 'XX000') {
+        errorMessage = "Error del servidor. Por favor, intenta de nuevo en unos momentos.";
+      } else if (error.message?.includes('Network request failed')) {
+        errorMessage = "Error de conexión. Verifica tu conexión a internet y vuelve a intentar.";
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo crear la clase programada: " + error.message,
+        description: "No se pudo crear la clase programada: " + errorMessage,
         variant: "destructive",
       });
     },
