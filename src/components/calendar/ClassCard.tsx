@@ -400,6 +400,10 @@ function AdminClassDetailsModal({
                     <span className="text-sm text-muted-foreground">Recurrencia</span>
                     <span className="font-medium capitalize">{cls.recurrence_type}</span>
                   </div>
+                  {cls.club && <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Club</span>
+                      <span className="font-medium">{cls.club.name}</span>
+                    </div>}
                   {isAdmin && cls.trainer && <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Profesor</span>
                       <span className="font-medium">{cls.trainer.full_name}</span>
@@ -618,6 +622,13 @@ function PlayerClassDetailsModal({
                 {new Date(cls.start_date).toLocaleDateString('es-ES')} - {new Date(cls.end_date).toLocaleDateString('es-ES')}
               </div>
             </div>
+
+            {cls.club && (
+              <div>
+                <div className="text-sm text-muted-foreground mb-1">Club</div>
+                <div className="text-sm font-medium">{cls.club.name}</div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
