@@ -55,8 +55,8 @@ const PaymentControlPage = () => {
 
   const filteredPayments = payments.filter((payment) => {
     const matchesSearch = 
-      payment.student_enrollment.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.student_enrollment.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.student_enrollment?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.student_enrollment?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.programmed_class.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesSearch;
@@ -289,7 +289,7 @@ const PaymentControlPage = () => {
                   <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{payment.student_enrollment.full_name}</h4>
+                          <h4 className="font-medium">{payment.student_enrollment?.full_name || 'Alumno sin nombre'}</h4>
                           {getStatusBadge(payment.payment_status)}
                           {payment.months_paid && payment.months_paid.length > 0 && (
                             <Badge variant="outline" className="bg-blue-50 text-blue-700">

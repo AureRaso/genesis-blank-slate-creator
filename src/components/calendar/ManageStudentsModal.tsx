@@ -217,10 +217,10 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{participant.student_enrollment.full_name}</div>
+                        <div className="font-medium">{participant.student_enrollment?.full_name || 'Alumno sin nombre'}</div>
                         <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Mail className="h-3 w-3" />
-                          {participant.student_enrollment.email}
+                          {participant.student_enrollment?.email || 'Sin email'}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           {participant.payment_status === 'paid' && (

@@ -736,7 +736,7 @@ export default function ScheduledClassForm({
                             <strong>Miembros:</strong>
                             <div className="grid grid-cols-2 gap-1 mt-1">
                               {selectedGroup.members.map(member => <div key={member.id} className="text-xs">
-                                  • {member.student_enrollment.full_name}
+                                  • {member.student_enrollment?.full_name || 'Alumno sin nombre'}
                                 </div>)}
                             </div>
                           </div>

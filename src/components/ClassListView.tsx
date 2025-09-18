@@ -344,7 +344,7 @@ function AdminClassDetailsModal({
             <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
             <div className="space-y-1">
               {selectedClass.participants.map(participant => <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                  {participant.student_enrollment.full_name}
+                  {participant.student_enrollment?.full_name || 'Alumno sin nombre'}
                 </div>)}
             </div>
           </div>}

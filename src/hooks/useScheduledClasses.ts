@@ -13,7 +13,7 @@ export type ScheduledClassWithTemplate = ProgrammedClass & {
     student_enrollment: {
       full_name: string;
       email: string;
-    };
+    } | null;
   })[];
   trainer: {
     full_name: string;
@@ -57,7 +57,7 @@ export const useScheduledClasses = (filters?: {
         .from("programmed_classes")
         .select(`
           *,
-          participants:class_participants(
+          participants:class_participants!inner(
             *,
             student_enrollment:student_enrollments!student_enrollment_id(
               full_name,
@@ -72,6 +72,7 @@ export const useScheduledClasses = (filters?: {
           )
         `)
         .eq("is_active", true)
+        .eq("participants.status", "active")
         .order("created_at", { ascending: false });
 
       // Filter by club(s) if provided
