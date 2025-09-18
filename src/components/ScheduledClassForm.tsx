@@ -351,11 +351,6 @@ export default function ScheduledClassForm({
             await createMutation.mutateAsync(submitData);
             successfulClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
             
-            // Small delay between creations to avoid conflicts
-            if (i < data.individual_classes.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
           } catch (error) {
             console.error(`Error creating class for court ${classData.court_number}:`, error);
             failedClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
