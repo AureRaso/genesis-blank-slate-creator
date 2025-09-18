@@ -95,15 +95,40 @@ export const useProgrammedClasses = (clubId?: string) => {
   });
 };
 
+// Optimized duplicate checker
+export const useCheckDuplicateClass = () => {
+  return useMutation({
+    mutationFn: async (classData: CreateProgrammedClassData) => {
+      const { data, error } = await supabase
+        .from('programmed_classes')
+        .select('id, name')
+        .eq('name', classData.name)
+        .eq('club_id', classData.club_id)
+        .eq('court_number', classData.court_number || 1)
+        .eq('start_time', classData.start_time)
+        .eq('start_date', classData.start_date)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (error) {
+        console.log('❌ Error checking duplicates:', error);
+        return { isDuplicate: false, existingClass: null };
+      }
+      
+      return {
+        isDuplicate: !!data,
+        existingClass: data
+      };
+    }
+  });
+};
+
 export const useCreateProgrammedClass = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const createProgrammedClassFn = async (data: CreateProgrammedClassData, retryCount = 0): Promise<{ success: true; class_id: string }> => {
-    const MAX_RETRIES = 3;
-    const TIMEOUT_MS = 10000; // Increased timeout to 10 seconds
-    
-    console.log(`🔄 Creating class (attempt ${retryCount + 1}/${MAX_RETRIES + 1}): ${data.name}`);
+  const createProgrammedClassFn = async (data: CreateProgrammedClassData): Promise<{ success: true; class_id: string; isDuplicate?: boolean; message?: string }> => {
+    console.log('🔄 Creating class with resilient strategy:', data.name);
     
     // Validate required data
     if (!data.name?.trim()) {
@@ -119,162 +144,186 @@ export const useCreateProgrammedClass = () => {
       throw new Error('La hora y días de la semana son obligatorios');
     }
     
-    let createdClassId: string | null = null;
-    
     try {
-      // Add unique constraint check to prevent duplicates
-      const uniqueCheck = `${data.name}_${data.club_id}_${data.court_number}_${data.start_time}_${data.days_of_week.join('')}`;
+      // First, check for duplicates with optimized query
+      console.log('🔍 Checking for duplicates...');
+      const { data: duplicateCheck } = await supabase
+        .from('programmed_classes')
+        .select('id, name')
+        .eq('name', data.name)
+        .eq('club_id', data.club_id)
+        .eq('court_number', data.court_number || 1)
+        .eq('start_time', data.start_time)
+        .eq('start_date', data.start_date)
+        .eq('is_active', true)
+        .maybeSingle();
       
-      const createOperation = async () => {
-        // Create the base programmed class with minimal select to reduce payload
-        const { data: createdClass, error: classError } = await supabase
-          .from("programmed_classes")
-          .insert({
-            name: data.name,
-            level_from: data.level_from,
-            level_to: data.level_to,
-            custom_level: data.custom_level,
-            duration_minutes: data.duration_minutes,
-            start_time: data.start_time,
-            days_of_week: data.days_of_week,
-            start_date: data.start_date,
-            end_date: data.end_date,
-            recurrence_type: data.recurrence_type,
-            trainer_profile_id: data.trainer_profile_id,
-            club_id: data.club_id,
-            court_number: data.court_number,
-            monthly_price: data.monthly_price || 0,
-            max_participants: data.max_participants || 8,
-            group_id: data.group_id
-          })
-          .select('id')
-          .single();
+      if (duplicateCheck) {
+        console.log('⚠️ Duplicate class found:', duplicateCheck);
+        return { 
+          success: true, 
+          class_id: duplicateCheck.id, 
+          isDuplicate: true,
+          message: 'Clase ya existe - se recuperó la existente'
+        };
+      }
+      
+      // Create with reduced timeout but better error handling
+      console.log('➕ Creating new class...');
+      const { data: createdClass, error: classError } = await supabase
+        .from("programmed_classes")
+        .insert({
+          name: data.name,
+          level_from: data.level_from,
+          level_to: data.level_to,
+          custom_level: data.custom_level,
+          duration_minutes: data.duration_minutes,
+          start_time: data.start_time,
+          days_of_week: data.days_of_week,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          recurrence_type: data.recurrence_type,
+          trainer_profile_id: data.trainer_profile_id,
+          club_id: data.club_id,
+          court_number: data.court_number,
+          monthly_price: data.monthly_price || 0,
+          max_participants: data.max_participants || 8,
+          group_id: data.group_id
+        })
+        .select('id')
+        .single();
 
-        if (classError) {
-          console.error('❌ Database error:', classError);
-          if (classError.code === '23505') {
-            throw new Error('Ya existe una clase con estos datos exactos. Verifica horarios y pistas.');
+      if (classError) {
+        console.error('❌ Database error:', classError);
+        
+        // Check if it was created anyway (common with XX000 errors)
+        if (classError.code === 'XX000' || classError.message?.includes('timeout')) {
+          console.log('🔍 Checking if class was created despite error...');
+          const { data: checkCreated } = await supabase
+            .from('programmed_classes')
+            .select('id, name')
+            .eq('name', data.name)
+            .eq('club_id', data.club_id)
+            .eq('court_number', data.court_number || 1)
+            .eq('start_time', data.start_time)
+            .eq('start_date', data.start_date)
+            .eq('is_active', true)
+            .maybeSingle();
+          
+          if (checkCreated) {
+            console.log('✅ Class was created despite error:', checkCreated.id);
+            return { 
+              success: true, 
+              class_id: checkCreated.id, 
+              isDuplicate: false,
+              message: 'Clase creada (recuperada tras timeout)'
+            };
           }
-          if (classError.code === '23503') {
-            throw new Error('Error de referencia: verifica que el entrenador y club existan.');
-          }
-          if (classError.code === 'PGRST116') {
-            throw new Error('No tienes permisos para crear clases en este club.');
-          }
-          throw new Error(`Error de base de datos: ${classError.message || 'Error desconocido'}`);
         }
-
-        if (!createdClass?.id) {
-          throw new Error('No se pudo obtener el ID de la clase creada');
+        
+        // Enhanced error handling
+        if (classError.code === '23505') {
+          throw new Error('Ya existe una clase con estos datos exactos');
         }
+        if (classError.code === '23503') {
+          throw new Error('Error de referencia: verifica que el entrenador y club existan');
+        }
+        if (classError.code === 'PGRST116') {
+          throw new Error('No tienes permisos para crear clases en este club');
+        }
+        
+        throw new Error(`Error de base de datos: ${classError.message || 'Error desconocido'}`);
+      }
 
-        createdClassId = createdClass.id;
-        console.log('✅ Class created successfully:', createdClassId);
+      if (!createdClass?.id) {
+        throw new Error('No se pudo obtener el ID de la clase creada');
+      }
 
-        // Handle participants efficiently if needed
-        if (data.group_id || (data.selected_students && data.selected_students.length > 0)) {
-          let participantsData: any[] = [];
+      const createdClassId = createdClass.id;
+      console.log('✅ Class created successfully:', createdClassId);
 
-          if (data.group_id) {
-            console.log('🔍 Fetching group members...');
-            const { data: groupMembers, error: groupError } = await supabase
-              .from("group_members")
-              .select("student_enrollment_id")
-              .eq("group_id", data.group_id)
-              .eq("is_active", true)
-              .limit(50);
-            
-            if (groupError) {
-              console.error('❌ Group members error:', groupError);
-              throw new Error(`Error al obtener miembros del grupo: ${groupError.message}`);
-            }
+      // Handle participants efficiently with minimal queries
+      if (data.group_id || (data.selected_students && data.selected_students.length > 0)) {
+        let participantsData: any[] = [];
 
-            if (groupMembers && groupMembers.length > 0) {
-              participantsData = groupMembers.map(member => ({
-                class_id: createdClassId,
-                student_enrollment_id: member.student_enrollment_id,
-                status: 'active'
-              }));
-            }
-          } else if (data.selected_students && data.selected_students.length > 0) {
-            participantsData = data.selected_students.map(studentId => ({
+        if (data.group_id) {
+          console.log('🔍 Fetching group members...');
+          const { data: groupMembers, error: groupError } = await supabase
+            .from("group_members")
+            .select("student_enrollment_id")
+            .eq("group_id", data.group_id)
+            .eq("is_active", true)
+            .limit(20); // Reduced limit for faster queries
+          
+          if (groupError) {
+            console.error('❌ Group members error:', groupError);
+            throw new Error(`Error al obtener miembros del grupo: ${groupError.message}`);
+          }
+
+          if (groupMembers && groupMembers.length > 0) {
+            participantsData = groupMembers.map(member => ({
               class_id: createdClassId,
-              student_enrollment_id: studentId,
+              student_enrollment_id: member.student_enrollment_id,
               status: 'active'
             }));
           }
+        } else if (data.selected_students && data.selected_students.length > 0) {
+          participantsData = data.selected_students.map(studentId => ({
+            class_id: createdClassId,
+            student_enrollment_id: studentId,
+            status: 'active'
+          }));
+        }
 
-          // Batch insert participants if we have any
-          if (participantsData.length > 0) {
-            console.log(`➡️ Adding ${participantsData.length} participants...`);
-            
-            const { error: participantsError } = await supabase
-              .from("class_participants")
-              .insert(participantsData);
+        // Batch insert participants
+        if (participantsData.length > 0) {
+          console.log(`➡️ Adding ${participantsData.length} participants...`);
+          
+          const { error: participantsError } = await supabase
+            .from("class_participants")
+            .insert(participantsData);
 
-            if (participantsError) {
-              console.error('❌ Participants error:', participantsError);
-              
-              // Rollback: delete the created class
-              console.log('🔄 Rolling back class creation...');
-              await supabase
-                .from("programmed_classes")
-                .delete()
-                .eq("id", createdClassId);
-              
-              throw new Error(`Error al agregar participantes: ${participantsError.message}`);
-            }
+          if (participantsError) {
+            console.error('❌ Participants error:', participantsError);
+            // Don't rollback - participants can be added later
+            console.log('⚠️ Class created but participants failed - they can be added manually');
+          } else {
             console.log('✅ Participants added successfully');
           }
         }
+      }
 
-        return { success: true as const, class_id: createdClassId };
+      return { 
+        success: true, 
+        class_id: createdClassId,
+        isDuplicate: false,
+        message: 'Clase creada exitosamente'
       };
-
-      // Execute with timeout
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), TIMEOUT_MS);
-      });
-
-      const result = await Promise.race([createOperation(), timeoutPromise]);
-      console.log('✅ Operation completed successfully');
-      return result as { success: true; class_id: string };
       
     } catch (error: any) {
-      console.error(`❌ Error in class creation (attempt ${retryCount + 1}):`, error.message);
-      
-      // Detect retryable errors
-      const isRetryableError = 
-        error.message?.includes('timeout') || 
-        error.message?.includes('timed out') ||
-        error.message?.includes('network') ||
-        error.message?.includes('fetch') ||
-        error.message?.includes('Operation timed out') ||
-        error.code === 'PGRST301' ||
-        error.code === 'XX000';
-      
-      if (retryCount < MAX_RETRIES && isRetryableError) {
-        // Exponential backoff: 2s, 4s, 8s delays
-        const delay = Math.pow(2, retryCount + 1) * 1000;
-        console.log(`⏳ Retrying in ${delay}ms (${retryCount + 1}/${MAX_RETRIES})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return createProgrammedClassFn(data, retryCount + 1);
-      }
-      
-      // For non-retryable errors or max retries exceeded
+      console.error('❌ Final error in class creation:', error.message);
       throw error;
     }
   };
 
   return useMutation({
     mutationFn: createProgrammedClassFn,
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
-      toast({
-        title: "Clase creada",
-        description: "La clase programada se ha creado correctamente.",
-      });
+      
+      if (result.isDuplicate) {
+        toast({
+          title: "Clase ya existía",
+          description: result.message || "Se recuperó la clase existente.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Clase creada",
+          description: result.message || "La clase programada se ha creado correctamente.",
+        });
+      }
     },
     onError: (error: any) => {
       console.error("❌ Class creation failed:", error);
@@ -285,13 +334,13 @@ export const useCreateProgrammedClass = () => {
       
       if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
         errorTitle = "Timeout";
-        errorMessage = "La operación tardó demasiado tiempo. La base de datos puede estar sobrecargada. Intenta crear menos clases a la vez o espera unos minutos.";
+        errorMessage = "La operación tardó demasiado tiempo. La clase puede haberse creado de todas formas - revisa la lista de clases.";
       } else if (error.message?.includes('FunctionsHttpError') || error.code === 'XX000') {
         errorTitle = "Error del servidor";
-        errorMessage = "Error interno del servidor. El equipo técnico ha sido notificado. Intenta de nuevo en unos minutos.";
+        errorMessage = "Error interno del servidor. La clase puede haberse creado - revisa la lista.";
       } else if (error.message?.includes('Network request failed') || error.message?.includes('fetch')) {
         errorTitle = "Error de conexión";
-        errorMessage = "Problemas de conectividad. Verifica tu conexión a internet y vuelve a intentar.";
+        errorMessage = "Problemas de conectividad. Verifica tu conexión a internet y revisa si la clase se creó.";
       } else if (error.message?.includes('23505')) {
         errorTitle = "Datos duplicados";
         errorMessage = "Ya existe una clase con esos datos. Revisa los horarios y números de pista.";

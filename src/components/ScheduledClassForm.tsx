@@ -124,6 +124,10 @@ export default function ScheduledClassForm({
     total: number; 
     isCreating: boolean; 
     currentClass?: string; 
+    successfulClasses?: string[];
+    failedClasses?: { name: string; error: string; court: number }[];
+    showResults?: boolean;
+    canRetryFailed?: boolean;
   }>({ current: 0, total: 0, isCreating: false });
   
   // Get trainer profile to get the correct club
@@ -317,39 +321,41 @@ export default function ScheduledClassForm({
         };
         await createMutation.mutateAsync(submitData);
       } else {
-        // Multiple classes creation - Optimized sequential processing
+        // Multiple classes creation - Resilient individual creation
         if (!data.individual_classes) {
           throw new Error("Individual class configurations are required for multiple courts");
         }
 
-        setCreationProgress({ current: 0, total: data.individual_classes.length, isCreating: true });
+        setCreationProgress({ 
+          current: 0, 
+          total: data.individual_classes.length, 
+          isCreating: true,
+          successfulClasses: [],
+          failedClasses: [],
+          showResults: false,
+          canRetryFailed: false
+        });
         
-        // Create each class with optimized spacing and robust error handling
+        // Create each class individually with resilient error handling
         const successfulClasses: string[] = [];
-        const failedClasses: { name: string; error: string }[] = [];
+        const failedClasses: { name: string; error: string; court: number }[] = [];
         const createdClassIds: string[] = [];
-        let isCancelled = false;
         
-        // Add cancellation mechanism
-        const cancelCreation = () => {
-          isCancelled = true;
-          console.log('🛑 Class creation cancelled by user');
-        };
-        
-        for (let i = 0; i < data.individual_classes.length && !isCancelled; i++) {
+        for (let i = 0; i < data.individual_classes.length; i++) {
           const classData = data.individual_classes[i];
           
-          setCreationProgress({ 
+          setCreationProgress(prev => ({ 
+            ...prev,
             current: i, 
-            total: data.individual_classes.length, 
-            isCreating: true,
-            currentClass: `Pista ${classData.court_number} - ${classData.name}`
-          });
+            currentClass: `${classData.name} - Pista ${classData.court_number}`,
+            successfulClasses: [...successfulClasses],
+            failedClasses: [...failedClasses]
+          }));
           
           try {
             console.log(`📝 Creating class ${i + 1}/${data.individual_classes.length}: ${classData.name}`);
             
-            // Comprehensive validation
+            // Enhanced validation
             if (!classData.name?.trim()) {
               throw new Error('El nombre de la clase es obligatorio');
             }
@@ -380,88 +386,96 @@ export default function ScheduledClassForm({
               max_participants: data.max_participants
             };
             
-            // Create with timeout protection
-            const createPromise = createMutation.mutateAsync(submitData);
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Timeout: La clase tardó demasiado en crearse')), 15000)
-            );
+            // Use the resilient creation approach
+            const result = await createMutation.mutateAsync(submitData);
             
-            const result = await Promise.race([createPromise, timeoutPromise]) as { success: true; class_id: string };
+            createdClassIds.push(result.class_id);
+            const classLabel = `${classData.name} - Pista ${classData.court_number}`;
+            successfulClasses.push(classLabel);
             
-            if (!isCancelled) {
-              createdClassIds.push(result.class_id);
-              successfulClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
-              console.log(`✅ Created: ${classData.name}`);
-              
-              // Progressive delay to avoid database overload: 500ms, 1s, 1.5s, etc.
-              if (i < data.individual_classes.length - 1) {
-                const delay = Math.min(500 + (i * 250), 2000); // Max 2s delay
-                console.log(`⏳ Waiting ${delay}ms before next creation`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-              }
+            if (result.isDuplicate) {
+              console.log(`⚠️ Recovered existing: ${classLabel}`);
+            } else {
+              console.log(`✅ Created: ${classLabel}`);
+            }
+            
+            // Small delay between creations to avoid overloading
+            if (i < data.individual_classes.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
             
           } catch (error: any) {
-            if (!isCancelled) {
-              console.error(`❌ Error creating class for court ${classData.court_number}:`, error);
-              let errorMessage = error.message || 'Error desconocido';
-              
-              // Provide more specific error messages
-              if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-                errorMessage = 'Timeout: La operación tardó demasiado tiempo';
-              } else if (errorMessage.includes('network')) {
-                errorMessage = 'Error de red: Verifica tu conexión';
-              }
-              
-              failedClasses.push({ 
-                name: `Pista ${classData.court_number} - ${classData.name}`, 
-                error: errorMessage 
-              });
+            console.error(`❌ Error creating class for court ${classData.court_number}:`, error);
+            let errorMessage = error.message || 'Error desconocido';
+            
+            // Provide more specific error messages
+            if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+              errorMessage = 'Timeout - La clase puede haberse creado de todas formas';
+            } else if (errorMessage.includes('network')) {
+              errorMessage = 'Error de red - Verifica la conexión';
+            } else if (errorMessage.includes('Ya existe')) {
+              errorMessage = 'Clase duplicada - Ya existe una clase similar';
             }
+            
+            failedClasses.push({ 
+              name: classData.name, 
+              error: errorMessage,
+              court: classData.court_number
+            });
           }
         }
 
-        setCreationProgress({ current: 0, total: 0, isCreating: false });
+        // Show final results with detailed status
+        setCreationProgress({ 
+          current: data.individual_classes.length, 
+          total: data.individual_classes.length, 
+          isCreating: false,
+          successfulClasses,
+          failedClasses,
+          showResults: true,
+          canRetryFailed: failedClasses.length > 0
+        });
         
-        // Show detailed results
+        // Enhanced results display
         if (successfulClasses.length > 0 && failedClasses.length === 0) {
           toast({
             title: "¡Éxito total!",
-            description: `Se crearon las ${successfulClasses.length} clases correctamente.`,
+            description: `${successfulClasses.length} clases creadas correctamente.`,
           });
+          // Close modal after short delay for success animation
+          setTimeout(() => onClose(), 2000);
         } else if (successfulClasses.length > 0 && failedClasses.length > 0) {
-          // Show partial success with option to retry failed ones
-          const failedDetails = failedClasses.map(f => `${f.name}: ${f.error}`).join('\n');
+          // Partial success - show detailed breakdown
           toast({
             title: "Creación parcial",
-            description: `✅ ${successfulClasses.length} clases creadas correctamente.\n❌ ${failedClasses.length} clases fallaron:\n${failedDetails}`,
-            variant: "destructive",
+            description: `✅ ${successfulClasses.length} exitosas\n❌ ${failedClasses.length} fallidas\n\nPuedes reintentar las fallidas desde el resumen.`,
+            variant: "default",
           });
-          
-          // If more than half failed, don't close modal to allow retry
-          if (failedClasses.length > successfulClasses.length) {
-            console.log('More failures than successes, keeping modal open for retry');
-            return;
-          }
+          // Keep modal open for retry option
         } else {
           // Complete failure
-          const errorDetails = failedClasses.length > 0 
-            ? failedClasses.map(f => `${f.name}: ${f.error}`).join('\n')
-            : 'Error desconocido al crear las clases';
-            
           toast({
-            title: "Error total",
-            description: `No se pudieron crear las clases:\n${errorDetails}\n\nRevisa los datos e inténtalo de nuevo.`,
+            title: "Error en todas las clases",
+            description: `No se pudo crear ninguna clase. Revisa los errores y reintenta.`,
             variant: "destructive",
           });
-          return; // Don't close the modal if all failed
         }
       }
       
-      onClose();
+      // Only close if it's a single class creation
+      if (data.selected_courts.length === 1) {
+        onClose();
+      }
     } catch (error) {
       console.error("Error creating programmed class:", error);
-      setCreationProgress({ current: 0, total: 0, isCreating: false });
+      setCreationProgress({ 
+        current: 0, 
+        total: 0, 
+        isCreating: false,
+        successfulClasses: [],
+        failedClasses: [],
+        showResults: false
+      });
       toast({
         title: "Error",
         description: "No se pudieron crear las clases. Inténtalo de nuevo.",
