@@ -151,7 +151,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="profile">Perfil y Seguridad</TabsTrigger>
             {isAdmin && <TabsTrigger value="payments">Pagos</TabsTrigger>}
             <TabsTrigger value="general">General</TabsTrigger>
