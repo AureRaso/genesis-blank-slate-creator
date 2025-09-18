@@ -267,6 +267,19 @@ export default function ScheduledClassForm({
     }
   };
   const nextStep = () => {
+    // Validate club selection before moving to step 2
+    if (currentStep === 1 && isAdmin) {
+      const currentClubId = form.getValues().club_id;
+      if (!currentClubId) {
+        toast({
+          title: "Club requerido",
+          description: "Debes seleccionar un club antes de continuar",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
