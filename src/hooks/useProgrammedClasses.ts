@@ -100,86 +100,167 @@ export const useCreateProgrammedClass = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreateProgrammedClassData) => {
-      console.log('Creating programmed class directly...');
+    mutationFn: async (data: CreateProgrammedClassData, retryCount = 0): Promise<{ success: true; class_id: string }> => {
+      const MAX_RETRIES = 2;
       
-      // Create the base programmed class directly in client
-      const { data: createdClass, error: classError } = await supabase
-        .from("programmed_classes")
-        .insert({
-          name: data.name,
-          level_from: data.level_from,
-          level_to: data.level_to,
-          custom_level: data.custom_level,
-          duration_minutes: data.duration_minutes,
-          start_time: data.start_time,
-          days_of_week: data.days_of_week,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          recurrence_type: data.recurrence_type,
-          trainer_profile_id: data.trainer_profile_id,
-          club_id: data.club_id,
-          court_number: data.court_number,
-          monthly_price: data.monthly_price || 0,
-          max_participants: data.max_participants || 8,
-          group_id: data.group_id
-        })
-        .select()
-        .single();
-
-      if (classError) {
-        console.error('Error creating programmed class:', classError);
-        throw classError;
+      console.log(`Creating programmed class directly (attempt ${retryCount + 1})...`);
+      
+      // Validate required data
+      if (!data.name?.trim()) {
+        throw new Error('El nombre de la clase es obligatorio');
       }
+      if (!data.trainer_profile_id) {
+        throw new Error('El entrenador es obligatorio');
+      }
+      if (!data.club_id) {
+        throw new Error('El club es obligatorio');
+      }
+      if (!data.start_time || !data.days_of_week?.length) {
+        throw new Error('La hora y días de la semana son obligatorios');
+      }
+      
+      let createdClassId: string | null = null;
+      
+      try {
+        // Create the base programmed class
+        const { data: createdClass, error: classError } = await supabase
+          .from("programmed_classes")
+          .insert({
+            name: data.name,
+            level_from: data.level_from,
+            level_to: data.level_to,
+            custom_level: data.custom_level,
+            duration_minutes: data.duration_minutes,
+            start_time: data.start_time,
+            days_of_week: data.days_of_week,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            recurrence_type: data.recurrence_type,
+            trainer_profile_id: data.trainer_profile_id,
+            club_id: data.club_id,
+            court_number: data.court_number,
+            monthly_price: data.monthly_price || 0,
+            max_participants: data.max_participants || 8,
+            group_id: data.group_id
+          })
+          .select()
+          .single();
 
-      console.log('Created programmed class:', createdClass.id);
-
-      // Handle participants if needed
-      if (data.group_id || (data.selected_students && data.selected_students.length > 0)) {
-        let participantsData: any[] = [];
-
-        if (data.group_id) {
-          // Get group members
-          const { data: groupMembers, error: groupError } = await supabase
-            .from("group_members")
-            .select("student_enrollment_id")
-            .eq("group_id", data.group_id)
-            .eq("is_active", true);
-
-          if (groupError) {
-            console.error('Error fetching group members:', groupError);
-            throw groupError;
+        if (classError) {
+          console.error('Error creating programmed class:', classError);
+          // Handle specific Supabase errors
+          if (classError.code === '23505') {
+            throw new Error('Ya existe una clase con estos datos. Revisa los horarios y pistas.');
           }
-
-          participantsData = groupMembers.map(member => ({
-            class_id: createdClass.id,
-            student_enrollment_id: member.student_enrollment_id,
-            status: 'active'
-          }));
-        } else if (data.selected_students && data.selected_students.length > 0) {
-          participantsData = data.selected_students.map(studentId => ({
-            class_id: createdClass.id,
-            student_enrollment_id: studentId,
-            status: 'active'
-          }));
+          if (classError.code === '23503') {
+            throw new Error('Error de referencia: verifica que el entrenador y club existan.');
+          }
+          throw new Error(`Error al crear la clase: ${classError.message}`);
         }
 
-        // Insert participants
-        if (participantsData.length > 0) {
-          console.log(`Creating ${participantsData.length} participants`);
-          const { error: participantsError } = await supabase
-            .from("class_participants")
-            .insert(participantsData);
+        createdClassId = createdClass.id;
+        console.log('Created programmed class:', createdClassId);
 
-          if (participantsError) {
-            console.error('Error creating participants:', participantsError);
-            throw participantsError;
+        // Handle participants if needed
+        if (data.group_id || (data.selected_students && data.selected_students.length > 0)) {
+          let participantsData: any[] = [];
+
+          if (data.group_id) {
+            // Get group members with retry
+            let groupMembers;
+            let groupError;
+            
+            for (let i = 0; i <= MAX_RETRIES; i++) {
+              const result = await supabase
+                .from("group_members")
+                .select("student_enrollment_id")
+                .eq("group_id", data.group_id)
+                .eq("is_active", true);
+              
+              groupMembers = result.data;
+              groupError = result.error;
+              
+              if (!groupError) break;
+              if (i < MAX_RETRIES) {
+                console.log(`Retrying group members fetch (${i + 1}/${MAX_RETRIES})`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+
+            if (groupError) {
+              console.error('Error fetching group members:', groupError);
+              throw new Error(`Error al obtener miembros del grupo: ${groupError.message}`);
+            }
+
+            if (!groupMembers || groupMembers.length === 0) {
+              console.warn('Group has no active members');
+            } else {
+              participantsData = groupMembers.map(member => ({
+                class_id: createdClassId,
+                student_enrollment_id: member.student_enrollment_id,
+                status: 'active'
+              }));
+            }
+          } else if (data.selected_students && data.selected_students.length > 0) {
+            participantsData = data.selected_students.map(studentId => ({
+              class_id: createdClassId,
+              student_enrollment_id: studentId,
+              status: 'active'
+            }));
+          }
+
+          // Insert participants with retry if we have any
+          if (participantsData.length > 0) {
+            console.log(`Creating ${participantsData.length} participants`);
+            
+            let participantsError;
+            for (let i = 0; i <= MAX_RETRIES; i++) {
+              const result = await supabase
+                .from("class_participants")
+                .insert(participantsData);
+              
+              participantsError = result.error;
+              
+              if (!participantsError) break;
+              if (i < MAX_RETRIES) {
+                console.log(`Retrying participants creation (${i + 1}/${MAX_RETRIES})`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+
+            if (participantsError) {
+              console.error('Error creating participants:', participantsError);
+              
+              // Rollback: delete the created class since participants failed
+              console.log('Rolling back: deleting created class due to participant error');
+              await supabase
+                .from("programmed_classes")
+                .delete()
+                .eq("id", createdClassId);
+              
+              throw new Error(`Error al agregar participantes: ${participantsError.message}`);
+            }
           }
         }
-      }
 
-      console.log('Successfully created programmed class and participants');
-      return { success: true, class_id: createdClass.id };
+        console.log('Successfully created programmed class and participants');
+        return { success: true, class_id: createdClassId };
+        
+      } catch (error: any) {
+        console.error('Error in class creation:', error);
+        
+        // If it's a network/timeout error and we haven't exceeded retries, try again
+        if (retryCount < MAX_RETRIES && 
+            (error.message?.includes('timeout') || 
+             error.message?.includes('network') ||
+             error.code === 'PGRST301')) {
+          console.log(`Retrying entire operation (${retryCount + 1}/${MAX_RETRIES})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return (this as any).mutationFn(data, retryCount + 1);
+        }
+        
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
