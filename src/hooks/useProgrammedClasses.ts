@@ -67,14 +67,30 @@ export const useProgrammedClasses = (clubId?: string) => {
           participants:class_participants(
             id,
             status,
+            student_enrollment_id,
+            discount_1,
+            discount_2,
+            created_at,
+            updated_at,
+            amount_paid,
+            months_paid,
+            payment_date,
+            payment_type,
+            total_months,
+            payment_notes,
+            payment_method,
+            payment_status,
+            payment_verified,
+            total_amount_due,
             student_enrollment:student_enrollments(
               id,
               full_name,
               email
             )
           ),
-          trainer:profiles!trainer_profile_id(
-            full_name
+          club:clubs(
+            id,
+            name
           )
         `)
         .eq("is_active", true)
@@ -89,7 +105,7 @@ export const useProgrammedClasses = (clubId?: string) => {
       if (error) throw error;
       return data as (ProgrammedClass & {
         participants?: any[];
-        trainer?: { full_name: string };
+        club?: { id: string; name: string };
       })[];
     },
   });

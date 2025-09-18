@@ -296,12 +296,13 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
             <span>{new Date(programmedClass.start_date).toLocaleDateString()} - {new Date(programmedClass.end_date).toLocaleDateString()}</span>
           </div>
 
-          {programmedClass.trainer?.full_name && (
+          {/* Trainer info temporalmente removido por problemas de RLS */}
+          {/* {programmedClass.trainer?.full_name && (
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span>{t('classes.teacher')}: {programmedClass.trainer.full_name}</span>
             </div>
-          )}
+          )} */}
 
           {/* Precio mensual */}
           {programmedClass.monthly_price !== undefined && (
@@ -369,12 +370,13 @@ const ProgrammedClassCard = ({ programmedClass }: { programmedClass: any }) => {
                   <span>{t('classes.court')} {programmedClass.court_number}</span>
                 </div>
               )}
-              {programmedClass.trainer?.full_name && (
+              {/* Trainer name temporalmente removido por problemas de RLS */}
+              {/* {programmedClass.trainer?.full_name && (
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span>{t('classes.teacher')}: {programmedClass.trainer.full_name}</span>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div className="space-y-2 text-sm">
