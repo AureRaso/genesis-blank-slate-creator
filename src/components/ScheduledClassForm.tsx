@@ -119,6 +119,7 @@ export default function ScheduledClassForm({
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
   const [isMultipleClasses, setIsMultipleClasses] = useState(false);
+  const [creationProgress, setCreationProgress] = useState({ current: 0, total: 0, isCreating: false });
   
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
@@ -311,45 +312,84 @@ export default function ScheduledClassForm({
         };
         await createMutation.mutateAsync(submitData);
       } else {
-        // Multiple classes creation
+        // Multiple classes creation - Sequential processing
         if (!data.individual_classes) {
           throw new Error("Individual class configurations are required for multiple courts");
         }
 
-        const promises = data.individual_classes.map((classData) => {
-          const submitData = {
-            name: classData.name,
-            level_from: classData.level_format === "numeric" ? classData.level_from : undefined,
-            level_to: classData.level_format === "numeric" ? classData.level_to : undefined,
-            custom_level: classData.level_format === "levante" ? classData.custom_level : undefined,
-            duration_minutes: data.duration_minutes,
-            start_time: data.start_time,
-            days_of_week: data.selected_days,
-            start_date: format(data.start_date, 'yyyy-MM-dd'),
-            end_date: format(data.end_date, 'yyyy-MM-dd'),
-            recurrence_type: data.recurrence_type,
-            trainer_profile_id: classData.trainer_profile_id,
-            club_id: data.club_id,
-            court_number: classData.court_number,
-            group_id: data.selection_type === "group" ? data.group_id : undefined,
-            selected_students: data.selection_type === "individual" ? data.selected_students : [],
-            monthly_price: classData.monthly_price,
-            max_participants: data.max_participants
-          };
-          return createMutation.mutateAsync(submitData);
-        });
-
-        await Promise.all(promises);
+        setCreationProgress({ current: 0, total: data.individual_classes.length, isCreating: true });
         
-        toast({
-          title: "Clases creadas",
-          description: `Se han creado ${data.individual_classes.length} clases simultáneas correctamente.`,
-        });
+        const successfulClasses: string[] = [];
+        const failedClasses: string[] = [];
+
+        for (let i = 0; i < data.individual_classes.length; i++) {
+          const classData = data.individual_classes[i];
+          
+          try {
+            setCreationProgress({ current: i + 1, total: data.individual_classes.length, isCreating: true });
+            
+            const submitData = {
+              name: classData.name,
+              level_from: classData.level_format === "numeric" ? classData.level_from : undefined,
+              level_to: classData.level_format === "numeric" ? classData.level_to : undefined,
+              custom_level: classData.level_format === "levante" ? classData.custom_level : undefined,
+              duration_minutes: data.duration_minutes,
+              start_time: data.start_time,
+              days_of_week: data.selected_days,
+              start_date: format(data.start_date, 'yyyy-MM-dd'),
+              end_date: format(data.end_date, 'yyyy-MM-dd'),
+              recurrence_type: data.recurrence_type,
+              trainer_profile_id: classData.trainer_profile_id,
+              club_id: data.club_id,
+              court_number: classData.court_number,
+              group_id: data.selection_type === "group" ? data.group_id : undefined,
+              selected_students: data.selection_type === "individual" ? data.selected_students : [],
+              monthly_price: classData.monthly_price,
+              max_participants: data.max_participants
+            };
+            
+            await createMutation.mutateAsync(submitData);
+            successfulClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
+            
+            // Small delay between creations to avoid conflicts
+            if (i < data.individual_classes.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+          } catch (error) {
+            console.error(`Error creating class for court ${classData.court_number}:`, error);
+            failedClasses.push(`Pista ${classData.court_number} - ${classData.name}`);
+          }
+        }
+
+        setCreationProgress({ current: 0, total: 0, isCreating: false });
+        
+        // Show results
+        if (successfulClasses.length > 0 && failedClasses.length === 0) {
+          toast({
+            title: "Clases creadas exitosamente",
+            description: `Se crearon ${successfulClasses.length} clases correctamente.`,
+          });
+        } else if (successfulClasses.length > 0 && failedClasses.length > 0) {
+          toast({
+            title: "Creación parcial",
+            description: `${successfulClasses.length} clases creadas correctamente. ${failedClasses.length} clases fallaron.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No se pudieron crear las clases. Inténtalo de nuevo.",
+            variant: "destructive",
+          });
+          return; // Don't close the modal if all failed
+        }
       }
       
       onClose();
     } catch (error) {
       console.error("Error creating programmed class:", error);
+      setCreationProgress({ current: 0, total: 0, isCreating: false });
       toast({
         title: "Error",
         description: "No se pudieron crear las clases. Inténtalo de nuevo.",
@@ -1128,10 +1168,34 @@ export default function ScheduledClassForm({
               {currentStep < 3 ? <Button type="button" onClick={nextStep}>
                   {t('classes.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button> : <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? t('common.loading') : t('classes.createClasses')}
+                </Button> : <Button type="submit" disabled={createMutation.isPending || creationProgress.isCreating}>
+                  {creationProgress.isCreating ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Creando {creationProgress.current}/{creationProgress.total}...
+                    </span>
+                  ) : createMutation.isPending ? (
+                    t('common.loading')
+                  ) : (
+                    t('classes.createClasses')
+                  )}
                 </Button>}
             </div>
+
+            {/* Progress indicator for multiple class creation */}
+            {creationProgress.isCreating && (
+              <div className="mt-4 space-y-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300 ease-out" 
+                    style={{ width: `${(creationProgress.current / creationProgress.total) * 100}%` }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Creando clase {creationProgress.current} de {creationProgress.total}...
+                </p>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>
