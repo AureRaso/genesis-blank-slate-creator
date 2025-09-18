@@ -145,27 +145,28 @@ export const useCreateProgrammedClass = () => {
 
   const createProgrammedClassFn = async (data: CreateProgrammedClassData): Promise<{ success: true; class_id: string; isDuplicate?: boolean; message?: string }> => {
     console.log('🔄 Creating class with resilient strategy:', data.name);
-    console.log('📋 Class data:', JSON.stringify(data, null, 2));
+    console.log('📋 Full class data:', JSON.stringify(data, null, 2));
     
     // Validate required data
-    console.log('✅ Validating required data...');
+    console.log('✅ Starting validation...');
     if (!data.name?.trim()) {
-      console.error('❌ Missing name');
+      console.error('❌ Validation failed: Missing name');
       throw new Error('El nombre de la clase es obligatorio');
     }
     if (!data.trainer_profile_id) {
-      console.error('❌ Missing trainer_profile_id');
+      console.error('❌ Validation failed: Missing trainer_profile_id');
       throw new Error('El entrenador es obligatorio');
     }
     if (!data.club_id) {
-      console.error('❌ Missing club_id');
+      console.error('❌ Validation failed: Missing club_id');
       throw new Error('El club es obligatorio');
     }
     if (!data.start_time || !data.days_of_week?.length) {
-      console.error('❌ Missing start_time or days_of_week');
+      console.error('❌ Validation failed: Missing start_time or days_of_week');
+      console.error('Start time:', data.start_time, 'Days:', data.days_of_week);
       throw new Error('La hora y días de la semana son obligatorios');
     }
-    console.log('✅ All validation passed');
+    console.log('✅ All validation passed successfully');
     
     try {
       // First, check for duplicates with optimized query

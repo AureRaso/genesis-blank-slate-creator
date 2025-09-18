@@ -355,6 +355,16 @@ export default function ScheduledClassForm({
           try {
             console.log(`📝 Creating class ${i + 1}/${data.individual_classes.length}: ${classData.name}`);
             
+            console.log('📊 Processing class:', i + 1, 'of', data.individual_classes.length, '- Name:', classData.name);
+            console.log('🔍 Class validation data:', {
+              name: classData.name,
+              trainer_profile_id: classData.trainer_profile_id,
+              court_number: classData.court_number,
+              club_id: data.club_id,
+              start_time: data.start_time,
+              selected_days: data.selected_days
+            });
+            
             // Enhanced validation
             if (!classData.name?.trim()) {
               throw new Error('El nombre de la clase es obligatorio');
@@ -366,6 +376,7 @@ export default function ScheduledClassForm({
               throw new Error('Debe especificar el número de pista');
             }
             
+            console.log('✅ Class validation passed, preparing submit data...');
             const submitData = {
               name: classData.name,
               level_from: classData.level_format === "numeric" ? classData.level_from : undefined,
@@ -385,6 +396,8 @@ export default function ScheduledClassForm({
               monthly_price: classData.monthly_price,
               max_participants: data.max_participants
             };
+            
+            console.log('🚀 Submitting class data:', JSON.stringify(submitData, null, 2));
             
             // Use the resilient creation approach
             const result = await createMutation.mutateAsync(submitData);
