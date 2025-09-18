@@ -129,25 +129,32 @@ export const useCreateProgrammedClass = () => {
 
   const createProgrammedClassFn = async (data: CreateProgrammedClassData): Promise<{ success: true; class_id: string; isDuplicate?: boolean; message?: string }> => {
     console.log('🔄 Creating class with resilient strategy:', data.name);
+    console.log('📋 Class data:', JSON.stringify(data, null, 2));
     
     // Validate required data
+    console.log('✅ Validating required data...');
     if (!data.name?.trim()) {
+      console.error('❌ Missing name');
       throw new Error('El nombre de la clase es obligatorio');
     }
     if (!data.trainer_profile_id) {
+      console.error('❌ Missing trainer_profile_id');
       throw new Error('El entrenador es obligatorio');
     }
     if (!data.club_id) {
+      console.error('❌ Missing club_id');
       throw new Error('El club es obligatorio');
     }
     if (!data.start_time || !data.days_of_week?.length) {
+      console.error('❌ Missing start_time or days_of_week');
       throw new Error('La hora y días de la semana son obligatorios');
     }
+    console.log('✅ All validation passed');
     
     try {
       // First, check for duplicates with optimized query
       console.log('🔍 Checking for duplicates...');
-      const { data: duplicateCheck } = await supabase
+      const { data: duplicateCheck, error: duplicateError } = await supabase
         .from('programmed_classes')
         .select('id, name')
         .eq('name', data.name)
@@ -158,9 +165,14 @@ export const useCreateProgrammedClass = () => {
         .eq('is_active', true)
         .maybeSingle();
       
+      if (duplicateError) {
+        console.error('❌ Duplicate check error:', duplicateError);
+        throw new Error(`Error checking for duplicates: ${duplicateError.message}`);
+      }
+      
       if (duplicateCheck) {
         console.log('⚠️ Duplicate class found:', duplicateCheck);
-        return { 
+        return {
           success: true, 
           class_id: duplicateCheck.id, 
           isDuplicate: true,
@@ -193,8 +205,13 @@ export const useCreateProgrammedClass = () => {
         .select('id')
         .single();
 
+      console.log('📊 Insert result - Error:', classError, 'Data:', createdClass);
+
       if (classError) {
         console.error('❌ Database error:', classError);
+        console.error('❌ Error code:', classError.code);
+        console.error('❌ Error message:', classError.message);
+        console.error('❌ Error details:', classError.details);
         
         // Check if it was created anyway (common with XX000 errors)
         if (classError.code === 'XX000' || classError.message?.includes('timeout')) {
