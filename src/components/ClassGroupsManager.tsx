@@ -200,9 +200,9 @@ const ManageGroupMembers = ({ group, onClose }: ManageGroupMembersProps) => {
             {group.members.map((member) => (
               <div key={member.id} className="flex items-center justify-between p-2 bg-muted rounded">
                 <div>
-                  <span className="font-medium">{member.student_enrollment?.full_name || 'Alumno sin nombre'}</span>
+                  <span className="font-medium">{member.student_enrollment.full_name}</span>
                   <span className="text-sm text-muted-foreground ml-2">
-                    (Nivel {member.student_enrollment?.level || 'N/A'})
+                    (Nivel {member.student_enrollment.level})
                   </span>
                 </div>
                 <Button
@@ -385,7 +385,7 @@ export const ClassGroupsManager = () => {
                     <div className="font-medium mb-1">Miembros:</div>
                     {group.members.slice(0, 3).map((member, index) => (
                       <div key={member.id}>
-                        {member.student_enrollment?.full_name || 'Alumno sin nombre'}
+                        {member.student_enrollment.full_name}
                       </div>
                     ))}
                     {group.members.length > 3 && (

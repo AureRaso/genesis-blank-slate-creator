@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -45,16 +45,6 @@ export default function ClassListView({
     clubId: clubId,
     clubIds: clubIds
   });
-
-  // Sync selectedClass with fresh query data when it updates
-  useEffect(() => {
-    if (selectedClass && classes) {
-      const updatedClass = classes.find(cls => cls.id === selectedClass.id);
-      if (updatedClass) {
-        setSelectedClass(updatedClass);
-      }
-    }
-  }, [classes, selectedClass?.id]);
 
   // Aplicar todos los filtros
   const filteredClasses = classes?.filter(cls => {
@@ -344,7 +334,7 @@ function AdminClassDetailsModal({
             <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
             <div className="space-y-1">
               {selectedClass.participants.map(participant => <div key={participant.id} className="text-sm p-2 bg-muted rounded">
-                  {participant.student_enrollment?.full_name || 'Alumno sin nombre'}
+                  {participant.student_enrollment.full_name}
                 </div>)}
             </div>
           </div>}

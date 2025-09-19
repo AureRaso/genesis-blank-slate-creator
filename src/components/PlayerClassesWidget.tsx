@@ -113,13 +113,12 @@ const PlayerClassesWidget = ({ limit = 3, showViewAll = true, onViewAll }: Playe
                 <Clock className="h-3 w-3 mr-1" />
                 <span>{programmedClass.start_time}</span>
               </div>
-              {/* Trainer name temporalmente removido por problemas de RLS */}
-              {/* {programmedClass.trainer?.full_name && (
+              {programmedClass.trainer?.full_name && (
                 <div className="flex items-center">
                   <User className="h-3 w-3 mr-1" />
                   <span>{programmedClass.trainer.full_name}</span>
                 </div>
-              )} */}
+              )}
             </div>
 
             <div className="mt-2 flex items-center justify-between">

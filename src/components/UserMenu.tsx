@@ -12,13 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import LanguageSelector from "@/components/LanguageSelector";
 
 const UserMenu = () => {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   if (!profile) return null;
 
@@ -70,9 +68,11 @@ const UserMenu = () => {
           <LanguageSelector />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/settings')}>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>{t('userMenu.settings')}</span>
+        <DropdownMenuItem asChild>
+          <a href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>{t('userMenu.settings')}</span>
+          </a>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />

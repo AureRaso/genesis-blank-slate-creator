@@ -115,63 +115,48 @@ export type Database = {
       }
       class_participants: {
         Row: {
-          amount_paid: number | null
           class_id: string
           created_at: string
           discount_1: number | null
           discount_2: number | null
           id: string
-          months_paid: number[] | null
           payment_date: string | null
           payment_method: string | null
           payment_notes: string | null
           payment_status: string
-          payment_type: string | null
           payment_verified: boolean
           status: string
           student_enrollment_id: string
-          total_amount_due: number | null
-          total_months: number | null
           updated_at: string
         }
         Insert: {
-          amount_paid?: number | null
           class_id: string
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
-          months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
-          payment_type?: string | null
           payment_verified?: boolean
           status?: string
           student_enrollment_id: string
-          total_amount_due?: number | null
-          total_months?: number | null
           updated_at?: string
         }
         Update: {
-          amount_paid?: number | null
           class_id?: string
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
-          months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
-          payment_type?: string | null
           payment_verified?: boolean
           status?: string
           student_enrollment_id?: string
-          total_amount_due?: number | null
-          total_months?: number | null
           updated_at?: string
         }
         Relationships: [

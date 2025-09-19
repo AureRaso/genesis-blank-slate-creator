@@ -23,8 +23,8 @@ const TeamSelector = ({ label, placeholder, teams, selectedTeamId, onTeamChange 
             const team = lt.teams;
             if (!team?.player1?.full_name || !team?.player2?.full_name) return null;
             
-            const player1Name = team.player1?.full_name;
-            const player2Name = team.player2?.full_name;
+            const player1Name = team.player1.full_name;
+            const player2Name = team.player2.full_name;
             
             return (
               <SelectItem key={lt.team_id} value={lt.team_id}>

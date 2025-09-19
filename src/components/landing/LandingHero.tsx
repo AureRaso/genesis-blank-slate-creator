@@ -103,11 +103,11 @@ export const LandingHero = () => {
                   PadeLock
                 </span>
                 <br />
-                <span className="text-foreground">Digitaliza tu academia de pádel</span>
+                <span className="text-foreground">Digitaliza tu club de pádel</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Software pensado para academias de padel. Ahorra tiempo y dinero.
+                Software pensado por y para academias de padel, entrenadores y clientes. Ahorra tiempo y dinero en tu academia.
               </p>
             </div>
 
@@ -127,7 +127,7 @@ export const LandingHero = () => {
               </div>
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
                 <div className="w-3 h-3 bg-primary rounded-full flex-shrink-0"></div>
-                <span className="text-sm font-medium">Pagos integrados</span>
+                <span className="text-sm font-medium">Pagos integrados seguros</span>
               </div>
             </div>
 

@@ -243,7 +243,7 @@ const TrainerDashboard = () => {
                       <div className="flex-1">
                         <CardTitle className="text-lg line-clamp-2">{programmedClass.name}</CardTitle>
                         <CardDescription>
-                          {/* Trainer name temporalmente removido */} Pista {programmedClass.court_number || "No asignada"}
+                          {programmedClass.trainer?.full_name} - Pista {programmedClass.court_number || "No asignada"}
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">

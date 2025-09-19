@@ -1,25 +1,15 @@
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Users, Building2, Search } from "lucide-react";
+import { Trash2, Users, Building2 } from "lucide-react";
 import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdminClubs } from "@/hooks/useClubs";
-import { Label } from "@/components/ui/label";
 
 const PlayersList = () => {
   const { isAdmin, profile } = useAuth();
   const { data: players, isLoading, error } = usePlayers();
-  const { data: clubs = [] } = useAdminClubs();
   const deletePlayerMutation = useDeletePlayer();
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [clubFilter, setClubFilter] = useState<string>("all");
-  const [levelFilter, setLevelFilter] = useState<string>("all");
 
   console.log('👥 PlayersList Debug:', {
     isAdmin,
@@ -90,15 +80,6 @@ const PlayersList = () => {
     return texts[level as keyof typeof texts] || "Desconocido";
   };
 
-  const filteredPlayers = players?.filter((player) => {
-    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         player.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClub = clubFilter === "all" || player.club_id === clubFilter;
-    const matchesLevel = levelFilter === "all" || player.level.toString() === levelFilter;
-    
-    return matchesSearch && matchesClub && matchesLevel;
-  }) || [];
-
   return (
     <Card>
       <CardHeader>
@@ -107,67 +88,17 @@ const PlayersList = () => {
           Jugadores Registrados
         </CardTitle>
         <CardDescription>
-          {filteredPlayers.length} de {players?.length || 0} jugadores
+          {players?.length || 0} jugadores en el sistema
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Buscar</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre o email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Club</Label>
-            <Select value={clubFilter} onValueChange={setClubFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Club" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos mis clubes</SelectItem>
-                {clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Nivel</Label>
-            <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Nivel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="1">Nivel 1 - Principiante</SelectItem>
-                <SelectItem value="2">Nivel 2 - Básico</SelectItem>
-                <SelectItem value="3">Nivel 3 - Intermedio</SelectItem>
-                <SelectItem value="4">Nivel 4 - Avanzado</SelectItem>
-                <SelectItem value="5">Nivel 5 - Experto</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {filteredPlayers.length === 0 ? (
+      <CardContent>
+        {!players || players.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {players?.length === 0 ? "No hay jugadores registrados" : "No se encontraron jugadores con los filtros seleccionados"}
+            No hay jugadores registrados
           </p>
         ) : (
           <div className="space-y-3">
-            {filteredPlayers.map((player) => (
+            {players.map((player) => (
               <div
                 key={player.id}
                 className="flex items-center justify-between p-4 border rounded-lg"
