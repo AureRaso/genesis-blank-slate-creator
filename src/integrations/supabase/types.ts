@@ -115,48 +115,63 @@ export type Database = {
       }
       class_participants: {
         Row: {
+          amount_paid: number | null
           class_id: string
           created_at: string
           discount_1: number | null
           discount_2: number | null
           id: string
+          months_paid: number[] | null
           payment_date: string | null
           payment_method: string | null
           payment_notes: string | null
           payment_status: string
+          payment_type: string | null
           payment_verified: boolean
           status: string
           student_enrollment_id: string
+          total_amount_due: number | null
+          total_months: number | null
           updated_at: string
         }
         Insert: {
+          amount_paid?: number | null
           class_id: string
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
+          payment_type?: string | null
           payment_verified?: boolean
           status?: string
           student_enrollment_id: string
+          total_amount_due?: number | null
+          total_months?: number | null
           updated_at?: string
         }
         Update: {
+          amount_paid?: number | null
           class_id?: string
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
           payment_notes?: string | null
           payment_status?: string
+          payment_type?: string | null
           payment_verified?: boolean
           status?: string
           student_enrollment_id?: string
+          total_amount_due?: number | null
+          total_months?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1341,6 +1356,34 @@ export type Database = {
           | { match_id: string; profile_id: string }
           | { profile_id: string }
         Returns: undefined
+      }
+      rpc_create_programmed_class: {
+        Args: {
+          p_club_id: string
+          p_court_number: number
+          p_custom_level: string
+          p_days_of_week: string[]
+          p_duration_minutes: number
+          p_end_date: string
+          p_group_id?: string
+          p_level_from: number
+          p_level_to: number
+          p_max_participants?: number
+          p_monthly_price?: number
+          p_name: string
+          p_recurrence_type: string
+          p_selected_students?: string[]
+          p_start_date: string
+          p_start_time: string
+          p_trainer_profile_id: string
+        }
+        Returns: {
+          class_id: string
+        }[]
+      }
+      rpc_create_programmed_classes_bulk: {
+        Args: { p_items: Json }
+        Returns: Json
       }
     }
     Enums: {

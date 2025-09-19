@@ -1,0 +1,1 @@
+DELETE FROM student_enrollments WHERE full_name = 'Sergio KL';
