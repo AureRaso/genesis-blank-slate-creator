@@ -57,10 +57,6 @@ serve(async (req) => {
     const classData: CreateClassData = await req.json()
     console.log('Creating programmed classes with data:', classData)
 
-    // Generate all class dates based on recurrence
-    const classDates = generateClassDates(classData)
-    console.log(`Generated ${classDates.length} class dates`)
-
     // Create the base programmed class
     const { data: createdClass, error: classError } = await supabase
       .from("programmed_classes")
@@ -142,8 +138,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        class_id: createdClass.id,
-        total_dates: classDates.length
+        class_id: createdClass.id
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -163,40 +158,3 @@ serve(async (req) => {
     )
   }
 })
-
-function generateClassDates(classData: CreateClassData): string[] {
-  const dates: string[] = []
-  const startDate = new Date(classData.start_date)
-  const endDate = new Date(classData.end_date)
-  
-  const dayMap: Record<string, number> = {
-    'domingo': 0,
-    'lunes': 1,
-    'martes': 2,
-    'miercoles': 3,
-    'jueves': 4,
-    'viernes': 5,
-    'sabado': 6
-  }
-
-  classData.days_of_week.forEach(day => {
-    const targetDay = dayMap[day]
-    let currentDate = new Date(startDate)
-
-    // Find first occurrence of target day
-    while (currentDate.getDay() !== targetDay && currentDate <= endDate) {
-      currentDate.setDate(currentDate.getDate() + 1)
-    }
-
-    // Generate dates based on recurrence
-    const intervalDays = classData.recurrence_type === 'weekly' ? 7 : 
-                        classData.recurrence_type === 'biweekly' ? 14 : 30
-
-    while (currentDate <= endDate) {
-      dates.push(currentDate.toISOString().split('T')[0])
-      currentDate.setDate(currentDate.getDate() + intervalDays)
-    }
-  })
-
-  return dates.sort()
-}
