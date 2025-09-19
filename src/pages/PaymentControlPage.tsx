@@ -231,11 +231,20 @@ const PaymentControlPage = () => {
             <div className="text-sm text-muted-foreground">
               Filtrando {filteredPayments.length} de {payments.length} registros
             </div>
-            <div className="flex items-center space-x-2 bg-muted px-4 py-2 rounded-lg">
-              <span className="text-sm text-muted-foreground">Total esperado:</span>
-              <div className="flex items-center font-bold text-lg">
-                <Euro className="h-4 w-4 mr-1" />
-                {totalAmount.toFixed(2)}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 bg-muted px-4 py-2 rounded-lg">
+                <span className="text-sm text-muted-foreground">Total esperado:</span>
+                <div className="flex items-center font-bold text-lg">
+                  <Euro className="h-4 w-4 mr-1" />
+                  {totalAmount.toFixed(2)}
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 bg-green-50 px-4 py-2 rounded-lg">
+                <span className="text-sm text-muted-foreground">Total pagado:</span>
+                <div className="flex items-center font-bold text-lg text-green-700">
+                  <Euro className="h-4 w-4 mr-1" />
+                  {filteredPayments.reduce((sum, payment) => sum + (payment.amount_paid || 0), 0).toFixed(2)}
+                </div>
               </div>
             </div>
           </div>
