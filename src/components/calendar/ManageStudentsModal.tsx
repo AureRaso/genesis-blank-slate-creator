@@ -76,7 +76,20 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
 
   const handleStudentToggle = (studentId: string, checked: boolean) => {
     const newSelected = new Set(selectedStudents);
+    const currentParticipantsCount = currentParticipants?.length || 0;
+    const maxParticipants = cls.max_participants || 8;
+    
     if (checked) {
+      // Check if adding this student would exceed the maximum
+      if (currentParticipantsCount + newSelected.size + 1 > maxParticipants) {
+        toast({
+          title: "Capacidad máxima alcanzada",
+          description: `La clase ya tiene el máximo de ${maxParticipants} participantes permitidos.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
       newSelected.add(studentId);
       // Initialize payment data for new student
       if (!paymentData[studentId]) {
@@ -170,9 +183,14 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Alumnos inscritos</h3>
-              <Badge variant="outline">
-                {currentParticipants?.length || 0} alumnos
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {currentParticipants?.length || 0}/{cls.max_participants || 8} alumnos
+                </Badge>
+                {(currentParticipants?.length || 0) >= (cls.max_participants || 8) && (
+                  <Badge variant="destructive">Completa</Badge>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -237,9 +255,16 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Alumnos disponibles</h3>
-              <Badge variant="outline">
-                {availableStudents.length} disponibles
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {availableStudents.length} disponibles
+                </Badge>
+                {selectedStudents.size > 0 && (
+                  <Badge variant="secondary">
+                    {selectedStudents.size} seleccionados
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="relative">
@@ -263,29 +288,35 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                   {searchTerm ? "No se encontraron alumnos" : "No hay alumnos disponibles"}
                 </p>
               ) : (
-                availableStudents.map((student) => (
-                  <div key={student.id} className="p-3 bg-muted rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Checkbox
-                          checked={selectedStudents.has(student.id)}
-                          onCheckedChange={(checked) => handleStudentToggle(student.id, !!checked)}
-                          disabled={isSaving}
-                        />
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>
-                            <User className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{student.full_name}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {student.email}
+                availableStudents.map((student) => {
+                  const currentParticipantsCount = currentParticipants?.length || 0;
+                  const maxParticipants = cls.max_participants || 8;
+                  const wouldExceedCapacity = !selectedStudents.has(student.id) && 
+                    (currentParticipantsCount + selectedStudents.size + 1 > maxParticipants);
+
+                  return (
+                    <div key={student.id} className="p-3 bg-muted rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <Checkbox
+                            checked={selectedStudents.has(student.id)}
+                            onCheckedChange={(checked) => handleStudentToggle(student.id, !!checked)}
+                            disabled={isSaving || wouldExceedCapacity}
+                          />
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback>
+                              <User className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{student.full_name}</div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {student.email}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      {selectedStudents.has(student.id) && (
+                        {selectedStudents.has(student.id) && (
                         <UserPlus className="h-4 w-4 text-primary" />
                       )}
                     </div>
@@ -357,7 +388,8 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                       </div>
                     )}
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

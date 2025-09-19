@@ -71,6 +71,31 @@ export const useAddStudentToClass = () => {
       paymentStatus?: string;
       paymentNotes?: string;
     }) => {
+      // First get the class info to check max participants
+      const { data: classInfo, error: classError } = await supabase
+        .from("programmed_classes")
+        .select("max_participants")
+        .eq("id", classId)
+        .single();
+
+      if (classError) throw classError;
+
+      // Check current active participants count
+      const { data: currentParticipants, error: participantsError } = await supabase
+        .from("class_participants")
+        .select("id")
+        .eq("class_id", classId)
+        .eq("status", "active");
+
+      if (participantsError) throw participantsError;
+
+      const maxParticipants = classInfo.max_participants || 8;
+      const currentCount = currentParticipants?.length || 0;
+
+      if (currentCount >= maxParticipants) {
+        throw new Error(`La clase ya tiene el máximo de ${maxParticipants} participantes.`);
+      }
+
       // Check if student is already in the class
       const { data: existing } = await supabase
         .from("class_participants")
@@ -184,15 +209,35 @@ export const useBulkUpdateClassParticipants = () => {
 
       // Add new students
       if (studentsToAdd.length > 0) {
-        // Check for existing participants to avoid duplicates
-        const { data: existing } = await supabase
+        // Get class info to check max participants
+        const { data: classInfo, error: classError } = await supabase
+          .from("programmed_classes")
+          .select("max_participants")
+          .eq("id", classId)
+          .single();
+
+        if (classError) throw classError;
+
+        // Check current active participants (after removals)
+        const { data: currentParticipants, error: participantsError } = await supabase
           .from("class_participants")
           .select("student_enrollment_id")
           .eq("class_id", classId)
           .eq("status", "active")
-          .in("student_enrollment_id", studentsToAdd);
+          .not("id", "in", `(${participantsToRemove.join(",")})`);
 
-        const existingIds = existing?.map(p => p.student_enrollment_id) || [];
+        if (participantsError) throw participantsError;
+
+        const maxParticipants = classInfo.max_participants || 8;
+        const currentCount = currentParticipants?.length || 0;
+        
+        if (currentCount + studentsToAdd.length > maxParticipants) {
+          const availableSpots = maxParticipants - currentCount;
+          throw new Error(`Solo quedan ${availableSpots} plazas disponibles de ${maxParticipants} máximas. Intenta agregar menos estudiantes.`);
+        }
+
+        // Check for existing participants to avoid duplicates
+        const existingIds = currentParticipants?.map(p => p.student_enrollment_id) || [];
         const newStudents = studentsToAdd.filter(id => !existingIds.includes(id));
 
         if (newStudents.length > 0) {
