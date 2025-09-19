@@ -336,7 +336,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                               <SelectContent>
                                 <SelectItem value="pending">Pendiente</SelectItem>
                                 <SelectItem value="paid">Pagado</SelectItem>
-                                <SelectItem value="verified">Verificado</SelectItem>
+                                
                               </SelectContent>
                             </Select>
                           </div>
