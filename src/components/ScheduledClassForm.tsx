@@ -149,7 +149,7 @@ export default function ScheduledClassForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: clubId,
+      club_id: isAdmin ? "" : clubId, // For admins, start with empty club selection
       trainer_profile_id: trainerProfileId,
       duration_minutes: 60,
       max_participants: 4,
