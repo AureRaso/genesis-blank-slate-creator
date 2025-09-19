@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Users, Building2, Search } from "lucide-react";
 import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClubs } from "@/hooks/useClubs";
+import { useAdminClubs } from "@/hooks/useClubs";
+import { Label } from "@/components/ui/label";
 
 const PlayersList = () => {
   const { isAdmin, profile } = useAuth();
   const { data: players, isLoading, error } = usePlayers();
-  const { data: clubs = [] } = useClubs();
+  const { data: clubs = [] } = useAdminClubs();
   const deletePlayerMutation = useDeletePlayer();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,8 +112,9 @@ const PlayersList = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Buscar</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -124,33 +126,39 @@ const PlayersList = () => {
             </div>
           </div>
           
-          <Select value={clubFilter} onValueChange={setClubFilter}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Club" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {clubs.map((club) => (
-                <SelectItem key={club.id} value={club.id}>
-                  {club.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Club</Label>
+            <Select value={clubFilter} onValueChange={setClubFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Club" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos mis clubes</SelectItem>
+                {clubs.map((club) => (
+                  <SelectItem key={club.id} value={club.id}>
+                    {club.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={levelFilter} onValueChange={setLevelFilter}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Nivel" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="1">Nivel 1 - Principiante</SelectItem>
-              <SelectItem value="2">Nivel 2 - Básico</SelectItem>
-              <SelectItem value="3">Nivel 3 - Intermedio</SelectItem>
-              <SelectItem value="4">Nivel 4 - Avanzado</SelectItem>
-              <SelectItem value="5">Nivel 5 - Experto</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Nivel</Label>
+            <Select value={levelFilter} onValueChange={setLevelFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Nivel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="1">Nivel 1 - Principiante</SelectItem>
+                <SelectItem value="2">Nivel 2 - Básico</SelectItem>
+                <SelectItem value="3">Nivel 3 - Intermedio</SelectItem>
+                <SelectItem value="4">Nivel 4 - Avanzado</SelectItem>
+                <SelectItem value="5">Nivel 5 - Experto</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {filteredPlayers.length === 0 ? (

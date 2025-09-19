@@ -17,7 +17,8 @@ import {
   Building2
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment } from "@/hooks/useStudentEnrollments";
-import { useClubs } from "@/hooks/useClubs";
+import { useAdminClubs } from "@/hooks/useClubs";
+import { Label } from "@/components/ui/label";
 
 const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +27,7 @@ const AdminStudentsList = () => {
   const [clubFilter, setClubFilter] = useState<string>("all");
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments();
-  const { data: clubs = [] } = useClubs();
+  const { data: clubs = [] } = useAdminClubs();
   
   console.log('📋 AdminStudentsList Data:', {
     studentsCount: students.length,
@@ -116,8 +117,9 @@ const AdminStudentsList = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Buscar</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -129,45 +131,54 @@ const AdminStudentsList = () => {
             </div>
           </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Activos</SelectItem>
-              <SelectItem value="inactive">Inactivos</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Estado</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="mensual">Mensual</SelectItem>
-              <SelectItem value="bimensual">Bimensual</SelectItem>
-              <SelectItem value="trimestral">Trimestral</SelectItem>
-              <SelectItem value="semestral">Semestral</SelectItem>
-              <SelectItem value="anual">Anual</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Período</Label>
+            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="mensual">Mensual</SelectItem>
+                <SelectItem value="bimensual">Bimensual</SelectItem>
+                <SelectItem value="trimestral">Trimestral</SelectItem>
+                <SelectItem value="semestral">Semestral</SelectItem>
+                <SelectItem value="anual">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={clubFilter} onValueChange={setClubFilter}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Club" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {clubs.map((club) => (
-                <SelectItem key={club.id} value={club.id}>
-                  {club.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Club</Label>
+            <Select value={clubFilter} onValueChange={setClubFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Club" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos mis clubes</SelectItem>
+                {clubs.map((club) => (
+                  <SelectItem key={club.id} value={club.id}>
+                    {club.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Students List */}
