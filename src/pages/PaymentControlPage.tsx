@@ -278,19 +278,26 @@ const PaymentControlPage = () => {
               {filteredPayments.map((payment) => (
                 <div key={payment.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium">{payment.student_enrollment.full_name}</h4>
-                        {getStatusBadge(payment.payment_status)}
-                        {payment.months_paid && payment.months_paid.length > 0 && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            {payment.months_paid.length} mes{payment.months_paid.length > 1 ? 'es' : ''}
-                          </Badge>
-                        )}
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <h4 className="font-medium">{payment.student_enrollment.full_name}</h4>
+                          {getStatusBadge(payment.payment_status)}
+                          {payment.months_paid && payment.months_paid.length > 0 && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {payment.months_paid.length} mes{payment.months_paid.length > 1 ? 'es' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{payment.student_enrollment.email}</p>
+                        <div className="text-xs text-muted-foreground">
+                          <span className="font-medium">{payment.programmed_class.name}</span>
+                          <span className="mx-2">•</span>
+                          <span>Inicio: {new Date(payment.programmed_class.start_date).toLocaleDateString()}</span>
+                          <span className="mx-2">•</span>
+                          <span>Fin: {new Date(payment.programmed_class.end_date).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{payment.student_enrollment.email}</p>
-                    </div>
                     
                     <div className="flex items-center space-x-2">
                       <div className="text-right">
