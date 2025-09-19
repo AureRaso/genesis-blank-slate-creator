@@ -101,24 +101,84 @@ export const useCreateProgrammedClass = () => {
 
   return useMutation({
     mutationFn: async (data: CreateProgrammedClassData) => {
-      console.log('Creating programmed class via edge function...');
+      console.log('Creating programmed class directly...');
       
-      // Call the edge function for better performance and reliability
-      const { data: result, error } = await supabase.functions.invoke('create-programmed-classes', {
-        body: data
-      });
+      // Create the base programmed class
+      const { data: createdClass, error: classError } = await supabase
+        .from("programmed_classes")
+        .insert([{
+          name: data.name,
+          level_from: data.level_from,
+          level_to: data.level_to,
+          custom_level: data.custom_level,
+          duration_minutes: data.duration_minutes,
+          start_time: data.start_time,
+          days_of_week: data.days_of_week,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          recurrence_type: data.recurrence_type,
+          trainer_profile_id: data.trainer_profile_id,
+          club_id: data.club_id,
+          court_number: data.court_number,
+          monthly_price: data.monthly_price || 0,
+          max_participants: data.max_participants || 8
+        }])
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
+      if (classError) {
+        console.error('Error creating programmed class:', classError);
+        throw classError;
       }
 
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to create programmed class');
+      console.log('Created programmed class:', createdClass.id);
+
+      // Handle participants if needed
+      if (data.group_id || (data.selected_students && data.selected_students.length > 0)) {
+        let participantsData: any[] = [];
+
+        if (data.group_id) {
+          // Get group members
+          const { data: groupMembers, error: groupError } = await supabase
+            .from("group_members")
+            .select("student_enrollment_id")
+            .eq("group_id", data.group_id)
+            .eq("is_active", true);
+
+          if (groupError) {
+            console.error('Error fetching group members:', groupError);
+            throw groupError;
+          }
+
+          participantsData = groupMembers.map(member => ({
+            class_id: createdClass.id,
+            student_enrollment_id: member.student_enrollment_id,
+            status: 'active'
+          }));
+        } else if (data.selected_students && data.selected_students.length > 0) {
+          participantsData = data.selected_students.map(studentId => ({
+            class_id: createdClass.id,
+            student_enrollment_id: studentId,
+            status: 'active'
+          }));
+        }
+
+        // Insert participants
+        if (participantsData.length > 0) {
+          console.log(`Creating ${participantsData.length} participants`);
+          const { error: participantsError } = await supabase
+            .from("class_participants")
+            .insert(participantsData);
+
+          if (participantsError) {
+            console.error('Error creating participants:', participantsError);
+            throw participantsError;
+          }
+        }
       }
 
-      console.log('Successfully created programmed class:', result);
-      return result;
+      console.log('Successfully created programmed class and participants');
+      return { success: true, class_id: createdClass.id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
