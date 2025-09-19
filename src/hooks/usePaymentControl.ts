@@ -9,8 +9,12 @@ export interface PaymentRecord {
   payment_status: string;
   payment_method?: string;
   payment_date?: string;
-  payment_verified: boolean;
   payment_notes?: string;
+  total_months?: number;
+  months_paid?: number[];
+  payment_type?: string;
+  total_amount_due?: number;
+  amount_paid?: number;
   created_at: string;
   updated_at: string;
   student_enrollment: {
@@ -109,14 +113,22 @@ export const useUpdatePaymentStatus = () => {
       participantId,
       paymentStatus,
       paymentMethod,
-      paymentVerified,
-      paymentNotes
+      paymentNotes,
+      totalMonths,
+      monthsPaid,
+      paymentType,
+      totalAmountDue,
+      amountPaid
     }: {
       participantId: string;
       paymentStatus: string;
       paymentMethod?: string;
-      paymentVerified?: boolean;
       paymentNotes?: string;
+      totalMonths?: number;
+      monthsPaid?: number[];
+      paymentType?: string;
+      totalAmountDue?: number;
+      amountPaid?: number;
     }) => {
       const updateData: any = {
         payment_status: paymentStatus,
@@ -124,8 +136,12 @@ export const useUpdatePaymentStatus = () => {
       };
 
       if (paymentMethod !== undefined) updateData.payment_method = paymentMethod;
-      if (paymentVerified !== undefined) updateData.payment_verified = paymentVerified;
       if (paymentNotes !== undefined) updateData.payment_notes = paymentNotes;
+      if (totalMonths !== undefined) updateData.total_months = totalMonths;
+      if (monthsPaid !== undefined) updateData.months_paid = monthsPaid;
+      if (paymentType !== undefined) updateData.payment_type = paymentType;
+      if (totalAmountDue !== undefined) updateData.total_amount_due = totalAmountDue;
+      if (amountPaid !== undefined) updateData.amount_paid = amountPaid;
 
       // Set payment date if status changes to paid
       if (paymentStatus === 'paid') {

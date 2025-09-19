@@ -36,8 +36,12 @@ const PaymentControlPage = () => {
   const [editForm, setEditForm] = useState({
     paymentStatus: "",
     paymentMethod: "",
-    paymentVerified: false,
-    paymentNotes: ""
+    paymentNotes: "",
+    totalMonths: 1,
+    monthsPaid: [] as number[],
+    paymentType: "monthly",
+    totalAmountDue: 0,
+    amountPaid: 0
   });
 
   const { data: clubs = [] } = useAdminClubs();
@@ -76,13 +80,30 @@ const PaymentControlPage = () => {
       <CreditCard className="h-4 w-4 text-blue-600" />;
   };
 
+  const calculateMonthsBetweenDates = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const yearDiff = end.getFullYear() - start.getFullYear();
+    const monthDiff = end.getMonth() - start.getMonth();
+    return Math.max(1, yearDiff * 12 + monthDiff + 1);
+  };
+
   const handleEditPayment = (payment: any) => {
     setEditingPayment(payment);
+    const totalMonths = payment.total_months || calculateMonthsBetweenDates(
+      payment.programmed_class.start_date, 
+      payment.programmed_class.end_date
+    );
+    
     setEditForm({
       paymentStatus: payment.payment_status,
       paymentMethod: payment.payment_method || "",
-      paymentVerified: payment.payment_verified,
-      paymentNotes: payment.payment_notes || ""
+      paymentNotes: payment.payment_notes || "",
+      totalMonths,
+      monthsPaid: payment.months_paid || [],
+      paymentType: payment.payment_type || "monthly",
+      totalAmountDue: payment.total_amount_due || (payment.programmed_class.monthly_price * totalMonths),
+      amountPaid: payment.amount_paid || 0
     });
   };
 
@@ -94,8 +115,12 @@ const PaymentControlPage = () => {
         participantId: editingPayment.id,
         paymentStatus: editForm.paymentStatus,
         paymentMethod: editForm.paymentMethod,
-        paymentVerified: editForm.paymentVerified,
-        paymentNotes: editForm.paymentNotes
+        paymentNotes: editForm.paymentNotes,
+        totalMonths: editForm.totalMonths,
+        monthsPaid: editForm.monthsPaid,
+        paymentType: editForm.paymentType,
+        totalAmountDue: editForm.totalAmountDue,
+        amountPaid: editForm.amountPaid
       });
       setEditingPayment(null);
     } catch (error) {
@@ -103,8 +128,44 @@ const PaymentControlPage = () => {
     }
   };
 
+  const handlePaymentTypeChange = (type: string) => {
+    setEditForm(prev => {
+      const newForm = { ...prev, paymentType: type };
+      
+      if (type === "full") {
+        // Pago completo: marcar todos los meses como pagados
+        newForm.monthsPaid = Array.from({ length: prev.totalMonths }, (_, i) => i + 1);
+        newForm.amountPaid = prev.totalAmountDue;
+        newForm.paymentStatus = "paid";
+      } else {
+        // Pago mensual: mantener los meses ya marcados
+        newForm.amountPaid = prev.monthsPaid.length * (prev.totalAmountDue / prev.totalMonths);
+      }
+      
+      return newForm;
+    });
+  };
+
+  const handleMonthToggle = (month: number) => {
+    setEditForm(prev => {
+      const monthsPaid = prev.monthsPaid.includes(month)
+        ? prev.monthsPaid.filter(m => m !== month)
+        : [...prev.monthsPaid, month].sort((a, b) => a - b);
+      
+      const monthlyPrice = prev.totalAmountDue / prev.totalMonths;
+      const amountPaid = monthsPaid.length * monthlyPrice;
+      
+      return {
+        ...prev,
+        monthsPaid,
+        amountPaid,
+        paymentStatus: monthsPaid.length > 0 ? "paid" : "pending"
+      };
+    });
+  };
+
   const totalAmount = filteredPayments.reduce((sum, payment) => 
-    sum + (payment.programmed_class.monthly_price || 0), 0
+    sum + (payment.total_amount_due || payment.programmed_class.monthly_price || 0), 0
   );
 
   return (
@@ -221,10 +282,10 @@ const PaymentControlPage = () => {
                       <div className="flex items-center space-x-2">
                         <h4 className="font-medium">{payment.student_enrollment.full_name}</h4>
                         {getStatusBadge(payment.payment_status)}
-                        {payment.payment_verified && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                        {payment.months_paid && payment.months_paid.length > 0 && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            Verificado
+                            {payment.months_paid.length} mes{payment.months_paid.length > 1 ? 'es' : ''}
                           </Badge>
                         )}
                       </div>
@@ -232,7 +293,16 @@ const PaymentControlPage = () => {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{payment.programmed_class.monthly_price}€</span>
+                      <div className="text-right">
+                        <div className="font-semibold">
+                          {payment.amount_paid?.toFixed(2) || '0.00'}€ de {payment.total_amount_due?.toFixed(2) || payment.programmed_class.monthly_price}€
+                        </div>
+                        {payment.months_paid && payment.total_months && (
+                          <div className="text-xs text-muted-foreground">
+                            {payment.months_paid.length}/{payment.total_months} meses
+                          </div>
+                        )}
+                      </div>
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button 
@@ -249,20 +319,55 @@ const PaymentControlPage = () => {
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
-                              <Label>Estado del pago</Label>
+                              <Label>Tipo de pago</Label>
                               <Select 
-                                value={editForm.paymentStatus} 
-                                onValueChange={(value) => setEditForm({...editForm, paymentStatus: value})}
+                                value={editForm.paymentType} 
+                                onValueChange={handlePaymentTypeChange}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="pending">Pendiente</SelectItem>
-                                  <SelectItem value="paid">Pagado</SelectItem>
-                                  
+                                  <SelectItem value="monthly">Pago mensual</SelectItem>
+                                  <SelectItem value="full">Pago completo</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            {editForm.paymentType === "monthly" && (
+                              <div>
+                                <Label>Mensualidades pagadas</Label>
+                                <div className="grid grid-cols-4 gap-2 mt-2">
+                                  {Array.from({ length: editForm.totalMonths }, (_, i) => i + 1).map(month => (
+                                    <div key={month} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        checked={editForm.monthsPaid.includes(month)}
+                                        onCheckedChange={() => handleMonthToggle(month)}
+                                      />
+                                      <Label className="text-sm">Mes {month}</Label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Total esperado</Label>
+                                <Input
+                                  type="number"
+                                  value={editForm.totalAmountDue}
+                                  onChange={(e) => setEditForm({...editForm, totalAmountDue: parseFloat(e.target.value) || 0})}
+                                />
+                              </div>
+                              <div>
+                                <Label>Total pagado</Label>
+                                <Input
+                                  type="number"
+                                  value={editForm.amountPaid}
+                                  onChange={(e) => setEditForm({...editForm, amountPaid: parseFloat(e.target.value) || 0})}
+                                />
+                              </div>
                             </div>
 
                             <div>
@@ -289,14 +394,6 @@ const PaymentControlPage = () => {
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={editForm.paymentVerified}
-                                onCheckedChange={(checked) => setEditForm({...editForm, paymentVerified: !!checked})}
-                              />
-                              <Label>Pago verificado</Label>
                             </div>
 
                             <div>
