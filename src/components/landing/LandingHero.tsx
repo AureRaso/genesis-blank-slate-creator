@@ -97,17 +97,20 @@ export const LandingHero = () => {
       <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           {/* Left Column - Content */}
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                <div className="mb-0">
-                  <img 
-                    src={padelockLogo} 
-                    alt="PadeLock Logo" 
-                    className="h-[400px] lg:h-[360px] w-auto"
-                  />
-                </div>
-                <span className="text-foreground">Digitaliza tu academia de pádel</span>
+          <div className="space-y-2">
+            {/* Logo */}
+            <div className="mb-0 mt-0">
+              <img 
+                src={padelockLogo} 
+                alt="PadeLock Logo" 
+                className="h-[120px] lg:h-[140px] w-auto mb-0 mt-0"
+              />
+            </div>
+            
+            {/* Title and Description */}
+            <div className="space-y-2">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-foreground mb-0 mt-0">
+                Digitaliza tu academia de pádel
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
