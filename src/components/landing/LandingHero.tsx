@@ -98,15 +98,15 @@ export const LandingHero = () => {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           {/* Left Column - Content */}
           <div className="space-y-6">
-            <div className="space-y-4">
+                     <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                <div>
-                <img 
-                  src={padelockLogo} 
-                  alt="PadeLock Logo" 
-                  className="h-160 lg:h-200 w-auto"
-                />
-              </div>
+                <div className="mb-2">
+                  <img 
+                    src={padelockLogo} 
+                    alt="PadeLock Logo" 
+                    className="h-16 lg:h-20 w-auto"
+                  />
+                </div>
                 <span className="text-foreground">Digitaliza tu club de pádel</span>
               </h1>
               
