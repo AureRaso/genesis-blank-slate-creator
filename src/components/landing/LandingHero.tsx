@@ -93,23 +93,23 @@ export const LandingHero = () => {
   };
   
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-2 lg:py-4">
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-8 lg:py-12">
       <div className="container max-w-7xl mx-auto px-4 w-full">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start w-full">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full min-h-[600px]">
           {/* Left Column - Content */}
-          <div className="space-y-0">
+          <div className="flex flex-col justify-center space-y-6">
             {/* Logo */}
-            <div className="mb-2 mt-0">
+            <div className="mb-4">
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
-                className="h-[420px] lg:h-[440px] w-auto mb-0 mt-0"
+                className="h-[120px] lg:h-[140px] w-auto"
               />
             </div>
             
             {/* Title and Description */}
-            <div className="space-y-3">
-              <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-foreground mb-0 mt-0">
+            <div className="space-y-4">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-foreground">
                 Digitaliza tu academia de pádel
               </h1>
               
@@ -119,7 +119,7 @@ export const LandingHero = () => {
             </div>
 
             {/* Key Features List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
                 <div className="w-3 h-3 bg-primary rounded-full flex-shrink-0"></div>
                 <span className="text-sm font-medium">Gestión avanzada de clases</span>
@@ -139,7 +139,7 @@ export const LandingHero = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 relative z-20 mt-4">
+            <div className="flex flex-col sm:flex-row gap-4 relative z-20">
               <Button 
                 size="lg" 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 relative z-10 pointer-events-auto" 
@@ -169,7 +169,7 @@ export const LandingHero = () => {
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-4">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-2">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 <span>Datos seguros y encriptados</span>
