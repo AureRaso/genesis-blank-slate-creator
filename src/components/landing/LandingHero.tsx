@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Smartphone, LogIn, Calendar, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import padelockLogo from "@/assets/padelock-logo.png";
+import padelockLogo from "@/assets/padelock-logo-red.png";
 
 export const LandingHero = () => {
   const navigate = useNavigate();
