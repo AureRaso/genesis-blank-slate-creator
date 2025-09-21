@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Smartphone, LogIn, Calendar, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import padelockLogo from "@/assets/padelock-logo-light.png";
 
 export const LandingHero = () => {
   const navigate = useNavigate();
@@ -98,11 +99,16 @@ export const LandingHero = () => {
           {/* Left Column - Content */}
           <div className="space-y-6">
             <div className="space-y-4">
+              {/* Logo */}
+              <div className="mb-6">
+                <img 
+                  src={padelockLogo} 
+                  alt="PadeLock Logo" 
+                  className="h-16 lg:h-20 w-auto"
+                />
+              </div>
+              
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  PadeLock
-                </span>
-                <br />
                 <span className="text-foreground">Digitaliza tu club de pádel</span>
               </h1>
               
