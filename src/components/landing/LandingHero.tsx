@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Smartphone, LogIn, Calendar, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import padelockLogo from "@/assets/padelock-logo-red.png";
+import padelockLogo from "@/assets/padelock-logo.png";
 
 export const LandingHero = () => {
   const navigate = useNavigate();
@@ -103,7 +103,7 @@ export const LandingHero = () => {
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
-                className="h-[420px] lg:h-[440px] w-auto"
+                className="h-[120px] lg:h-[140px] w-auto"
               />
             </div>
             
