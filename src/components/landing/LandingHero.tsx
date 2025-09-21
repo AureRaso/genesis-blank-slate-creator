@@ -93,17 +93,17 @@ export const LandingHero = () => {
   };
   
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 lg:py-20">
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-6 lg:py-10">
       <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           {/* Left Column - Content */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {/* Logo */}
             <div className="mb-0 mt-0">
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
-                className="h-[320px] lg:h-[340px] w-auto mb-0 mt-0"
+                className="h-[280px] lg:h-[300px] w-auto mb-0 mt-0"
               />
             </div>
             
