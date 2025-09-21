@@ -1,6 +1,5 @@
 import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Facebook, ArrowRight, Calendar, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import padelockLogoDark from "@/assets/padelock-logo-dark.jpg";
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
   const scrollToTop = () => {
@@ -17,11 +16,9 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <img 
-                  src={padelockLogoDark} 
-                  alt="PadeLock Logo" 
-                  className="h-12 w-auto"
-                />
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  PadeLock
+                </h3>
               </div>
               <p className="text-muted-foreground max-w-md">La plataforma todo-en-uno para la gestión digital de academias de pádel. Diseñada para optimizar operaciones y mejorar la experiencia de entrenadores y jugadores.</p>
             </div>
