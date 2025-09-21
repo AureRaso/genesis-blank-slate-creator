@@ -107,7 +107,7 @@ export const LandingHero = () => {
                     className="h-24 lg:h-32 w-auto"
                   />
                 </div>
-                <span className="text-foreground">Digitaliza tu club de pádel</span>
+                <span className="text-foreground">Digitaliza tu academia de pádel</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
