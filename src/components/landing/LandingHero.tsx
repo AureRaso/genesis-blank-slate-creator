@@ -100,7 +100,7 @@ export const LandingHero = () => {
           <div className="space-y-6">
             <div className="space-y-4">
               {/* Logo */}
-              <div className="mb-6">
+              <div className="mb-2">
                 <img 
                   src={padelockLogo} 
                   alt="PadeLock Logo" 
