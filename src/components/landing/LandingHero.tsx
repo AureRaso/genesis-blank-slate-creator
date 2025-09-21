@@ -103,7 +103,7 @@ export const LandingHero = () => {
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
-                className="h-[220px] lg:h-[240px] w-auto"
+                className="h-[120px] lg:h-[140px] w-auto"
               />
             </div>
             
