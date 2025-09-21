@@ -104,7 +104,7 @@ export const LandingHero = () => {
                   <img 
                     src={padelockLogo} 
                     alt="PadeLock Logo" 
-                    className="h-32 lg:h-48 w-auto"
+                    className="h-48 lg:h-64 w-auto"
                   />
                 </div>
                 <span className="text-foreground">Digitaliza tu academia de pádel</span>
