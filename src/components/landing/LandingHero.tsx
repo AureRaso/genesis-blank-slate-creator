@@ -99,7 +99,7 @@ export const LandingHero = () => {
           {/* Left Column - Content */}
           <div className="flex flex-col justify-center space-y-6">
             {/* Logo */}
-            <div className="mb-4">
+            <div className="mb-0">
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
