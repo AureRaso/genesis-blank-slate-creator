@@ -97,33 +97,29 @@ export const LandingHero = () => {
       <div className="container max-w-7xl mx-auto px-4 w-full">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
           {/* Left Column - Content */}
-          <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+          <div className="space-y-2">
             {/* Logo */}
-            <div className="flex-shrink-0">
+            <div className="mb-0 mt-0">
               <img 
                 src={padelockLogo} 
                 alt="PadeLock Logo" 
-                className="h-[200px] lg:h-[220px] w-auto"
+                className="h-[320px] lg:h-[340px] w-auto mb-0 mt-0"
               />
             </div>
             
             {/* Title and Description */}
-            <div className="flex-1 space-y-4">
-              <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight text-foreground">
+            <div className="space-y-2">
+              <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-foreground mb-0 mt-0">
                 Digitaliza tu academia de pádel
               </h1>
               
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
                 Software pensado por y para academias de padel, entrenadores y clientes. Ahorra tiempo y dinero en tu academia.
               </p>
             </div>
-          </div>
 
-          
-          {/* Features, Buttons and Trust Indicators */}
-          <div className="space-y-6 lg:col-span-2">
             {/* Key Features List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
                 <div className="w-3 h-3 bg-primary rounded-full flex-shrink-0"></div>
                 <span className="text-sm font-medium">Gestión avanzada de clases</span>
