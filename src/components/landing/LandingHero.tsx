@@ -100,11 +100,11 @@ export const LandingHero = () => {
           <div className="space-y-6">
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                <div className="mb-4">
+                <div className="mb-6">
                   <img 
                     src={padelockLogo} 
                     alt="PadeLock Logo" 
-                    className="h-24 lg:h-32 w-auto"
+                    className="h-32 lg:h-48 w-auto"
                   />
                 </div>
                 <span className="text-foreground">Digitaliza tu academia de pádel</span>
