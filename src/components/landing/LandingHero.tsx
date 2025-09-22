@@ -157,6 +157,8 @@ export const LandingHero = () => {
                 <Play className="mr-2 h-4 w-4" />
                 Ver Funcionalidades
               </Button>
+            </div>
+            
             {/* Trust Indicators */}
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-2">
               <div className="flex items-center space-x-2">
