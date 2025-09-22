@@ -157,17 +157,6 @@ export const LandingHero = () => {
                 <Play className="mr-2 h-4 w-4" />
                 Ver Funcionalidades
               </Button>
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                onClick={(e) => goToAuth(e)} 
-                className="text-primary hover:text-primary/80 relative z-10 pointer-events-auto"
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                Acceder al Panel
-              </Button>
-            </div>
-
             {/* Trust Indicators */}
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-2">
               <div className="flex items-center space-x-2">
