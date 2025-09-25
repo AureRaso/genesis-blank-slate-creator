@@ -72,6 +72,16 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
     trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
   );
   
+  // Debug logging - más detallado
+  console.log('Trainers loaded:', trainers);
+  console.log('Club ID:', clubId);
+  console.log('Trainers structure:', trainers.map(t => ({ 
+    id: t.id, 
+    profile_id: t.profile_id, 
+    profiles: t.profiles,
+    trainer_clubs: t.trainer_clubs 
+  })));
+  
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -114,7 +124,7 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
     // Create base classes for first time slot
     selectedCourtNumbers.forEach((courtNumber, index) => {
       const trainerId = selectedTrainerIds[index % selectedTrainerIds.length];
-      const trainer = trainers.find(t => t.id === trainerId);
+      const trainer = trainers.find(t => t.profile_id === trainerId);
       
       classes.push({
         id: `base-${courtNumber}-${baseConfig.first_class_time}`,
@@ -357,14 +367,14 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               {trainers.map((trainer) => (
-                <div key={trainer.id} className="flex items-center space-x-2">
+                <div key={trainer.profile_id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`trainer-${trainer.id}`}
-                    checked={selectedTrainerIds.includes(trainer.id)}
-                    onCheckedChange={(checked) => handleTrainerToggle(trainer.id, !!checked)}
-                    disabled={!selectedTrainerIds.includes(trainer.id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
+                    id={`trainer-${trainer.profile_id}`}
+                    checked={selectedTrainerIds.includes(trainer.profile_id)}
+                    onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
+                    disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
                   />
-                  <Label htmlFor={`trainer-${trainer.id}`} className="text-sm">
+                  <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm">
                     {trainer.profiles?.full_name || "Sin nombre"}
                   </Label>
                 </div>
