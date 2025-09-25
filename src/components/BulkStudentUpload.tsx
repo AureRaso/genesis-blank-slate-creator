@@ -20,17 +20,6 @@ interface StudentRow {
   email: string;
   phone: string;
   level: number;
-  weekly_days: string;
-  preferred_times: string;
-  enrollment_period: string;
-  enrollment_date?: string;
-  expected_end_date?: string;
-  course?: string;
-  discount_1?: number;
-  discount_2?: number;
-  first_payment?: number;
-  payment_method?: string;
-  observations?: string;
 }
 
 interface ValidationResult {
@@ -63,19 +52,16 @@ const BulkStudentUpload: React.FC<BulkStudentUploadProps> = ({ onClose }) => {
 
   const downloadTemplate = () => {
     const headers = [
-      'full_name', 'email', 'phone', 'level', 'weekly_days', 'preferred_times', 
-      'enrollment_period', 'enrollment_date', 'expected_end_date', 'course',
-      'discount_1', 'discount_2', 'first_payment', 'payment_method', 'observations'
+      'Nomre y Apellidos', 'Email', 'Telefono', 'Nivel de juego'
     ];
     
     const sampleData = [
-      'Juan Pérez', 'juan@email.com', '123456789', '3.5', 'lunes,miercoles', '18:00,19:00',
-      'mensual', '2024-01-15', '2024-12-15', 'Iniciación', '0', '0', '50', 'efectivo', 'Alumno principiante'
+      'Juan Pérez García', 'juan@email.com', '123456789', '3.5'
     ];
 
     const csvContent = [
-      headers.join(','),
-      sampleData.join(',')
+      headers.join(';'),
+      sampleData.join(';')
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -96,28 +82,28 @@ const BulkStudentUpload: React.FC<BulkStudentUploadProps> = ({ onClose }) => {
 
   const parseCSV = (text: string): StudentRow[] => {
     const lines = text.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const headers = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
     
     return lines.slice(1).map((line, index) => {
-      const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+      const values = line.split(';').map(v => v.trim().replace(/"/g, ''));
       const row: any = {};
+      
+      // Mapear los headers españoles a los campos internos
+      const headerMapping: { [key: string]: string } = {
+        'Nomre y Apellidos': 'full_name',
+        'Email': 'email',
+        'Telefono': 'phone',
+        'Nivel de juego': 'level'
+      };
       
       headers.forEach((header, i) => {
         const value = values[i] || '';
+        const fieldName = headerMapping[header] || header.toLowerCase();
         
-        switch (header) {
-          case 'level':
-          case 'discount_1':
-          case 'discount_2':
-          case 'first_payment':
-            row[header] = value ? parseFloat(value) : undefined;
-            break;
-          case 'weekly_days':
-          case 'preferred_times':
-            row[header] = value;
-            break;
-          default:
-            row[header] = value || undefined;
+        if (fieldName === 'level') {
+          row[fieldName] = value ? parseFloat(value) : undefined;
+        } else {
+          row[fieldName] = value || undefined;
         }
       });
       
@@ -142,18 +128,6 @@ const BulkStudentUpload: React.FC<BulkStudentUploadProps> = ({ onClose }) => {
     
     if (!row.level || row.level < 1 || row.level > 10) {
       errors.push("Nivel debe estar entre 1 y 10");
-    }
-    
-    if (!row.weekly_days) {
-      errors.push("Días de la semana requeridos");
-    }
-    
-    if (!row.preferred_times) {
-      errors.push("Horarios preferidos requeridos");
-    }
-    
-    if (!row.enrollment_period) {
-      errors.push("Periodo de inscripción requerido");
     }
     
     return {
@@ -231,8 +205,9 @@ const BulkStudentUpload: React.FC<BulkStudentUploadProps> = ({ onClose }) => {
       const studentsData = validRows.map(row => ({
         ...row.validation.data!,
         club_id: selectedClubId,
-        weekly_days: row.weekly_days.split(',').map(d => d.trim()),
-        preferred_times: row.preferred_times.split(',').map(t => t.trim())
+        weekly_days: [], // Campo vacío por defecto
+        preferred_times: [], // Campo vacío por defecto
+        enrollment_period: 'mensual' // Valor por defecto
       }));
 
       // Call bulk processing edge function

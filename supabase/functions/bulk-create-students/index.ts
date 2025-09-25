@@ -11,10 +11,10 @@ interface StudentData {
   email: string;
   phone: string;
   level: number;
-  weekly_days: string[];
-  preferred_times: string[];
-  enrollment_period: string;
   club_id: string;
+  weekly_days?: string[];
+  preferred_times?: string[];
+  enrollment_period?: string;
   enrollment_date?: string;
   expected_end_date?: string;
   course?: string;
@@ -120,8 +120,8 @@ const handler = async (req: Request): Promise<Response> => {
             console.log(`Processing student ${rowIndex}: ${student.email}`);
             
             // Validate required fields
-            if (!student.email || !student.full_name || !student.phone || !student.club_id) {
-              throw new Error("Missing required fields");
+            if (!student.email || !student.full_name || !student.phone || !student.club_id || !student.level) {
+              throw new Error("Missing required fields: name, email, phone, level");
             }
 
             // Check if user already exists
@@ -144,10 +144,6 @@ const handler = async (req: Request): Promise<Response> => {
                 user_metadata: {
                   full_name: student.full_name,
                   role: "player"
-                },
-                raw_user_meta_data: {
-                  full_name: student.full_name,
-                  club_id: student.club_id
                 }
               });
 
@@ -189,9 +185,9 @@ const handler = async (req: Request): Promise<Response> => {
               email: student.email,
               phone: student.phone,
               level: student.level,
-              weekly_days: student.weekly_days,
-              preferred_times: student.preferred_times,
-              enrollment_period: student.enrollment_period,
+              weekly_days: student.weekly_days || [],
+              preferred_times: student.preferred_times || [],
+              enrollment_period: student.enrollment_period || 'mensual',
               club_id: student.club_id,
               created_by_profile_id: user.id,
               trainer_profile_id: user.id,
