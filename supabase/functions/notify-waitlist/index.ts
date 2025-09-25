@@ -153,7 +153,7 @@ serve(async (req) => {
     const message = `🎾 ¡PLAZA DISPONIBLE!
 
 📋 Clase: ${classInfo.name}
-🏟️ Club: ${classInfo.clubs.name}
+🏟️ Club: ${(classInfo as any).clubs?.name || 'Club'}
 📅 Días: ${daysText}
 ⏰ Hora: ${timeText}
 👥 Plazas disponibles: ${availableSpots}

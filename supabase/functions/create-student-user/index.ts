@@ -78,10 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
       email_confirm: true, // Auto-confirm email
       user_metadata: {
         full_name: full_name,
-        role: "player"
-      },
-      raw_user_meta_data: {
-        full_name: full_name,
+        role: "player",
         club_id: club_id
       }
     });
