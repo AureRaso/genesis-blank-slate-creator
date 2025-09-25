@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ScheduledClassForm from "@/components/ScheduledClassForm";
-import { BulkClassCreator } from "@/components/BulkClassCreator";
+import { ImprovedBulkClassCreator } from "@/components/ImprovedBulkClassCreator";
 import ClassCalendarView from "@/components/ClassCalendarView";
 import ClassListView from "@/components/ClassListView";
 import ClassFilters from "@/components/ClassFilters";
@@ -149,17 +149,17 @@ function ScheduledClassesContent() {
 
       {/* Dialog for bulk class creation */}
       <Dialog open={showBulkCreator} onOpenChange={setShowBulkCreator}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
-              Creación Masiva de Clases
+              Creación Masiva Inteligente
             </DialogTitle>
             <DialogDescription>
-              Crea múltiples clases programadas de forma automática configurando horarios masivos
+              Selecciona múltiples pistas, entrenadores y crea clases de forma inteligente
             </DialogDescription>
           </DialogHeader>
-          <BulkClassCreator
+          <ImprovedBulkClassCreator
             clubId={currentClub.id}
             onClose={() => setShowBulkCreator(false)}
             onSuccess={() => {

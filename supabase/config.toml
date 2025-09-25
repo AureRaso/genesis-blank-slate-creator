@@ -12,6 +12,9 @@ verify_jwt = true
 [functions.bulk-create-classes]
 verify_jwt = true
 
+[functions.intelligent-bulk-create-classes]
+verify_jwt = true
+
 [functions.stripe-connect]
 verify_jwt = true
 
