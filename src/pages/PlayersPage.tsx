@@ -3,13 +3,15 @@ import { useState } from "react";
 import PlayersList from "@/components/PlayersList";
 import AdminStudentsList from "@/components/AdminStudentsList";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
+import BulkStudentUpload from "@/components/BulkStudentUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Upload } from "lucide-react";
 
 const PlayersPage = () => {
   const { isAdmin, loading, profile } = useAuth();
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   
   console.log('🏠 PlayersPage Auth Check:', {
     isAdmin,
@@ -38,6 +40,16 @@ const PlayersPage = () => {
     );
   }
 
+  if (showBulkUpload) {
+    return (
+      <div className="space-y-6">
+        <BulkStudentUpload 
+          onClose={() => setShowBulkUpload(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -50,10 +62,16 @@ const PlayersPage = () => {
           </p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setShowStudentForm(true)} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Nueva Inscripción
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={() => setShowStudentForm(true)} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Nueva Inscripción
+            </Button>
+            <Button onClick={() => setShowBulkUpload(true)} variant="outline">
+              <Upload className="mr-2 h-4 w-4" />
+              Subida Masiva
+            </Button>
+          </div>
         )}
       </div>
 

@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.detect-available-spots]
 verify_jwt = false
 
+[functions.bulk-create-students]
+verify_jwt = true
+
 [functions.stripe-connect]
 verify_jwt = true
 
