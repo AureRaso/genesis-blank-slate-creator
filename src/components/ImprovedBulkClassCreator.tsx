@@ -15,7 +15,7 @@ import { useAdminTrainers } from "@/hooks/useTrainers";
 import { useClubs } from "@/hooks/useClubs";
 
 interface ImprovedBulkClassCreatorProps {
-  clubId: string;
+  clubId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -64,23 +64,22 @@ const DAYS_OPTIONS = [
   { value: "domingo", label: "Domingo" }
 ];
 
-export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: ImprovedBulkClassCreatorProps) {
+export function ImprovedBulkClassCreator({ clubId: initialClubId, onClose, onSuccess }: ImprovedBulkClassCreatorProps) {
   const { toast } = useToast();
   const { data: clubs = [] } = useClubs();
   const { data: allTrainers = [] } = useAdminTrainers();
+  
+  // Estado para el club seleccionado
+  const [selectedClubId, setSelectedClubId] = useState<string>(initialClubId || '');
+  
   const trainers = allTrainers.filter(trainer => 
-    trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
+    selectedClubId && trainer.trainer_clubs?.some(tc => tc.club_id === selectedClubId)
   );
   
   // Debug logging - más detallado
+  console.log('Selected Club ID:', selectedClubId);
   console.log('Trainers loaded:', trainers);
-  console.log('Club ID:', clubId);
-  console.log('Trainers structure:', trainers.map(t => ({ 
-    id: t.id, 
-    profile_id: t.profile_id, 
-    profiles: t.profiles,
-    trainer_clubs: t.trainer_clubs 
-  })));
+  console.log('Available clubs:', clubs);
   
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -109,7 +108,7 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
   
   const [generatedClasses, setGeneratedClasses] = useState<GeneratedClass[]>([]);
 
-  const selectedClub = clubs.find(club => club.id === clubId);
+  const selectedClub = clubs.find(club => club.id === selectedClubId);
   const maxCourts = selectedClub?.court_count || 1;
   const availableCourts = Array.from({ length: maxCourts }, (_, i) => i + 1);
 
@@ -270,7 +269,7 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
         end_date: baseConfig.end_date,
         recurrence_type: "weekly",
         trainer_profile_id: cls.trainer_profile_id,
-        club_id: clubId,
+        club_id: selectedClubId,
         court_number: cls.court_number,
         monthly_price: cls.monthly_price,
         max_participants: cls.max_participants
@@ -319,69 +318,100 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
   // STEP 1: Base Configuration
   if (step === 1) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold">Configuración Inteligente</h3>
-          <p className="text-sm text-muted-foreground">
-            Selecciona pistas, entrenadores y configuración base
-          </p>
-        </div>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">Configuración Inteligente</h3>
+            <p className="text-sm text-muted-foreground">
+              Selecciona club, pistas, entrenadores y configuración base
+            </p>
+          </div>
 
-        {/* Courts Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Pistas Seleccionadas ({selectedCourtNumbers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 gap-3">
-              {availableCourts.map((courtNumber) => (
-                <div key={courtNumber} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`court-${courtNumber}`}
-                    checked={selectedCourtNumbers.includes(courtNumber)}
-                    onCheckedChange={(checked) => handleCourtToggle(courtNumber, !!checked)}
-                  />
-                  <Label htmlFor={`court-${courtNumber}`} className="text-sm">
-                    Pista {courtNumber}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          {/* Club Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Seleccionar Club
+              </CardTitle>
+              <CardDescription>
+                Elige el club donde se crearán las clases
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecciona un club" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
-        {/* Trainers Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Entrenadores Seleccionados ({selectedTrainerIds.length})
-            </CardTitle>
-            <CardDescription>
-              Máximo: {selectedCourtNumbers.length} entrenadores
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {trainers.map((trainer) => (
-                <div key={trainer.profile_id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`trainer-${trainer.profile_id}`}
-                    checked={selectedTrainerIds.includes(trainer.profile_id)}
-                    onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
-                    disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
-                  />
-                  <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm">
-                    {trainer.profiles?.full_name || "Sin nombre"}
-                  </Label>
+          {/* Courts Selection - Solo mostrar si hay club seleccionado */}
+          {selectedClubId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Pistas Seleccionadas ({selectedCourtNumbers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-3">
+                  {Array.from({ length: clubs.find(c => c.id === selectedClubId)?.court_count || 8 }, (_, i) => i + 1).map((courtNumber) => (
+                    <div key={courtNumber} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`court-${courtNumber}`}
+                        checked={selectedCourtNumbers.includes(courtNumber)}
+                        onCheckedChange={(checked) => handleCourtToggle(courtNumber, !!checked)}
+                      />
+                      <Label htmlFor={`court-${courtNumber}`} className="text-sm">
+                        Pista {courtNumber}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Trainers Selection - Solo mostrar si hay club seleccionado */}
+          {selectedClubId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Entrenadores Seleccionados ({selectedTrainerIds.length})
+                </CardTitle>
+                <CardDescription>
+                  Máximo: {selectedCourtNumbers.length} entrenadores
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  {trainers.map((trainer) => (
+                    <div key={trainer.profile_id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`trainer-${trainer.profile_id}`}
+                        checked={selectedTrainerIds.includes(trainer.profile_id)}
+                        onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
+                        disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
+                      />
+                      <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm">
+                        {trainer.profiles?.full_name || "Sin nombre"}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
         {/* Base Class Config */}
         <div className="grid grid-cols-2 gap-4">

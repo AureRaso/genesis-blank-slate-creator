@@ -160,7 +160,6 @@ function ScheduledClassesContent() {
             </DialogDescription>
           </DialogHeader>
           <ImprovedBulkClassCreator
-            clubId={currentClub.id}
             onClose={() => setShowBulkCreator(false)}
             onSuccess={() => {
               setShowBulkCreator(false);
