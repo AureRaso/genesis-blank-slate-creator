@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CalendarDays, Clock, Users, MapPin, DollarSign, Edit3, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useTrainers } from "@/hooks/useTrainers";
+import { useAdminTrainers } from "@/hooks/useTrainers";
 import { useClubs } from "@/hooks/useClubs";
 
 interface ImprovedBulkClassCreatorProps {
@@ -67,7 +67,7 @@ const DAYS_OPTIONS = [
 export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: ImprovedBulkClassCreatorProps) {
   const { toast } = useToast();
   const { data: clubs = [] } = useClubs();
-  const { data: allTrainers = [] } = useTrainers();
+  const { data: allTrainers = [] } = useAdminTrainers();
   const trainers = allTrainers.filter(trainer => 
     trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
   );
@@ -114,7 +114,7 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
     // Create base classes for first time slot
     selectedCourtNumbers.forEach((courtNumber, index) => {
       const trainerId = selectedTrainerIds[index % selectedTrainerIds.length];
-      const trainer = trainers.find(t => t.profile_id === trainerId);
+      const trainer = trainers.find(t => t.id === trainerId);
       
       classes.push({
         id: `base-${courtNumber}-${baseConfig.first_class_time}`,
@@ -357,14 +357,14 @@ export function ImprovedBulkClassCreator({ clubId, onClose, onSuccess }: Improve
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               {trainers.map((trainer) => (
-                <div key={trainer.profile_id} className="flex items-center space-x-2">
+                <div key={trainer.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`trainer-${trainer.profile_id}`}
-                    checked={selectedTrainerIds.includes(trainer.profile_id)}
-                    onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
-                    disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
+                    id={`trainer-${trainer.id}`}
+                    checked={selectedTrainerIds.includes(trainer.id)}
+                    onCheckedChange={(checked) => handleTrainerToggle(trainer.id, !!checked)}
+                    disabled={!selectedTrainerIds.includes(trainer.id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
                   />
-                  <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm">
+                  <Label htmlFor={`trainer-${trainer.id}`} className="text-sm">
                     {trainer.profiles?.full_name || "Sin nombre"}
                   </Label>
                 </div>
