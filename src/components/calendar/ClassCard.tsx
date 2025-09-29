@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
+import { useClassParticipants } from "@/hooks/useClassParticipants";
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
   onDragStart?: () => void;
@@ -245,7 +246,8 @@ function AdminClassDetailsModal({
   class: cls,
   onEditClass
 }: AdminClassDetailsModalProps) {
-  const enrolledCount = cls.participants?.length || 0;
+  const { data: participants = [] } = useClassParticipants(cls.id);
+  const enrolledCount = participants.length;
   const {
     isAdmin,
     profile
@@ -415,7 +417,7 @@ function AdminClassDetailsModal({
 
           <TabsContent value="students" className="mt-6">
             <div className="bg-muted/30 rounded-xl p-6">
-              {cls.participants && cls.participants.length > 0 ? <div className="space-y-4">
+              {participants && participants.length > 0 ? <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg">Lista de alumnos</h3>
                     <Badge variant="secondary" className="text-sm">
@@ -424,7 +426,7 @@ function AdminClassDetailsModal({
                   </div>
                   
                   <div className="grid gap-3 max-h-80 overflow-y-auto">
-                    {cls.participants.map(participant => <div key={participant.id} className="flex items-center justify-between p-4 bg-background rounded-lg border hover:bg-muted/50 transition-colors">
+                    {participants.map(participant => <div key={participant.id} className="flex items-center justify-between p-4 bg-background rounded-lg border hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <Users className="h-4 w-4 text-primary" />
@@ -436,11 +438,19 @@ function AdminClassDetailsModal({
                             <div className="text-sm text-muted-foreground">
                               {participant.student_enrollment?.email || 'Sin email'}
                             </div>
+                            <div className="text-xs text-muted-foreground">
+                              Nivel: {participant.student_enrollment?.level || 'No especificado'}
+                            </div>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={participant.payment_status === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                            {participant.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
+                          </Badge>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>)}
                   </div>
                 </div> : <div className="text-center py-12">
@@ -457,7 +467,7 @@ function AdminClassDetailsModal({
                   </Button>
                 </div>}
               
-              {cls.participants && cls.participants.length > 0 && <div className="pt-6 border-t mt-6">
+              {participants && participants.length > 0 && <div className="pt-6 border-t mt-6">
                   <Button variant="outline" className="gap-2" onClick={() => setShowManageStudents(true)}>
                     <UserPlus className="h-4 w-4" />
                     Añadir Alumno
