@@ -42,13 +42,21 @@ const AppSidebar = () => {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Mis Clases</SidebarGroupLabel>
+            <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                 <Link to="/dashboard">
                   <GraduationCap />
                   <span>{t('sidebar.dashboard')}</span>
+                </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                <Link to="/dashboard/students">
+                  <Users />
+                  <span>Alumnos</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
