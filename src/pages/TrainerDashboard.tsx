@@ -8,11 +8,12 @@ import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useProgrammedClasses, useDeleteProgrammedClass } from "@/hooks/useProgrammedClasses";
 import ScheduledClassForm from "@/components/ScheduledClassForm";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
-import StudentsList from "@/components/StudentsList";
+import TrainerStudentsList from "@/components/TrainerStudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
 import TrainerNotifications from "@/components/TrainerNotifications";
 import WaitlistDebugger from "@/components/WaitlistDebugger";
 import StudentEditModal from "@/components/StudentEditModal";
+import { AssignStudentToClassModal } from "@/components/AssignStudentToClassModal";
 import { ProgrammedClass } from "@/hooks/useProgrammedClasses";
 import { StudentEnrollment, useDeleteStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { Link } from "react-router-dom";
@@ -41,8 +42,10 @@ const TrainerDashboard = () => {
   const [showStudentForm, setShowStudentForm] = useState(initialState.showStudentForm);
   const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
   const [viewingStudent, setViewingStudent] = useState<StudentEnrollment | undefined>();
+  const [assigningStudent, setAssigningStudent] = useState<StudentEnrollment | undefined>();
   const [activeTab, setActiveTab] = useState(initialState.activeTab);
   const [isStudentEditModalOpen, setIsStudentEditModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
   // Persist state changes
   useEffect(() => {
@@ -104,6 +107,11 @@ const TrainerDashboard = () => {
     if (confirm('¿Estás seguro de que quieres eliminar completamente este alumno? Esta acción no se puede deshacer.')) {
       deleteStudentMutation.mutate(studentId);
     }
+  };
+
+  const handleAssignToClass = (student: StudentEnrollment) => {
+    setAssigningStudent(student);
+    setIsAssignModalOpen(true);
   };
   const handleCloseStudentForm = () => {
     setShowStudentForm(false);
@@ -302,7 +310,12 @@ const TrainerDashboard = () => {
             </Button>
           </div>
 
-          <StudentsList onViewStudent={handleViewStudent} onEditStudent={handleEditStudent} onDeleteStudent={handleDeleteStudent} />
+          <TrainerStudentsList 
+            onViewStudent={handleViewStudent} 
+            onEditStudent={handleEditStudent} 
+            onDeleteStudent={handleDeleteStudent}
+            onAssignToClass={handleAssignToClass}
+          />
         </TabsContent>
 
         {/* Groups Tab */}
@@ -318,6 +331,16 @@ const TrainerDashboard = () => {
         onClose={() => {
           setIsStudentEditModalOpen(false);
           setEditingStudent(undefined);
+        }}
+      />
+
+      {/* Assign Student to Class Modal */}
+      <AssignStudentToClassModal
+        student={assigningStudent || null}
+        isOpen={isAssignModalOpen}
+        onClose={() => {
+          setIsAssignModalOpen(false);
+          setAssigningStudent(undefined);
         }}
       />
 

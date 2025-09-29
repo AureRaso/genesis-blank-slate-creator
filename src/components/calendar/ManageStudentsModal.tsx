@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Search, UserPlus, UserMinus, Mail, User, Loader2, CreditCard, Banknote, CheckCircle } from "lucide-react";
 import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useClassParticipants, useBulkUpdateClassParticipants } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useUpdateClassParticipant } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -52,7 +52,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   });
   
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
-  const bulkUpdateMutation = useBulkUpdateClassParticipants();
+  const updateMutation = useUpdateClassParticipant();
 
   // Filter students by search term and exclude current participants
   const availableStudents = allStudents?.filter(student => 
@@ -134,11 +134,10 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     }
 
     try {
-      await bulkUpdateMutation.mutateAsync({
-        classId: cls.id,
-        studentsToAdd,
-        participantsToRemove,
-        paymentData
+      // For now, just show a message that this feature needs implementation
+      toast({
+        title: "Funcionalidad en desarrollo",
+        description: "La gestión masiva de estudiantes se implementará próximamente",
       });
       
       // Reset selections
@@ -156,7 +155,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   };
 
   const isLoading = studentsLoading || participantsLoading;
-  const isSaving = bulkUpdateMutation.isPending;
+  const isSaving = updateMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

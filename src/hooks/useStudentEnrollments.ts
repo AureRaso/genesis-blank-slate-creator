@@ -78,7 +78,10 @@ export const useStudentEnrollments = () => {
 
       if (profileError) throw profileError;
 
-      let query = supabase.from("student_enrollments").select("*");
+      let query = supabase.from("student_enrollments").select(`
+        *,
+        clubs(name, status)
+      `);
 
       // If user is a trainer, get all students from their assigned clubs
       if (userProfile.role === 'trainer') {
@@ -103,7 +106,15 @@ export const useStudentEnrollments = () => {
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as StudentEnrollment[];
+      
+      // Transform data to include club information
+      const studentsWithClubs = (data || []).map(student => ({
+        ...student,
+        club_name: student.clubs?.name || 'Club desconocido',
+        club_status: student.clubs?.status || null,
+      }));
+
+      return studentsWithClubs as StudentEnrollment[];
     },
   });
 };

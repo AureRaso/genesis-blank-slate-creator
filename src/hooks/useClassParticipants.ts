@@ -1,37 +1,60 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export interface ClassParticipant {
   id: string;
   class_id: string;
   student_enrollment_id: string;
   status: string;
+  payment_status: string;
+  payment_verified: boolean;
+  amount_paid: number;
+  total_amount_due: number;
+  payment_method?: string;
+  payment_notes?: string;
   discount_1?: number;
   discount_2?: number;
-  payment_status: string;
-  payment_method?: string;
+  payment_type: string;
   payment_date?: string;
-  payment_verified: boolean;
-  payment_notes?: string;
+  months_paid?: number[];
+  total_months?: number;
   created_at: string;
   updated_at: string;
-  student_enrollment: {
+  // Related data
+  student_enrollment?: {
     id: string;
     full_name: string;
     email: string;
     phone: string;
     level: number;
   };
+  programmed_class?: {
+    id: string;
+    name: string;
+    monthly_price: number;
+  };
+}
+
+export interface CreateClassParticipantData {
+  class_id: string;
+  student_enrollment_id: string;
+  status?: string;
+  payment_status?: string;
+  amount_paid?: number;
+  total_amount_due?: number;
+  payment_method?: string;
+  payment_notes?: string;
+  discount_1?: number;
+  discount_2?: number;
+  payment_verified?: boolean;
 }
 
 export const useClassParticipants = (classId?: string) => {
   return useQuery({
     queryKey: ["class-participants", classId],
     queryFn: async () => {
-      if (!classId) return [];
-      
-      const { data, error } = await supabase
+      let query = supabase
         .from("class_participants")
         .select(`
           *,
@@ -41,10 +64,19 @@ export const useClassParticipants = (classId?: string) => {
             email,
             phone,
             level
+          ),
+          programmed_class:programmed_classes(
+            id,
+            name,
+            monthly_price
           )
-        `)
-        .eq("class_id", classId)
-        .eq("status", "active");
+        `);
+
+      if (classId) {
+        query = query.eq("class_id", classId);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as ClassParticipant[];
@@ -53,48 +85,23 @@ export const useClassParticipants = (classId?: string) => {
   });
 };
 
-export const useAddStudentToClass = () => {
+export const useCreateClassParticipant = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ 
-      classId, 
-      studentId, 
-      paymentMethod, 
-      paymentStatus = 'pending',
-      paymentNotes 
-    }: { 
-      classId: string; 
-      studentId: string; 
-      paymentMethod?: string;
-      paymentStatus?: string;
-      paymentNotes?: string;
-    }) => {
-      // Check if student is already in the class
-      const { data: existing } = await supabase
-        .from("class_participants")
-        .select("id")
-        .eq("class_id", classId)
-        .eq("student_enrollment_id", studentId)
-        .eq("status", "active")
-        .single();
-
-      if (existing) {
-        throw new Error("El alumno ya está inscrito en esta clase");
-      }
+    mutationFn: async (participantData: CreateClassParticipantData) => {
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) throw new Error("No authenticated user");
 
       const { data, error } = await supabase
         .from("class_participants")
         .insert({
-          class_id: classId,
-          student_enrollment_id: studentId,
-          status: "active",
-          payment_status: paymentStatus,
-          payment_method: paymentMethod,
-          payment_date: paymentStatus === 'paid' ? new Date().toISOString() : null,
-          payment_verified: false,
-          payment_notes: paymentNotes
+          ...participantData,
+          status: participantData.status || "active",
+          payment_status: participantData.payment_status || "pending",
+          payment_verified: participantData.payment_verified || false,
+          amount_paid: participantData.amount_paid || 0,
+          total_amount_due: participantData.total_amount_due || 0,
         })
         .select()
         .single();
@@ -102,136 +109,82 @@ export const useAddStudentToClass = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { classId }) => {
-      queryClient.invalidateQueries({ queryKey: ["class-participants", classId] });
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-classes"] });
       toast({
-        title: "Alumno añadido",
-        description: "El alumno ha sido añadido a la clase correctamente."
+        title: "Alumno asignado",
+        description: "El alumno ha sido asignado a la clase correctamente",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "No se pudo añadir el alumno a la clase.",
-        variant: "destructive"
+        description: error.message || "No se pudo asignar el alumno a la clase",
+        variant: "destructive",
       });
     },
   });
 };
 
-export const useRemoveStudentFromClass = () => {
+export const useUpdateClassParticipant = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (participantId: string) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateClassParticipantData> }) => {
       const { error } = await supabase
         .from("class_participants")
-        .update({ status: "inactive" })
-        .eq("id", participantId);
+        .update(data)
+        .eq("id", id);
 
       if (error) throw error;
     },
-    onSuccess: (_, participantId) => {
-      // Get the class_id from the participant to invalidate the right queries
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-classes"] });
       toast({
-        title: "Alumno eliminado",
-        description: "El alumno ha sido eliminado de la clase correctamente."
+        title: "Participante actualizado",
+        description: "Los datos del participante han sido actualizados correctamente",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "No se pudo eliminar el alumno de la clase.",
-        variant: "destructive"
+        description: error.message || "No se pudo actualizar el participante",
+        variant: "destructive",
       });
     },
   });
 };
 
-export const useBulkUpdateClassParticipants = () => {
+export const useDeleteClassParticipant = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ 
-      classId, 
-      studentsToAdd, 
-      participantsToRemove,
-      paymentData = {}
-    }: { 
-      classId: string; 
-      studentsToAdd: string[]; 
-      participantsToRemove: string[];
-      paymentData?: Record<string, {
-        paymentMethod?: string;
-        paymentStatus?: string;
-        paymentNotes?: string;
-      }>
-    }) => {
-      // Remove students (set status to inactive)
-      if (participantsToRemove.length > 0) {
-        const { error: removeError } = await supabase
-          .from("class_participants")
-          .update({ status: "inactive" })
-          .in("id", participantsToRemove);
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("class_participants")
+        .delete()
+        .eq("id", id);
 
-        if (removeError) throw removeError;
-      }
-
-      // Add new students
-      if (studentsToAdd.length > 0) {
-        // Check for existing participants to avoid duplicates
-        const { data: existing } = await supabase
-          .from("class_participants")
-          .select("student_enrollment_id")
-          .eq("class_id", classId)
-          .eq("status", "active")
-          .in("student_enrollment_id", studentsToAdd);
-
-        const existingIds = existing?.map(p => p.student_enrollment_id) || [];
-        const newStudents = studentsToAdd.filter(id => !existingIds.includes(id));
-
-        if (newStudents.length > 0) {
-          const participantsToInsert = newStudents.map(studentId => {
-            const payment = paymentData[studentId] || {};
-            return {
-              class_id: classId,
-              student_enrollment_id: studentId,
-              status: "active",
-              payment_status: payment.paymentStatus || 'pending',
-              payment_method: payment.paymentMethod,
-              payment_date: payment.paymentStatus === 'paid' ? new Date().toISOString() : null,
-              payment_verified: false,
-              payment_notes: payment.paymentNotes
-            };
-          });
-
-          const { error: addError } = await supabase
-            .from("class_participants")
-            .insert(participantsToInsert);
-
-          if (addError) throw addError;
-        }
-      }
+      if (error) throw error;
     },
-    onSuccess: (_, { classId }) => {
-      queryClient.invalidateQueries({ queryKey: ["class-participants", classId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
-      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-classes"] });
       toast({
-        title: "Alumnos actualizados",
-        description: "Los cambios se han guardado correctamente."
+        title: "Participante eliminado",
+        description: "El participante ha sido eliminado de la clase",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "No se pudieron guardar los cambios.",
-        variant: "destructive"
+        description: error.message || "No se pudo eliminar el participante",
+        variant: "destructive",
       });
     },
   });
