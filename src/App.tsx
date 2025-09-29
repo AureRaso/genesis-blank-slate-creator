@@ -20,6 +20,7 @@ import ClubFormPage from "@/pages/ClubFormPage";
 import NotFound from "@/pages/NotFound";
 import TrainersPage from "@/pages/TrainersPage";
 import TrainerDashboard from "@/pages/TrainerDashboard";
+import TrainerStudentsPage from "@/pages/TrainerStudentsPage";
 import LogoutPage from "@/pages/LogoutPage";
 import StudentEnrollmentLink from "@/pages/StudentEnrollmentLink";
 import ScheduledClassesPage from "@/pages/ScheduledClassesPage";
@@ -137,6 +138,7 @@ function App() {
                   <>
                     <Route path="/" element={<TrainerDashboard />} />
                     <Route path="/dashboard" element={<TrainerDashboard />} />
+                    <Route path="/students" element={<TrainerStudentsPage />} />
                     <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="*" element={<Navigate to="/" replace />} />

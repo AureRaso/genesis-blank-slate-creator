@@ -163,7 +163,13 @@ const TrainerDashboard = () => {
         {/* Quick Actions */}
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link to="/scheduled-classes">
+            <Link to="/dashboard/students">
+              <Users className="mr-2 h-4 w-4" />
+              Gestionar Alumnos
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/dashboard/scheduled-classes">
               <CalendarCheck className="mr-2 h-4 w-4" />
               Clases Programadas
             </Link>
