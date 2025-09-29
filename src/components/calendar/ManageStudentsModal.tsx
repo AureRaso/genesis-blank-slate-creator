@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Search, UserPlus, UserMinus, Mail, User, Loader2, CreditCard, Banknote, CheckCircle } from "lucide-react";
 import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useClassParticipants, useUpdateClassParticipant } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useUpdateClassParticipant, useCreateClassParticipant } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -53,6 +53,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const updateMutation = useUpdateClassParticipant();
+  const createMutation = useCreateClassParticipant();
 
   // Filter students by search term and exclude current participants
   const availableStudents = allStudents?.filter(student => 
@@ -134,10 +135,30 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     }
 
     try {
-      // For now, just show a message that this feature needs implementation
+      // Add students to class
+      for (const studentId of studentsToAdd) {
+        const paymentInfo = paymentData[studentId] || {};
+        await createMutation.mutateAsync({
+          class_id: cls.id,
+          student_enrollment_id: studentId,
+          status: 'active',
+          payment_method: paymentInfo.paymentMethod || '',
+          payment_status: paymentInfo.paymentStatus || 'pending',
+          payment_notes: paymentInfo.paymentNotes || ''
+        });
+      }
+
+      // Remove participants from class
+      for (const participantId of participantsToRemove) {
+        await updateMutation.mutateAsync({
+          id: participantId,
+          data: { status: 'inactive' }
+        });
+      }
+
       toast({
-        title: "Funcionalidad en desarrollo",
-        description: "La gestión masiva de estudiantes se implementará próximamente",
+        title: "Cambios guardados",
+        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s)` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s)` : ''} correctamente.`
       });
       
       // Reset selections
@@ -150,12 +171,17 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
         onClose();
       }, 1000);
     } catch (error) {
-      // Error handling is done in the mutation
+      console.error('Error updating participants:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
     }
   };
 
   const isLoading = studentsLoading || participantsLoading;
-  const isSaving = updateMutation.isPending;
+  const isSaving = updateMutation.isPending || createMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
