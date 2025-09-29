@@ -137,7 +137,7 @@ const PlayerDashboard = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate('/scheduled-classes')}
+                onClick={() => navigate('/dashboard/scheduled-classes')}
               >
                 Ver todas
               </Button>
@@ -150,7 +150,7 @@ const PlayerDashboard = () => {
             <PlayerClassesWidget 
               limit={3}
               showViewAll={true}
-              onViewAll={() => navigate('/scheduled-classes')}
+              onViewAll={() => navigate('/dashboard/scheduled-classes')}
             />
           </CardContent>
         </Card>
@@ -166,7 +166,7 @@ const PlayerDashboard = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate('/leagues')}
+                onClick={() => navigate('/dashboard/leagues')}
               >
                 Ver todas
               </Button>
@@ -264,7 +264,7 @@ const PlayerDashboard = () => {
                       No hay ligas creadas en tu club todavía.
                     </p>
                     <Button 
-                      onClick={() => navigate('/leagues')}
+                      onClick={() => navigate('/dashboard/leagues')}
                       variant="outline"
                     >
                       Ver Todas las Ligas
@@ -278,7 +278,7 @@ const PlayerDashboard = () => {
                     variant="ghost" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => navigate('/leagues')}
+                    onClick={() => navigate('/dashboard/leagues')}
                   >
                     Ver todas las ligas de mi club
                   </Button>
