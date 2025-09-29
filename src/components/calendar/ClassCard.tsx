@@ -17,6 +17,8 @@ import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
 import { useClassParticipants } from "@/hooks/useClassParticipants";
+import { useStudentClassParticipations } from "@/hooks/useStudentClasses";
+
 interface ClassCardProps {
   class: ScheduledClassWithTemplate;
   onDragStart?: () => void;
@@ -41,6 +43,12 @@ export function ClassCard({
   } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
   const enrolledCount = cls.participants?.length || 0;
+  
+  // Get user's class participations to highlight enrolled classes
+  const { data: userParticipations = [] } = useStudentClassParticipations();
+  const isUserEnrolled = userParticipations.some(participation => 
+    participation.programmed_class.id === cls.id && participation.status === 'active'
+  );
   const getLevelDisplay = () => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
@@ -51,6 +59,11 @@ export function ClassCard({
     return 'Sin nivel';
   };
   const getLevelColor = () => {
+    // If user is enrolled in this class, use special enrolled color
+    if (isUserEnrolled) {
+      return 'bg-primary/20 text-primary border-primary/30 ring-2 ring-primary/20';
+    }
+
     // For admins, use the new class color system that distinguishes creator vs trainer
     if (isAdmin) {
       return getClassColor(cls.created_by, cls.trainer_profile_id, profile?.id || null);
