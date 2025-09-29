@@ -96,6 +96,7 @@ export const useStudentEnrollments = () => {
         const clubIds = trainerClubs.map(tc => tc.club_id);
         
         if (clubIds.length > 0) {
+          // Get ALL students from the trainer's assigned clubs, not just those they created
           query = query.in("club_id", clubIds);
         } else {
           // If trainer has no assigned clubs, return empty array
