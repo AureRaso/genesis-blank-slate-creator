@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -90,6 +90,11 @@ const AppSidebar = () => {
         url: "/dashboard",
         icon: SquareTerminal,
         isActive: true
+      },
+      {
+        title: "Mis Clases",
+        url: "/dashboard/my-classes",
+        icon: BookOpen
       },
       ...(leaguesEnabled ? [{
         title: t('sidebar.leagues'),

@@ -24,6 +24,7 @@ import LogoutPage from "@/pages/LogoutPage";
 import StudentEnrollmentLink from "@/pages/StudentEnrollmentLink";
 import ScheduledClassesPage from "@/pages/ScheduledClassesPage";
 import PlayerScheduledClassesPage from "@/pages/PlayerScheduledClassesPage";
+import StudentClassesPage from "@/pages/StudentClassesPage";
 import WaitlistNotifications from "@/pages/WaitlistNotifications";
 import PublicEnrollmentPage from "@/pages/PublicEnrollmentPage";
 import ClassEnrollmentPage from "@/pages/ClassEnrollmentPage";
@@ -145,6 +146,7 @@ function App() {
                   <>
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<Index />} />
+                    <Route path="/my-classes" element={<StudentClassesPage />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
                     {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
