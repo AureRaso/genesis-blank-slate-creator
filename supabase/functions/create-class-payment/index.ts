@@ -78,13 +78,14 @@ serve(async (req) => {
     }
 
     // Determine payment details based on whether it's a class or slot
-    let productName, productDescription, unitAmount, metadata;
-    
+    let productName, productDescription, unitAmount, metadata, sessionMode;
+
     if (slotId) {
-      // Payment for class slot
+      // Payment for class slot - single payment
       productName = `Clase con ${trainerName}`;
       productDescription = `Reserva de clase individual`;
       unitAmount = Math.round(price * 100);
+      sessionMode = "payment";
       metadata = {
         slotId: slotId,
         userId: user.id,
@@ -92,28 +93,60 @@ serve(async (req) => {
         type: "slot_payment"
       };
     } else {
-      // Payment for programmed class (existing logic)
+      // Payment for programmed class - subscription
       productName = `Clase: ${className}`;
-      productDescription = `Pago mensual de clase programada`;
+      productDescription = `Suscripción mensual de clase programada`;
       unitAmount = Math.round(monthlyPrice * 100);
+      sessionMode = "subscription";
       metadata = {
         classId: classId,
         userId: user.id,
-        type: "class_payment"
+        type: "class_subscription"
       };
     }
 
     // Create Stripe checkout session
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    logStep("Creating Stripe checkout session", { productName, unitAmount });
-    const session = await stripe.checkout.sessions.create({
+    logStep("Creating Stripe checkout session", { productName, unitAmount, mode: sessionMode });
+
+    let sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [
+      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/payment-cancel`,
+      metadata: metadata
+    };
+
+    if (sessionMode === "subscription") {
+      // For subscription mode
+      sessionConfig.mode = "subscription";
+      sessionConfig.line_items = [
         {
           price_data: {
             currency: "eur",
-            product_data: { 
+            product_data: {
+              name: productName,
+              description: productDescription
+            },
+            unit_amount: unitAmount,
+            recurring: {
+              interval: "month"
+            }
+          },
+          quantity: 1,
+        },
+      ];
+      sessionConfig.subscription_data = {
+        metadata: metadata
+      };
+    } else {
+      // For one-time payment mode
+      sessionConfig.mode = "payment";
+      sessionConfig.line_items = [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
               name: productName,
               description: productDescription
             },
@@ -121,12 +154,10 @@ serve(async (req) => {
           },
           quantity: 1,
         },
-      ],
-      mode: "payment",
-      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/payment-cancel`,
-      metadata: metadata
-    });
+      ];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     logStep("Stripe session created", { sessionId: session.id, url: session.url });
 

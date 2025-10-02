@@ -52,16 +52,22 @@ serve(async (req) => {
 
     // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    logStep("Session retrieved", { 
-      sessionId: session.id, 
+    logStep("Session retrieved", {
+      sessionId: session.id,
+      mode: session.mode,
       paymentStatus: session.payment_status,
-      metadata: session.metadata 
+      metadata: session.metadata
     });
 
-    if (session.payment_status !== "paid") {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "Payment not completed" 
+    // Check if payment/subscription is complete
+    const isPaymentComplete = session.mode === "payment"
+      ? session.payment_status === "paid"
+      : session.status === "complete";
+
+    if (!isPaymentComplete) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: session.mode === "payment" ? "Payment not completed" : "Subscription not activated"
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -149,8 +155,9 @@ serve(async (req) => {
       logStep("Class reservation created successfully", { reservationId: reservation.id });
 
     } else if (classId) {
-      // Handle programmed class participation
-      logStep("Processing class participation");
+      // Handle programmed class participation or subscription
+      const isSubscription = session.mode === "subscription";
+      logStep("Processing class participation", { isSubscription });
       
       // Get class details for student enrollment
       const { data: classData, error: classError } = await supabaseClient
@@ -164,6 +171,12 @@ serve(async (req) => {
       }
 
       // Check if user already has a student enrollment for this trainer/club
+      logStep("Looking for existing enrollment", {
+        userEmail: user.email,
+        trainerId: classData.trainer_profile_id,
+        clubId: classData.club_id
+      });
+
       let { data: existingEnrollment, error: enrollmentError } = await supabaseClient
         .from('student_enrollments')
         .select('id')
@@ -173,11 +186,17 @@ serve(async (req) => {
         .eq('status', 'active')
         .single();
 
+      logStep("Enrollment query result", {
+        existingEnrollment,
+        enrollmentError: enrollmentError?.message || null
+      });
+
       if (enrollmentError && enrollmentError.code !== 'PGRST116') {
         throw new Error(`Error checking existing enrollment: ${enrollmentError.message}`);
       }
 
       let studentEnrollmentId;
+      let allEnrollmentIds; // Declare this here so it's available later
 
       if (!existingEnrollment) {
         // Create student enrollment
@@ -214,40 +233,221 @@ serve(async (req) => {
         logStep("Using existing enrollment", { enrollmentId: studentEnrollmentId });
       }
 
-      // Check if user is already participating in this class
+      // Check if user is already participating in this class (any status)
+      // We need to check all enrollments for this user, not just the current one
+      const { data: allUserEnrollments, error: allEnrollmentsError } = await supabaseClient
+        .from('student_enrollments')
+        .select('id')
+        .eq('email', user.email)
+        .eq('trainer_profile_id', classData.trainer_profile_id)
+        .eq('club_id', classData.club_id);
+
+      if (allEnrollmentsError) {
+        throw new Error(`Error checking all user enrollments: ${allEnrollmentsError.message}`);
+      }
+
+      allEnrollmentIds = allUserEnrollments?.map(e => e.id) || [studentEnrollmentId];
+
+      logStep("Checking for existing participation across all enrollments", {
+        allEnrollmentIds,
+        classId
+      });
+
       const { data: existingParticipation, error: checkError } = await supabaseClient
         .from('class_participants')
-        .select('id')
+        .select('id, payment_status, status, student_enrollment_id')
         .eq('class_id', classId)
-        .eq('student_enrollment_id', studentEnrollmentId)
-        .eq('status', 'active')
-        .single();
+        .in('student_enrollment_id', allEnrollmentIds)
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) {
         throw new Error(`Error checking existing participation: ${checkError.message}`);
       }
 
       if (existingParticipation) {
-        logStep("User already enrolled in class");
+        logStep("Found existing participation, updating payment status", {
+          participationId: existingParticipation.id,
+          currentPaymentStatus: existingParticipation.payment_status
+        });
+
+        let subscriptionId = null;
+
+        // If this is a subscription, create subscription record
+        if (isSubscription) {
+          logStep("Creating subscription record");
+
+          // Get subscription details from Stripe
+          const subscription = await stripe.subscriptions.retrieve(session.subscription);
+          logStep("Subscription retrieved from Stripe", {
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            currentPeriodStart: subscription.current_period_start,
+            currentPeriodEnd: subscription.current_period_end
+          });
+
+          // Use the enrollment ID from the existing participation
+          const enrollmentIdForSubscription = existingParticipation.student_enrollment_id;
+
+          // Create subscription record in database
+          const { data: subscriptionRecord, error: subscriptionError } = await supabaseClient
+            .from('class_subscriptions')
+            .insert([
+              {
+                student_enrollment_id: enrollmentIdForSubscription,
+                class_id: classId,
+                stripe_subscription_id: subscription.id,
+                stripe_customer_id: subscription.customer,
+                status: subscription.status,
+                current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end || false,
+                canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null
+              }
+            ])
+            .select()
+            .single();
+
+          if (subscriptionError) {
+            logStep("Error creating subscription", { error: subscriptionError });
+            throw subscriptionError;
+          }
+
+          subscriptionId = subscriptionRecord.id;
+          logStep("Subscription created successfully", { subscriptionId });
+        }
+
+        // Update existing participation to mark as paid
+        const updateData = {
+          payment_status: 'paid',
+          payment_verified: true,
+          payment_date: new Date().toISOString(),
+          payment_method: 'tarjeta',
+          status: 'active',
+          ...(subscriptionId && { subscription_id: subscriptionId })
+        };
+
+        logStep("Updating participation with data", {
+          participationId: existingParticipation.id,
+          updateData
+        });
+
+        const { data: updatedParticipation, error: updateError } = await supabaseClient
+          .from('class_participants')
+          .update(updateData)
+          .eq('id', existingParticipation.id)
+          .select()
+          .single();
+
+        logStep("Update result", {
+          updatedParticipation,
+          updateError: updateError?.message || null,
+          updateErrorCode: updateError?.code || null
+        });
+
+        if (updateError) {
+          logStep("Error updating participation payment status", { error: updateError });
+          throw updateError;
+        }
+
+        logStep("Participation payment status updated successfully", {
+          participationId: updatedParticipation.id,
+          newPaymentStatus: updatedParticipation.payment_status
+        });
+
         return new Response(JSON.stringify({
           success: true,
-          message: "Ya estás inscrito en esta clase",
-          participationId: existingParticipation.id
+          message: "Pago procesado correctamente",
+          participationId: updatedParticipation.id
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         });
       }
 
-      // Create new class participation
-      logStep("Creating class participation");
+      // Create new class participation (for cases where student wasn't pre-assigned)
+      // Double-check one more time to prevent duplicates
+      logStep("Final check before creating new participation");
+
+      const { data: finalCheck, error: finalCheckError } = await supabaseClient
+        .from('class_participants')
+        .select('id')
+        .eq('class_id', classId)
+        .in('student_enrollment_id', allEnrollmentIds);
+
+      if (finalCheckError) {
+        logStep("Error in final duplicate check", { error: finalCheckError });
+      } else if (finalCheck && finalCheck.length > 0) {
+        logStep("Found existing participation in final check - avoiding duplicate", {
+          existingParticipations: finalCheck
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: "Participación ya existe, no se creó duplicado",
+          existingParticipationId: finalCheck[0].id
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      logStep("Creating new class participation");
+
+      let subscriptionId = null;
+
+      // If this is a subscription, create subscription record
+      if (isSubscription) {
+        logStep("Creating subscription record for new participation");
+
+        // Get subscription details from Stripe
+        const subscription = await stripe.subscriptions.retrieve(session.subscription);
+        logStep("Subscription retrieved from Stripe", {
+          subscriptionId: subscription.id,
+          status: subscription.status,
+          currentPeriodStart: subscription.current_period_start,
+          currentPeriodEnd: subscription.current_period_end
+        });
+
+        // Create subscription record in database
+        const { data: subscriptionRecord, error: subscriptionError } = await supabaseClient
+          .from('class_subscriptions')
+          .insert([
+            {
+              student_enrollment_id: studentEnrollmentId,
+              class_id: classId,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subscription.customer,
+              status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end || false,
+              canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null
+            }
+          ])
+          .select()
+          .single();
+
+        if (subscriptionError) {
+          logStep("Error creating subscription for new participation", { error: subscriptionError });
+          throw subscriptionError;
+        }
+
+        subscriptionId = subscriptionRecord.id;
+        logStep("Subscription created successfully for new participation", { subscriptionId });
+      }
+
       const { data: participation, error: participationError } = await supabaseClient
         .from('class_participants')
         .insert([
           {
             class_id: classId,
             student_enrollment_id: studentEnrollmentId,
-            status: 'active'
+            status: 'active',
+            payment_status: 'paid',
+            payment_verified: true,
+            payment_date: new Date().toISOString(),
+            payment_method: 'tarjeta',
+            ...(subscriptionId && { subscription_id: subscriptionId })
           }
         ])
         .select()

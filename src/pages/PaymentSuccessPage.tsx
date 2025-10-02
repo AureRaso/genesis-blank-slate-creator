@@ -37,7 +37,7 @@ const PaymentSuccessPage = () => {
   }, [location.search, verificationStatus]);
 
   const handleGoToClasses = () => {
-    navigate('/scheduled-classes');
+    navigate('/dashboard/my-classes');
   };
 
   if (verificationStatus === 'loading') {

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,6 +50,7 @@ export const useCreateClassPayment = () => {
 
 export const useVerifyClassPayment = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ sessionId }: VerifyClassPaymentParams) => {
@@ -62,9 +63,15 @@ export const useVerifyClassPayment = () => {
     },
     onSuccess: (data) => {
       if (data.success) {
+        // Invalidar cache para refrescar los datos
+        queryClient.invalidateQueries({ queryKey: ['student-class-participations'] });
+        queryClient.invalidateQueries({ queryKey: ['student-class-reservations'] });
+
         toast({
           title: "¡Pago exitoso!",
-          description: "Te has inscrito correctamente en la clase.",
+          description: data.type === 'class_subscription'
+            ? "Te has suscrito correctamente a la clase. Se renovará automáticamente cada mes."
+            : "Te has inscrito correctamente en la clase.",
         });
       }
     },
@@ -73,6 +80,38 @@ export const useVerifyClassPayment = () => {
       toast({
         title: "Error",
         description: "No se pudo verificar el pago.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useCancelSubscription = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ subscriptionId }: { subscriptionId: string }) => {
+      const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+        body: { subscriptionId }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-class-participations'] });
+
+      toast({
+        title: "Suscripción cancelada",
+        description: "Tu suscripción se cancelará al final del período actual.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error canceling subscription:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la suscripción.",
         variant: "destructive",
       });
     },

@@ -6,11 +6,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, User, MapPin, Euro, CreditCard, CheckCircle, AlertCircle, XCircle, BookOpen } from "lucide-react";
 import { useStudentClassParticipations, useStudentClassReservations } from "@/hooks/useStudentClasses";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCreateClassPayment, useCancelSubscription } from "@/hooks/useClassPayment";
+import DebugStudentClasses from "@/components/DebugStudentClasses";
 
 const StudentClassesPage = () => {
   const { profile } = useAuth();
   const { data: participations = [], isLoading: loadingParticipations } = useStudentClassParticipations();
   const { data: reservations = [], isLoading: loadingReservations } = useStudentClassReservations();
+
+  const createPaymentMutation = useCreateClassPayment();
+  const cancelSubscriptionMutation = useCancelSubscription();
+
+  const handlePayClass = (participation: any) => {
+    createPaymentMutation.mutate({
+      classId: participation.class_id,
+      className: participation.programmed_class.name,
+      monthlyPrice: parseFloat(participation.programmed_class.monthly_price)
+    });
+  };
+
+  const handleCancelSubscription = (subscription: any) => {
+    if (confirm("¿Estás seguro de que quieres cancelar tu suscripción? Se mantendrá activa hasta el final del período actual.")) {
+      cancelSubscriptionMutation.mutate({
+        subscriptionId: subscription.id
+      });
+    }
+  };
 
   const formatDaysOfWeek = (days: string[]) => {
     const dayMapping: { [key: string]: string } = {
@@ -120,6 +141,9 @@ const StudentClassesPage = () => {
             Gestiona tus inscripciones, pagos y reservas de clases
           </p>
         </div>
+
+        {/* Debug Component - Remove in production */}
+        <DebugStudentClasses />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -241,19 +265,74 @@ const StudentClassesPage = () => {
                       </div>
                     )}
 
-                    {participation.payment_status === 'pending' && (
-                      <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <div className="flex items-center">
-                          <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                          <span className="text-sm font-medium text-yellow-800">
-                            Pago pendiente - Contacta con tu profesor
-                          </span>
-                        </div>
-                        {participation.payment_method && (
-                          <Badge variant="outline">
-                            {participation.payment_method}
+                    {participation.subscription && (
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center">
+                            <CreditCard className="h-4 w-4 text-blue-600 mr-2" />
+                            <span className="text-sm font-medium text-blue-800">Suscripción Activa</span>
+                          </div>
+                          <Badge variant="outline" className="text-blue-600 border-blue-600">
+                            {participation.subscription.status === 'active' ? 'Activa' :
+                             participation.subscription.status === 'past_due' ? 'Pago Pendiente' :
+                             participation.subscription.status === 'canceled' ? 'Cancelada' :
+                             participation.subscription.status}
                           </Badge>
+                        </div>
+                        <div className="space-y-1 text-sm text-blue-700">
+                          <p><strong>Próximo cobro:</strong> {new Date(participation.subscription.current_period_end).toLocaleDateString()}</p>
+                          {participation.subscription.cancel_at_period_end && (
+                            <p className="text-orange-600"><strong>Se cancelará:</strong> Al final del período actual</p>
+                          )}
+                        </div>
+                        {participation.subscription.status === 'active' && !participation.subscription.cancel_at_period_end && (
+                          <div className="mt-3">
+                            <Button
+                              onClick={() => handleCancelSubscription(participation.subscription)}
+                              disabled={cancelSubscriptionMutation.isPending}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-600 hover:bg-red-50"
+                            >
+                              {cancelSubscriptionMutation.isPending ? 'Cancelando...' : 'Cancelar Suscripción'}
+                            </Button>
+                          </div>
                         )}
+                      </div>
+                    )}
+
+                    {participation.payment_status === 'pending' && (
+                      <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+                            <span className="text-sm font-medium text-yellow-800">
+                              Pago pendiente
+                            </span>
+                          </div>
+                          {participation.payment_method && (
+                            <Badge variant="outline">
+                              {participation.payment_method}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-yellow-700">
+                            Precio: €{participation.programmed_class.monthly_price}/mes
+                          </div>
+                          <Button
+                            onClick={() => handlePayClass(participation)}
+                            disabled={createPaymentMutation.isPending}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            {createPaymentMutation.isPending ? 'Procesando...' : 'Suscribirse Ahora'}
+                          </Button>
+                        </div>
+                        <div className="text-xs text-yellow-600 mt-2">
+                          Al suscribirte, se renovará automáticamente cada mes por €{participation.programmed_class.monthly_price}
+                        </div>
                       </div>
                     )}
                   </CardContent>
