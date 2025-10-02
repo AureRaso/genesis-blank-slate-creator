@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserPlus, Link, Copy } from "lucide-react";
-import { useCreateStudentEnrollment, useCreateEnrollmentForm } from "@/hooks/useStudentEnrollments";
+import { useCreateStudentEnrollment, useCreateEnrollmentForm, useCompleteEnrollmentForm } from "@/hooks/useStudentEnrollments";
 import { useAdminClubs } from "@/hooks/useClubs";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -22,9 +22,9 @@ const enrollmentSchema = z.object({
   email: z.string().email("Email inválido"),
   phone: z.string().min(9, "Teléfono inválido"),
   level: z.number().min(1.0).max(10.0),
-  weekly_days: z.array(z.string()).min(1, "Selecciona al menos un día"),
-  preferred_times: z.array(z.string()).min(1, "Selecciona al menos un horario"),
-  enrollment_period: z.string().min(1, "Selecciona un periodo"),
+  weekly_days: z.array(z.string()).optional(),
+  preferred_times: z.array(z.string()).optional(),
+  enrollment_period: z.string().optional(),
   enrollment_date: z.string().optional(),
   expected_end_date: z.string().optional(),
   course: z.string().optional(),
@@ -42,6 +42,7 @@ interface StudentEnrollmentFormProps {
   trainerProfile?: any;
   isPlayerMode?: boolean;
   onSuccess?: () => void;
+  enrollmentToken?: string;
 }
 
 const DAYS_OF_WEEK = [
@@ -59,17 +60,18 @@ const TIME_SLOTS = [
   "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
 
-const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, onSuccess }: StudentEnrollmentFormProps) => {
+const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, onSuccess, enrollmentToken }: StudentEnrollmentFormProps) => {
   const [enrollmentMode, setEnrollmentMode] = useState<"teacher" | "link" | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string>("");
   const [selectedClubId, setSelectedClubId] = useState<string>("");
   const isWindowVisible = useWindowVisibility();
-  
+
   const { isAdmin } = useAuth();
   const { data: adminClubs, isLoading: clubsLoading } = useAdminClubs();
-  
+
   const createEnrollmentMutation = useCreateStudentEnrollment();
   const createLinkMutation = useCreateEnrollmentForm();
+  const completeEnrollmentMutation = useCompleteEnrollmentForm();
 
   // Override onSuccess behavior 
   const enhancedCreateEnrollmentMutation = {
@@ -181,10 +183,36 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
   };
 
   const onSubmit = (data: EnrollmentFormData) => {
-    // En modo player, se usa el club_id que viene del enrollmentForm
+    // Si es modo player (usuario anónimo con token), usar completeEnrollmentMutation
+    if (isPlayerMode && enrollmentToken) {
+      completeEnrollmentMutation.mutate({
+        token: enrollmentToken,
+        studentData: data
+      }, {
+        onSuccess: () => {
+          if (onSuccess) {
+            onSuccess();
+          }
+          // Limpiar datos persistidos después del envío exitoso
+          clearPersistedData();
+          localStorage.removeItem(`${persistenceKey}-mode`);
+          localStorage.removeItem(`${persistenceKey}-days`);
+          localStorage.removeItem(`${persistenceKey}-times`);
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      });
+      return;
+    }
+
     // En modo teacher/admin, se usa el club seleccionado
     let clubId;
-    
+
     if (isPlayerMode && trainerProfile?.club_id) {
       clubId = trainerProfile.club_id;
     } else if (!isPlayerMode && isAdmin && selectedClubId) {
@@ -192,7 +220,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
     } else if (!isPlayerMode && trainerProfile?.trainer_clubs?.[0]?.club_id) {
       clubId = trainerProfile.trainer_clubs[0].club_id;
     }
-    
+
     if (!clubId) {
       toast({
         title: "Error",
@@ -206,7 +234,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
       ...data,
       club_id: clubId,
     } as any);
-    
+
     // Limpiar datos persistidos después del envío exitoso
     clearPersistedData();
     localStorage.removeItem(`${persistenceKey}-mode`);
@@ -480,7 +508,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
           {/* Schedule Section */}
           <div className="space-y-4">
             <div>
-              <Label>Días de la semana *</Label>
+              <Label>Días de la semana {!isPlayerMode && '(opcional)'}</Label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.value} className="flex items-center space-x-2">
@@ -499,7 +527,7 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
             </div>
 
             <div>
-              <Label>Horarios preferidos *</Label>
+              <Label>Horarios preferidos {!isPlayerMode && '(opcional)'}</Label>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-2">
                 {TIME_SLOTS.map((time) => (
                   <div key={time} className="flex items-center space-x-2">
@@ -517,24 +545,26 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="enrollment_period">Período de Inscripción *</Label>
-              <Select onValueChange={(value) => setValue("enrollment_period", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mensual">Mensual</SelectItem>
-                  <SelectItem value="bimensual">Bimensual</SelectItem>
-                  <SelectItem value="trimestral">Trimestral</SelectItem>
-                  <SelectItem value="semestral">Semestral</SelectItem>
-                  <SelectItem value="anual">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.enrollment_period && (
-                <p className="text-sm text-red-600">{errors.enrollment_period.message}</p>
-              )}
-            </div>
+            {!isPlayerMode && (
+              <div className="space-y-2">
+                <Label htmlFor="enrollment_period">Período de Inscripción (opcional)</Label>
+                <Select onValueChange={(value) => setValue("enrollment_period", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mensual">Mensual</SelectItem>
+                    <SelectItem value="bimensual">Bimensual</SelectItem>
+                    <SelectItem value="trimestral">Trimestral</SelectItem>
+                    <SelectItem value="semestral">Semestral</SelectItem>
+                    <SelectItem value="anual">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.enrollment_period && (
+                  <p className="text-sm text-red-600">{errors.enrollment_period.message}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Teacher-only fields */}
@@ -634,8 +664,11 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
             <Button type="button" variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createEnrollmentMutation.isPending}>
-              {createEnrollmentMutation.isPending ? "Guardando..." : "Guardar Inscripción"}
+            <Button type="submit" disabled={isPlayerMode ? completeEnrollmentMutation.isPending : createEnrollmentMutation.isPending}>
+              {isPlayerMode
+                ? (completeEnrollmentMutation.isPending ? "Enviando..." : "Enviar Inscripción")
+                : (createEnrollmentMutation.isPending ? "Guardando..." : "Guardar Inscripción")
+              }
             </Button>
           </div>
         </form>

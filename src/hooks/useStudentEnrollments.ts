@@ -345,39 +345,13 @@ export const useCompleteEnrollmentForm = () => {
 
   return useMutation({
     mutationFn: async ({ token, studentData }: { token: string; studentData: any }) => {
-      // First get the enrollment form data
-      const { data: formData, error: formError } = await supabase
-        .from("enrollment_forms")
-        .select("*")
-        .eq("token", token)
-        .single();
-
-      if (formError) throw formError;
-
-      // Create the actual enrollment with the club from the enrollment form
-      const { data, error } = await supabase
-        .from("student_enrollments")
-        .insert({
-          ...studentData,
-          trainer_profile_id: formData.trainer_profile_id,
-          club_id: formData.club_id, // Always use the club from the enrollment form
-          created_by_profile_id: formData.trainer_profile_id,
-        })
-        .select()
-        .single();
+      // Use RPC function to complete enrollment (bypasses RLS)
+      const { data, error } = await supabase.rpc('complete_enrollment_form', {
+        p_token: token,
+        p_student_data: studentData
+      });
 
       if (error) throw error;
-
-      // Update the enrollment form status
-      await supabase
-        .from("enrollment_forms")
-        .update({
-          status: "completed",
-          student_data: studentData,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("token", token);
-
       return data;
     },
     onSuccess: () => {

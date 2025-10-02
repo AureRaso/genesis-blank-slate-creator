@@ -36,7 +36,7 @@ const AdminStudentsList = () => {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    const matchesPeriod = periodFilter === "all" || student.enrollment_period === periodFilter;
+    const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
     
     return matchesSearch && matchesStatus && matchesPeriod;
   });
@@ -203,15 +203,19 @@ const AdminStudentsList = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{getPeriodLabel(student.enrollment_period)}</span>
-                  </div>
+                  {student.enrollment_period && (
+                    <div className="flex items-center text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>{getPeriodLabel(student.enrollment_period)}</span>
+                    </div>
+                  )}
 
-                  <div className="flex items-center text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{student.weekly_days.join(", ")}</span>
-                  </div>
+                  {student.weekly_days && student.weekly_days.length > 0 && (
+                    <div className="flex items-center text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>{student.weekly_days.join(", ")}</span>
+                    </div>
+                  )}
 
                   {student.first_payment && (
                     <div className="flex items-center text-muted-foreground">

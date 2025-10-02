@@ -126,6 +126,7 @@ function App() {
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/logout" element={<LogoutPage />} />
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
+              <Route path="/enrollment/:token" element={<PublicEnrollmentPage />} />
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />

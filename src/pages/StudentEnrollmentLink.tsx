@@ -153,6 +153,7 @@ const StudentEnrollmentLink = () => {
       <div className="w-full max-w-4xl">
         <StudentEnrollmentForm
           isPlayerMode={true}
+          enrollmentToken={token}
           onClose={() => setShowForm(false)}
           onSuccess={() => {
             toast({
