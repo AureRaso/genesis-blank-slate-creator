@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, UserPlus, Link, Copy } from "lucide-react";
+import { ArrowLeft, UserPlus, Link, Copy, User, Calendar, Loader2 } from "lucide-react";
 import { useCreateStudentEnrollment, useCreateEnrollmentForm, useCompleteEnrollmentForm } from "@/hooks/useStudentEnrollments";
 import { useAdminClubs } from "@/hooks/useClubs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -422,21 +422,21 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
   }
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader>
-          <div className="flex items-center space-x-2">
+    <Card className="max-w-4xl mx-auto border-0 shadow-2xl bg-card/95 backdrop-blur-sm">
+      <CardHeader className="pb-4">
+          <div className="flex items-center space-x-3">
             <Button variant="ghost" size="sm" onClick={isPlayerMode ? handleCancel : () => {
               localStorage.removeItem(`${persistenceKey}-mode`);
               setEnrollmentMode(null);
-            }}>
-              <ArrowLeft className="h-4 w-4" />
+            }} className="hover:bg-muted">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-          <div>
-            <CardTitle>
+          <div className="flex-1">
+            <CardTitle className="text-xl">
               {isPlayerMode ? "Completar Inscripción" : "Nueva Inscripción de Alumno"}
             </CardTitle>
-            <CardDescription>
-              {isPlayerMode 
+            <CardDescription className="text-sm mt-1">
+              {isPlayerMode
                 ? "Completa tus datos para inscribirte en la escuela de pádel"
                 : "Completa todos los datos del alumno"
               }
@@ -444,105 +444,129 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Personal Data Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Nombre y Apellidos *</Label>
-              <Input
-                id="full_name"
-                {...register("full_name")}
-                placeholder="Nombre completo"
-              />
-              {errors.full_name && (
-                <p className="text-sm text-red-600">{errors.full_name.message}</p>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-2 border-b">
+              <div className="w-8 h-8 rounded-full bg-playtomic-orange/20 flex items-center justify-center">
+                <User className="h-4 w-4 text-playtomic-orange" />
+              </div>
+              <h3 className="text-base font-semibold">Datos Personales</h3>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register("email")}
-                placeholder="email@ejemplo.com"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="full_name" className="text-sm font-medium">Nombre y Apellidos *</Label>
+                <Input
+                  id="full_name"
+                  {...register("full_name")}
+                  placeholder="Juan Pérez García"
+                  className="h-11"
+                />
+                {errors.full_name && (
+                  <p className="text-sm text-red-600">{errors.full_name.message}</p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono *</Label>
-              <Input
-                id="phone"
-                {...register("phone")}
-                placeholder="123456789"
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-600">{errors.phone.message}</p>
-              )}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="correo@ejemplo.com"
+                  className="h-11"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="level">Nivel de Juego *</Label>
-              <Input
-                id="level"
-                type="number"
-                step="0.1"
-                min="1.0"
-                max="10.0"
-                {...register("level", { valueAsNumber: true })}
-                placeholder="3.0"
-              />
-              <p className="text-xs text-muted-foreground">
-                Introduce tu nivel en Playtomic (si lo conoces)
-              </p>
-              {errors.level && (
-                <p className="text-sm text-red-600">{errors.level.message}</p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">Teléfono *</Label>
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="612 345 678"
+                  className="h-11"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-600">{errors.phone.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="level" className="text-sm font-medium">Nivel de Juego *</Label>
+                <Input
+                  id="level"
+                  type="number"
+                  step="0.1"
+                  min="1.0"
+                  max="10.0"
+                  {...register("level", { valueAsNumber: true })}
+                  placeholder="3.0"
+                  className="h-11"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Introduce tu nivel en Playtomic (1.0 - 10.0)
+                </p>
+                {errors.level && (
+                  <p className="text-sm text-red-600">{errors.level.message}</p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Schedule Section */}
           <div className="space-y-4">
-            <div>
-              <Label>Días de la semana {!isPlayerMode && '(opcional)'}</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                {DAYS_OF_WEEK.map((day) => (
-                  <div key={day.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={day.value}
-                      checked={watchedDays?.includes(day.value) || false}
-                      onCheckedChange={(checked) => handleDayChange(day.value, checked as boolean)}
-                    />
-                    <Label htmlFor={day.value} className="text-sm">{day.label}</Label>
-                  </div>
-                ))}
+            <div className="flex items-center gap-3 pb-2 border-b">
+              <div className="w-8 h-8 rounded-full bg-playtomic-orange/20 flex items-center justify-center">
+                <Calendar className="h-4 w-4 text-playtomic-orange" />
               </div>
-              {errors.weekly_days && (
-                <p className="text-sm text-red-600">{errors.weekly_days.message}</p>
-              )}
+              <h3 className="text-base font-semibold">Disponibilidad</h3>
             </div>
 
-            <div>
-              <Label>Horarios preferidos {!isPlayerMode && '(opcional)'}</Label>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-2">
-                {TIME_SLOTS.map((time) => (
-                  <div key={time} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={time}
-                      checked={watchedTimes?.includes(time) || false}
-                      onCheckedChange={(checked) => handleTimeChange(time, checked as boolean)}
-                    />
-                    <Label htmlFor={time} className="text-sm">{time}</Label>
-                  </div>
-                ))}
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Días de la semana {!isPlayerMode && '(opcional)'}</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                  {DAYS_OF_WEEK.map((day) => (
+                    <div key={day.value} className="flex items-center space-x-2 p-3 rounded-lg border hover:border-playtomic-orange/50 transition-colors">
+                      <Checkbox
+                        id={day.value}
+                        checked={watchedDays?.includes(day.value) || false}
+                        onCheckedChange={(checked) => handleDayChange(day.value, checked as boolean)}
+                        className="data-[state=checked]:bg-playtomic-orange data-[state=checked]:border-playtomic-orange"
+                      />
+                      <Label htmlFor={day.value} className="text-sm font-normal cursor-pointer">{day.label}</Label>
+                    </div>
+                  ))}
+                </div>
+                {errors.weekly_days && (
+                  <p className="text-sm text-red-600 mt-2">{errors.weekly_days.message}</p>
+                )}
               </div>
-              {errors.preferred_times && (
-                <p className="text-sm text-red-600">{errors.preferred_times.message}</p>
-              )}
+
+              <div>
+                <Label className="text-sm font-medium">Horarios preferidos {!isPlayerMode && '(opcional)'}</Label>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-3">
+                  {TIME_SLOTS.map((time) => (
+                    <div key={time} className="flex items-center space-x-2 p-2 rounded-lg border hover:border-playtomic-orange/50 transition-colors">
+                      <Checkbox
+                        id={time}
+                        checked={watchedTimes?.includes(time) || false}
+                        onCheckedChange={(checked) => handleTimeChange(time, checked as boolean)}
+                        className="data-[state=checked]:bg-playtomic-orange data-[state=checked]:border-playtomic-orange"
+                      />
+                      <Label htmlFor={time} className="text-sm font-normal cursor-pointer">{time}</Label>
+                    </div>
+                  ))}
+                </div>
+                {errors.preferred_times && (
+                  <p className="text-sm text-red-600 mt-2">{errors.preferred_times.message}</p>
+                )}
+              </div>
             </div>
 
             {!isPlayerMode && (
@@ -660,14 +684,28 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
             </div>
           )}
 
-          <div className="flex justify-end space-x-2 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={handleCancel}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={handleCancel} className="sm:w-auto w-full h-11">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPlayerMode ? completeEnrollmentMutation.isPending : createEnrollmentMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={isPlayerMode ? completeEnrollmentMutation.isPending : createEnrollmentMutation.isPending}
+              className="sm:w-auto w-full h-11 bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white shadow-lg"
+            >
               {isPlayerMode
-                ? (completeEnrollmentMutation.isPending ? "Enviando..." : "Enviar Inscripción")
-                : (createEnrollmentMutation.isPending ? "Guardando..." : "Guardar Inscripción")
+                ? (completeEnrollmentMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : "Enviar Inscripción")
+                : (createEnrollmentMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : "Guardar Inscripción")
               }
             </Button>
           </div>
