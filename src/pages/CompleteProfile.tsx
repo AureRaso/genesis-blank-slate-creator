@@ -18,20 +18,29 @@ export const CompleteProfile = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if profile is already complete
-  useEffect(() => {
-    if (profile?.club_id && profile?.level) {
-      console.log('Profile already complete, redirecting to dashboard');
-      navigate("/dashboard", { replace: true });
-    }
-  }, [profile, navigate]);
-
   // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/auth", { replace: true });
     }
   }, [user, navigate]);
+
+  // Redirect if profile is already complete or user is not a player
+  useEffect(() => {
+    if (profile) {
+      // Only players need to complete profile with club and level
+      if (profile.role !== 'player') {
+        console.log('User is not a player, redirecting to dashboard');
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      if (profile.club_id && profile.level) {
+        console.log('Player profile already complete, redirecting to dashboard');
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [profile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

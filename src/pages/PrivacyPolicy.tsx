@@ -24,8 +24,8 @@ export default function PrivacyPolicy() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 md:p-12">
+      <div className="w-full px-4 md:px-8 lg:px-12 py-12">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 md:p-12 lg:p-16 w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-200">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-playtomic-orange/20 to-playtomic-orange/30 flex items-center justify-center">
@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
           </div>
 
           {/* Content */}
-          <div className="prose prose-slate max-w-none">
+          <div className="w-full">
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">1. Introducción</h2>
               <p className="text-slate-700 leading-relaxed mb-4">

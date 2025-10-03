@@ -10,9 +10,9 @@ export const AuthCallback = () => {
     if (loading) return;
 
     if (user && profile) {
-      // Check if profile is complete
-      if (!profile.club_id || !profile.level) {
-        console.log('AuthCallback - Profile incomplete, redirecting to complete-profile');
+      // Only check profile completion for players
+      if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
+        console.log('AuthCallback - Player profile incomplete, redirecting to complete-profile');
         navigate("/complete-profile", { replace: true });
       } else {
         console.log('AuthCallback - Profile complete, redirecting to dashboard');

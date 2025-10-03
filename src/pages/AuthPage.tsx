@@ -34,9 +34,9 @@ export const AuthPage = () => {
     if (user && profile) {
       console.log('User is authenticated, checking profile completion...');
 
-      // Check if profile is complete (has club_id and level)
-      if (!profile.club_id || !profile.level) {
-        console.log('Profile incomplete, redirecting to complete-profile');
+      // Only check profile completion for players
+      if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
+        console.log('Player profile incomplete, redirecting to complete-profile');
         navigate("/complete-profile", { replace: true });
         return;
       }
@@ -242,285 +242,298 @@ export const AuthPage = () => {
         </div>
 
         {/* Panel derecho - Forms */}
-        <div className="flex-1 w-full max-w-md mx-auto lg:mx-0 flex flex-col">
-          <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl flex flex-col lg:h-full lg:max-h-full overflow-hidden">
-            <CardHeader className="text-center space-y-2 pb-6 flex-shrink-0">
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-playtomic-dark to-slate-700 bg-clip-text text-transparent">
-                Acceso al Sistema
-              </CardTitle>
-              <CardDescription className="text-base text-slate-600">
-                Inicia sesión o crea tu cuenta
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6 flex-1 lg:overflow-y-auto">
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 h-12 bg-slate-100 p-1">
-                  <TabsTrigger
-                    value="signin"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange data-[state=active]:shadow-sm rounded-md transition-all"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span className="font-semibold">Iniciar Sesión</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="signup"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-playtomic-orange data-[state=active]:shadow-sm rounded-md transition-all"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span className="font-semibold">Registrarse</span>
-                  </TabsTrigger>
-                </TabsList>
+<div className="flex-1 w-full max-w-md mx-auto lg:mx-0 flex flex-col justify-center">
+  <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl rounded-2xl overflow-y-auto border border-white/20 max-h-[90vh] lg:max-h-[85vh]">
+    <CardHeader className="text-center space-y-3 pb-8 pt-12 px-8">
+      <CardTitle className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+        Acceso al Sistema
+      </CardTitle>
+      <CardDescription className="text-base text-slate-600">
+        Gestiona tu club de pádel de forma profesional
+      </CardDescription>
+    </CardHeader>
+    
+    <CardContent className="px-6 pb-8">
+      <Tabs defaultValue="signin" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-8 h-12 bg-slate-100/80 p-1 rounded-xl">
+          <TabsTrigger
+            value="signin"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-playtomic-orange rounded-lg transition-all duration-200 font-semibold"
+          >
+            <LogIn className="h-4 w-4" />
+            <span>Iniciar Sesión</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="signup"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-playtomic-orange rounded-lg transition-all duration-200 font-semibold"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Registrarse</span>
+          </TabsTrigger>
+        </TabsList>
 
-                {/* Formulario de Inicio de Sesión */}
-                <TabsContent value="signin" className="space-y-5 mt-6">
-                  <form onSubmit={handleSignIn} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="text-sm font-semibold text-slate-700">
-                        Email
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="signin-email"
-                          type="email"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          placeholder="tu@email.com"
-                          className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="text-sm font-semibold text-slate-700">
-                        Contraseña
-                      </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="signin-password"
-                          type="password"
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          placeholder="Tu contraseña"
-                          className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white font-semibold text-base shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          Iniciando...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <LogIn className="h-5 w-5" />
-                          Iniciar Sesión
-                        </div>
-                      )}
-                    </Button>
+        {/* Formulario de Inicio de Sesión */}
+        <TabsContent value="signin" className="space-y-6 mt-2">
+          <form onSubmit={handleSignIn} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <Label htmlFor="signin-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label htmlFor="signin-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Contraseña
+                </Label>
+                <Input
+                  id="signin-password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Tu contraseña"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
+            </div>
 
-                    {/* Divider */}
-                    <div className="relative my-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-200"></div>
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-slate-500">O continúa con</span>
-                      </div>
-                    </div>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white font-semibold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 rounded-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Iniciando Sesión...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <LogIn className="h-5 w-5" />
+                  Iniciar Sesión
+                </div>
+              )}
+            </Button>
 
-                    {/* Google Sign In Button */}
-                    <Button
-                      type="button"
-                      onClick={handleGoogleSignIn}
-                      variant="outline"
-                      className="w-full h-12 border-2 border-slate-200 hover:border-playtomic-orange hover:bg-slate-50 transition-all duration-200"
-                    >
-                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                      </svg>
-                      Continuar con Google
-                    </Button>
-                  </form>
-                </TabsContent>
+            {/* Divider mejorado */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-white text-slate-500 font-medium">O continúa con</span>
+              </div>
+            </div>
 
-                {/* Formulario de Registro */}
-                <TabsContent value="signup" className="space-y-4 mt-6">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    {/* Nombre completo */}
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name" className="text-sm font-semibold text-slate-700">
-                        Nombre y Apellidos
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="signup-name"
-                          type="text"
-                          value={fullName}
-                          onChange={e => setFullName(e.target.value)}
-                          placeholder="Juan Pérez García"
-                          className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                          required
-                        />
-                      </div>
-                    </div>
+            {/* Google Sign In Button mejorado */}
+            <Button
+              type="button"
+              onClick={handleGoogleSignIn}
+              variant="outline"
+              className="w-full h-12 border-2 border-slate-200 hover:border-playtomic-orange/50 hover:bg-white text-slate-700 font-medium rounded-lg transition-all duration-200 hover:shadow-md"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continuar con Google
+            </Button>
+          </form>
+        </TabsContent>
 
-                    {/* Email y confirmación en grid */}
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-email" className="text-sm font-semibold text-slate-700">
-                          Email
-                        </Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="tu@email.com"
-                            className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                            required
-                          />
-                        </div>
-                      </div>
+        {/* Formulario de Registro */}
+        <TabsContent value="signup" className="space-y-6 mt-2">
+          <form onSubmit={handleSignUp} className="space-y-6">
+            {/* Nombre completo */}
+            <div className="space-y-3">
+              <Label htmlFor="signup-name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Nombre y Apellidos
+              </Label>
+              <Input
+                id="signup-name"
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                placeholder="Juan Pérez García"
+                className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                required
+              />
+            </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-confirm-email" className="text-sm font-semibold text-slate-700">
-                          Confirmar Email
-                        </Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                          <Input
-                            id="signup-confirm-email"
-                            type="email"
-                            value={confirmEmail}
-                            onChange={e => setConfirmEmail(e.target.value)}
-                            placeholder="Confirma tu email"
-                            className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
+            {/* Email y confirmación */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-3">
+                <Label htmlFor="signup-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
 
-                    {/* Contraseñas en grid */}
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-password" className="text-sm font-semibold text-slate-700">
-                          Contraseña
-                        </Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                          <Input
-                            id="signup-password"
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            placeholder="Mínimo 6 caracteres"
-                            className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                            required
-                          />
-                        </div>
-                      </div>
+              <div className="space-y-3">
+                <Label htmlFor="signup-confirm-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Confirmar Email
+                </Label>
+                <Input
+                  id="signup-confirm-email"
+                  type="email"
+                  value={confirmEmail}
+                  onChange={e => setConfirmEmail(e.target.value)}
+                  placeholder="Confirma tu email"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
+            </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-slate-700">
-                          Confirmar Contraseña
-                        </Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                          <Input
-                            id="signup-confirm-password"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={e => setConfirmPassword(e.target.value)}
-                            placeholder="Repite tu contraseña"
-                            className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
+            {/* Contraseñas */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-3">
+                <Label htmlFor="signup-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Contraseña
+                </Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
 
-                    {/* Club selector */}
-                    <div className="space-y-2">
-                      <ClubSelector
-                        value={selectedClubId}
-                        onValueChange={value => {
-                          console.log('🔧 ClubSelector - Value changed to:', value);
-                          setSelectedClubId(value);
-                        }}
-                        label="Club"
-                        placeholder="Selecciona tu club"
-                        required
-                      />
-                    </div>
+              <div className="space-y-3">
+                <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Confirmar Contraseña
+                </Label>
+                <Input
+                  id="signup-confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Repite tu contraseña"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+              </div>
+            </div>
 
-                    {/* Nivel de juego */}
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700">
-                        Nivel de Juego (Playtomic)
-                      </Label>
-                      <div className="relative">
-                        <Target className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="signup-level"
-                          type="number"
-                          step="0.1"
-                          min="1.0"
-                          max="10.0"
-                          value={level}
-                          onChange={e => setLevel(e.target.value)}
-                          placeholder="Ej: 3.5"
-                          className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                          required
-                        />
-                      </div>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <span>Introduce tu nivel Playtomic (1.0 - 10.0)</span>
-                      </p>
-                    </div>
+            {/* Club selector */}
+            <div className="space-y-3">
+              <ClubSelector
+                value={selectedClubId}
+                onValueChange={value => {
+                  console.log('🔧 ClubSelector - Value changed to:', value);
+                  setSelectedClubId(value);
+                }}
+                label="Club"
+                placeholder="Selecciona tu club"
+                required
+              />
+            </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white font-semibold text-base shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] mt-6"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          Creando cuenta...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <UserPlus className="h-5 w-5" />
-                          Crear Cuenta
-                        </div>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+            {/* Nivel de juego */}
+            <div className="space-y-3">
+              <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Nivel de Juego (Playtomic)
+              </Label>
+              <Input
+                id="signup-level"
+                type="number"
+                step="0.1"
+                min="1.0"
+                max="10.0"
+                value={level}
+                onChange={e => setLevel(e.target.value)}
+                placeholder="Ej: 3.5"
+                className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                required
+              />
+              <p className="text-xs text-slate-500">
+                Introduce tu nivel Playtomic (1.0 - 10.0)
+              </p>
+            </div>
 
-          {/* Footer */}
-          <div className="text-center mt-4 text-sm text-slate-400 flex-shrink-0">
-            <p>© 2025 PadeLock. Todos los derechos reservados.</p>
-          </div>
-        </div>
+            {/* Checkbox de términos y condiciones */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  required
+                  className="mt-1 w-4 h-4 text-playtomic-orange bg-white border-slate-300 rounded focus:ring-playtomic-orange focus:ring-2"
+                />
+                <label htmlFor="terms" className="text-sm text-slate-700 leading-tight">
+                  Acepto los{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:text-orange-600 font-medium underline">
+                    Términos y Condiciones
+                  </a>{' '}
+                  y la{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:text-orange-600 font-medium underline">
+                    Política de Privacidad
+                  </a>
+                </label>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white font-semibold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200 rounded-lg mt-2"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Creando Cuenta...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" />
+                  Crear Cuenta
+                </div>
+              )}
+            </Button>
+          </form>
+        </TabsContent>
+      </Tabs>
+    </CardContent>
+  </Card>
+
+  {/* Footer mejorado */}
+  <div className="text-center mt-6 text-sm text-slate-400 flex-shrink-0">
+    <p className="flex items-center justify-center gap-2">
+      <span>© 2025 PadeLock · Tu club, simplificado</span>
+    </p>
+  </div>
+</div>
       </div>
     </div>
   );
