@@ -213,7 +213,7 @@ export const AuthPage = () => {
           {/* Hero text */}
           <div className="space-y-3 lg:space-y-4">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
-              Gestiona tu academia de
+              Gestiona tu academia
               <span className="block bg-gradient-to-r from-playtomic-orange to-orange-400 bg-clip-text text-transparent">
                 con éxito
               </span>
