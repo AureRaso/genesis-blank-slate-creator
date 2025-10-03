@@ -20,8 +20,11 @@ import { toast } from "@/hooks/use-toast";
 const enrollmentSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
+  confirm_email: z.string().email("Email inválido").optional(),
   phone: z.string().min(9, "Teléfono inválido"),
-  level: z.number().min(1.0).max(10.0),
+  level: z.number().min(1.0, "El nivel debe ser mínimo 1.0").max(10.0, "El nivel debe ser máximo 10.0"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
+  confirm_password: z.string().optional(),
   weekly_days: z.array(z.string()).optional(),
   preferred_times: z.array(z.string()).optional(),
   enrollment_period: z.string().optional(),
@@ -33,6 +36,24 @@ const enrollmentSchema = z.object({
   first_payment: z.number().optional(),
   payment_method: z.string().optional(),
   observations: z.string().optional(),
+}).refine((data) => {
+  // Verificar que los emails coincidan si está en modo player
+  if (data.confirm_email) {
+    return data.email === data.confirm_email;
+  }
+  return true;
+}, {
+  message: "Los emails no coinciden",
+  path: ["confirm_email"],
+}).refine((data) => {
+  // Verificar que las contraseñas coincidan
+  if (data.password || data.confirm_password) {
+    return data.password === data.confirm_password;
+  }
+  return true;
+}, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirm_password"],
 });
 
 type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
@@ -41,7 +62,7 @@ interface StudentEnrollmentFormProps {
   onClose: () => void;
   trainerProfile?: any;
   isPlayerMode?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (email?: string) => void;
   enrollmentToken?: string;
 }
 
@@ -185,13 +206,23 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
   const onSubmit = (data: EnrollmentFormData) => {
     // Si es modo player (usuario anónimo con token), usar completeEnrollmentMutation
     if (isPlayerMode && enrollmentToken) {
+      // Validar que tenga contraseña en modo player
+      if (!data.password) {
+        toast({
+          title: "Error",
+          description: "La contraseña es requerida",
+          variant: "destructive",
+        });
+        return;
+      }
+
       completeEnrollmentMutation.mutate({
         token: enrollmentToken,
         studentData: data
       }, {
         onSuccess: () => {
           if (onSuccess) {
-            onSuccess();
+            onSuccess(data.email);
           }
           // Limpiar datos persistidos después del envío exitoso
           clearPersistedData();
@@ -483,6 +514,22 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
                 )}
               </div>
 
+              {isPlayerMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirm_email" className="text-sm font-medium">Confirmar Email *</Label>
+                  <Input
+                    id="confirm_email"
+                    type="email"
+                    {...register("confirm_email")}
+                    placeholder="correo@ejemplo.com"
+                    className="h-11"
+                  />
+                  {errors.confirm_email && (
+                    <p className="text-sm text-red-600">{errors.confirm_email.message}</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium">Teléfono *</Label>
                 <Input
@@ -515,6 +562,38 @@ const StudentEnrollmentForm = ({ onClose, trainerProfile, isPlayerMode = false, 
                   <p className="text-sm text-red-600">{errors.level.message}</p>
                 )}
               </div>
+
+              {isPlayerMode && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium">Contraseña *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      {...register("password")}
+                      placeholder="Mínimo 6 caracteres"
+                      className="h-11"
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-600">{errors.password.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm_password" className="text-sm font-medium">Confirmar Contraseña *</Label>
+                    <Input
+                      id="confirm_password"
+                      type="password"
+                      {...register("confirm_password")}
+                      placeholder="Repite tu contraseña"
+                      className="h-11"
+                    />
+                    {errors.confirm_password && (
+                      <p className="text-sm text-red-600">{errors.confirm_password.message}</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

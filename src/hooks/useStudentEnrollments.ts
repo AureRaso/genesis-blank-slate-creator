@@ -229,25 +229,25 @@ export const useCreateStudentEnrollment = () => {
       }
 
       // First create the student user account
-      try {
-        const { data: createUserResponse, error: createUserError } = await supabase.functions.invoke('create-student-user', {
-          body: {
-            email: enrollmentData.email,
-            full_name: enrollmentData.full_name,
-            club_id: clubId
-          }
-        });
-
-        if (createUserError) {
-          console.error("Error creating student user:", createUserError);
-          throw new Error("Error al crear la cuenta del alumno");
+      console.log("🔵 Attempting to create student user account for:", enrollmentData.email);
+      const { data: createUserResponse, error: createUserError } = await supabase.functions.invoke('create-student-user', {
+        body: {
+          email: enrollmentData.email,
+          full_name: enrollmentData.full_name,
+          club_id: clubId
         }
+      });
 
-        console.log("Student user created:", createUserResponse);
-      } catch (userCreationError: any) {
-        console.error("User creation failed:", userCreationError);
-        // Continue with enrollment creation even if user creation fails
-        // The user might already exist or there might be other issues
+      if (createUserError) {
+        console.error("❌ Error creating student user:", createUserError);
+        toast({
+          title: "Advertencia",
+          description: "La inscripción se creó pero hubo un problema al crear la cuenta de usuario. El alumno puede que no pueda acceder al sistema.",
+          variant: "destructive",
+          duration: 8000,
+        });
+      } else {
+        console.log("✅ Student user created successfully:", createUserResponse);
       }
 
       // Then create the enrollment
@@ -345,27 +345,113 @@ export const useCompleteEnrollmentForm = () => {
 
   return useMutation({
     mutationFn: async ({ token, studentData }: { token: string; studentData: any }) => {
-      // Use RPC function to complete enrollment (bypasses RLS)
-      const { data, error } = await supabase.rpc('complete_enrollment_form', {
-        p_token: token,
-        p_student_data: studentData
+      console.log("🔵 Starting enrollment completion for:", studentData.email);
+
+      // Verificar que tenemos email y contraseña
+      if (!studentData.email || !studentData.password) {
+        throw new Error("Email y contraseña son requeridos");
+      }
+
+      // 1. Crear cuenta de usuario con Supabase Auth
+      console.log("🔵 Creating user account with Supabase Auth...");
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: studentData.email,
+        password: studentData.password,
+        options: {
+          data: {
+            full_name: studentData.full_name,
+            role: 'player'
+          }
+        }
       });
 
-      if (error) throw error;
-      return data;
+      if (authError) {
+        console.error("❌ Error creating user account:", authError);
+        throw new Error(`No se pudo crear la cuenta: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error("No se pudo crear el usuario");
+      }
+
+      console.log("✅ User account created:", authData.user.id);
+
+      // 2. Obtener información del formulario de inscripción
+      const { data: enrollmentForm, error: formError } = await supabase
+        .from('enrollment_forms')
+        .select('*')
+        .eq('token', token)
+        .eq('status', 'pending')
+        .single();
+
+      if (formError) {
+        console.error("❌ Error fetching enrollment form:", formError);
+        throw new Error("Formulario de inscripción no válido o expirado");
+      }
+
+      console.log("✅ Enrollment form found:", enrollmentForm);
+
+      // 3. Crear student_enrollment
+      console.log("🔵 Creating student enrollment...");
+      const { data: enrollmentData, error: enrollmentError } = await supabase
+        .from('student_enrollments')
+        .insert({
+          trainer_profile_id: enrollmentForm.trainer_profile_id,
+          club_id: enrollmentForm.club_id,
+          created_by_profile_id: enrollmentForm.trainer_profile_id,
+          full_name: studentData.full_name,
+          email: studentData.email,
+          phone: studentData.phone,
+          level: studentData.level,
+          weekly_days: studentData.weekly_days || [],
+          preferred_times: studentData.preferred_times || [],
+          enrollment_period: studentData.enrollment_period || 'mensual',
+          observations: studentData.observations,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (enrollmentError) {
+        console.error("❌ Error creating enrollment:", enrollmentError);
+        throw new Error(`No se pudo crear la inscripción: ${enrollmentError.message}`);
+      }
+
+      console.log("✅ Enrollment created:", enrollmentData);
+
+      // 4. Marcar formulario como completado
+      const { error: updateError } = await supabase
+        .from('enrollment_forms')
+        .update({
+          status: 'completed',
+          student_data: { ...studentData, password: undefined, confirm_password: undefined },
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('token', token);
+
+      if (updateError) {
+        console.error("⚠️ Warning: Could not update enrollment form:", updateError);
+      }
+
+      console.log("✅ Enrollment process completed successfully");
+
+      return {
+        ...enrollmentData,
+        user_id: authData.user.id,
+        email: studentData.email
+      };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["enrollment-forms"] });
-      toast({
-        title: "Inscripción completada",
-        description: "Tu inscripción ha sido enviada correctamente",
-      });
+      // Don't show toast here, let the component handle it with credentials
+      return data;
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error al completar inscripción",
+        description: error.message || "Ha ocurrido un error al procesar tu inscripción",
         variant: "destructive",
       });
     },

@@ -11,7 +11,8 @@ const StudentEnrollmentLink = () => {
   const { token } = useParams<{ token: string }>();
   const [showForm, setShowForm] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(5);
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const { data: enrollmentForm, isLoading, error } = useEnrollmentFormByToken(token || "");
   const completeEnrollmentMutation = useCompleteEnrollmentForm();
@@ -137,8 +138,8 @@ const StudentEnrollmentLink = () => {
   if (redirecting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-playtomic-dark via-playtomic-dark to-playtomic-orange/20 flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full border-0 shadow-2xl bg-card">
-          <CardContent className="text-center py-16 px-8">
+        <Card className="max-w-2xl w-full border-0 shadow-2xl bg-card">
+          <CardContent className="text-center py-12 px-8">
             <div className="mx-auto mb-8 w-24 h-24 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center shadow-xl animate-pulse">
               <CheckCircle className="h-14 w-14 text-white" />
             </div>
@@ -148,8 +149,29 @@ const StudentEnrollmentLink = () => {
             </h2>
 
             <p className="text-lg text-muted-foreground mb-8">
-              Tu inscripción ha sido enviada correctamente
+              Tu cuenta ha sido creada exitosamente
             </p>
+
+            <div className="bg-gradient-to-r from-playtomic-orange/10 to-orange-600/10 border border-playtomic-orange/20 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
+                <User className="h-5 w-5 text-playtomic-orange" />
+                Tus credenciales de acceso
+              </h3>
+              <div className="space-y-3 text-left">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <Mail className="h-5 w-5 text-playtomic-orange flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="font-medium truncate">{userEmail}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                    ✓ Contraseña configurada correctamente
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="bg-muted/50 rounded-xl p-6 mb-8">
               <p className="text-sm text-muted-foreground mb-2">
@@ -158,13 +180,16 @@ const StudentEnrollmentLink = () => {
               <div className="text-5xl font-bold text-playtomic-orange">
                 {countdown}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                segundos
+              </p>
             </div>
 
             <Button
               onClick={() => window.location.href = "/auth"}
-              className="bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white shadow-lg"
+              className="w-full bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white shadow-lg"
             >
-              Ir ahora
+              Ir al inicio de sesión ahora
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </CardContent>
@@ -280,7 +305,8 @@ const StudentEnrollmentLink = () => {
           isPlayerMode={true}
           enrollmentToken={token}
           onClose={() => setShowForm(false)}
-          onSuccess={() => {
+          onSuccess={(email: string) => {
+            setUserEmail(email);
             setRedirecting(true);
           }}
           trainerProfile={{

@@ -9,7 +9,10 @@
       "Bash(npx supabase migration:*)",
       "Bash(npx supabase db reset:*)",
       "Bash(rm:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(echo:*)",
+      "Bash(npx supabase functions:*)",
+      "Bash(npx supabase db remote commit:*)"
     ],
     "deny": [],
     "ask": []

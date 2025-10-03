@@ -10,6 +10,7 @@ interface CreateStudentUserRequest {
   email: string;
   full_name: string;
   club_id: string;
+  password?: string; // Optional custom password, defaults to "123456"
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -37,8 +38,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    const { email, full_name, club_id }: CreateStudentUserRequest = await req.json();
-    console.log("Creating student user for:", { email, full_name, club_id });
+    const { email, full_name, club_id, password }: CreateStudentUserRequest = await req.json();
+    const userPassword = password || "123456"; // Use custom password or default
+    console.log("Creating student user for:", { email, full_name, club_id, hasCustomPassword: !!password });
 
     if (!email || !full_name || !club_id) {
       console.error("Missing required fields");
@@ -70,11 +72,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create the user with fixed password
+    // Create the user with provided or default password
     console.log("Creating auth user...");
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
-      password: "123456", // Fixed password
+      password: userPassword, // Use custom password or default "123456"
       email_confirm: true, // Auto-confirm email
       user_metadata: {
         full_name: full_name,
@@ -144,7 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         message: "Cuenta de alumno creada exitosamente",
         email: email,
-        password: "123456",
+        password: userPassword,
         user_id: authUser.user.id
       }),
       {
