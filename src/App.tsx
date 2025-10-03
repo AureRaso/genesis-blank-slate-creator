@@ -34,6 +34,10 @@ import PaymentCancelPage from "@/pages/PaymentCancelPage";
 import PaymentControlPage from "@/pages/PaymentControlPage";
 import SettingsPage from "@/pages/SettingsPage";
 import LandingPage from "@/pages/LandingPage";
+import CompleteProfile from "@/pages/CompleteProfile";
+import AuthCallback from "@/pages/AuthCallback";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -122,8 +126,17 @@ function App() {
   return (
     <Router>
         <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<AuthCallback />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/complete-profile" element={
+                <ProtectedRoute>
+                  <CompleteProfile />
+                </ProtectedRoute>
+              } />
               <Route path="/logout" element={<LogoutPage />} />
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
               <Route path="/enrollment/:token" element={<PublicEnrollmentPage />} />

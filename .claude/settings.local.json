@@ -1,18 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx supabase link:*)",
-      "Bash(grep:*)",
-      "Bash(npx supabase db push:*)",
-      "Bash(git add:*)",
-      "Bash(git push:*)",
-      "Bash(npx supabase migration:*)",
-      "Bash(npx supabase db reset:*)",
-      "Bash(rm:*)",
-      "Bash(npm run dev:*)",
-      "Bash(echo:*)",
-      "Bash(npx supabase functions:*)",
-      "Bash(npx supabase db remote commit:*)"
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Improve AuthPage responsive layout for mobile devices\n\n- Change container from h-screen to min-h-screen on mobile\n- Enable vertical scroll on mobile devices\n- Reduce logo and text sizes for better mobile fit\n- Hide feature list on mobile to save space\n- Add responsive breakpoints for all text elements\n- Fix overflow issues preventing mobile scrolling\n- Center form card on mobile devices\n- Keep desktop full-height layout with internal scroll\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

@@ -11,6 +11,7 @@ interface AuthContextType {
   loading: boolean;
   authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string, clubId?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   retryAuth: () => void;
@@ -199,6 +200,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    });
+    return { error };
+  };
+
   const signUp = async (email: string, password: string, fullName: string, clubId?: string) => {
     console.log('AuthContext - signUp called with:', { email, fullName, clubId });
     
@@ -269,6 +284,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     authError,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     retryAuth,
