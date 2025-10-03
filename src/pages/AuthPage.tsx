@@ -159,7 +159,7 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 flex items-center justify-center p-4 py-6 relative overflow-hidden">
+    <div className="min-h-screen lg:h-screen w-full bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 flex items-center justify-center p-4 py-6 relative overflow-x-hidden">
       {/* Elementos decorativos de fondo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-playtomic-orange/10 rounded-full blur-3xl animate-pulse"></div>
@@ -167,33 +167,33 @@ export const AuthPage = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-playtomic-orange/5 to-transparent rounded-full blur-3xl"></div>
       </div>
 
-      <div className="w-full h-full max-w-7xl flex flex-col lg:flex-row items-stretch gap-8 relative z-10">
+      <div className="w-full lg:h-full max-w-7xl flex flex-col lg:flex-row items-stretch gap-8 relative z-10 py-8 lg:py-0">
         {/* Panel izquierdo - Branding */}
-        <div className="flex-1 flex flex-col justify-center text-center lg:text-left space-y-8 py-8">
+        <div className="flex-1 flex flex-col justify-center text-center lg:text-left space-y-6 lg:space-y-8">
           {/* Logo */}
           <div className="flex justify-center lg:justify-start">
             <img
               src={padelockLogo}
               alt="PadeLock Logo"
-              className="h-32 lg:h-40 w-auto drop-shadow-2xl"
+              className="h-24 lg:h-32 xl:h-40 w-auto drop-shadow-2xl"
             />
           </div>
 
           {/* Hero text */}
-          <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
+          <div className="space-y-3 lg:space-y-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
               Gestiona tu academia de
               <span className="block bg-gradient-to-r from-playtomic-orange to-orange-400 bg-clip-text text-transparent">
                 pádel con éxito
               </span>
             </h1>
-            <p className="text-xl text-slate-300 max-w-lg">
+            <p className="text-base sm:text-lg lg:text-xl text-slate-300 max-w-lg mx-auto lg:mx-0">
               La plataforma completa para administrar clases, estudiantes y reservas de manera profesional.
             </p>
           </div>
 
-          {/* Features */}
-          <div className="space-y-4 max-w-lg">
+          {/* Features - Hidden on mobile to save space */}
+          <div className="hidden lg:flex lg:flex-col space-y-4 max-w-lg">
             {[
               "Gestión completa de estudiantes y matrículas",
               "Programación inteligente de clases",
@@ -211,8 +211,8 @@ export const AuthPage = () => {
         </div>
 
         {/* Panel derecho - Forms */}
-        <div className="flex-1 w-full max-w-md flex flex-col">
-          <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl flex flex-col h-full max-h-full overflow-hidden">
+        <div className="flex-1 w-full max-w-md mx-auto lg:mx-0 flex flex-col">
+          <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl flex flex-col lg:h-full lg:max-h-full overflow-hidden">
             <CardHeader className="text-center space-y-2 pb-6 flex-shrink-0">
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-playtomic-dark to-slate-700 bg-clip-text text-transparent">
                 Acceso al Sistema
@@ -221,7 +221,7 @@ export const AuthPage = () => {
                 Inicia sesión o crea tu cuenta
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-6 pb-6 flex-1 overflow-y-auto">
+            <CardContent className="px-6 pb-6 flex-1 lg:overflow-y-auto">
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6 h-12 bg-slate-100 p-1">
                   <TabsTrigger
