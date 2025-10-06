@@ -151,10 +151,11 @@ const TodayAttendancePage = () => {
       ) : (
         <div className="space-y-4">
           {classes.map((classData) => {
-            const confirmedCount = classData.participants.filter(
+            const validParticipants = classData.participants.filter(p => p.student_enrollment);
+            const confirmedCount = validParticipants.filter(
               p => p.attendance_confirmed_for_date
             ).length;
-            const totalCount = classData.participants.length;
+            const totalCount = validParticipants.length;
             const confirmationRate = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
 
             return (
@@ -181,7 +182,7 @@ const TodayAttendancePage = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {classData.participants.length === 0 ? (
+                  {validParticipants.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">
                       No hay alumnos inscritos en esta clase
                     </p>
@@ -189,7 +190,7 @@ const TodayAttendancePage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium mb-3">Alumnos ({totalCount})</h4>
                       <div className="grid gap-2">
-                        {classData.participants.map((participant) => {
+                        {validParticipants.map((participant) => {
                           const isConfirmed = !!participant.attendance_confirmed_for_date;
                           const isAbsent = !!participant.absence_confirmed;
 
@@ -215,10 +216,10 @@ const TodayAttendancePage = () => {
                                   )}
                                   <div>
                                     <p className="font-medium text-sm">
-                                      {participant.student_enrollment.full_name}
+                                      {participant.student_enrollment!.full_name}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                      {participant.student_enrollment.email}
+                                      {participant.student_enrollment!.email}
                                     </p>
                                   </div>
                                 </div>

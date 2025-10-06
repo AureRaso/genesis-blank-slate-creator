@@ -86,14 +86,14 @@ export const useTodayAttendance = () => {
         .lte('start_date', today)
         .gte('end_date', today);
 
-      // Filter by club if user has a club_id
-      if (profile.club_id) {
-        query = query.eq('club_id', profile.club_id);
-      }
-
-      // If trainer (not admin), filter by classes they created
+      // If trainer, filter by classes assigned to them (regardless of club)
       if (profile.role === 'trainer') {
-        query = query.eq('created_by', profile.id);
+        query = query.eq('trainer_profile_id', profile.id);
+      } else {
+        // For admins, filter by club if they have one assigned
+        if (profile.club_id) {
+          query = query.eq('club_id', profile.club_id);
+        }
       }
 
       query = query.order('start_time', { ascending: true });
