@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordChangeSection } from '@/components/PasswordChangeSection';
+import { canChangePassword, getAuthProviderMessage } from '@/utils/authProviders';
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -281,6 +283,12 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Password Change Section */}
+          <PasswordChangeSection
+            canChangePassword={canChangePassword(user)}
+            authProviderMessage={getAuthProviderMessage(user)}
+          />
         </div>
       </div>
     );
