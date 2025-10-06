@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -65,6 +65,14 @@ const AppSidebar = () => {
                 <Link to="/dashboard/scheduled-classes">
                   <Calendar />
                   <span>{t('sidebar.scheduledClasses')}</span>
+                </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                <Link to="/dashboard/today-attendance">
+                  <ClipboardCheck />
+                  <span>Asistencia Hoy</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -195,6 +203,11 @@ const AppSidebar = () => {
         title: t('sidebar.scheduledClasses'),
         url: "/dashboard/scheduled-classes",
         icon: Calendar
+      },
+      {
+        title: "Asistencia Hoy",
+        url: "/dashboard/today-attendance",
+        icon: ClipboardCheck
       },
       {
         title: "Control de Pagos",

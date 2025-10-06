@@ -10,6 +10,7 @@ import { useState } from "react";
 import PlayerLeagueDetails from "./PlayerLeagueDetails";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
 import PlayerClassesWidget from "./PlayerClassesWidget";
+import { TodayClassesConfirmation } from "./TodayClassesConfirmation";
 
 const PlayerDashboard = () => {
   const { profile } = useAuth();
@@ -79,6 +80,9 @@ const PlayerDashboard = () => {
           Bienvenido a tu dashboard personal de pádel
         </p>
       </div>
+
+      {/* Confirmación de Clases de Hoy - Destacado */}
+      <TodayClassesConfirmation />
 
       {/* Información del Club */}
       <Card>

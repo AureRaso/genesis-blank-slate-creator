@@ -40,6 +40,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         return { title: "Profesores", path: "/dashboard/trainers" };
       case "/dashboard/waitlist-notifications":
         return { title: "Notificaciones", path: "/dashboard/waitlist-notifications" };
+      case "/dashboard/today-attendance":
+        return { title: "Asistencia de Hoy", path: "/dashboard/today-attendance" };
       default:
         return { title: "Dashboard", path: "/dashboard" };
     }
