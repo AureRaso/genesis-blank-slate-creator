@@ -12,7 +12,7 @@ interface AuthContextType {
   authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, clubId?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, clubId?: string, level?: number) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   retryAuth: () => void;
   isAdmin: boolean;
@@ -121,26 +121,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [profile, isWindowVisible]);
 
   const fetchProfile = async (userId: string) => {
-    console.log('AuthContext - Starting fetchProfile for user:', userId);
-    
+    console.log('🔍 DEBUG - Starting fetchProfile for user:', userId);
+
     // Prevent multiple concurrent requests
     if (isCurrentlyFetching.current) {
-      console.log('AuthContext - Already fetching profile, skipping');
+      console.log('🔍 DEBUG - Already fetching profile, skipping');
       return;
     }
 
     isCurrentlyFetching.current = true;
-    
+
     try {
-      console.log('AuthContext - Making profile query...');
-      
+      console.log('🔍 DEBUG - Making profile query...');
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      
-      console.log('AuthContext - Profile query result:', { data, error });
+
+      console.log('🔍 DEBUG - Profile query result:', {
+        data,
+        error,
+        level: data?.level,
+        levelType: typeof data?.level,
+        club_id: data?.club_id
+      });
 
       if (error) {
         console.error('AuthContext - Error fetching profile:', error);
@@ -214,24 +220,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, clubId?: string) => {
-    console.log('AuthContext - signUp called with:', { email, fullName, clubId });
-    
+  const signUp = async (email: string, password: string, fullName: string, clubId?: string, level?: number) => {
+    console.log('🔍 DEBUG - AuthContext signUp called with:', {
+      email,
+      fullName,
+      clubId,
+      level,
+      levelType: typeof level
+    });
+
     const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
+
+    const userData = {
+      full_name: fullName,
+      club_id: clubId,
+      level: level
+    };
+
+    console.log('🔍 DEBUG - userData being sent to Supabase:', userData);
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          club_id: clubId
-        }
+        data: userData
       }
     });
-    
-    console.log('AuthContext - signUp result:', { error });
+
+    console.log('🔍 DEBUG - Supabase signUp result:', {
+      error,
+      user: data?.user?.id,
+      userMetadata: data?.user?.user_metadata
+    });
+
     return { error };
   };
 

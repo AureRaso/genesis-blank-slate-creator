@@ -7,23 +7,44 @@ export const AuthCallback = () => {
   const { user, profile, loading } = useAuth();
 
   useEffect(() => {
+    console.log('🔍 DEBUG - AuthCallback useEffect:', {
+      loading,
+      hasUser: !!user,
+      hasProfile: !!profile,
+      profileData: profile ? {
+        role: profile.role,
+        club_id: profile.club_id,
+        level: profile.level,
+        levelType: typeof profile.level
+      } : null
+    });
+
     if (loading) return;
 
     if (user && profile) {
       // Only check profile completion for players
-      if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
-        console.log('AuthCallback - Player profile incomplete, redirecting to complete-profile');
+      const isProfileIncomplete = profile.role === 'player' && (!profile.club_id || !profile.level);
+
+      console.log('🔍 DEBUG - Profile completion check:', {
+        role: profile.role,
+        club_id: profile.club_id,
+        level: profile.level,
+        isProfileIncomplete
+      });
+
+      if (isProfileIncomplete) {
+        console.log('🔍 DEBUG - Player profile incomplete, redirecting to complete-profile');
         navigate("/complete-profile", { replace: true });
       } else {
-        console.log('AuthCallback - Profile complete, redirecting to dashboard');
+        console.log('🔍 DEBUG - Profile complete, redirecting to dashboard');
         navigate("/dashboard", { replace: true });
       }
     } else if (user && !profile) {
       // Wait for profile to load
-      console.log('AuthCallback - Waiting for profile to load...');
+      console.log('🔍 DEBUG - Waiting for profile to load...');
     } else {
       // No user, redirect to auth
-      console.log('AuthCallback - No user, redirecting to auth');
+      console.log('🔍 DEBUG - No user, redirecting to auth');
       navigate("/auth", { replace: true });
     }
   }, [user, profile, loading, navigate]);

@@ -144,6 +144,13 @@ export const AuthPage = () => {
     }
 
     const numLevel = parseFloat(level);
+    console.log('🔍 DEBUG - Level validation:', {
+      levelString: level,
+      levelNumber: numLevel,
+      isNaN: isNaN(numLevel),
+      isValid: !isNaN(numLevel) && numLevel >= 1.0 && numLevel <= 10.0
+    });
+
     if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
       toast({
         title: "Error",
@@ -162,9 +169,18 @@ export const AuthPage = () => {
       return;
     }
 
+    console.log('🔍 DEBUG - About to call signUp with:', {
+      email,
+      fullName,
+      selectedClubId,
+      numLevel,
+      numLevelType: typeof numLevel
+    });
+
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName, selectedClubId);
+      const { error } = await signUp(email, password, fullName, selectedClubId, numLevel);
+      console.log('🔍 DEBUG - signUp completed with error:', error);
       if (error) {
         toast({
           title: "Error al registrarse",
@@ -467,12 +483,16 @@ export const AuthPage = () => {
               </Label>
               <Input
                 id="signup-level"
-                type="number"
-                step="0.1"
-                min="1.0"
-                max="10.0"
+                type="text"
+                inputMode="decimal"
                 value={level}
-                onChange={e => setLevel(e.target.value)}
+                onChange={e => {
+                  const value = e.target.value;
+                  // Allow only numbers and one decimal point
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    setLevel(value);
+                  }
+                }}
                 placeholder="Ej: 3.5"
                 className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
                 required
