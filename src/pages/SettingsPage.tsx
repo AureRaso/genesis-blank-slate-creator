@@ -22,16 +22,26 @@ interface ClubWithStripe {
 }
 
 const SettingsPage = () => {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, isPlayer, user } = useAuth();
   const { data: clubs } = useClubs();
   const [loading, setLoading] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>('');
   const [testStripeUrl, setTestStripeUrl] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({
+    full_name: profile?.full_name || '',
+    email: user?.email || '',
+    phone: profile?.phone || '',
+    level: profile?.level || '',
+  });
 
   // Get the selected club or default to the first one
-  const club = clubs && clubs.length > 0 
+  const club = clubs && clubs.length > 0
     ? clubs.find(c => c.id === selectedClubId) as ClubWithStripe || clubs[0] as ClubWithStripe
     : null;
+
+  // Get user's club name
+  const userClub = clubs?.find(c => c.id === profile?.club_id);
 
   // Set default selected club when clubs load
   React.useEffect(() => {
@@ -104,6 +114,179 @@ const SettingsPage = () => {
 
   const isStripeConnected = club?.stripe_account_id && club?.stripe_onboarding_completed;
 
+  // Update editedProfile when profile changes
+  React.useEffect(() => {
+    if (profile && user) {
+      setEditedProfile({
+        full_name: profile.full_name || '',
+        email: user.email || '',
+        phone: profile.phone || '',
+        level: profile.level?.toString() || '',
+      });
+    }
+  }, [profile, user]);
+
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editedProfile.full_name,
+          phone: editedProfile.phone,
+          level: parseFloat(editedProfile.level) || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile?.id);
+
+      if (error) throw error;
+
+      toast.success('Perfil actualizado correctamente');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Error al actualizar el perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Player view - show profile information
+  if (isPlayer) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
+        <div className="max-w-2xl mx-auto pt-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Mi Perfil
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Gestiona tu información personal
+            </p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Información Personal
+                </CardTitle>
+                {!isEditing ? (
+                  <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                    Editar
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button onClick={() => setIsEditing(false)} variant="outline" size="sm">
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleSaveProfile} disabled={loading} size="sm">
+                      {loading ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name" className="text-sm font-medium">
+                    Nombre Completo
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="full_name"
+                      value={editedProfile.full_name}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, full_name: e.target.value })}
+                      placeholder="Tu nombre completo"
+                    />
+                  ) : (
+                    <p className="text-base">{profile?.full_name || 'No especificado'}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">
+                    Email
+                  </Label>
+                  <p className="text-base text-muted-foreground">{user?.email || 'No especificado'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    El email no se puede cambiar desde aquí
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium">
+                    Teléfono
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="phone"
+                      value={editedProfile.phone}
+                      onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
+                      placeholder="Tu número de teléfono"
+                    />
+                  ) : (
+                    <p className="text-base">{profile?.phone || 'No especificado'}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="level" className="text-sm font-medium">
+                    Nivel de Juego (Playtomic)
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="level"
+                      type="text"
+                      inputMode="decimal"
+                      value={editedProfile.level}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setEditedProfile({ ...editedProfile, level: value });
+                        }
+                      }}
+                      placeholder="Ej: 3.5"
+                    />
+                  ) : (
+                    <p className="text-base">{profile?.level || 'No especificado'}</p>
+                  )}
+                  {isEditing && (
+                    <p className="text-xs text-muted-foreground">
+                      Introduce tu nivel entre 1.0 y 10.0
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Club
+                  </Label>
+                  <p className="text-base">{userClub?.name || 'No asignado'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Contacta al administrador para cambiar de club
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Rol
+                  </Label>
+                  <Badge variant="secondary" className="capitalize">
+                    {profile?.role === 'player' ? 'Jugador' : profile?.role}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Non-admin, non-player users (trainers) - restricted access
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
@@ -112,12 +295,12 @@ const SettingsPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                Acceso Denegado
+                Acceso Limitado
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Solo los administradores pueden acceder a la configuración.
+                La configuración avanzada solo está disponible para administradores.
               </p>
             </CardContent>
           </Card>
