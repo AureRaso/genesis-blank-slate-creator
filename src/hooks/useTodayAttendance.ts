@@ -19,6 +19,9 @@ export interface TodayAttendanceClass {
     };
     attendance_confirmed_for_date: string | null;
     attendance_confirmed_at: string | null;
+    absence_confirmed: boolean | null;
+    absence_reason: string | null;
+    absence_confirmed_at: string | null;
   }[];
 }
 
@@ -69,6 +72,9 @@ export const useTodayAttendance = () => {
             status,
             attendance_confirmed_for_date,
             attendance_confirmed_at,
+            absence_confirmed,
+            absence_reason,
+            absence_confirmed_at,
             student_enrollment:student_enrollments!student_enrollment_id(
               full_name,
               email
@@ -114,7 +120,10 @@ export const useTodayAttendance = () => {
             id: p.id,
             student_enrollment: p.student_enrollment,
             attendance_confirmed_for_date: p.attendance_confirmed_for_date,
-            attendance_confirmed_at: p.attendance_confirmed_at
+            attendance_confirmed_at: p.attendance_confirmed_at,
+            absence_confirmed: p.absence_confirmed,
+            absence_reason: p.absence_reason,
+            absence_confirmed_at: p.absence_confirmed_at
           }))
       })) as TodayAttendanceClass[];
 

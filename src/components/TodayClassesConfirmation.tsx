@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle } from "lucide-react";
-import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation } from "@/hooks/useTodayClassAttendance";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
+import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
 
 export const TodayClassesConfirmation = () => {
   const { data: todayClasses = [], isLoading } = useTodayClassAttendance();
   const confirmAttendance = useConfirmAttendance();
   const cancelConfirmation = useCancelAttendanceConfirmation();
+  const confirmAbsence = useConfirmAbsence();
+  const cancelAbsence = useCancelAbsenceConfirmation();
+
+  const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   const handleToggleConfirmation = (participantId: string, isConfirmed: boolean) => {
     if (isConfirmed) {
@@ -16,6 +23,29 @@ export const TodayClassesConfirmation = () => {
     } else {
       confirmAttendance.mutate(participantId);
     }
+  };
+
+  const handleOpenAbsenceDialog = (participantId: string) => {
+    setSelectedClassId(participantId);
+    setAbsenceDialogOpen(true);
+  };
+
+  const handleConfirmAbsence = (reason?: string) => {
+    if (selectedClassId) {
+      confirmAbsence.mutate(
+        { participantId: selectedClassId, reason },
+        {
+          onSuccess: () => {
+            setAbsenceDialogOpen(false);
+            setSelectedClassId(null);
+          },
+        }
+      );
+    }
+  };
+
+  const handleCancelAbsence = (participantId: string) => {
+    cancelAbsence.mutate(participantId);
   };
 
   const getCurrentDate = () => {
@@ -105,6 +135,7 @@ export const TodayClassesConfirmation = () => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
           const today = new Date().toISOString().split('T')[0];
           const isConfirmedForToday = classItem.attendance_confirmed_for_date === today;
+          const isAbsent = !!classItem.absence_confirmed;
 
           return (
             <div
@@ -112,17 +143,25 @@ export const TodayClassesConfirmation = () => {
               className={`p-4 rounded-lg border-2 transition-all ${
                 isConfirmedForToday
                   ? 'bg-green-50 border-green-300'
+                  : isAbsent
+                  ? 'bg-red-50 border-red-300'
                   : 'bg-white border-gray-200 hover:border-blue-300'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-lg">{classItem.programmed_class.name}</h3>
                     {isConfirmedForToday && (
                       <Badge className="bg-green-600 text-white">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Confirmado
+                        Asistiré
+                      </Badge>
+                    )}
+                    {isAbsent && (
+                      <Badge className="bg-red-600 text-white">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        No asistiré
                       </Badge>
                     )}
                   </div>
@@ -141,22 +180,60 @@ export const TodayClassesConfirmation = () => {
                       <span>{classItem.programmed_class.club.name}</span>
                     </div>
                   </div>
+
+                  {/* Show absence reason if present */}
+                  {isAbsent && classItem.absence_reason && (
+                    <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
+                      <strong>Motivo:</strong> {classItem.absence_reason}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col items-center gap-2">
-                  <Checkbox
-                    id={`attendance-${classItem.id}`}
-                    checked={isConfirmedForToday}
-                    onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForToday)}
-                    disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                    className="h-6 w-6 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                  />
-                  <label
-                    htmlFor={`attendance-${classItem.id}`}
-                    className="text-xs text-center cursor-pointer select-none"
-                  >
-                    {isConfirmedForToday ? 'Asistiré' : 'Confirmar'}
-                  </label>
+                <div className="flex flex-col items-end gap-2">
+                  {!isAbsent && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Checkbox
+                        id={`attendance-${classItem.id}`}
+                        checked={isConfirmedForToday}
+                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForToday)}
+                        disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
+                        className="h-6 w-6 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                      />
+                      <label
+                        htmlFor={`attendance-${classItem.id}`}
+                        className="text-xs text-center cursor-pointer select-none"
+                      >
+                        {isConfirmedForToday ? 'Asistiré' : 'Confirmar'}
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Absence button */}
+                  {!isConfirmedForToday && !isAbsent && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenAbsenceDialog(classItem.id)}
+                      disabled={confirmAbsence.isPending}
+                      className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      No voy
+                    </Button>
+                  )}
+
+                  {/* Cancel absence button */}
+                  {isAbsent && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancelAbsence(classItem.id)}
+                      disabled={cancelAbsence.isPending}
+                      className="border-gray-300"
+                    >
+                      Cancelar ausencia
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -173,6 +250,14 @@ export const TodayClassesConfirmation = () => {
             </p>
           </div>
         )}
+
+        {/* Absence confirmation dialog */}
+        <ConfirmAbsenceDialog
+          open={absenceDialogOpen}
+          onOpenChange={setAbsenceDialogOpen}
+          onConfirm={handleConfirmAbsence}
+          isLoading={confirmAbsence.isPending}
+        />
       </CardContent>
     </Card>
   );

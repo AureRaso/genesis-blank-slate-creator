@@ -45,6 +45,10 @@ const TodayAttendancePage = () => {
     (acc, c) => acc + c.participants.filter(p => p.attendance_confirmed_for_date).length,
     0
   ) || 0;
+  const absentParticipants = classes?.reduce(
+    (acc, c) => acc + c.participants.filter(p => p.absence_confirmed).length,
+    0
+  ) || 0;
 
   return (
     <div className="space-y-6">
@@ -75,7 +79,7 @@ const TodayAttendancePage = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Clases Hoy</CardTitle>
@@ -100,17 +104,34 @@ const TodayAttendancePage = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Confirmaciones</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Asistirán</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {confirmedParticipants}/{totalParticipants}
+            <div className="text-2xl font-bold text-green-600">
+              {confirmedParticipants}
             </div>
             <p className="text-xs text-muted-foreground">
               {totalParticipants > 0
                 ? `${Math.round((confirmedParticipants / totalParticipants) * 100)}% confirmado`
-                : 'Sin alumnos'}
+                : 'Sin confirmaciones'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">No Asistirán</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {absentParticipants}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {totalParticipants > 0
+                ? `${Math.round((absentParticipants / totalParticipants) * 100)}% ausente`
+                : 'Sin ausencias'}
             </p>
           </CardContent>
         </Card>
@@ -170,47 +191,72 @@ const TodayAttendancePage = () => {
                       <div className="grid gap-2">
                         {classData.participants.map((participant) => {
                           const isConfirmed = !!participant.attendance_confirmed_for_date;
+                          const isAbsent = !!participant.absence_confirmed;
 
                           return (
                             <div
                               key={participant.id}
-                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                              className={`p-3 rounded-lg border ${
                                 isConfirmed
                                   ? 'bg-green-50 border-green-200'
+                                  : isAbsent
+                                  ? 'bg-red-50 border-red-200'
                                   : 'bg-gray-50 border-gray-200'
                               }`}
                             >
-                              <div className="flex items-center gap-3">
-                                {isConfirmed ? (
-                                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                ) : (
-                                  <XCircle className="h-5 w-5 text-gray-400" />
-                                )}
-                                <div>
-                                  <p className="font-medium text-sm">
-                                    {participant.student_enrollment.full_name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {participant.student_enrollment.email}
-                                  </p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  {isConfirmed ? (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                  ) : isAbsent ? (
+                                    <XCircle className="h-5 w-5 text-red-600" />
+                                  ) : (
+                                    <XCircle className="h-5 w-5 text-gray-400" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {participant.student_enrollment.full_name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {participant.student_enrollment.email}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {isConfirmed ? (
+                                    <Badge variant="default" className="bg-green-600">
+                                      Confirmado
+                                    </Badge>
+                                  ) : isAbsent ? (
+                                    <Badge variant="destructive" className="bg-red-600">
+                                      No asistirá
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-gray-600">
+                                      Pendiente
+                                    </Badge>
+                                  )}
+                                  {participant.attendance_confirmed_at && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {format(new Date(participant.attendance_confirmed_at), 'HH:mm')}
+                                    </p>
+                                  )}
+                                  {participant.absence_confirmed_at && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {format(new Date(participant.absence_confirmed_at), 'HH:mm')}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                {isConfirmed ? (
-                                  <Badge variant="default" className="bg-green-600">
-                                    Confirmado
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-gray-600">
-                                    Pendiente
-                                  </Badge>
-                                )}
-                                {participant.attendance_confirmed_at && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {format(new Date(participant.attendance_confirmed_at), 'HH:mm')}
+
+                              {/* Show absence reason if present */}
+                              {isAbsent && participant.absence_reason && (
+                                <div className="mt-2 pt-2 border-t border-red-200">
+                                  <p className="text-xs text-red-800">
+                                    <strong>Motivo:</strong> {participant.absence_reason}
                                   </p>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}

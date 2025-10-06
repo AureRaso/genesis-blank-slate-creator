@@ -8,6 +8,9 @@ export interface TodayClassAttendance {
   class_id: string;
   attendance_confirmed_for_date: string | null;
   attendance_confirmed_at: string | null;
+  absence_confirmed: boolean | null;
+  absence_reason: string | null;
+  absence_confirmed_at: string | null;
   programmed_class: {
     id: string;
     name: string;
@@ -74,7 +77,7 @@ export const useTodayClassAttendance = () => {
 
       const { data: participantsBasic, error: errorBasic } = await supabase
         .from('class_participants')
-        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at')
+        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at, absence_confirmed, absence_reason, absence_confirmed_at')
         .in('student_enrollment_id', enrollmentIds)
         .eq('status', 'active');
 
@@ -165,6 +168,9 @@ export const useTodayClassAttendance = () => {
           class_id: participant.class_id,
           attendance_confirmed_for_date: participant.attendance_confirmed_for_date,
           attendance_confirmed_at: participant.attendance_confirmed_at,
+          absence_confirmed: participant.absence_confirmed,
+          absence_reason: participant.absence_reason,
+          absence_confirmed_at: participant.absence_confirmed_at,
           programmed_class: {
             id: programmedClass.id,
             name: programmedClass.name,
@@ -288,6 +294,75 @@ export const useCancelAttendanceConfirmation = () => {
     onError: (error: any) => {
       console.error('Error canceling attendance confirmation:', error);
       toast.error('Error al cancelar confirmación');
+    },
+  });
+};
+
+// Hook para confirmar ausencia (no asistencia)
+export const useConfirmAbsence = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async ({ participantId, reason }: { participantId: string; reason?: string }) => {
+      const { data, error } = await supabase
+        .from('class_participants')
+        .update({
+          absence_confirmed: true,
+          absence_reason: reason || null,
+          absence_confirmed_at: new Date().toISOString(),
+          // Clear attendance confirmation if exists
+          attendance_confirmed_for_date: null,
+          attendance_confirmed_at: null,
+        })
+        .eq('id', participantId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      toast.success('Ausencia confirmada');
+    },
+    onError: (error: any) => {
+      console.error('Error confirming absence:', error);
+      toast.error('Error al confirmar ausencia');
+    },
+  });
+};
+
+// Hook para cancelar confirmación de ausencia
+export const useCancelAbsenceConfirmation = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async (participantId: string) => {
+      const { data, error } = await supabase
+        .from('class_participants')
+        .update({
+          absence_confirmed: false,
+          absence_reason: null,
+          absence_confirmed_at: null,
+        })
+        .eq('id', participantId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      toast.success('Confirmación de ausencia cancelada');
+    },
+    onError: (error: any) => {
+      console.error('Error canceling absence confirmation:', error);
+      toast.error('Error al cancelar confirmación de ausencia');
     },
   });
 };
