@@ -1,12 +1,48 @@
+import { useState } from "react";
 import { useTodayAttendance } from "@/hooks/useTodayAttendance";
+import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
+import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, MessageCircle, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import WaitlistManagement from "@/components/WaitlistManagement";
 
 const TodayAttendancePage = () => {
   const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
+  const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
+  const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
+  const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
+
+  const handleNotifyWhatsApp = (classData: any) => {
+    if (!whatsappGroup?.group_chat_id) {
+      console.error("No WhatsApp group configured");
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const absentCount = classData.participants.filter((p: any) => p.absence_confirmed).length;
+
+    // Generate waitlist URL
+    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+
+    sendWhatsApp({
+      groupChatId: whatsappGroup.group_chat_id,
+      className: classData.name,
+      classDate: today,
+      classTime: classData.start_time,
+      trainerName: classData.trainer?.full_name || 'Profesor',
+      waitlistUrl,
+      availableSlots: absentCount
+    });
+  };
+
+  const toggleWaitlist = (classId: string) => {
+    setExpandedWaitlist(expandedWaitlist === classId ? null : classId);
+  };
 
   if (isLoading) {
     return (
@@ -77,6 +113,16 @@ const TodayAttendancePage = () => {
           </div>
         </div>
       </div>
+
+      {/* WhatsApp Group Warning */}
+      {!loadingWhatsAppGroup && !whatsappGroup && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            No tienes un grupo de WhatsApp configurado. Las notificaciones de disponibilidad no funcionarán hasta que configures un grupo.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -215,9 +261,16 @@ const TodayAttendancePage = () => {
                                     <XCircle className="h-5 w-5 text-gray-400" />
                                   )}
                                   <div>
-                                    <p className="font-medium text-sm">
-                                      {participant.student_enrollment!.full_name}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-sm">
+                                        {participant.student_enrollment!.full_name}
+                                      </p>
+                                      {participant.is_substitute && (
+                                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-300">
+                                          Sustituto
+                                        </Badge>
+                                      )}
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
                                       {participant.student_enrollment!.email}
                                     </p>
@@ -264,6 +317,62 @@ const TodayAttendancePage = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* WhatsApp Notification and Waitlist Management */}
+                  {(() => {
+                    const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
+                    const today = new Date().toISOString().split('T')[0];
+
+                    return absentCount > 0 && (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                              {absentCount} {absentCount === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleNotifyWhatsApp(classData)}
+                              disabled={isSendingWhatsApp || !whatsappGroup}
+                              className="bg-green-600 hover:bg-green-700"
+                              title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              Notificar Disponibilidad
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleWaitlist(classData.id)}
+                            >
+                              {expandedWaitlist === classData.id ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4 mr-2" />
+                                  Ocultar Lista
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4 mr-2" />
+                                  Ver Lista de Espera
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Waitlist Management Panel */}
+                        {expandedWaitlist === classData.id && (
+                          <WaitlistManagement
+                            classId={classData.id}
+                            classDate={today}
+                            className={classData.name}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );

@@ -22,6 +22,8 @@ export interface TodayAttendanceClass {
     absence_confirmed: boolean | null;
     absence_reason: string | null;
     absence_confirmed_at: string | null;
+    is_substitute: boolean | null;
+    joined_from_waitlist_at: string | null;
   }[];
 }
 
@@ -75,6 +77,8 @@ export const useTodayAttendance = () => {
             absence_confirmed,
             absence_reason,
             absence_confirmed_at,
+            is_substitute,
+            joined_from_waitlist_at,
             student_enrollment:student_enrollments!student_enrollment_id(
               full_name,
               email
