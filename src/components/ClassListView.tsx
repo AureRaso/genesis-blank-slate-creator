@@ -242,7 +242,7 @@ export default function ClassListView({
                 </TableBody>
               </Table>
             </div>
-          </>
+          </>}
 
         {/* Class details modal */}
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
