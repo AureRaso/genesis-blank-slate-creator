@@ -56,16 +56,66 @@ function ScheduledClassesContent() {
         </Card>
       </div>;
   }
-  return <div className="container mx-auto py-0 space-y-2">
+  return <div className="container mx-auto py-2 sm:py-4 px-2 sm:px-4 space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t('pages.scheduledClasses.title')}</h1>
-          <p className="text-muted-foreground mt-1">
-            {profile?.role === 'admin' && adminClubs && adminClubs.length > 1 ? `${t('pages.scheduledClasses.description')} todos tus clubes` : `${t('pages.scheduledClasses.description')} ${currentClub.name}`}
-          </p>
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{t('pages.scheduledClasses.title')}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+              {profile?.role === 'admin' && adminClubs && adminClubs.length > 1 ? `${t('pages.scheduledClasses.description')} todos tus clubes` : `${t('pages.scheduledClasses.description')} ${currentClub.name}`}
+            </p>
+          </div>
+
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+            {/* View mode toggle */}
+            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+              <Button variant={viewMode === 'calendar' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('calendar')}>
+                <Calendar className="h-4 w-4" />
+              </Button>
+              <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')}>
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {(profile?.role === 'admin' || profile?.role === 'trainer') && (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowBulkCreator(true)}
+                  className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  <span className="hidden xl:inline">Creación Masiva</span>
+                  <span className="xl:hidden">Masiva</span>
+                </Button>
+
+                <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      <span className="hidden xl:inline">{t('classes.createScheduledClasses')}</span>
+                      <span className="xl:hidden">Crear</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
+                      <DialogDescription>
+                        Formulario para crear una nueva clase programada con horarios recurrentes y asignación de alumnos.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ScheduledClassForm onClose={handleCloseForm} clubId={currentClub.id} trainerProfileId={profile?.id || ""} />
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Mobile Actions */}
+        <div className="flex lg:hidden items-center gap-2">
           {/* View mode toggle */}
           <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
             <Button variant={viewMode === 'calendar' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('calendar')}>
@@ -75,26 +125,27 @@ function ScheduledClassesContent() {
               <List className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {(profile?.role === 'admin' || profile?.role === 'trainer') && (
             <>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={() => setShowBulkCreator(true)}
-                className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20"
+                size="sm"
+                className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 flex-1"
               >
-                <Zap className="h-4 w-4 mr-2" />
-                Creación Masiva
+                <Zap className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Masiva</span>
               </Button>
-              
+
               <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t('classes.createScheduledClasses')}
+                  <Button size="sm" className="flex-1">
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Crear</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
                   <DialogHeader className="sr-only">
                     <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
                     <DialogDescription>
@@ -109,27 +160,8 @@ function ScheduledClassesContent() {
         </div>
       </div>
 
-      {/* Filtros y leyenda solo en modo calendario */}
-      {viewMode === 'calendar' && <div className="space-y-4">
-          {/* Search bar and legend on same line */}
-          <div className="flex items-start gap-4">
-            <div className="flex-1 flex items-center gap-2">
-              <div className="relative flex-1">
-                
-                
-              </div>
-              
-            </div>
-            <TrainerLegend classes={filteredCalendarClasses} />
-          </div>
-          
-          {/* Advanced filters */}
-          <ClassFilters filters={filters} onFiltersChange={setFilters} groups={groups} trainers={[]} />
-        </div>}
-
-      {/* Filtros solo en modo listado */}
-      {viewMode === 'list' && <ClassFilters filters={filters} onFiltersChange={setFilters} groups={groups} trainers={[]} // TODO: Add trainers data when available
-    />}
+      {/* Filtros */}
+      <ClassFilters filters={filters} onFiltersChange={setFilters} groups={groups} trainers={[]} />
 
       {/* Main content */}
       <Tabs value={viewMode} onValueChange={value => setViewMode(value as 'calendar' | 'list')}>
@@ -149,13 +181,13 @@ function ScheduledClassesContent() {
 
       {/* Dialog for bulk class creation */}
       <Dialog open={showBulkCreator} onOpenChange={setShowBulkCreator}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Creación Masiva Inteligente
+            <DialogTitle className="flex items-center gap-2 text-sm sm:text-base md:text-lg">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+              <span className="truncate">Creación Masiva Inteligente</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Selecciona múltiples pistas, entrenadores y crea clases de forma inteligente
             </DialogDescription>
           </DialogHeader>

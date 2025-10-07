@@ -70,17 +70,17 @@ const QuickActions = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Button
                 key={index}
                 onClick={action.action}
-                className="h-auto p-4 flex flex-col items-center space-y-2 bg-muted hover:bg-muted/80 text-foreground border"
+                className="h-auto p-3 sm:p-4 flex flex-col items-center space-y-2 bg-muted hover:bg-muted/80 text-foreground border"
               >
-                <Icon className="h-6 w-6" />
-                <span className="font-semibold text-sm text-center">{action.title}</span>
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="font-semibold text-xs sm:text-sm text-center leading-tight">{action.title}</span>
               </Button>
             );
           })}
