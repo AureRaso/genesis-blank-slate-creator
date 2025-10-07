@@ -156,44 +156,44 @@ const SettingsPage = () => {
   // Player view - show profile information
   if (isPlayer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
-        <div className="max-w-2xl mx-auto pt-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
+        <div className="max-w-2xl mx-auto pt-4 sm:pt-8">
+          <div className="mb-4 sm:mb-6 md:mb-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               Mi Perfil
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
               Gestiona tu información personal
             </p>
           </div>
 
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
+            <CardHeader className="p-3 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                   Información Personal
                 </CardTitle>
                 {!isEditing ? (
-                  <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                  <Button onClick={() => setIsEditing(true)} variant="outline" size="sm" className="w-full sm:w-auto">
                     Editar
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={() => setIsEditing(false)} variant="outline" size="sm">
+                    <Button onClick={() => setIsEditing(false)} variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
                       Cancelar
                     </Button>
-                    <Button onClick={handleSaveProfile} disabled={loading} size="sm">
+                    <Button onClick={handleSaveProfile} disabled={loading} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
                       {loading ? 'Guardando...' : 'Guardar'}
                     </Button>
                   </div>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="full_name" className="text-sm font-medium">
+            <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6 pt-0 sm:pt-0">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="full_name" className="text-xs sm:text-sm font-medium">
                     Nombre Completo
                   </Label>
                   {isEditing ? (
@@ -202,24 +202,25 @@ const SettingsPage = () => {
                       value={editedProfile.full_name}
                       onChange={(e) => setEditedProfile({ ...editedProfile, full_name: e.target.value })}
                       placeholder="Tu nombre completo"
+                      className="text-sm h-9 sm:h-10"
                     />
                   ) : (
-                    <p className="text-base">{profile?.full_name || 'No especificado'}</p>
+                    <p className="text-sm sm:text-base">{profile?.full_name || 'No especificado'}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="email" className="text-xs sm:text-sm font-medium">
                     Email
                   </Label>
-                  <p className="text-base text-muted-foreground">{user?.email || 'No especificado'}</p>
+                  <p className="text-sm sm:text-base text-muted-foreground truncate">{user?.email || 'No especificado'}</p>
                   <p className="text-xs text-muted-foreground">
                     El email no se puede cambiar desde aquí
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">
                     Teléfono
                   </Label>
                   {isEditing ? (
@@ -228,14 +229,15 @@ const SettingsPage = () => {
                       value={editedProfile.phone}
                       onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
                       placeholder="Tu número de teléfono"
+                      className="text-sm h-9 sm:h-10"
                     />
                   ) : (
-                    <p className="text-base">{profile?.phone || 'No especificado'}</p>
+                    <p className="text-sm sm:text-base">{profile?.phone || 'No especificado'}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="level" className="text-sm font-medium">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="level" className="text-xs sm:text-sm font-medium">
                     Nivel de Juego (Playtomic)
                   </Label>
                   {isEditing ? (
@@ -251,9 +253,10 @@ const SettingsPage = () => {
                         }
                       }}
                       placeholder="Ej: 3.5"
+                      className="text-sm h-9 sm:h-10"
                     />
                   ) : (
-                    <p className="text-base">{profile?.level || 'No especificado'}</p>
+                    <p className="text-sm sm:text-base">{profile?.level || 'No especificado'}</p>
                   )}
                   {isEditing && (
                     <p className="text-xs text-muted-foreground">
@@ -262,21 +265,21 @@ const SettingsPage = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">
                     Club
                   </Label>
-                  <p className="text-base">{userClub?.name || 'No asignado'}</p>
+                  <p className="text-sm sm:text-base truncate">{userClub?.name || 'No asignado'}</p>
                   <p className="text-xs text-muted-foreground">
                     Contacta al administrador para cambiar de club
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label className="text-xs sm:text-sm font-medium">
                     Rol
                   </Label>
-                  <Badge variant="secondary" className="capitalize">
+                  <Badge variant="secondary" className="capitalize text-xs sm:text-sm">
                     {profile?.role === 'player' ? 'Jugador' : profile?.role}
                   </Badge>
                 </div>
@@ -297,17 +300,17 @@ const SettingsPage = () => {
   // Non-admin, non-player users (trainers) - restricted access
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
-        <div className="max-w-2xl mx-auto pt-20">
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
+        <div className="max-w-2xl mx-auto pt-12 sm:pt-20">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                 Acceso Limitado
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
+            <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 La configuración avanzada solo está disponible para administradores.
               </p>
             </CardContent>
@@ -318,39 +321,40 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
-      <div className="max-w-4xl mx-auto pt-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
+      <div className="max-w-4xl mx-auto pt-4 sm:pt-8">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Configuración
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
             Gestiona la configuración de tu club
           </p>
         </div>
 
-        <Tabs defaultValue="payments" className="space-y-6">
+        <Tabs defaultValue="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="payments">Pagos</TabsTrigger>
-            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm">Pagos</TabsTrigger>
+            <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="payments" className="space-y-6">
+          <TabsContent value="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
             {!club ? (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
+                <CardHeader className="p-3 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
                     Club Requerido
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     Necesitas crear un club antes de poder configurar los pagos.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button 
+                <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+                  <Button
                     onClick={() => window.location.href = '/clubs/new'}
-                    className="w-full"
+                    className="w-full text-sm"
+                    size="sm"
                   >
                     Crear Club
                   </Button>
@@ -358,24 +362,24 @@ const SettingsPage = () => {
               </Card>
             ) : (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
+                <CardHeader className="p-3 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
                     Conecta tu cuenta de Stripe
                   </CardTitle>
-                  <CardDescription>
-                    Para poder cobrar a tus jugadores directamente en tu cuenta bancaria, 
+                  <CardDescription className="text-xs sm:text-sm">
+                    Para poder cobrar a tus jugadores directamente en tu cuenta bancaria,
                     conecta tu Stripe con nuestra plataforma. Es rápido y seguro.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4 mb-4">
+                <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0 sm:pt-0">
+                  <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-xs sm:text-sm font-medium mb-2 block">
                         Seleccionar Club:
                       </label>
                       <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
                           <SelectValue placeholder="Selecciona un club" />
                         </SelectTrigger>
                         <SelectContent>
@@ -387,10 +391,10 @@ const SettingsPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     {club && (
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-blue-800 text-sm">
+                      <div className="p-2 sm:p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-blue-800 text-xs sm:text-sm">
                           <strong>Club seleccionado:</strong> {club.name}
                         </p>
                       </div>
@@ -398,9 +402,9 @@ const SettingsPage = () => {
                   </div>
 
                   {!isStripeConnected ? (
-                    <div className="space-y-4">
-                      <div className="space-y-3">
-                        <Label htmlFor="test-stripe-url" className="text-sm font-medium">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="test-stripe-url" className="text-xs sm:text-sm font-medium">
                           Enlace de prueba de Stripe Connect (temporal)
                         </Label>
                         <Input
@@ -409,7 +413,7 @@ const SettingsPage = () => {
                           placeholder="https://connect.stripe.com/d/setup/s/..."
                           value={testStripeUrl}
                           onChange={(e) => setTestStripeUrl(e.target.value)}
-                          className="w-full"
+                          className="w-full text-xs sm:text-sm h-9 sm:h-10"
                         />
                         <p className="text-xs text-muted-foreground">
                           Introduce aquí el enlace de configuración de prueba que te ha proporcionado Stripe para continuar con la configuración.
@@ -417,12 +421,12 @@ const SettingsPage = () => {
                       </div>
 
                       {testStripeUrl.trim() && (
-                        <Button 
+                        <Button
                           onClick={handleUseTestUrl}
-                          size="lg"
-                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                          size="sm"
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xs sm:text-sm"
                         >
-                          <ExternalLink className="mr-2 h-5 w-5" />
+                          <ExternalLink className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                           Usar enlace de prueba
                         </Button>
                       )}
@@ -438,52 +442,54 @@ const SettingsPage = () => {
                         </div>
                       </div>
 
-                      <Button 
+                      <Button
                         onClick={handleConnectStripe}
                         disabled={loading}
-                        size="lg"
+                        size="sm"
                         variant="outline"
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm"
                       >
-                        <CreditCard className="mr-2 h-5 w-5" />
-                        {loading ? 'Conectando...' : 'Conectar con Stripe (requiere cuenta completa)'}
+                        <CreditCard className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="hidden sm:inline">{loading ? 'Conectando...' : 'Conectar con Stripe (requiere cuenta completa)'}</span>
+                        <span className="sm:hidden">{loading ? 'Conectando...' : 'Conectar con Stripe'}</span>
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="text-green-800 font-medium">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-center gap-2 p-2 sm:p-3 bg-green-50 rounded-lg border border-green-200">
+                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                        <span className="text-green-800 font-medium text-xs sm:text-sm">
                           Tu cuenta Stripe está conectada correctamente
                         </span>
                       </div>
-                      
+
                       <Button
                         onClick={handleStripeLoginLink}
                         disabled={loading}
                         variant="outline"
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm"
+                        size="sm"
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <ExternalLink className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                         {loading ? 'Accediendo...' : 'Revisar tu cuenta en Stripe'}
                       </Button>
                     </div>
                   )}
 
                   {club && (
-                    <div className="mt-6 p-4 bg-secondary/30 rounded-lg">
-                      <h4 className="font-medium text-sm mb-2">Estado de la cuenta:</h4>
+                    <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-secondary/30 rounded-lg">
+                      <h4 className="font-medium text-xs sm:text-sm mb-2">Estado de la cuenta:</h4>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Estado:</span>
-                          <Badge variant={isStripeConnected ? "default" : "secondary"}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs sm:text-sm text-muted-foreground">Estado:</span>
+                          <Badge variant={isStripeConnected ? "default" : "secondary"} className="text-xs">
                             {club.stripe_account_status || 'Desconectado'}
                           </Badge>
                         </div>
                         {club.stripe_account_id && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">ID de cuenta:</span>
-                            <code className="text-xs bg-background px-2 py-1 rounded">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">ID de cuenta:</span>
+                            <code className="text-xs bg-background px-2 py-1 rounded truncate max-w-[200px]">
                               {club.stripe_account_id}
                             </code>
                           </div>
@@ -496,16 +502,16 @@ const SettingsPage = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="general" className="space-y-6">
+          <TabsContent value="general" className="space-y-3 sm:space-y-4 md:space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Configuración General</CardTitle>
-                <CardDescription>
+              <CardHeader className="p-3 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Configuración General</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Próximamente podrás configurar otros aspectos de tu club aquí.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
+              <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Esta sección estará disponible en futuras actualizaciones.
                 </p>
               </CardContent>

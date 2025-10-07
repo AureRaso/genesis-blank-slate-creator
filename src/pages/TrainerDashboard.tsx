@@ -148,30 +148,48 @@ const TrainerDashboard = () => {
         <StudentEnrollmentForm onClose={handleCloseStudentForm} trainerProfile={trainerProfile} />
       </div>;
   }
-  return <div className="space-y-6">
+  return <div className="space-y-3 sm:space-y-4 md:space-y-6 p-2 sm:p-0">
       {/* Header with Quick Actions */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent truncate">
             Panel del Profesor
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground truncate">
             Bienvenido, {trainerName}
           </p>
         </div>
-        
-        {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
+
+        {/* Desktop Quick Actions */}
+        <div className="hidden sm:flex gap-2 flex-shrink-0">
+          <Button asChild variant="outline" size="sm">
             <Link to="/dashboard/students">
-              <Users className="mr-2 h-4 w-4" />
-              Gestionar Alumnos
+              <Users className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden lg:inline">Gestionar Alumnos</span>
+              <span className="lg:hidden">Alumnos</span>
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link to="/dashboard/scheduled-classes">
-              <CalendarCheck className="mr-2 h-4 w-4" />
-              Clases Programadas
+              <CalendarCheck className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden lg:inline">Clases Programadas</span>
+              <span className="lg:hidden">Clases</span>
+            </Link>
+          </Button>
+        </div>
+
+        {/* Mobile Quick Actions */}
+        <div className="flex sm:hidden gap-2">
+          <Button asChild variant="outline" size="sm" className="flex-1">
+            <Link to="/dashboard/students">
+              <Users className="h-4 w-4 sm:mr-2" />
+              <span className="ml-1">Alumnos</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="flex-1">
+            <Link to="/dashboard/scheduled-classes">
+              <CalendarCheck className="h-4 w-4 sm:mr-2" />
+              <span className="ml-1">Clases</span>
             </Link>
           </Button>
         </div>
@@ -179,16 +197,16 @@ const TrainerDashboard = () => {
 
       {/* Club Card */}
       {trainerProfile && <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
               <span>Mi Club</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Badge variant="outline" className="text-playtomic-orange border-playtomic-orange">
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <Badge variant="outline" className="text-playtomic-orange border-playtomic-orange text-xs sm:text-sm">
               {clubName}
             </Badge>
-            {trainerProfile.trainer_clubs && trainerProfile.trainer_clubs.length > 0 && <div className="mt-2 text-sm text-muted-foreground">
+            {trainerProfile.trainer_clubs && trainerProfile.trainer_clubs.length > 0 && <div className="mt-2 text-xs sm:text-sm text-muted-foreground truncate">
                 Asignado al club: {trainerProfile.trainer_clubs[0]?.clubs?.name}
               </div>}
           </CardContent>
@@ -198,103 +216,102 @@ const TrainerDashboard = () => {
       <WaitlistDebugger />
 
       {/* Tabs Section */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4 md:space-y-6">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="classes">Clases</TabsTrigger>
-          <TabsTrigger value="students">Alumnos</TabsTrigger>
-          <TabsTrigger value="groups">Grupos</TabsTrigger>
+          <TabsTrigger value="classes" className="text-xs sm:text-sm">Clases</TabsTrigger>
+          <TabsTrigger value="students" className="text-xs sm:text-sm">Alumnos</TabsTrigger>
+          <TabsTrigger value="groups" className="text-xs sm:text-sm">Grupos</TabsTrigger>
         </TabsList>
 
         {/* Classes Tab */}
-        <TabsContent value="classes" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Mis Clases</h2>
-              <p className="text-muted-foreground">Gestiona tus clases de pádel</p>
+        <TabsContent value="classes" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold truncate">Mis Clases</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Gestiona tus clases de pádel</p>
             </div>
-            
           </div>
 
-          {classesLoading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {classesLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {Array.from({
             length: 3
           }).map((_, i) => <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <CardHeader className="p-3 sm:p-6">
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
                     <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-2 sm:h-3 bg-gray-200 rounded"></div>
+                      <div className="h-2 sm:h-3 bg-gray-200 rounded w-2/3"></div>
                     </div>
                   </CardContent>
                 </Card>)}
             </div> : !myClasses || myClasses.length === 0 ? <Card>
-              <CardContent className="text-center py-12">
-                <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">Aún no tienes clases activas</h3>
-                <p className="text-muted-foreground mb-6">
+              <CardContent className="text-center py-8 sm:py-12 px-3 sm:px-6">
+                <Calendar className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg md:text-xl font-medium mb-2">Aún no tienes clases activas</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
                   Crea tu primera clase para comenzar a gestionar tu disponibilidad
                 </p>
-                <div className="flex gap-3 justify-center">
-                  <Button onClick={handleCreateNewClass} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark" size="lg">
-                    <Plus className="mr-2 h-5 w-5" />
-                    Crear Primera Clase
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
+                  <Button onClick={handleCreateNewClass} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark" size="sm">
+                    <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="text-sm sm:text-base">Crear Primera Clase</span>
                   </Button>
-                  <Button asChild variant="outline" size="lg">
+                  <Button asChild variant="outline" size="sm">
                     <Link to="/scheduled-classes">
-                      <CalendarCheck className="mr-2 h-5 w-5" />
-                      Ver Clases Programadas
+                      <CalendarCheck className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="text-sm sm:text-base">Ver Clases Programadas</span>
                     </Link>
                   </Button>
                 </div>
               </CardContent>
-            </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </Card> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {myClasses.map(programmedClass => <Card key={programmedClass.id} className="hover:shadow-lg transition-all duration-300 group">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2">{programmedClass.name}</CardTitle>
-                        <CardDescription>
+                  <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm sm:text-base md:text-lg line-clamp-2">{programmedClass.name}</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm truncate">
                           {programmedClass.trainer?.full_name} - Pista {programmedClass.court_number || "No asignada"}
                         </CardDescription>
                       </div>
-                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewClass(programmedClass)}>
-                          <Eye className="h-4 w-4" />
+                      <div className="flex items-center gap-0 sm:gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewClass(programmedClass)} className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClass(programmedClass)}>
-                          <Edit className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClass(programmedClass)} className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(programmedClass.id)} className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(programmedClass.id)} className="text-red-600 hover:text-red-700 h-7 w-7 sm:h-8 sm:w-8 p-0">
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {programmedClass.days_of_week.join(", ")}
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-2" />
-                      {programmedClass.start_time} ({programmedClass.duration_minutes} min)
+
+                  <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
+                    <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{programmedClass.days_of_week.join(", ")}</span>
                     </div>
 
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Users className="h-4 w-4 mr-2" />
+                    <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{programmedClass.start_time} ({programmedClass.duration_minutes} min)</span>
+                    </div>
+
+                    <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
                       {programmedClass.participants?.length || 0} / 4 alumnos
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t">
+                      <Badge variant="outline" className="text-xs w-fit">
                         {programmedClass.custom_level || `${programmedClass.level_from || 1}-${programmedClass.level_to || 10}`}
                       </Badge>
-                      <span className="text-sm font-medium text-playtomic-orange">
+                      <span className="text-xs sm:text-sm font-medium text-playtomic-orange truncate">
                         {programmedClass.start_date} - {programmedClass.end_date}
                       </span>
                     </div>
@@ -304,15 +321,15 @@ const TrainerDashboard = () => {
         </TabsContent>
 
         {/* Students Tab */}
-        <TabsContent value="students" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Mis Alumnos</h2>
-              <p className="text-muted-foreground">Gestiona las inscripciones de tus alumnos</p>
+        <TabsContent value="students" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold truncate">Mis Alumnos</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Gestiona las inscripciones de tus alumnos</p>
             </div>
-            <Button onClick={handleCreateNewStudent} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Nueva Inscripción
+            <Button onClick={handleCreateNewStudent} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark flex-shrink-0" size="sm">
+              <UserPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-sm sm:text-base">Nueva Inscripción</span>
             </Button>
           </div>
 

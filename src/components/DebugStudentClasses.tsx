@@ -74,15 +74,6 @@ const DebugStudentClasses = () => {
   }, [profile?.id]);
 
   if (!profile) return <div>No user profile</div>;
-
-  return (
-    <div className="p-4 bg-gray-100 rounded">
-      <h3 className="font-bold mb-4">Debug Student Classes</h3>
-      <pre className="text-xs bg-white p-2 rounded overflow-auto max-h-96">
-        {JSON.stringify(debugData, null, 2)}
-      </pre>
-    </div>
-  );
 };
 
 export default DebugStudentClasses;

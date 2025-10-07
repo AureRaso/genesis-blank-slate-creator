@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// ============================================
+// LEGACY WAITLIST HOOKS (for existing features)
+// ============================================
+
 export interface WaitlistEntry {
   id: string;
   class_id: string;
@@ -28,9 +32,9 @@ export interface WaitlistWithDetails extends WaitlistEntry {
 }
 
 // Hook para obtener la lista de espera de una clase específica
-export const useClassWaitlist = (classId: string) => {
+export const useClassWaitlistOld = (classId: string) => {
   return useQuery({
-    queryKey: ["class-waitlist", classId],
+    queryKey: ["class-waitlist-old", classId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("waitlists")
@@ -94,7 +98,7 @@ export const useUserWaitlistPosition = (classId: string, userId?: string) => {
     queryKey: ["user-waitlist-position", classId, userId],
     queryFn: async () => {
       if (!userId) return null;
-      
+
       const { data, error } = await supabase
         .from("waitlists")
         .select("*")
@@ -108,7 +112,7 @@ export const useUserWaitlistPosition = (classId: string, userId?: string) => {
         return null;
       }
       if (error) throw error;
-      
+
       return data as WaitlistEntry;
     },
     enabled: !!classId && !!userId,
@@ -138,9 +142,9 @@ export const useJoinWaitlist = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["class-waitlist"] });
+      queryClient.invalidateQueries({ queryKey: ["class-waitlist-old"] });
       queryClient.invalidateQueries({ queryKey: ["user-waitlist-position"] });
-      
+
       toast({
         title: "¡Te has unido a la lista de espera!",
         description: `Estás en la posición ${data.position}. Te notificaremos cuando haya una plaza disponible.`,
@@ -173,9 +177,9 @@ export const useLeaveWaitlist = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["class-waitlist"] });
+      queryClient.invalidateQueries({ queryKey: ["class-waitlist-old"] });
       queryClient.invalidateQueries({ queryKey: ["user-waitlist-position"] });
-      
+
       toast({
         title: "Has salido de la lista de espera",
         description: "Ya no recibirás notificaciones para esta clase.",
@@ -228,9 +232,9 @@ export const useClassCapacity = (classId: string) => {
           .select("max_participants")
           .eq("id", classId)
           .single();
-        
+
         if (basicError) throw basicError;
-        
+
         // Obtener lista de espera
         const { data: waitlist, error: waitlistError } = await supabase
           .from("waitlists")

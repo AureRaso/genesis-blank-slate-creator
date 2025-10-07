@@ -14,30 +14,33 @@ export const usePlayers = () => {
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) throw new Error('No authenticated user');
 
-      // Get user profile to check role and clubs
+      // Get user profile to check role and club
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, id')
+        .select('role, id, club_id')
         .eq('id', currentUser.user.id)
         .single();
 
       let query = supabase
         .from('profiles')
         .select(`
-          id, 
-          full_name, 
-          email, 
-          level, 
-          created_at, 
+          id,
+          full_name,
+          email,
+          level,
+          created_at,
           role,
           club_id,
-          clubs(name, status)
+          clubs!club_id(name, status)
         `)
         .eq('role', 'player')
         .order('created_at', { ascending: false });
 
-      // If user is admin, filter players by their clubs only
-      if (profile?.role === 'admin') {
+      // If user is admin with a club assigned, filter players by their club
+      if (profile?.role === 'admin' && profile.club_id) {
+        query = query.eq('club_id', profile.club_id);
+      } else if (profile?.role === 'admin' && !profile.club_id) {
+        // Admin without club assigned, try to get clubs they created
         const { data: adminClubs } = await supabase
           .from('clubs')
           .select('id')

@@ -39,6 +39,8 @@ import AuthCallback from "@/pages/AuthCallback";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import TodayAttendancePage from "@/pages/TodayAttendancePage";
+import WaitlistJoinPage from "@/pages/WaitlistJoinPage";
+import GetIdsPage from "@/pages/GetIdsPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -142,6 +144,8 @@ function App() {
               <Route path="/student-enrollment/:token" element={<StudentEnrollmentLink />} />
               <Route path="/enrollment/:token" element={<PublicEnrollmentPage />} />
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
+              <Route path="/waitlist/:classId/:date" element={<WaitlistJoinPage />} />
+              <Route path="/get-ids" element={<GetIdsPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
         <Route path="/dashboard/*" element={
