@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ManageStudentsModal } from "@/components/calendar/ManageStudentsModal";
 import { EditClassModal } from "@/components/calendar/EditClassModal";
+import { ClassListViewMobile } from "@/components/ClassListViewMobile";
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useAuth } from "@/contexts/AuthContext";
@@ -132,43 +133,57 @@ export default function ClassListView({
   }
   return <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between text-base sm:text-lg">
           <span>{t('classes.classList')} ({filteredClasses.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {filteredClasses.length === 0 ? <div className="text-center py-8 text-muted-foreground">
+      <CardContent className="p-3 sm:p-6">
+        {filteredClasses.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
             {t('classes.noClassesFound')}
-          </div> : <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('classes.className')}</TableHead>
-                  <TableHead>{t('classes.schedule')}</TableHead>
-                  <TableHead>{t('classes.students')}</TableHead>
-                  <TableHead>{t('classes.period')}</TableHead>
-                  <TableHead>{t('classes.days')}</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClasses.map(cls => {
-              const enrolledCount = cls.participants?.length || 0;
-              return <TableRow key={cls.id}>
-                       <TableCell>
-                         <div className="space-y-1">
-                           <div className="font-medium">{cls.name}</div>
-                           {cls.club && <div className="text-xs text-muted-foreground">
-                               {cls.club.name}
-                             </div>}
-                           <div className="flex items-center gap-2">
-                             <Badge className={getLevelColor(cls)}>
-                               {getLevelDisplay(cls)}
-                             </Badge>
-                           </div>
-                         </div>
-                       </TableCell>
-                      
+          </div> : <>
+            {/* Mobile View */}
+            <div className="block md:hidden">
+              <ClassListViewMobile
+                classes={filteredClasses}
+                isAdmin={isAdmin}
+                isTrainer={isTrainer}
+                onViewDetails={(cls) => setSelectedClass(cls)}
+                getLevelDisplay={getLevelDisplay}
+                getLevelColor={getLevelColor}
+              />
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('classes.className')}</TableHead>
+                    <TableHead>{t('classes.schedule')}</TableHead>
+                    <TableHead>{t('classes.students')}</TableHead>
+                    <TableHead>{t('classes.period')}</TableHead>
+                    <TableHead>{t('classes.days')}</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClasses.map(cls => {
+                    const enrolledCount = cls.participants?.length || 0;
+                    return <TableRow key={cls.id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{cls.name}</div>
+                          {cls.club && <div className="text-xs text-muted-foreground">
+                            {cls.club.name}
+                          </div>}
+                          <div className="flex items-center gap-2">
+                            <Badge className={getLevelColor(cls)}>
+                              {getLevelDisplay(cls)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </TableCell>
+
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-sm">
@@ -213,22 +228,21 @@ export default function ClassListView({
                               {t('classes.viewDetails')}
                             </DropdownMenuItem>
                             {(isAdmin || isTrainer) && <>
-                                 
-                                <DropdownMenuSeparator />
-                                
-                                <DropdownMenuItem className="text-destructive">
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  {t('classes.cancelClass')}
-                                </DropdownMenuItem>
-                              </>}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t('classes.cancelClass')}
+                              </DropdownMenuItem>
+                            </>}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>;
-            })}
-              </TableBody>
-            </Table>
-          </div>}
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
 
         {/* Class details modal */}
         <Dialog open={!!selectedClass} onOpenChange={() => setSelectedClass(null)}>
@@ -285,23 +299,23 @@ function AdminClassDetailsModal({
     }
     return 'bg-gray-100 text-gray-800 border-gray-200';
   };
-  return <DialogContent className="max-w-md">
+  return <DialogContent className="max-w-md w-[95vw] sm:w-full">
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Eye className="h-5 w-5" />
+        <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
           {t('classes.classDetails')}
         </DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div>
-          <h3 className="font-semibold text-lg">{selectedClass.name}</h3>
-          <Badge className={getLevelColor(selectedClass)}>
+          <h3 className="font-semibold text-base sm:text-lg truncate">{selectedClass.name}</h3>
+          <Badge className={`${getLevelColor(selectedClass)} text-xs`}>
             {getLevelDisplay(selectedClass)}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
           <div>
             <div className="text-muted-foreground">{t('classes.schedule')}</div>
             <div className="font-medium flex items-center gap-1">
@@ -334,27 +348,28 @@ function AdminClassDetailsModal({
         </div>
 
         <div>
-          <div className="text-muted-foreground text-sm">{t('classes.period')}</div>
-          <div className="font-medium">
-            {format(parseISO(selectedClass.start_date), "dd/MM/yyyy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yyyy")}
+          <div className="text-muted-foreground text-xs sm:text-sm">{t('classes.period')}</div>
+          <div className="font-medium text-xs sm:text-sm">
+            {format(parseISO(selectedClass.start_date), "dd/MM/yy")} - {format(parseISO(selectedClass.end_date), "dd/MM/yy")}
           </div>
         </div>
 
         {selectedClass.participants && selectedClass.participants.length > 0 && <div>
-            <div className="text-muted-foreground text-sm mb-2">{t('classes.enrolledStudents')}</div>
-            <div className="space-y-1">
-              {selectedClass.participants.map(participant => <div key={participant.id} className="text-sm p-2 bg-muted rounded">
+            <div className="text-muted-foreground text-xs sm:text-sm mb-2">{t('classes.enrolledStudents')}</div>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {selectedClass.participants.map(participant => <div key={participant.id} className="text-xs sm:text-sm p-2 bg-muted rounded truncate">
                   {participant.student_enrollment.full_name}
                 </div>)}
             </div>
           </div>}
 
-        <div className="flex gap-2 pt-2">
-          <Button variant="outline" size="sm" className="flex-1" onClick={onEditClass}>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm" onClick={onEditClass}>
             {t('classes.edit')}
           </Button>
-          <Button variant="outline" size="sm" className="flex-1" onClick={onManageStudents}>
-            {t('classes.manageStudentsAction')}
+          <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm" onClick={onManageStudents}>
+            <span className="hidden sm:inline">{t('classes.manageStudentsAction')}</span>
+            <span className="sm:hidden">Gestionar</span>
           </Button>
         </div>
       </div>
@@ -436,22 +451,22 @@ function PlayerClassDetailsModal({
     waitlistCount: capacity?.waitlistCount || 0
   };
   const hasAvailableSpots = actualCapacity.current < actualCapacity.max;
-  return <DialogContent className="max-w-2xl">
+  return <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
       <DialogHeader>
-        <DialogTitle className="flex items-center justify-between">
-          <span>Detalles de la Clase</span>
-          <Badge className={getLevelColor(selectedClass)}>
+        <DialogTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <span className="text-base sm:text-lg truncate">Detalles de la Clase</span>
+          <Badge className={`${getLevelColor(selectedClass)} text-xs flex-shrink-0`}>
             {getLevelDisplay(selectedClass)}
           </Badge>
         </DialogTitle>
       </DialogHeader>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h3 className="font-semibold text-lg mb-2">{selectedClass.name}</h3>
+          <h3 className="font-semibold text-base sm:text-lg mb-2 truncate">{selectedClass.name}</h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-4">
             <div>
               <div className="text-sm text-muted-foreground mb-1">Horario</div>
