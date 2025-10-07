@@ -26,19 +26,29 @@ export const Footer = () => {
               <p className="text-muted-foreground max-w-md">La plataforma todo-en-uno para la gestión digital de academias de pádel. Diseñada para optimizar operaciones y mejorar la experiencia de entrenadores y jugadores.</p>
             </div>
             
-            <div className="flex space-x-4">
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Linkedin className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Twitter className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Instagram className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Facebook className="h-4 w-4" />
-              </Button>
+            {/* Founders */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Fundadores</h4>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="https://www.linkedin.com/in/aure1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                >
+                  <Linkedin className="h-4 w-4 flex-shrink-0 group-hover:text-[#0077B5]" />
+                  <span>Aurelio Contreras</span>
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/sergio-falc%C3%B3n-de-la-calle-083787195/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                >
+                  <Linkedin className="h-4 w-4 flex-shrink-0 group-hover:text-[#0077B5]" />
+                  <span>Sergio Falcón</span>
+                </a>
+              </div>
             </div>
             
             {/* Newsletter Subscription */}
@@ -172,8 +182,8 @@ export const Footer = () => {
             </div>
             
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Política de Privacidad</a>
-              <a href="#" className="hover:text-primary transition-colors">Términos de Servicio</a>
+              <a href="/privacy" className="hover:text-primary transition-colors">Política de Privacidad</a>
+              <a href="/terms" className="hover:text-primary transition-colors">Términos de Servicio</a>
               <a href="#" className="hover:text-primary transition-colors">Cookies</a>
             </div>
             

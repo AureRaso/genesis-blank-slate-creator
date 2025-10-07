@@ -3,6 +3,7 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import AppSidebar from "./AppSidebar";
+import Footer from "./Footer";
 import { useLocation, Link } from "react-router-dom";
 
 interface AppLayoutProps {
@@ -52,7 +53,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -77,6 +78,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {children}
         </div>
+        <Footer />
       </SidebarInset>
     </div>
   );

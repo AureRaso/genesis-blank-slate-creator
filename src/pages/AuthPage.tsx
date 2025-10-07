@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2 } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
+import Footer from "@/components/Footer";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const AuthPage = () => {
@@ -547,11 +548,9 @@ export const AuthPage = () => {
     </CardContent>
   </Card>
 
-  {/* Footer mejorado */}
-  <div className="text-center mt-6 text-sm text-slate-400 flex-shrink-0">
-    <p className="flex items-center justify-center gap-2">
-      <span>© 2025 PadeLock · Tu club, simplificado</span>
-    </p>
+  {/* Footer */}
+  <div className="mt-6 flex-shrink-0">
+    <Footer />
   </div>
 </div>
       </div>
