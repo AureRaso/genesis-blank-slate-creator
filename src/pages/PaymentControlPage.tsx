@@ -110,26 +110,26 @@ const PaymentControlPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtros</CardTitle>
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Filtros</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <CardContent className="p-3 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
+            <div className="relative sm:col-span-2 lg:col-span-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar alumno o clase..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9 sm:pl-10 text-sm"
               />
             </div>
 
             <Select value={selectedClub} onValueChange={setSelectedClub}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Club" />
               </SelectTrigger>
               <SelectContent>
@@ -141,7 +141,7 @@ const PaymentControlPage = () => {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
@@ -153,7 +153,7 @@ const PaymentControlPage = () => {
             </Select>
 
             <Select value={methodFilter} onValueChange={setMethodFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Método" />
               </SelectTrigger>
               <SelectContent>
@@ -163,20 +163,20 @@ const PaymentControlPage = () => {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground sm:col-span-2 lg:col-span-1">
               <span>Total: {filteredPayments.length} registros</span>
             </div>
           </div>
-          
+
           {/* Total esperado integrado en la misma card */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-4 border-t">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Filtrando {filteredPayments.length} de {payments.length} registros
             </div>
-            <div className="flex items-center space-x-2 bg-muted px-4 py-2 rounded-lg">
-              <span className="text-sm text-muted-foreground">Total esperado:</span>
-              <div className="flex items-center font-bold text-lg">
-                <Euro className="h-4 w-4 mr-1" />
+            <div className="flex items-center space-x-2 bg-muted px-3 sm:px-4 py-2 rounded-lg">
+              <span className="text-xs sm:text-sm text-muted-foreground">Total esperado:</span>
+              <div className="flex items-center font-bold text-base sm:text-lg">
+                <Euro className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 {totalAmount.toFixed(2)}
               </div>
             </div>
@@ -186,17 +186,17 @@ const PaymentControlPage = () => {
 
       {/* Payments List */}
       <Card>
-        <CardHeader>
-          <CardTitle>Registros de Pagos</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Registros de Pagos</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             {filteredPayments.length} registros encontrados
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse p-4 border rounded-lg">
+                <div key={i} className="animate-pulse p-3 sm:p-4 border rounded-lg">
                   <div className="flex justify-between">
                     <div className="space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -208,56 +208,57 @@ const PaymentControlPage = () => {
               ))}
             </div>
           ) : filteredPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-medium mb-2">No hay registros de pago</h3>
-              <p className="text-muted-foreground">
+            <div className="text-center py-8 sm:py-12">
+              <CreditCard className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-base sm:text-xl font-medium mb-2">No hay registros de pago</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Los pagos de las clases aparecerán aquí cuando se registren
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {filteredPayments.map((payment) => (
-                <div key={payment.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium">{payment.student_enrollment.full_name}</h4>
+                <div key={payment.id} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium text-sm sm:text-base truncate">{payment.student_enrollment.full_name}</h4>
                         {getStatusBadge(payment.payment_status)}
                         {payment.payment_verified && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
                             <CheckCircle className="h-3 w-3 mr-1" />
-                            Verificado
+                            <span className="hidden sm:inline">Verificado</span>
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{payment.student_enrollment.email}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{payment.student_enrollment.email}</p>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{payment.programmed_class.monthly_price}€</span>
+
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <span className="font-semibold text-sm sm:text-base">{payment.programmed_class.monthly_price}€</span>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleEditPayment(payment)}
+                            className="h-8 w-8 p-0"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="w-[95vw] sm:w-full max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Editar Pago</DialogTitle>
+                            <DialogTitle className="text-base sm:text-lg">Editar Pago</DialogTitle>
                           </DialogHeader>
-                          <div className="space-y-4">
+                          <div className="space-y-3 sm:space-y-4">
                             <div>
-                              <Label>Estado del pago</Label>
-                              <Select 
-                                value={editForm.paymentStatus} 
+                              <Label className="text-xs sm:text-sm">Estado del pago</Label>
+                              <Select
+                                value={editForm.paymentStatus}
                                 onValueChange={(value) => setEditForm({...editForm, paymentStatus: value})}
                               >
-                                <SelectTrigger>
+                                <SelectTrigger className="text-sm">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -269,12 +270,12 @@ const PaymentControlPage = () => {
                             </div>
 
                             <div>
-                              <Label>Método de pago</Label>
-                              <Select 
-                                value={editForm.paymentMethod} 
+                              <Label className="text-xs sm:text-sm">Método de pago</Label>
+                              <Select
+                                value={editForm.paymentMethod}
                                 onValueChange={(value) => setEditForm({...editForm, paymentMethod: value})}
                               >
-                                <SelectTrigger>
+                                <SelectTrigger className="text-sm">
                                   <SelectValue placeholder="Seleccionar método" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -299,28 +300,31 @@ const PaymentControlPage = () => {
                                 checked={editForm.paymentVerified}
                                 onCheckedChange={(checked) => setEditForm({...editForm, paymentVerified: !!checked})}
                               />
-                              <Label>Pago verificado</Label>
+                              <Label className="text-xs sm:text-sm">Pago verificado</Label>
                             </div>
 
                             <div>
-                              <Label>Notas</Label>
+                              <Label className="text-xs sm:text-sm">Notas</Label>
                               <Textarea
                                 value={editForm.paymentNotes}
                                 onChange={(e) => setEditForm({...editForm, paymentNotes: e.target.value})}
                                 placeholder="Notas adicionales sobre el pago..."
+                                className="text-sm min-h-[80px]"
                               />
                             </div>
 
-                            <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="outline" 
+                            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:space-x-2">
+                              <Button
+                                variant="outline"
                                 onClick={() => setEditingPayment(null)}
+                                className="w-full sm:w-auto text-sm"
                               >
                                 Cancelar
                               </Button>
-                              <Button 
+                              <Button
                                 onClick={handleSavePayment}
                                 disabled={updatePaymentMutation.isPending}
+                                className="w-full sm:w-auto text-sm"
                               >
                                 Guardar
                               </Button>
@@ -331,20 +335,20 @@ const PaymentControlPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{payment.programmed_class.name}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span>{payment.programmed_class.club.name}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="font-medium truncate">{payment.programmed_class.name}</span>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <Building className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">{payment.programmed_class.club.name}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">
                         {payment.programmed_class.start_time ? (
                           <>
                             {payment.programmed_class.start_time.slice(0, 5)} - {
@@ -355,16 +359,16 @@ const PaymentControlPage = () => {
                                 const endMins = totalMinutes % 60;
                                 return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
                               })()
-                            } ({payment.programmed_class.duration_minutes}min)
+                            } <span className="hidden sm:inline">({payment.programmed_class.duration_minutes}min)</span>
                           </>
                         ) : 'Horario no definido'}
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {payment.programmed_class.days_of_week?.length > 0 
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="truncate">
+                        {payment.programmed_class.days_of_week?.length > 0
                           ? payment.programmed_class.days_of_week.join(', ')
                           : 'Días no definidos'
                         }
@@ -372,7 +376,7 @@ const PaymentControlPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm">
                     {getMethodIcon(payment.payment_method)}
                     <span>{payment.payment_method || 'No especificado'}</span>
                   </div>
