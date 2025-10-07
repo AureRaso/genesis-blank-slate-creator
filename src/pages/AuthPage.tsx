@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2 } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
-import Footer from "@/components/Footer";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const AuthPage = () => {
@@ -547,11 +546,6 @@ export const AuthPage = () => {
       </Tabs>
     </CardContent>
   </Card>
-
-  {/* Footer */}
-  <div className="mt-6 flex-shrink-0">
-    <Footer />
-  </div>
 </div>
       </div>
     </div>

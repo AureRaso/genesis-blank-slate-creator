@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Linkedin, Mail, MapPin } from "lucide-react";
-import padelockLogo from "@/assets/padelock-logo.png";
+import padelockLogo from "@/assets/padelock-logo-red.png";
 import aurelioPhoto from "@/assets/aurelio-contreras.jpg";
 import sergioPhoto from "@/assets/sergio-falcon.jpg";
 
