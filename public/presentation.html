@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PadeLock - Análisis de Marca 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 60px 80px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .slide-header {
+            margin-bottom: 40px;
+        }
+
+        .slide-number {
+            font-size: 14px;
+            color: #FF6B35;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .slide-title {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B35 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .slide-subtitle {
+            font-size: 24px;
+            color: #94a3b8;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            background: rgba(255, 107, 53, 0.2);
+            border: 2px solid #FF6B35;
+            color: #FF6B35;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: #FF6B35;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .dots {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 107, 53, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #FF6B35;
+            transform: scale(1.3);
+        }
+
+        .logo {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF6B35 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 1000;
+        }
+
+        /* Cover Slide */
+        .cover-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+
+        .cover-title {
+            font-size: 72px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .cover-subtitle {
+            font-size: 32px;
+            color: #94a3b8;
+            margin-bottom: 60px;
+        }
+
+        .cover-info {
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        /* Content Styles */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #FF6B35;
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #FF6B35;
+            margin-bottom: 15px;
+        }
+
+        .card-content {
+            font-size: 16px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-size: 18px;
+            color: #94a3b8;
+        }
+
+        .list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .list li {
+            padding: 12px 0;
+            font-size: 18px;
+            color: #cbd5e1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .list li:before {
+            content: "✓";
+            color: #FF6B35;
+            font-weight: 700;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        .swot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .swot-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid;
+        }
+
+        .swot-card.strengths {
+            border-left-color: #10b981;
+        }
+
+        .swot-card.weaknesses {
+            border-left-color: #ef4444;
+        }
+
+        .swot-card.opportunities {
+            border-left-color: #3b82f6;
+        }
+
+        .swot-card.threats {
+            border-left-color: #f59e0b;
+        }
+
+        .swot-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .swot-card.strengths .swot-title {
+            color: #10b981;
+        }
+
+        .swot-card.weaknesses .swot-title {
+            color: #ef4444;
+        }
+
+        .swot-card.opportunities .swot-title {
+            color: #3b82f6;
+        }
+
+        .swot-card.threats .swot-title {
+            color: #f59e0b;
+        }
+
+        .swot-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .swot-list li {
+            padding: 8px 0;
+            font-size: 16px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .swot-list li:before {
+            content: "•";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .screenshot-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 165, 0, 0.1) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .screenshot-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .big-number {
+            font-size: 120px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF6B35 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .center-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .roadmap {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .roadmap-item {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+            border-top: 4px solid #FF6B35;
+        }
+
+        .roadmap-quarter {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+
+        .roadmap-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .roadmap-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .roadmap-list li {
+            padding: 6px 0;
+            font-size: 15px;
+            color: #cbd5e1;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .team-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+
+        .team-role {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .team-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .team-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">PadeLock</div>
+
+    <div class="presentation">
+        <!-- Slide 1: Cover -->
+        <div class="slide active cover-slide" data-slide="1">
+            <div class="slide-content center-content">
+                <h1 class="cover-title">PadeLock</h1>
+                <p class="cover-subtitle">Análisis de Marca y Plataforma 2025</p>
+                <div class="cover-info">
+                    <p>Plataforma SaaS para Gestión de Clubes de Pádel</p>
+                    <p style="margin-top: 10px;">Octubre 2025</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Visión General -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <div class="slide-number">01</div>
+                <h2 class="slide-title">Visión General</h2>
+                <p class="slide-subtitle">¿Qué es PadeLock?</p>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="card">
+                        <h3 class="card-title">🎯 Misión</h3>
+                        <p class="card-content">
+                            Revolucionar la gestión de clubes y academias de pádel mediante una plataforma integral
+                            que conecta administradores, entrenadores y jugadores en un ecosistema unificado.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">💡 Propuesta de Valor</h3>
+                        <p class="card-content">
+                            Sistema todo-en-uno que elimina la necesidad de múltiples herramientas,
+                            optimizando la gestión de clases, pagos, asistencias y comunicación.
+                        </p>
+                    </div>
+                </div>
+                <div class="three-column" style="margin-top: 40px;">
+                    <div class="metric">
+                        <div class="metric-value">21</div>
+                        <div class="metric-label">Pantallas Desktop</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">21</div>
+                        <div class="metric-label">Pantallas Mobile</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Roles de Usuario</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Vista Administrador -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <div class="slide-number">02</div>
+                <h2 class="slide-title">Vista Administrador</h2>
+                <p class="slide-subtitle">Control Total del Club</p>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div>
+                        <ul class="list">
+                            <li>Dashboard con KPIs en tiempo real</li>
+                            <li>Gestión completa de jugadores</li>
+                            <li>Administración de entrenadores</li>
+                            <li>Control de clubes</li>
+                            <li>Sistema de pagos Stripe</li>
+                            <li>Control de asistencia diario</li>
+                            <li>Programación de clases</li>
+                            <li>Reportes y estadísticas</li>
+                        </ul>
+                    </div>
+                    <div class="center-content">
+                        <div class="big-number">9</div>
+                        <p style="font-size: 24px; color: #94a3b8; margin-top: 20px;">Pantallas Especializadas</p>
+                        <div style="margin-top: 30px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                            <p style="font-size: 32px; font-weight: 700; color: #10b981;">95%</p>
+                            <p style="font-size: 18px; color: #cbd5e1;">Nivel de Completitud</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Vista Entrenador -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <div class="slide-number">03</div>
+                <h2 class="slide-title">Vista Entrenador</h2>
+                <p class="slide-subtitle">Herramientas para Profesionales</p>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="center-content">
+                        <div class="big-number">5</div>
+                        <p style="font-size: 24px; color: #94a3b8; margin-top: 20px;">Pantallas Optimizadas</p>
+                        <div style="margin-top: 30px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                            <p style="font-size: 32px; font-weight: 700; color: #10b981;">90%</p>
+                            <p style="font-size: 18px; color: #cbd5e1;">Nivel de Completitud</p>
+                        </div>
+                    </div>
+                    <div>
+                        <ul class="list">
+                            <li>Dashboard del entrenador</li>
+                            <li>Gestión de alumnos asignados</li>
+                            <li>Control de asistencia rápido</li>
+                            <li>Sistema de listas de espera</li>
+                            <li>Notificaciones WhatsApp</li>
+                            <li>Calendario de clases</li>
+                        </ul>
+                        <div class="card" style="margin-top: 30px;">
+                            <h3 class="card-title">🎯 Enfoque</h3>
+                            <p class="card-content">
+                                Interface simplificada para que los entrenadores se concentren en enseñar,
+                                no en administrar.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Vista Jugador -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <div class="slide-number">04</div>
+                <h2 class="slide-title">Vista Jugador</h2>
+                <p class="slide-subtitle">Experiencia Simplificada</p>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div>
+                        <ul class="list">
+                            <li>Dashboard personal intuitivo</li>
+                            <li>Mis clases matriculadas</li>
+                            <li>Calendario personal</li>
+                            <li>Confirmación de asistencia</li>
+                        </ul>
+                        <div class="card" style="margin-top: 30px;">
+                            <h3 class="card-title">📱 Mobile First</h3>
+                            <p class="card-content">
+                                Diseñada pensando en que los jugadores accederán principalmente desde sus móviles.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="center-content">
+                        <div class="big-number">3</div>
+                        <p style="font-size: 24px; color: #94a3b8; margin-top: 20px;">Pantallas Esenciales</p>
+                        <div style="margin-top: 30px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                            <p style="font-size: 32px; font-weight: 700; color: #10b981;">85%</p>
+                            <p style="font-size: 18px; color: #cbd5e1;">Nivel de Completitud</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Análisis DAFO - Parte 1 -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <div class="slide-number">05</div>
+                <h2 class="slide-title">Análisis DAFO</h2>
+                <p class="slide-subtitle">Fortalezas y Oportunidades</p>
+            </div>
+            <div class="slide-content">
+                <div class="swot-grid">
+                    <div class="swot-card strengths">
+                        <h3 class="swot-title">💪 Fortalezas</h3>
+                        <ul class="swot-list">
+                            <li>Plataforma multi-rol completa</li>
+                            <li>Stack tecnológico moderno</li>
+                            <li>Diseño profesional y responsive</li>
+                            <li>Sistema de pagos integrado</li>
+                            <li>Notificaciones WhatsApp automáticas</li>
+                            <li>Seguridad y RGPD compliance</li>
+                        </ul>
+                    </div>
+                    <div class="swot-card opportunities">
+                        <h3 class="swot-title">🎯 Oportunidades</h3>
+                        <ul class="swot-list">
+                            <li>Mercado en crecimiento</li>
+                            <li>Internacionalización</li>
+                            <li>App móvil nativa</li>
+                            <li>Analytics avanzado</li>
+                            <li>Modelo freemium</li>
+                            <li>API pública para integraciones</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Análisis DAFO - Parte 2 -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <div class="slide-number">06</div>
+                <h2 class="slide-title">Análisis DAFO</h2>
+                <p class="slide-subtitle">Debilidades y Amenazas</p>
+            </div>
+            <div class="slide-content">
+                <div class="swot-grid">
+                    <div class="swot-card weaknesses">
+                        <h3 class="swot-title">⚠️ Debilidades</h3>
+                        <ul class="swot-list">
+                            <li>Dependencia de Supabase</li>
+                            <li>Marca aún por posicionar</li>
+                            <li>Falta documentación completa</li>
+                            <li>Analytics interno limitado</li>
+                            <li>Sin casos de éxito demostrables</li>
+                        </ul>
+                    </div>
+                    <div class="swot-card threats">
+                        <h3 class="swot-title">🚨 Amenazas</h3>
+                        <ul class="swot-list">
+                            <li>Competencia de Playtomic</li>
+                            <li>Clubes con soluciones propias</li>
+                            <li>Cambios en pricing de servicios</li>
+                            <li>Resistencia al cambio</li>
+                            <li>Equipo pequeño (escalabilidad)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Stack Tecnológico -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <div class="slide-number">07</div>
+                <h2 class="slide-title">Stack Tecnológico</h2>
+                <p class="slide-subtitle">Arquitectura Moderna y Escalable</p>
+            </div>
+            <div class="slide-content">
+                <div class="three-column">
+                    <div class="card">
+                        <h3 class="card-title">⚛️ Frontend</h3>
+                        <p class="card-content">
+                            React 18<br>
+                            TypeScript<br>
+                            Vite<br>
+                            Tailwind CSS<br>
+                            Shadcn/ui<br>
+                            React Query
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">🗄️ Backend</h3>
+                        <p class="card-content">
+                            Supabase<br>
+                            PostgreSQL<br>
+                            Row Level Security<br>
+                            Edge Functions<br>
+                            Realtime<br>
+                            Storage
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">🔌 Integraciones</h3>
+                        <p class="card-content">
+                            Stripe (Pagos)<br>
+                            WhatsApp API<br>
+                            Google OAuth<br>
+                            Vercel (Hosting)<br>
+                            Playwright (Tests)
+                        </p>
+                    </div>
+                </div>
+                <div class="three-column" style="margin-top: 30px;">
+                    <div class="metric">
+                        <div class="metric-value">~90</div>
+                        <div class="metric-label">Lighthouse Score</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">&lt;1.5s</div>
+                        <div class="metric-label">First Paint</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">&lt;3s</div>
+                        <div class="metric-label">Time to Interactive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Roadmap -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header">
+                <div class="slide-number">08</div>
+                <h2 class="slide-title">Roadmap 2025-2026</h2>
+                <p class="slide-subtitle">Plan de Desarrollo</p>
+            </div>
+            <div class="slide-content">
+                <div class="roadmap">
+                    <div class="roadmap-item">
+                        <div class="roadmap-quarter">Q4 2025</div>
+                        <div class="roadmap-title">Consolidación</div>
+                        <ul class="roadmap-list">
+                            <li>✓ Sistema de tests</li>
+                            <li>✓ Analytics interno</li>
+                            <li>✓ Documentación</li>
+                            <li>✓ Casos de éxito</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-quarter">Q1 2026</div>
+                        <div class="roadmap-title">Crecimiento</div>
+                        <ul class="roadmap-list">
+                            <li>○ Programa afiliados</li>
+                            <li>○ Chat en tiempo real</li>
+                            <li>○ Módulo facturación</li>
+                            <li>○ Integraciones (Calendar)</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-item">
+                        <div class="roadmap-quarter">Q2 2026</div>
+                        <div class="roadmap-title">Expansión</div>
+                        <ul class="roadmap-list">
+                            <li>○ App móvil nativa</li>
+                            <li>○ API pública</li>
+                            <li>○ Marketplace</li>
+                            <li>○ Internacionalización</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Modelo de Negocio -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header">
+                <div class="slide-number">09</div>
+                <h2 class="slide-title">Modelo de Negocio</h2>
+                <p class="slide-subtitle">Estrategia Freemium</p>
+            </div>
+            <div class="slide-content">
+                <div class="three-column">
+                    <div class="card">
+                        <h3 class="card-title">🆓 Free</h3>
+                        <div style="margin: 20px 0;">
+                            <div style="font-size: 36px; font-weight: 700; color: #FF6B35;">€0</div>
+                            <div style="color: #94a3b8;">hasta 50 alumnos</div>
+                        </div>
+                        <p class="card-content">
+                            • Funcionalidades básicas<br>
+                            • 1 club<br>
+                            • 2 entrenadores<br>
+                            • Soporte email
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">💳 Pro</h3>
+                        <div style="margin: 20px 0;">
+                            <div style="font-size: 36px; font-weight: 700; color: #FF6B35;">€49</div>
+                            <div style="color: #94a3b8;">hasta 200 alumnos</div>
+                        </div>
+                        <p class="card-content">
+                            • Todo de Free<br>
+                            • Múltiples clubes<br>
+                            • Entrenadores ilimitados<br>
+                            • Soporte prioritario
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">💎 Premium</h3>
+                        <div style="margin: 20px 0;">
+                            <div style="font-size: 36px; font-weight: 700; color: #FF6B35;">€149</div>
+                            <div style="color: #94a3b8;">hasta 500 alumnos</div>
+                        </div>
+                        <p class="card-content">
+                            • Todo de Pro<br>
+                            • Analytics avanzado<br>
+                            • API access<br>
+                            • Soporte 24/7
+                        </p>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 30px; text-align: center;">
+                    <h3 class="card-title">🏢 Enterprise - Personalizado</h3>
+                    <p class="card-content">
+                        Para franquicias y grandes clubes con necesidades específicas
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Equipo -->
+        <div class="slide" data-slide="11">
+            <div class="slide-header">
+                <div class="slide-number">10</div>
+                <h2 class="slide-title">Equipo Fundador</h2>
+                <p class="slide-subtitle">Quiénes Somos</p>
+            </div>
+            <div class="slide-content center-content">
+                <div class="team-grid">
+                    <div class="team-card">
+                        <div class="team-name">Aurelio Contreras</div>
+                        <div class="team-role">Co-fundador</div>
+                        <a href="https://www.linkedin.com/in/aure1/" target="_blank" class="team-link">
+                            LinkedIn →
+                        </a>
+                    </div>
+                    <div class="team-card">
+                        <div class="team-name">Sergio Falcón</div>
+                        <div class="team-role">Co-fundador</div>
+                        <a href="https://www.linkedin.com/in/sergio-falcón-de-la-calle-083787195/" target="_blank" class="team-link">
+                            LinkedIn →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Conclusión -->
+        <div class="slide" data-slide="12">
+            <div class="slide-header">
+                <div class="slide-number">11</div>
+                <h2 class="slide-title">Conclusión</h2>
+                <p class="slide-subtitle">El Futuro de la Gestión de Clubes de Pádel</p>
+            </div>
+            <div class="slide-content center-content">
+                <div style="max-width: 800px;">
+                    <div class="card" style="margin-bottom: 30px;">
+                        <h3 class="card-title" style="font-size: 32px; text-align: center;">🎯 Misión Clara</h3>
+                        <p class="card-content" style="font-size: 20px; text-align: center;">
+                            Convertirnos en la plataforma líder para gestión de clubes de pádel en España,
+                            simplificando la vida de administradores, entrenadores y jugadores.
+                        </p>
+                    </div>
+                    <div class="three-column">
+                        <div class="metric">
+                            <div class="metric-value">42</div>
+                            <div class="metric-label">Screenshots</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">100%</div>
+                            <div class="metric-label">Responsive</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">🚀</div>
+                            <div class="metric-label">Listo para Crecer</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 50px; text-align: center;">
+                        <div style="font-size: 24px; color: #94a3b8; margin-bottom: 15px;">Contacto</div>
+                        <div style="font-size: 20px; color: #FF6B35; font-weight: 600;">www.padelock.com</div>
+                        <div style="font-size: 18px; color: #cbd5e1; margin-top: 10px;">info@padelock.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-button" id="prevBtn" onclick="changeSlide(-1)">← Anterior</button>
+        <button class="nav-button" id="nextBtn" onclick="changeSlide(1)">Siguiente →</button>
+    </div>
+
+    <div class="dots" id="dots"></div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+
+        // Create dots
+        const dotsContainer = document.getElementById('dots');
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot' + (i === 1 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function changeSlide(direction) {
+            goToSlide(currentSlide + direction);
+        }
+
+        function goToSlide(n) {
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+
+            // Show current slide
+            document.querySelector(`[data-slide="${n}"]`).classList.add('active');
+
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === n - 1);
+            });
+
+            // Update buttons
+            document.getElementById('prevBtn').disabled = n === 1;
+            document.getElementById('nextBtn').disabled = n === totalSlides;
+
+            currentSlide = n;
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
+        // Initialize
+        goToSlide(1);
+    </script>
+</body>
+</html>
