@@ -110,21 +110,6 @@
 
   #root {
     width: 100%;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-/* Custom sidebar styles to make it end above the footer */
-@layer components {
-  [data-sidebar="sidebar"] {
-    position: relative !important;
-    height: auto !important;
-  }
-
-  .group\/sidebar-wrapper {
-    min-height: auto !important;
-    flex: 1;
+    height: 100%;
   }
 }
