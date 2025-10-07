@@ -51,23 +51,48 @@ const PlayersPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
-          </h1>
-          <p className="text-muted-foreground">
-            {isAdmin ? 'Alumnos inscritos en tus clubes' : 'Lista de jugadores registrados'}
-          </p>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent truncate">
+              {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+              {isAdmin ? 'Alumnos inscritos en tus clubes' : 'Lista de jugadores registrados'}
+            </p>
+          </div>
+          {isAdmin && (
+            <div className="hidden sm:flex space-x-2 flex-shrink-0">
+              <Button onClick={() => setShowStudentForm(true)} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Nueva Inscripción
+              </Button>
+              <Button onClick={() => setShowBulkUpload(true)} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Subida Masiva
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Mobile buttons */}
         {isAdmin && (
-          <div className="flex space-x-2">
-            <Button onClick={() => setShowStudentForm(true)} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+          <div className="flex sm:hidden gap-2">
+            <Button
+              onClick={() => setShowStudentForm(true)}
+              className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark flex-1 text-sm"
+              size="sm"
+            >
               <UserPlus className="mr-2 h-4 w-4" />
               Nueva Inscripción
             </Button>
-            <Button onClick={() => setShowBulkUpload(true)} variant="outline">
+            <Button
+              onClick={() => setShowBulkUpload(true)}
+              variant="outline"
+              className="flex-1 text-sm"
+              size="sm"
+            >
               <Upload className="mr-2 h-4 w-4" />
               Subida Masiva
             </Button>

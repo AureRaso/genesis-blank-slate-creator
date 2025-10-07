@@ -82,43 +82,44 @@ const PlayersList = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
+      <CardHeader className="p-3 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Users className="h-4 w-4 sm:h-5 sm:w-5" />
           Jugadores Registrados
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs sm:text-sm">
           {players?.length || 0} jugadores en el sistema
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-6">
         {!players || players.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
+          <p className="text-center text-muted-foreground text-sm py-8">
             No hay jugadores registrados
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {players.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg"
               >
-                <div className="flex-1">
-                  <h3 className="font-medium">{player.name}</h3>
-                  <p className="text-sm text-muted-foreground">{player.email}</p>
-                  <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                    <Building2 className="h-4 w-4 mr-1" />
-                    <span>{player.club_name}</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm sm:text-base truncate">{player.name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{player.email}</p>
+                  <div className="flex items-center mt-1 text-xs sm:text-sm text-muted-foreground">
+                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                    <span className="truncate">{player.club_name}</span>
                     {player.club_status && (
-                      <Badge variant="outline" className="ml-2 text-xs">
+                      <Badge variant="outline" className="ml-2 text-xs flex-shrink-0">
                         {player.club_status}
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge className={getLevelColor(player.level)}>
-                    Nivel {player.level} - {getLevelText(player.level)}
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                  <Badge className={`${getLevelColor(player.level)} text-xs`}>
+                    <span className="hidden sm:inline">Nivel {player.level} - {getLevelText(player.level)}</span>
+                    <span className="sm:hidden">Nv. {player.level}</span>
                   </Badge>
                   {isAdmin && (
                     <Button
@@ -126,9 +127,9 @@ const PlayersList = () => {
                       size="sm"
                       onClick={() => deletePlayerMutation.mutate(player.id)}
                       disabled={deletePlayerMutation.isPending}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   )}
                 </div>
