@@ -106,109 +106,62 @@ const Index = () => {
 
   // Dashboard de administrador
   return (
-    <div className="space-y-8">
-      {/* Header Section con gradiente sutil */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/5 via-primary/3 to-background p-8 border border-primary/10">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {t('pages.dashboard.title')}
-              </h1>
-              <p className="mt-2 text-base text-muted-foreground">
-                {t('pages.dashboard.description')}, <span className="font-medium text-foreground">{profile?.full_name || user?.email}</span>
-              </p>
-            </div>
-            <Badge
-              className="bg-primary/10 text-primary border-primary/20 px-4 py-2 text-sm font-semibold hover:bg-primary/15 transition-colors"
-              variant="outline"
-            >
-              {t('userMenu.admin')}
-            </Badge>
-          </div>
-        </div>
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -z-0" />
-      </div>
-
-      {/* Stats Section con animación de hover mejorada */}
+    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-4">
+      {/* Stats Section compacta */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          Estadísticas Generales
-        </h2>
         <DashboardStats />
       </div>
 
-      {/* Quick Actions y contenido adicional */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Quick Actions y contenido adicional - más compacto */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
         <div className="lg:col-span-2">
           <QuickActions />
         </div>
 
-        {/* Panel de actividad reciente */}
-        <Card className="border-primary/10 hover:border-primary/20 transition-colors">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary" />
-              Resumen Rápido
+        {/* Panel de actividad reciente - compacto */}
+        <Card className="border-primary/10 hover:border-primary/20 transition-colors h-full flex flex-col">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-primary" />
+              Accesos Rápidos
             </CardTitle>
-            <CardDescription>
-              Información relevante de hoy
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/today-attendance")}>
-              <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <GraduationCap className="h-4 w-4 text-primary" />
+          <CardContent className="space-y-2 flex-1 overflow-auto">
+            <button
+              className="flex items-center gap-2 w-full p-2 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group"
+              onClick={() => navigate("/dashboard/today-attendance")}
+            >
+              <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <GraduationCap className="h-3.5 w-3.5 text-primary" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Clases de hoy</p>
-                <p className="text-xs text-muted-foreground truncate">Revisa la asistencia</p>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-semibold text-foreground">Clases de hoy</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary hover:text-primary hover:bg-primary/20"
-              >
-                Ver
-              </Button>
-            </div>
+            </button>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/players")}>
-              <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                <Users className="h-4 w-4 text-gray-700" />
+            <button
+              className="flex items-center gap-2 w-full p-2 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 group"
+              onClick={() => navigate("/dashboard/players")}
+            >
+              <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                <Users className="h-3.5 w-3.5 text-gray-700" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Jugadores</p>
-                <p className="text-xs text-muted-foreground truncate">Gestionar jugadores</p>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-semibold text-foreground">Jugadores</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-700 hover:text-gray-900 hover:bg-gray-200"
-              >
-                Ver
-              </Button>
-            </div>
+            </button>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/scheduled-classes")}>
-              <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Calendar className="h-4 w-4 text-primary" />
+            <button
+              className="flex items-center gap-2 w-full p-2 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group"
+              onClick={() => navigate("/dashboard/scheduled-classes")}
+            >
+              <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Clases programadas</p>
-                <p className="text-xs text-muted-foreground truncate">Ver calendario</p>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-xs font-semibold text-foreground">Clases programadas</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary hover:text-primary hover:bg-primary/20"
-              >
-                Ver
-              </Button>
-            </div>
+            </button>
           </CardContent>
         </Card>
       </div>
