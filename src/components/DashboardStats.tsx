@@ -78,9 +78,9 @@ const DashboardStats = () => {
       title: "Jugadores Totales",
       value: totalPlayers,
       icon: Users,
-      color: "text-primary",
-      bg: "bg-primary/5",
-      border: "border-primary/20"
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+      border: "border-gray-200"
     },
     {
       title: "Clases Programadas",
@@ -94,9 +94,9 @@ const DashboardStats = () => {
       title: "Entrenamientos Hoy",
       value: totalTodayClasses,
       icon: Clock,
-      color: "text-primary",
-      bg: "bg-primary/5",
-      border: "border-primary/20"
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+      border: "border-gray-200"
     }
   ];
 
