@@ -91,9 +91,35 @@ export function ImprovedBulkClassCreator({ clubId: initialClubId, onClose, onSuc
     }
   }, [clubs, selectedClubId]);
 
-  const trainers = allTrainers.filter(trainer =>
+  // Filter trainers by selected club
+  const clubTrainers = allTrainers.filter(trainer =>
     selectedClubId && trainer.trainer_clubs?.some(tc => tc.club_id === selectedClubId)
   );
+
+  // Check if current user can be a trainer
+  // Include current user if they are admin or trainer and not already in the list
+  const currentUserAsTrainer = profile && (profile.role === 'admin' || profile.role === 'trainer')
+    ? {
+        id: profile.id,
+        profile_id: profile.id,
+        specialty: null,
+        photo_url: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        profiles: {
+          id: profile.id,
+          full_name: profile.full_name || 'Usuario actual',
+          email: profile.email || ''
+        },
+        trainer_clubs: []
+      }
+    : null;
+
+  // Combine trainers, adding current user if not already in the list
+  const trainers = currentUserAsTrainer && !clubTrainers.some(t => t.profile_id === profile?.id)
+    ? [currentUserAsTrainer, ...clubTrainers]
+    : clubTrainers;
   
   // Debug logging - más detallado
   console.log('Selected Club ID:', selectedClubId);
