@@ -36,9 +36,12 @@ function ScheduledClassesContent() {
     setFilters
   } = useClassFilters();
 
-  // For admins, get all their clubs. For players, get their specific club
-  const adminClubs = profile?.role === 'admin' ? clubs : [];
+  // Get the current club based on user profile
+  // If user has a club_id, use that club. Otherwise for admins, use the first available club
   const currentClub = profile?.club_id ? clubs?.find(c => c.id === profile.club_id) : clubs?.[0];
+
+  // Only show multiple clubs if admin has NO specific club assigned
+  const adminClubs = profile?.role === 'admin' && !profile?.club_id ? clubs : [];
   const {
     data: groups
   } = useClassGroups(currentClub?.id);
@@ -63,7 +66,7 @@ function ScheduledClassesContent() {
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{t('pages.scheduledClasses.title')}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
-              {profile?.role === 'admin' && adminClubs && adminClubs.length > 1 ? `${t('pages.scheduledClasses.description')} todos tus clubes` : `${t('pages.scheduledClasses.description')} ${currentClub.name}`}
+              {adminClubs && adminClubs.length > 1 ? `${t('pages.scheduledClasses.description')} todos tus clubes` : `${t('pages.scheduledClasses.description')} ${currentClub.name}`}
             </p>
           </div>
 
@@ -171,11 +174,19 @@ function ScheduledClassesContent() {
         </TabsList>
 
         <TabsContent value="calendar" className="mt-0">
-          <ClassCalendarView clubId={profile?.role === 'admin' ? undefined : currentClub.id} clubIds={profile?.role === 'admin' ? adminClubs?.map(c => c.id) : undefined} filters={filters} />
+          <ClassCalendarView
+            clubId={adminClubs?.length ? undefined : currentClub?.id}
+            clubIds={adminClubs?.length ? adminClubs.map(c => c.id) : undefined}
+            filters={filters}
+          />
         </TabsContent>
 
         <TabsContent value="list" className="mt-0">
-          <ClassListView clubId={profile?.role === 'admin' ? undefined : currentClub.id} clubIds={profile?.role === 'admin' ? adminClubs?.map(c => c.id) : undefined} filters={filters} />
+          <ClassListView
+            clubId={adminClubs?.length ? undefined : currentClub?.id}
+            clubIds={adminClubs?.length ? adminClubs.map(c => c.id) : undefined}
+            filters={filters}
+          />
         </TabsContent>
       </Tabs>
 

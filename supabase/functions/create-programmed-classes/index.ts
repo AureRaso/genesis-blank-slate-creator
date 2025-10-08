@@ -78,8 +78,8 @@ serve(async (req) => {
         trainer_profile_id: classData.trainer_profile_id,
         club_id: classData.club_id,
         court_number: classData.court_number,
-        monthly_price: classData.monthly_price,
-        max_participants: classData.max_participants,
+        monthly_price: classData.monthly_price || 0,
+        max_participants: classData.max_participants || 8,
         group_id: classData.group_id,
         created_by: user.id
       }])

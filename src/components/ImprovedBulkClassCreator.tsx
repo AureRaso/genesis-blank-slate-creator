@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,8 @@ import { CalendarDays, Clock, Users, MapPin, DollarSign, Edit3, Trash2 } from "l
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminTrainers } from "@/hooks/useTrainers";
-import { useClubs } from "@/hooks/useClubs";
+import { useActiveClubs } from "@/hooks/useActiveClubs";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ImprovedBulkClassCreatorProps {
   clubId?: string;
@@ -66,13 +67,31 @@ const DAYS_OPTIONS = [
 
 export function ImprovedBulkClassCreator({ clubId: initialClubId, onClose, onSuccess }: ImprovedBulkClassCreatorProps) {
   const { toast } = useToast();
-  const { data: clubs = [] } = useClubs();
+  const { profile } = useAuth();
+  const { data: allClubs = [] } = useActiveClubs();
   const { data: allTrainers = [] } = useAdminTrainers();
+
+  // Filter clubs based on user's profile
+  // If user has a specific club_id, only show that club
+  // Otherwise, for admins without club_id, show all clubs they have access to
+  const clubs = profile?.club_id
+    ? allClubs.filter(club => club.id === profile.club_id)
+    : allClubs;
   
   // Estado para el club seleccionado
-  const [selectedClubId, setSelectedClubId] = useState<string>(initialClubId || '');
-  
-  const trainers = allTrainers.filter(trainer => 
+  // Priority: initialClubId (passed from parent) > profile.club_id > first available club
+  const [selectedClubId, setSelectedClubId] = useState<string>(
+    initialClubId || profile?.club_id || ''
+  );
+
+  // Update selected club when clubs are loaded or profile changes
+  useEffect(() => {
+    if (!selectedClubId && clubs.length > 0) {
+      setSelectedClubId(clubs[0].id);
+    }
+  }, [clubs, selectedClubId]);
+
+  const trainers = allTrainers.filter(trainer =>
     selectedClubId && trainer.trainer_clubs?.some(tc => tc.club_id === selectedClubId)
   );
   
