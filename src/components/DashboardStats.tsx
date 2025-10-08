@@ -111,24 +111,24 @@ const DashboardStats = () => {
         return (
           <div
             key={index}
-            className="hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-primary/50 hover:bg-white/10"
+            className="hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative p-5 rounded-xl bg-white border border-gray-200 hover:border-primary/40 hover:shadow-lg"
           >
             {/* Decorative gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             <div className="flex flex-row items-center justify-between space-y-0 mb-3 relative z-10">
-              <h3 className="text-xs font-semibold text-white/60 group-hover:text-white/80 transition-colors">
+              <h3 className="text-sm font-bold text-[#10172a]/70 group-hover:text-[#10172a] transition-colors">
                 {stat.title}
               </h3>
-              <div className={`p-2 rounded-lg ${isOrange ? 'bg-primary/20' : 'bg-white/10'} group-hover:scale-110 transition-transform duration-300`}>
-                <Icon className={`h-4 w-4 ${isOrange ? 'text-primary' : 'text-white/70'}`} />
+              <div className={`p-2.5 rounded-xl ${isOrange ? 'bg-primary/10' : 'bg-gray-100'} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                <Icon className={`h-5 w-5 ${isOrange ? 'text-primary' : 'text-[#10172a]'}`} />
               </div>
             </div>
             <div className="relative z-10">
-              <div className="text-2xl font-bold text-white tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
+              <div className="text-3xl font-bold text-[#10172a] tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
                 {stat.value}
               </div>
-              <div className={`mt-2 h-0.5 w-8 rounded-full bg-gradient-to-r ${isOrange ? 'from-primary' : 'from-white/50'} to-transparent opacity-50 group-hover:w-12 transition-all duration-300`} />
+              <div className={`mt-2 h-1 w-10 rounded-full bg-gradient-to-r ${isOrange ? 'from-primary' : 'from-[#10172a]'} to-transparent opacity-40 group-hover:w-16 transition-all duration-300`} />
             </div>
           </div>
         );

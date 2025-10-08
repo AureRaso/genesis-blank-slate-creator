@@ -62,33 +62,33 @@ const QuickActions = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-white/90">
-          <div className="p-1.5 rounded-lg bg-primary/20">
-            <BarChart3 className="h-4 w-4 text-primary" />
+      <div className="mb-4">
+        <h3 className="text-base font-bold flex items-center gap-2 text-[#10172a]">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           Acciones Rápidas
         </h3>
       </div>
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
               <button
                 key={index}
                 onClick={action.action}
-                className="group relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm hover:bg-white/10 p-4 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02] text-left"
+                className="group relative overflow-hidden rounded-xl bg-white hover:bg-primary/5 p-5 border border-gray-200 hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg text-left"
               >
                 {/* Decorative background element */}
-                <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-primary/10 blur-xl group-hover:bg-primary/20 transition-colors duration-300" />
+                <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-300" />
 
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="p-2.5 rounded-lg bg-primary/20 w-fit mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                    <Icon className="h-5 w-5 text-primary" />
+                  <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm">
+                    <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-sm text-white/90 mb-0.5 group-hover:text-white transition-colors leading-tight">
+                    <h3 className="font-bold text-base text-[#10172a] mb-1 group-hover:text-primary transition-colors leading-tight">
                       {action.title}
                     </h3>
                   </div>

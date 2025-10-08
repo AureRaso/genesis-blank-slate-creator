@@ -37,13 +37,13 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 210 20% 15%;
+    --sidebar-background: 225 37% 11%; /* #10172a - Dark navy */
+    --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 22 100% 55%; /* Naranja Playtomic */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 22 100% 96%;
-    --sidebar-accent-foreground: 22 100% 25%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 225 37% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 225 37% 18%;
     --sidebar-ring: 22 100% 55%; /* Naranja Playtomic */
 
     /* Admin class colors */

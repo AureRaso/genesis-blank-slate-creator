@@ -106,7 +106,7 @@ const Index = () => {
 
   // Dashboard de administrador
   return (
-    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-6 bg-[#10172a] p-6 rounded-xl">
+    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-6">
       {/* Stats Section sin contenedores */}
       <div>
         <DashboardStats />
@@ -120,46 +120,46 @@ const Index = () => {
 
         {/* Panel de accesos rápidos sin contenedor */}
         <div className="h-full flex flex-col">
-          <div className="mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2 text-white/90">
-              <Trophy className="h-4 w-4 text-primary" />
+          <div className="mb-4">
+            <h3 className="text-base font-bold flex items-center gap-2 text-[#10172a]">
+              <Trophy className="h-5 w-5 text-primary" />
               Accesos Rápidos
             </h3>
           </div>
-          <div className="space-y-2 flex-1 overflow-auto">
+          <div className="space-y-3 flex-1 overflow-auto">
             <button
-              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 group shadow-sm hover:shadow-md"
               onClick={() => navigate("/dashboard/today-attendance")}
             >
-              <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
-                <GraduationCap className="h-4 w-4 text-primary" />
+              <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <GraduationCap className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-white/90">Clases de hoy</p>
+                <p className="text-base font-bold text-[#10172a]">Clases de hoy</p>
               </div>
             </button>
 
             <button
-              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 group shadow-sm hover:shadow-md"
               onClick={() => navigate("/dashboard/players")}
             >
-              <div className="p-2 rounded-lg bg-white/10 group-hover:bg-white/15 transition-colors">
-                <Users className="h-4 w-4 text-white/70" />
+              <div className="p-2.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                <Users className="h-5 w-5 text-[#10172a]" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-white/90">Jugadores</p>
+                <p className="text-base font-bold text-[#10172a]">Jugadores</p>
               </div>
             </button>
 
             <button
-              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 group shadow-sm hover:shadow-md"
               onClick={() => navigate("/dashboard/scheduled-classes")}
             >
-              <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
-                <Calendar className="h-4 w-4 text-primary" />
+              <div className="p-2.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Calendar className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-white/90">Clases programadas</p>
+                <p className="text-base font-bold text-[#10172a]">Clases programadas</p>
               </div>
             </button>
           </div>
