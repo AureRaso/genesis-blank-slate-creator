@@ -1,6 +1,5 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, Calendar, BarChart3, GraduationCap, UserCheck } from "lucide-react";
+import { Plus, Users, Calendar, GraduationCap, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -63,15 +62,12 @@ const QuickActions = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="text-base font-bold flex items-center gap-2 text-[#10172a]">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <BarChart3 className="h-5 w-5 text-primary" />
-          </div>
+        <h3 className="text-base font-bold text-[#10172a]">
           Acciones Rápidas
         </h3>
       </div>
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (

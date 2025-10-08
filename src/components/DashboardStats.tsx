@@ -56,9 +56,9 @@ const DashboardStats = () => {
       title: "Ingresos Estimados",
       value: `€${totalRevenue}`,
       icon: Euro,
-      color: "text-gray-700",
-      bg: "bg-gray-50",
-      border: "border-gray-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     }
   ] : [];
 
@@ -78,25 +78,25 @@ const DashboardStats = () => {
       title: "Jugadores Totales",
       value: totalPlayers,
       icon: Users,
-      color: "text-gray-700",
-      bg: "bg-gray-50",
-      border: "border-gray-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     },
     {
       title: "Clases Programadas",
       value: totalProgrammedClasses,
       icon: GraduationCap,
-      color: "text-gray-700",
-      bg: "bg-gray-50",
-      border: "border-gray-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     },
     {
       title: "Entrenamientos Hoy",
       value: totalTodayClasses,
       icon: Clock,
-      color: "text-gray-700",
-      bg: "bg-gray-50",
-      border: "border-gray-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     }
   ];
 
