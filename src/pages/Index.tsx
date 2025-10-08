@@ -159,55 +159,52 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <div className="p-2 rounded-full bg-primary/10">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/today-attendance")}>
+              <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 <GraduationCap className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">Clases de hoy</p>
+                <p className="text-sm font-semibold text-foreground">Clases de hoy</p>
                 <p className="text-xs text-muted-foreground truncate">Revisa la asistencia</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/dashboard/today-attendance")}
-                className="text-primary hover:text-primary hover:bg-primary/10"
+                className="text-primary hover:text-primary hover:bg-primary/20"
               >
                 Ver
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
-              <div className="p-2 rounded-full bg-green-100">
-                <Users className="h-4 w-4 text-green-700" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/players")}>
+              <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                <Users className="h-4 w-4 text-gray-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">Jugadores</p>
+                <p className="text-sm font-semibold text-foreground">Jugadores</p>
                 <p className="text-xs text-muted-foreground truncate">Gestionar jugadores</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/dashboard/players")}
-                className="text-green-700 hover:text-green-800 hover:bg-green-100"
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-200"
               >
                 Ver
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
-              <div className="p-2 rounded-full bg-blue-100">
-                <Calendar className="h-4 w-4 text-blue-700" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 cursor-pointer group" onClick={() => navigate("/dashboard/scheduled-classes")}>
+              <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Calendar className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">Clases programadas</p>
+                <p className="text-sm font-semibold text-foreground">Clases programadas</p>
                 <p className="text-xs text-muted-foreground truncate">Ver calendario</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/dashboard/scheduled-classes")}
-                className="text-blue-700 hover:text-blue-800 hover:bg-blue-100"
+                className="text-primary hover:text-primary hover:bg-primary/20"
               >
                 Ver
               </Button>

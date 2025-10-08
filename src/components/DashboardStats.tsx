@@ -39,14 +39,15 @@ const DashboardStats = () => {
   const totalTodayClasses = todayClasses?.length || 0;
 
   // Define different stats based on feature flags
+  // Using only orange (primary) and neutral grays for brand consistency
   const clubStats = [
     {
       title: "Clubes Activos",
       value: activeClubs,
       icon: Building2,
-      color: "text-playtomic-orange",
-      bg: "bg-orange-50",
-      border: "border-orange-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     }
   ];
 
@@ -55,9 +56,9 @@ const DashboardStats = () => {
       title: "Ingresos Estimados",
       value: `€${totalRevenue}`,
       icon: Euro,
-      color: "text-playtomic-green-dark",
-      bg: "bg-green-50",
-      border: "border-green-200"
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+      border: "border-gray-200"
     }
   ] : [];
 
@@ -66,9 +67,9 @@ const DashboardStats = () => {
       title: "Partidos Pendientes",
       value: pendingMatches,
       icon: Calendar,
-      color: "text-playtomic-orange-dark",
-      bg: "bg-orange-50",
-      border: "border-orange-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     }
   ] : [];
 
@@ -77,25 +78,25 @@ const DashboardStats = () => {
       title: "Jugadores Totales",
       value: totalPlayers,
       icon: Users,
-      color: "text-playtomic-green",
-      bg: "bg-green-50",
-      border: "border-green-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     },
     {
       title: "Clases Programadas",
       value: totalProgrammedClasses,
       icon: GraduationCap,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-200"
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+      border: "border-gray-200"
     },
     {
       title: "Entrenamientos Hoy",
       value: totalTodayClasses,
       icon: Clock,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-purple-200"
+      color: "text-primary",
+      bg: "bg-primary/5",
+      border: "border-primary/20"
     }
   ];
 
