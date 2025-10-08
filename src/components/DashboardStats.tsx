@@ -104,32 +104,33 @@ const DashboardStats = () => {
   const stats = [...coreStats, ...clubStats, ...leagueStats, ...matchStats].slice(0, 4);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
+        const isOrange = stat.color === 'text-primary';
         return (
-          <Card
+          <div
             key={index}
-            className={`${stat.bg} ${stat.border} hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative`}
+            className="hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-primary/50 hover:bg-white/10"
           >
             {/* Decorative gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-              <CardTitle className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-3 relative z-10">
+              <h3 className="text-xs font-semibold text-white/60 group-hover:text-white/80 transition-colors">
                 {stat.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.bg} ring-1 ring-white shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                <Icon className={`h-4 w-4 ${stat.color}`} />
+              </h3>
+              <div className={`p-2 rounded-lg ${isOrange ? 'bg-primary/20' : 'bg-white/10'} group-hover:scale-110 transition-transform duration-300`}>
+                <Icon className={`h-4 w-4 ${isOrange ? 'text-primary' : 'text-white/70'}`} />
               </div>
-            </CardHeader>
-            <CardContent className="relative z-10 pb-3">
-              <div className="text-2xl font-bold text-gray-900 tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
+            </div>
+            <div className="relative z-10">
+              <div className="text-2xl font-bold text-white tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
                 {stat.value}
               </div>
-              <div className="mt-1 h-0.5 w-8 rounded-full bg-gradient-to-r from-current to-transparent opacity-30 group-hover:w-12 transition-all duration-300" style={{ color: stat.color.replace('text-', '') }} />
-            </CardContent>
-          </Card>
+              <div className={`mt-2 h-0.5 w-8 rounded-full bg-gradient-to-r ${isOrange ? 'from-primary' : 'from-white/50'} to-transparent opacity-50 group-hover:w-12 transition-all duration-300`} />
+            </div>
+          </div>
         );
       })}
     </div>

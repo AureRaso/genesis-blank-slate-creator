@@ -106,64 +106,64 @@ const Index = () => {
 
   // Dashboard de administrador
   return (
-    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-4">
-      {/* Stats Section compacta */}
+    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-6 bg-[#10172a] p-6 rounded-xl">
+      {/* Stats Section sin contenedores */}
       <div>
         <DashboardStats />
       </div>
 
-      {/* Quick Actions y contenido adicional - más compacto */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+      {/* Quick Actions y contenido adicional sin contenedores */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
         <div className="lg:col-span-2">
           <QuickActions />
         </div>
 
-        {/* Panel de actividad reciente - compacto */}
-        <Card className="border-primary/10 hover:border-primary/20 transition-colors h-full flex flex-col">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+        {/* Panel de accesos rápidos sin contenedor */}
+        <div className="h-full flex flex-col">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-white/90">
               <Trophy className="h-4 w-4 text-primary" />
               Accesos Rápidos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 flex-1 overflow-auto">
+            </h3>
+          </div>
+          <div className="space-y-2 flex-1 overflow-auto">
             <button
-              className="flex items-center gap-2 w-full p-2 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 group"
               onClick={() => navigate("/dashboard/today-attendance")}
             >
-              <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <GraduationCap className="h-3.5 w-3.5 text-primary" />
+              <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                <GraduationCap className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold text-foreground">Clases de hoy</p>
+                <p className="text-sm font-semibold text-white/90">Clases de hoy</p>
               </div>
             </button>
 
             <button
-              className="flex items-center gap-2 w-full p-2 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 group"
               onClick={() => navigate("/dashboard/players")}
             >
-              <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                <Users className="h-3.5 w-3.5 text-gray-700" />
+              <div className="p-2 rounded-lg bg-white/10 group-hover:bg-white/15 transition-colors">
+                <Users className="h-4 w-4 text-white/70" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold text-foreground">Jugadores</p>
+                <p className="text-sm font-semibold text-white/90">Jugadores</p>
               </div>
             </button>
 
             <button
-              className="flex items-center gap-2 w-full p-2 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group"
+              className="flex items-center gap-3 w-full p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 group"
               onClick={() => navigate("/dashboard/scheduled-classes")}
             >
-              <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Calendar className="h-3.5 w-3.5 text-primary" />
+              <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                <Calendar className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold text-foreground">Clases programadas</p>
+                <p className="text-sm font-semibold text-white/90">Clases programadas</p>
               </div>
             </button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

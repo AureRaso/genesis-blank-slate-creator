@@ -61,34 +61,34 @@ const QuickActions = () => {
   const actions = isAdmin ? adminActions : playerActions;
 
   return (
-    <Card className="border-primary/10 hover:border-primary/20 transition-colors h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10">
+    <div className="h-full flex flex-col">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-white/90">
+          <div className="p-1.5 rounded-lg bg-primary/20">
             <BarChart3 className="h-4 w-4 text-primary" />
           </div>
           Acciones Rápidas
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
-        <div className="grid grid-cols-2 gap-2">
+        </h3>
+      </div>
+      <div className="flex-1 overflow-auto">
+        <div className="grid grid-cols-2 gap-3">
           {actions.map((action, index) => {
             const Icon = action.icon;
             return (
               <button
                 key={index}
                 onClick={action.action}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 p-3 border border-primary/20 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] text-left"
+                className="group relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm hover:bg-white/10 p-4 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02] text-left"
               >
                 {/* Decorative background element */}
-                <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-primary/10 blur-xl group-hover:bg-primary/20 transition-colors duration-300" />
+                <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-primary/10 blur-xl group-hover:bg-primary/20 transition-colors duration-300" />
 
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="p-2 rounded-lg bg-white shadow-sm w-fit mb-2 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                    <Icon className="h-4 w-4 text-primary" />
+                  <div className="p-2.5 rounded-lg bg-primary/20 w-fit mb-3 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-xs text-foreground mb-0.5 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="font-semibold text-sm text-white/90 mb-0.5 group-hover:text-white transition-colors leading-tight">
                       {action.title}
                     </h3>
                   </div>
@@ -97,8 +97,8 @@ const QuickActions = () => {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
