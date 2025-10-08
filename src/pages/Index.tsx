@@ -6,7 +6,7 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
@@ -136,6 +136,84 @@ const Index = () => {
 
       // Sort by timestamp
       return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    },
+    enabled: isAdmin && !!profile?.club_id
+  });
+
+  // Fetch weekly summary stats for admin
+  const { data: weeklySummary } = useQuery({
+    queryKey: ['admin-weekly-summary', profile?.club_id],
+    queryFn: async () => {
+      if (!profile?.club_id) return null;
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      try {
+        // New players this week vs last week
+        const { data: playersThisWeek } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact' })
+          .eq('club_id', profile.club_id)
+          .eq('role', 'player')
+          .gte('created_at', oneWeekAgo.toISOString());
+
+        const { data: playersLastWeek } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact' })
+          .eq('club_id', profile.club_id)
+          .eq('role', 'player')
+          .gte('created_at', twoWeeksAgo.toISOString())
+          .lt('created_at', oneWeekAgo.toISOString());
+
+        // Classes this week vs last week
+        const { data: classesThisWeek } = await supabase
+          .from('programmed_classes')
+          .select('id', { count: 'exact' })
+          .eq('club_id', profile.club_id)
+          .gte('created_at', oneWeekAgo.toISOString());
+
+        const { data: classesLastWeek } = await supabase
+          .from('programmed_classes')
+          .select('id', { count: 'exact' })
+          .eq('club_id', profile.club_id)
+          .gte('created_at', twoWeeksAgo.toISOString())
+          .lt('created_at', oneWeekAgo.toISOString());
+
+        // Attendance rate this week
+        const { data: attendanceData } = await supabase
+          .from('class_attendance')
+          .select('status')
+          .gte('created_at', oneWeekAgo.toISOString());
+
+        const totalAttendance = attendanceData?.length || 0;
+        const confirmedAttendance = attendanceData?.filter(a => a.status === 'confirmed').length || 0;
+        const attendanceRate = totalAttendance > 0 ? Math.round((confirmedAttendance / totalAttendance) * 100) : 0;
+
+        const playersThisWeekCount = playersThisWeek?.length || 0;
+        const playersLastWeekCount = playersLastWeek?.length || 0;
+        const playersTrend = playersLastWeekCount > 0
+          ? Math.round(((playersThisWeekCount - playersLastWeekCount) / playersLastWeekCount) * 100)
+          : playersThisWeekCount > 0 ? 100 : 0;
+
+        const classesThisWeekCount = classesThisWeek?.length || 0;
+        const classesLastWeekCount = classesLastWeek?.length || 0;
+        const classesTrend = classesLastWeekCount > 0
+          ? Math.round(((classesThisWeekCount - classesLastWeekCount) / classesLastWeekCount) * 100)
+          : classesThisWeekCount > 0 ? 100 : 0;
+
+        return {
+          newPlayers: playersThisWeekCount,
+          playersTrend,
+          newClasses: classesThisWeekCount,
+          classesTrend,
+          attendanceRate
+        };
+      } catch (error) {
+        console.error('Error fetching weekly summary:', error);
+        return null;
+      }
     },
     enabled: isAdmin && !!profile?.club_id
   });
@@ -334,43 +412,82 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Tareas Pendientes / Información Importante */}
+        {/* Resumen Semanal / Próximas Clases */}
         <div>
           <div className="mb-4">
             <h3 className="text-lg font-extrabold text-[#10172a]">
-              {profile?.role === 'admin' ? 'Tareas Pendientes' : 'Próximas Clases'}
+              {profile?.role === 'admin' ? 'Resumen Semanal' : 'Próximas Clases'}
             </h3>
           </div>
           <div className="space-y-3">
             {profile?.role === 'admin' ? (
               <>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <AlertTriangle className="h-4 w-4 text-primary" />
+                {weeklySummary ? (
+                  <>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                        <Users className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[#10172a]">Nuevos Jugadores</p>
+                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.newPlayers} jugadores esta semana</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          {weeklySummary.playersTrend >= 0 ? (
+                            <>
+                              <TrendingUp className="h-3 w-3 text-green-600" />
+                              <p className="text-xs text-green-600">+{weeklySummary.playersTrend}% vs semana anterior</p>
+                            </>
+                          ) : (
+                            <>
+                              <TrendingDown className="h-3 w-3 text-red-600" />
+                              <p className="text-xs text-red-600">{weeklySummary.playersTrend}% vs semana anterior</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
+                        <Calendar className="h-4 w-4 text-[#10172a]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[#10172a]">Clases Creadas</p>
+                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.newClasses} clases esta semana</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          {weeklySummary.classesTrend >= 0 ? (
+                            <>
+                              <TrendingUp className="h-3 w-3 text-green-600" />
+                              <p className="text-xs text-green-600">+{weeklySummary.classesTrend}% vs semana anterior</p>
+                            </>
+                          ) : (
+                            <>
+                              <TrendingDown className="h-3 w-3 text-red-600" />
+                              <p className="text-xs text-red-600">{weeklySummary.classesTrend}% vs semana anterior</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                        <Activity className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[#10172a]">Tasa de Asistencia</p>
+                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.attendanceRate}% de asistencia esta semana</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {weeklySummary.attendanceRate >= 80 ? 'Excelente participación' :
+                           weeklySummary.attendanceRate >= 60 ? 'Buena participación' :
+                           'Mejorar comunicación con alumnos'}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">Cargando estadísticas semanales...</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Revisar pagos pendientes</p>
-                    <p className="text-xs text-gray-600 mt-1">5 jugadores con cuotas mensuales atrasadas</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
-                    <Calendar className="h-4 w-4 text-[#10172a]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Programar clases noviembre</p>
-                    <p className="text-xs text-gray-600 mt-1">Crear horarios del próximo mes</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <UserCheck className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Evaluar entrenadores</p>
-                    <p className="text-xs text-gray-600 mt-1">Revisión mensual de desempeño</p>
-                  </div>
-                </div>
+                )}
               </>
             ) : (
               <>
