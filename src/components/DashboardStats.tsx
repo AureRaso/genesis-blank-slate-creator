@@ -103,19 +103,30 @@ const DashboardStats = () => {
   const stats = [...coreStats, ...clubStats, ...leagueStats, ...matchStats].slice(0, 4);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className={`${stat.bg} ${stat.border} hover:shadow-md transition-shadow`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-playtomic-gray-700">
+          <Card
+            key={index}
+            className={`${stat.bg} ${stat.border} hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative`}
+          >
+            {/* Decorative gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+              <CardTitle className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
                 {stat.title}
               </CardTitle>
-              <Icon className={`h-4 w-4 ${stat.color}`} />
+              <div className={`p-2.5 rounded-xl ${stat.bg} ring-2 ring-white shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                <Icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+            <CardContent className="relative z-10">
+              <div className="text-3xl font-bold text-gray-900 tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
+                {stat.value}
+              </div>
+              <div className="mt-1 h-1 w-12 rounded-full bg-gradient-to-r from-current to-transparent opacity-30 group-hover:w-16 transition-all duration-300" style={{ color: stat.color.replace('text-', '') }} />
             </CardContent>
           </Card>
         );
