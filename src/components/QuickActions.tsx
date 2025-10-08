@@ -62,11 +62,11 @@ const QuickActions = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="text-base font-bold text-[#10172a]">
+        <h3 className="text-base font-extrabold text-[#10172a]">
           Acciones Rápidas
         </h3>
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="grid grid-cols-4 gap-4">
           {actions.map((action, index) => {
             const Icon = action.icon;
@@ -74,7 +74,7 @@ const QuickActions = () => {
               <button
                 key={index}
                 onClick={action.action}
-                className="group relative overflow-hidden rounded-xl bg-white hover:bg-primary/5 p-5 border border-gray-200 hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg text-left"
+                className="group relative rounded-xl bg-white hover:bg-primary/5 p-5 border border-gray-200 hover:border-primary/40 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg text-left"
               >
                 {/* Decorative background element */}
                 <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-300" />

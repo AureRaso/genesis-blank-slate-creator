@@ -111,7 +111,7 @@ const DashboardStats = () => {
         return (
           <div
             key={index}
-            className="hover:scale-[1.02] transition-all duration-300 cursor-default group overflow-hidden relative p-5 rounded-xl bg-white border border-gray-200 hover:border-primary/40 hover:shadow-lg"
+            className="hover:scale-[1.02] transition-all duration-300 cursor-default group relative p-5 rounded-xl bg-white border border-gray-200 hover:border-primary/40 hover:shadow-lg"
           >
             {/* Decorative gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

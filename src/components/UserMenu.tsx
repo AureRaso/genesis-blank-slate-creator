@@ -1,5 +1,5 @@
 
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, Settings, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,10 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import LanguageSelector from "@/components/LanguageSelector";
 
 const UserMenu = () => {
   const { profile, signOut } = useAuth();
@@ -34,39 +32,42 @@ const UserMenu = () => {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'admin':
-        return t('userMenu.admin');
+        return 'Administrador';
       case 'trainer':
-        return t('userMenu.trainer');
+        return 'Entrenador';
       default:
-        return t('userMenu.player');
+        return 'Jugador';
     }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <User className="h-4 w-4" />
-          <span className="hidden sm:block">{profile.full_name}</span>
+        <Button
+          variant="ghost"
+          className="w-full justify-between gap-2 pl-2 pr-2 py-3 hover:bg-sidebar-accent/50 h-auto border-t border-sidebar-border rounded-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground">
+              <span className="text-sm font-semibold">
+                {profile.full_name?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-sm font-medium text-sidebar-foreground">{profile.full_name}</span>
+              <span className="text-xs text-sidebar-foreground/70">{getRoleText(profile.role)}</span>
+            </div>
+          </div>
+          <ChevronDown className="h-4 w-4 text-sidebar-foreground/70" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent side="top" align="center" className="w-56 mb-2">
         <DropdownMenuLabel className="flex items-center justify-between">
           <div>
             <p className="font-medium">{profile.full_name}</p>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <Badge className={getRoleColor(profile.role)}>
-            {getRoleText(profile.role)}
-          </Badge>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LanguageSelector />
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a href="/dashboard/settings">

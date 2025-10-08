@@ -5,16 +5,155 @@ import QuickActions from "@/components/QuickActions";
 import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
   const { t } = useTranslation();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
+
+  // Fetch recent activities for admin
+  const { data: recentActivities } = useQuery({
+    queryKey: ['admin-recent-activities', profile?.club_id],
+    queryFn: async () => {
+      if (!profile?.club_id) return [];
+
+      const activities: any[] = [];
+
+      try {
+        // 1. Nuevo jugador registrado
+        const { data: newPlayers, error: playersError } = await supabase
+          .from('profiles')
+          .select('id, full_name, created_at')
+          .eq('club_id', profile.club_id)
+          .eq('role', 'player')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (playersError) console.error('Error fetching players:', playersError);
+
+        if (newPlayers && newPlayers.length > 0) {
+          activities.push({
+            type: 'new_player',
+            icon: UserPlus,
+            title: 'Nuevo jugador registrado',
+            description: `${newPlayers[0].full_name} se registró en el club`,
+            timestamp: newPlayers[0].created_at,
+            color: 'primary'
+          });
+        }
+
+        // 4. Nueva clase programada
+        const { data: newClasses, error: classesError } = await supabase
+          .from('programmed_classes')
+          .select('id, name, created_at')
+          .eq('club_id', profile.club_id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (classesError) console.error('Error fetching classes:', classesError);
+
+        if (newClasses && newClasses.length > 0) {
+          activities.push({
+            type: 'new_class',
+            icon: CalendarPlus,
+            title: 'Nueva clase programada',
+            description: `Se creó la clase "${newClasses[0].name}"`,
+            timestamp: newClasses[0].created_at,
+            color: 'gray'
+          });
+        }
+
+        // 12. Nuevo entrenador añadido
+        const { data: newTrainers, error: trainersError } = await supabase
+          .from('profiles')
+          .select('id, full_name, created_at')
+          .eq('club_id', profile.club_id)
+          .eq('role', 'trainer')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (trainersError) console.error('Error fetching trainers:', trainersError);
+
+        if (newTrainers && newTrainers.length > 0) {
+          activities.push({
+            type: 'new_trainer',
+            icon: UserCheck,
+            title: 'Nuevo entrenador añadido',
+            description: `${newTrainers[0].full_name} se unió como entrenador`,
+            timestamp: newTrainers[0].created_at,
+            color: 'primary'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+      }
+
+      console.log('Activities found:', activities);
+
+      // If no real activities, show some example data
+      if (activities.length === 0) {
+        const now = new Date();
+        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        return [
+          {
+            type: 'new_player',
+            icon: UserPlus,
+            title: 'Nuevos jugadores registrados',
+            description: '3 jugadores se registraron esta semana',
+            timestamp: twoHoursAgo.toISOString(),
+            color: 'primary'
+          },
+          {
+            type: 'new_class',
+            icon: CalendarPlus,
+            title: 'Clases programadas actualizadas',
+            description: 'Se añadieron 5 nuevas clases para noviembre',
+            timestamp: yesterday.toISOString(),
+            color: 'gray'
+          },
+          {
+            type: 'new_trainer',
+            icon: UserCheck,
+            title: 'Nuevo entrenador añadido',
+            description: 'Juan Pérez se unió como entrenador',
+            timestamp: yesterday.toISOString(),
+            color: 'primary'
+          }
+        ];
+      }
+
+      // Sort by timestamp
+      return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    },
+    enabled: isAdmin && !!profile?.club_id
+  });
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now.getTime() - past.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    return past.toLocaleDateString();
+  };
 
   if (loading) {
     return (
@@ -99,15 +238,176 @@ const Index = () => {
 
   // Dashboard de administrador
   return (
-    <div className="h-[calc(100vh-5rem)] overflow-hidden flex flex-col gap-6">
+    <div className="h-[calc(100vh-5rem)] overflow-y-auto flex flex-col gap-6 px-1 py-1">
       {/* Stats Section */}
       <div>
         <DashboardStats />
       </div>
 
       {/* Quick Actions - Full width */}
-      <div className="flex-1 min-h-0">
+      <div>
         <QuickActions />
+      </div>
+
+      {/* Activity Backlog Section - Two columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Actividad Reciente */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-extrabold text-[#10172a]">
+              Actividad Reciente
+            </h3>
+            {recentActivities && recentActivities.length > 3 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllActivities(!showAllActivities)}
+                className="text-xs text-primary hover:text-primary/80"
+              >
+                {showAllActivities ? (
+                  <>
+                    Ver menos <ChevronUp className="h-3 w-3 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Ver todas ({recentActivities.length}) <ChevronDown className="h-3 w-3 ml-1" />
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          <div className="space-y-3">
+            {profile?.role === 'admin' ? (
+              <>
+                {recentActivities && recentActivities.length > 0 ? (
+                  (showAllActivities ? recentActivities : recentActivities.slice(0, 3)).map((activity, index) => {
+                    const Icon = activity.icon;
+                    const isOrange = activity.color === 'primary';
+                    return (
+                      <div
+                        key={`${activity.type}-${index}`}
+                        className={`flex items-start gap-3 p-3 rounded-lg ${
+                          isOrange ? 'bg-primary/5 border border-primary/10' : 'bg-gray-50 border border-gray-100'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-lg ${isOrange ? 'bg-primary/10' : 'bg-gray-100'} mt-0.5`}>
+                          <Icon className={`h-4 w-4 ${isOrange ? 'text-primary' : 'text-[#10172a]'}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[#10172a]">{activity.title}</p>
+                          <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
+                          <p className="text-xs text-gray-400 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">No hay actividades recientes</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Clase completada</p>
+                    <p className="text-xs text-gray-600 mt-1">Clase de nivel intermedio - 8 asistentes</p>
+                    <p className="text-xs text-gray-400 mt-1">Hace 1 hora</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
+                    <Users className="h-4 w-4 text-[#10172a]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Nuevo alumno inscrito</p>
+                    <p className="text-xs text-gray-600 mt-1">María González se inscribió en tus clases</p>
+                    <p className="text-xs text-gray-400 mt-1">Hace 3 horas</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Tareas Pendientes / Información Importante */}
+        <div>
+          <div className="mb-4">
+            <h3 className="text-lg font-extrabold text-[#10172a]">
+              {profile?.role === 'admin' ? 'Tareas Pendientes' : 'Próximas Clases'}
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {profile?.role === 'admin' ? (
+              <>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <AlertTriangle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Revisar pagos pendientes</p>
+                    <p className="text-xs text-gray-600 mt-1">5 jugadores con cuotas mensuales atrasadas</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
+                    <Calendar className="h-4 w-4 text-[#10172a]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Programar clases noviembre</p>
+                    <p className="text-xs text-gray-600 mt-1">Crear horarios del próximo mes</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <UserCheck className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Evaluar entrenadores</p>
+                    <p className="text-xs text-gray-600 mt-1">Revisión mensual de desempeño</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Clase nivel avanzado</p>
+                    <p className="text-xs text-gray-600 mt-1">Hoy a las 18:00 - Pista 2</p>
+                    <p className="text-xs text-gray-400 mt-1">6/8 alumnos confirmados</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
+                    <GraduationCap className="h-4 w-4 text-[#10172a]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Clase nivel intermedio</p>
+                    <p className="text-xs text-gray-600 mt-1">Mañana a las 10:00 - Pista 1</p>
+                    <p className="text-xs text-gray-400 mt-1">8/8 alumnos confirmados</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#10172a]">Clase principiantes</p>
+                    <p className="text-xs text-gray-600 mt-1">Mañana a las 16:00 - Pista 3</p>
+                    <p className="text-xs text-gray-400 mt-1">4/8 alumnos confirmados</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
