@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -57,7 +57,7 @@ const formSchema = z.object({
   trainer_profile_id: z.string().min(1, "Trainer is required"),
   club_id: z.string().min(1, "Club is required"),
   objective: z.string().optional(),
-  court_number: z.number().min(1).max(7, "Select a court from 1 to 7"),
+  court_number: z.number().min(1).nullable().optional(),
   // Optional trainer assignment for admins
   assigned_trainer_id: z.string().optional(),
   // Precio mensual
@@ -83,12 +83,24 @@ interface ScheduledClassFormProps {
     start_date?: Date;
     end_date?: Date;
   };
+  showPreview?: boolean;
+  renderPreview?: (data: {
+    formData: any;
+    previewDates: string[];
+    conflicts: string[];
+    students: any[];
+    groups: any[];
+    clubs: any[];
+    currentStep: number;
+  }) => React.ReactNode;
 }
 export default function ScheduledClassForm({
   onClose,
   clubId,
   trainerProfileId,
-  initialData
+  initialData,
+  showPreview = false,
+  renderPreview
 }: ScheduledClassFormProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -135,11 +147,16 @@ export default function ScheduledClassForm({
   
   // Get admin clubs for club selection
   const { data: adminClubs } = useAdminClubs();
-  
+
+  // Get the first available club for default value
+  const defaultClubId = isAdmin
+    ? (adminClubs?.[0]?.id || "")
+    : (trainerClubId || clubId);
+
   // Filter trainers by club - for admins, adminTrainers already filtered
-  const availableTrainers = isAdmin 
+  const availableTrainers = isAdmin
     ? allTrainers // Admin trainers already filtered by admin's clubs
-    : allTrainers?.filter(trainer => 
+    : allTrainers?.filter(trainer =>
         trainer.trainer_clubs?.some(tc => tc.club_id === clubId)
       );
   const createMutation = useCreateProgrammedClass();
@@ -149,7 +166,7 @@ export default function ScheduledClassForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      club_id: isAdmin ? "" : clubId, // For admins, start with empty club selection
+      club_id: defaultClubId,
       trainer_profile_id: trainerProfileId,
       duration_minutes: 60,
       max_participants: 4,
@@ -187,6 +204,13 @@ export default function ScheduledClassForm({
     }
     setConflicts(newConflicts);
   }, [watchedValues.selected_days, watchedValues.start_date, watchedValues.end_date, watchedValues.recurrence_type]);
+
+  // Set default club when adminClubs loads
+  useEffect(() => {
+    if (isAdmin && adminClubs && adminClubs.length > 0 && !form.getValues().club_id) {
+      form.setValue("club_id", adminClubs[0].id);
+    }
+  }, [adminClubs, isAdmin, form]);
 
   // Clear selected students when club changes (for admins only)
   useEffect(() => {
@@ -261,9 +285,20 @@ export default function ScheduledClassForm({
         monthly_price: data.monthly_price
       };
       await createMutation.mutateAsync(submitData);
+
+      toast({
+        title: "¡Clases creadas!",
+        description: `Se han creado ${previewDates.length} clases programadas exitosamente`,
+      });
+
       onClose();
     } catch (error) {
       console.error("Error creating programmed class:", error);
+      toast({
+        title: "Error al crear clases",
+        description: "Ocurrió un error al crear las clases. Por favor intenta nuevamente.",
+        variant: "destructive"
+      });
     }
   };
   const nextStep = () => {
@@ -305,91 +340,163 @@ export default function ScheduledClassForm({
       form.setValue("selected_days", currentDays.filter(d => d !== day));
     }
   };
-  return <Card className="w-full max-w-4xl mx-auto">
+  // Render preview if provided
+  const previewPanel = renderPreview?.({
+    formData: watchedValues,
+    previewDates,
+    conflicts,
+    students: students || [],
+    groups: groups || [],
+    clubs: adminClubs || [],
+    currentStep
+  });
+
+  const formContent = (
+    <>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          {t('classes.createScheduledClasses')}
-        </CardTitle>
-        
-        {/* Step indicator */}
-        <div className="flex items-center gap-2 mt-4">
-          {[1, 2, 3].map(step => <div key={step} className="flex items-center">
-              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium", step === currentStep ? "bg-primary text-primary-foreground" : step < currentStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
-                {step}
-              </div>
-              {step < 3 && <div className="w-8 h-px bg-border mx-2" />}
-            </div>)}
-        </div>
-        
-        <div className="text-sm text-muted-foreground mt-2">
-          {currentStep === 1 && t('classes.basicInfoAndRecurrence')}
-          {currentStep === 2 && t('classes.groupAndStudents')}
-          {currentStep === 3 && t('classes.finalConfiguration')}
+        <div className="flex items-center justify-between">
+          {/* Step indicator */}
+          <div className="flex items-center gap-1">
+            {[1, 2, 3].map(step => <div key={step} className="flex items-center">
+                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium", step === currentStep ? "bg-primary text-primary-foreground" : step < currentStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
+                  {step}
+                </div>
+                {step < 3 && <div className="w-8 h-px bg-border mx-2" />}
+              </div>)}
+          </div>
+
+          <div className="text-lg font-semibold">
+            {currentStep === 1 && t('classes.basicInfoAndRecurrence')}
+            {currentStep === 2 && t('classes.groupAndStudents')}
+            {currentStep === 3 && t('classes.finalConfiguration')}
+          </div>
         </div>
       </CardHeader>
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            // Show toast with validation errors
+            const errorFields = Object.keys(errors);
+            const fieldNames: Record<string, string> = {
+              name: "Nombre de la clase",
+              start_time: "Hora de inicio",
+              selected_days: "Días de la semana",
+              start_date: "Fecha de inicio",
+              end_date: "Fecha de fin",
+              club_id: "Club",
+              court_number: "Pista"
+            };
+
+            const missingFieldNames = errorFields.map(field => fieldNames[field] || field);
+
+            toast({
+              title: "Faltan campos requeridos",
+              description: `Por favor completa: ${missingFieldNames.join(", ")}`,
+              variant: "destructive"
+            });
+          })} className="space-y-6">
             
             {/* Step 1: Basic Info and Recurrence */}
             {currentStep === 1 && <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="name" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>{t('classes.className')}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
+                {/* Single row layout for all basic info fields */}
+                <div className="space-y-4">
+                  {/* Numeric level format: all fields in one row */}
+                  {watchedValues.level_format === "numeric" && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                      <div className="md:col-span-4">
+                        <FormField control={form.control} name="name" render={({
+                          field
+                        }) => <FormItem>
+                              <FormLabel>{t('classes.className')}</FormLabel>
+                              <FormControl>
+                                <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>} />
+                      </div>
 
-                  {/* Modified Level Selection */}
-                  <div className="space-y-4">
-                    <FormField control={form.control} name="level_format" render={({
-                  field
-                }) => <FormItem>
-                          <FormLabel>{t('classes.levelFormat')}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <div className="md:col-span-4">
+                        <FormField control={form.control} name="level_format" render={({
+                          field
+                        }) => <FormItem>
+                              <FormLabel>{t('classes.levelFormat')}</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="numeric">{t('classes.numeric')}</SelectItem>
+                                  <SelectItem value="levante">{t('classes.levelCategories')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>} />
+                      </div>
+
+                      <div className="md:col-span-4">
+                        <div className="space-y-2">
+                          <FormLabel>Nivel</FormLabel>
+                          <div className="flex gap-2 items-center">
+                            <FormField control={form.control} name="level_from" render={({
+                              field
+                            }) => <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input placeholder="Desde" className="w-full text-center" type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>} />
+                            <span className="text-muted-foreground">-</span>
+                            <FormField control={form.control} name="level_to" render={({
+                              field
+                            }) => <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input placeholder="Hasta" className="w-full text-center" type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Levante level format: name, format, and category in one row */}
+                  {watchedValues.level_format === "levante" && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField control={form.control} name="name" render={({
+                        field
+                      }) => <FormItem>
+                            <FormLabel>{t('classes.className')}</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
+                              <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
                             </FormControl>
-                             <SelectContent>
+                            <FormMessage />
+                          </FormItem>} />
+
+                      <FormField control={form.control} name="level_format" render={({
+                        field
+                      }) => <FormItem>
+                            <FormLabel>{t('classes.levelFormat')}</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
                                 <SelectItem value="numeric">{t('classes.numeric')}</SelectItem>
                                 <SelectItem value="levante">{t('classes.levelCategories')}</SelectItem>
-                             </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>} />
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>} />
 
-                    {watchedValues.level_format === "numeric" && <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="level_from" render={({
-                    field
-                  }) => <FormItem>
-                              <FormLabel>{t('classes.levelFrom')}</FormLabel>
-                              <FormControl>
-                                <Input type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>} />
-                        <FormField control={form.control} name="level_to" render={({
-                    field
-                  }) => <FormItem>
-                              <FormLabel>{t('classes.levelTo')}</FormLabel>
-                              <FormControl>
-                                <Input type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>} />
-                      </div>}
-
-                    {watchedValues.level_format === "levante" && <FormField control={form.control} name="custom_level" render={({
-                  field
-                }) => <FormItem>
+                      <FormField control={form.control} name="custom_level" render={({
+                        field
+                      }) => <FormItem>
                             <FormLabel>{t('classes.categoryLevel')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
@@ -404,12 +511,13 @@ export default function ScheduledClassForm({
                               </SelectContent>
                             </Select>
                             <FormMessage />
-                          </FormItem>} />}
+                          </FormItem>} />
+                    </div>
+                  )}
 
-                    {watchedValues.level_format === "numeric" && <p className="text-sm text-muted-foreground">
-                        {t('classes.selectLevelRange')}
-                      </p>}
-                  </div>
+                  {watchedValues.level_format === "numeric" && <p className="text-sm text-muted-foreground">
+                      
+                    </p>}
                 </div>
 
                 <Separator />
@@ -468,10 +576,10 @@ export default function ScheduledClassForm({
                 {/* Modified Days Selection */}
                 <FormField control={form.control} name="selected_days" render={() => <FormItem>
                       <FormLabel>{t('classes.daysOfWeek')}</FormLabel>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="flex justify-between gap-3">
                         {DAYS_OF_WEEK.map(day => <div key={day.value} className="flex items-center space-x-2">
                             <Checkbox id={`day-${day.value}`} checked={watchedValues.selected_days?.includes(day.value)} onCheckedChange={checked => handleDaySelection(day.value, checked as boolean)} />
-                            <label htmlFor={`day-${day.value}`} className="text-sm font-medium cursor-pointer">
+                            <label htmlFor={`day-${day.value}`} className="text-sm font-medium cursor-pointer whitespace-nowrap">
                               {day.label}
                             </label>
                           </div>)}
@@ -479,165 +587,144 @@ export default function ScheduledClassForm({
                       <FormMessage />
                     </FormItem>} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <FormField control={form.control} name="start_date" render={({
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField control={form.control} name="start_date" render={({
                   field
                 }) => <FormItem>
-                          <FormLabel>{t('classes.startDate')}</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
-                                  <Calendar className="mr-2 h-4 w-4" />
-                                  {field.value ? format(field.value, "dd/MM/yyyy", {
-                            locale: getDateFnsLocale()
-                          }) : t('common.selectDate')}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <CalendarComponent mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date()} initialFocus className="pointer-events-auto" />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>} />
+                      <FormLabel>{t('classes.startDate')}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {field.value ? format(field.value, "dd/MM/yyyy", {
+                        locale: getDateFnsLocale()
+                      }) : t('common.selectDate')}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date()} initialFocus className="pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>} />
 
-                    <FormField control={form.control} name="end_date" render={({
+                  <FormField control={form.control} name="end_date" render={({
                   field
                 }) => <FormItem>
-          <FormLabel>{t('classes.endDate')}</FormLabel>
-          <Popover>
-            <PopoverTrigger asChild>
-              <FormControl>
-                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {field.value ? format(field.value, "dd/MM/yyyy", {
-            locale: getDateFnsLocale()
-          }) : t('common.selectDate')}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <CalendarComponent mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < (watchedValues.start_date || new Date())} initialFocus className="pointer-events-auto" />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>} />
-                  </div>
+                      <FormLabel>{t('classes.endDate')}</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {field.value ? format(field.value, "dd/MM/yyyy", {
+                        locale: getDateFnsLocale()
+                      }) : t('common.selectDate')}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < (watchedValues.start_date || new Date())} initialFocus className="pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>} />
 
-                  <div className="space-y-4">
-                    <FormField control={form.control} name="recurrence_type" render={({
+                  <FormField control={form.control} name="recurrence_type" render={({
                   field
                 }) => <FormItem>
-          <FormLabel>{t('classes.recurrence')}</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={t('classes.selectLevel')} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="weekly">{t('classes.weekly')}</SelectItem>
-              <SelectItem value="biweekly">{t('classes.biweekly')}</SelectItem>
-              <SelectItem value="monthly">{t('classes.monthly')}</SelectItem>
-            </SelectContent>
-          </Select>
-                          <FormMessage />
-                        </FormItem>} />
-
-                    {previewDates.length > 0 && <div className="space-y-2">
-                        <FormLabel>{t('classes.previewDates')} ({previewDates.length} {t('classes.totalClasses')})</FormLabel>
-                        <div className="max-h-32 overflow-y-auto space-y-1">
-                          {previewDates.slice(0, 10).map((date, index) => <Badge key={index} variant="outline" className="text-xs">
-                              {date}
-                            </Badge>)}
-                          {previewDates.length > 10 && <Badge variant="secondary" className="text-xs">
-                              +{previewDates.length - 10} más...
-                            </Badge>}
-                        </div>
-                      </div>}
-
-                    {conflicts.length > 0 && <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          {conflicts.map((conflict, index) => <div key={index}>{conflict}</div>)}
-                        </AlertDescription>
-                      </Alert>}
-                  </div>
+                      <FormLabel>{t('classes.recurrence')}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('classes.selectLevel')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="weekly">{t('classes.weekly')}</SelectItem>
+                          <SelectItem value="biweekly">{t('classes.biweekly')}</SelectItem>
+                          <SelectItem value="monthly">{t('classes.monthly')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>} />
                 </div>
 
                 {/* Admin-only club and trainer assignment */}
                 {isAdmin && <div className="border-t pt-6 space-y-6">
-                    <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    {/* <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <Users className="h-5 w-5" />
                       Configuración Avanzada (Admin)
-                    </h4>
-                    
-                    {/* Club assignment */}
-                    <FormField control={form.control} name="club_id" render={({
-                  field
-                }) => <FormItem>
-                          <FormLabel>Asignar a Club</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar club" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                               {adminClubs && adminClubs.length > 0 ? (
-                                 adminClubs.map(club => (
-                                     <SelectItem key={club.id} value={club.id}>
-                                       {club.name}
-                                     </SelectItem>
-                                   ))
-                              ) : (
-                                <div className="p-2 text-sm text-muted-foreground">
-                                  No tienes clubes creados
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Selecciona en qué club se creará esta clase programada.
-                          </p>
-                        </FormItem>} />
-                    
-                    {/* Trainer assignment */}
-                    <FormField control={form.control} name="assigned_trainer_id" render={({
-                  field
-                }) => <FormItem>
-                          <FormLabel>Asignar clase a otro profesor (Opcional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar profesor (opcional)" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="unassigned">Sin asignar (permanece como mi clase)</SelectItem>
-                               {availableTrainers && availableTrainers.length > 0 ? (
-                                 availableTrainers
-                                   .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
-                                   .map(trainer => (
-                                     <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
-                                       {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
-                                     </SelectItem>
-                                   ))
-                              ) : (
-                                <div className="p-2 text-sm text-muted-foreground">
-                                  No hay otros profesores disponibles
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Si seleccionas un profesor, la clase aparecerá en su calendario como si él la hubiera creado.
-                          </p>
-                        </FormItem>} />
+                    </h4> */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Club assignment */}
+                      <FormField control={form.control} name="club_id" render={({
+                        field
+                      }) => <FormItem>
+                            <FormLabel>Asignar a Club</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccionar club" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {adminClubs && adminClubs.length > 0 ? (
+                                  adminClubs.map(club => (
+                                      <SelectItem key={club.id} value={club.id}>
+                                        {club.name}
+                                      </SelectItem>
+                                    ))
+                                ) : (
+                                  <div className="p-2 text-sm text-muted-foreground">
+                                    No tienes clubes creados
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Selecciona en qué club se creará esta clase programada.
+                            </p>
+                          </FormItem>} />
+
+                      {/* Trainer assignment */}
+                      <FormField control={form.control} name="assigned_trainer_id" render={({
+                        field
+                      }) => <FormItem>
+                            <FormLabel>Asignar clase a otro profesor (Opcional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccionar profesor (opcional)" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="unassigned">Sin asignar (permanece como mi clase)</SelectItem>
+                                {availableTrainers && availableTrainers.length > 0 ? (
+                                  availableTrainers
+                                    .filter(trainer => trainer.profile_id !== trainerProfileId) // Exclude current trainer
+                                    .map(trainer => (
+                                      <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                                        {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
+                                      </SelectItem>
+                                    ))
+                                ) : (
+                                  <div className="p-2 text-sm text-muted-foreground">
+                                    No hay otros profesores disponibles
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Selecciona a un profesor de tu club
+                            </p>
+                          </FormItem>} />
+                    </div>
                   </div>}
               </div>}
 
@@ -747,92 +834,127 @@ export default function ScheduledClassForm({
               </div>}
 
             {/* Step 3: Final Configuration */}
-            {currentStep === 3 && <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <FormField control={form.control} name="court_number" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>{t('classes.court')}</FormLabel>
-                        <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('classes.selectCourt')} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-background border shadow-md z-50">
-                            {[1, 2, 3, 4, 5, 6, 7].map(court => <SelectItem key={court} value={court.toString()}>
-                                {t('classes.court')} {court}
-                              </SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>} />
+            {currentStep === 3 && <div className="space-y-8">
+                {/* Court and Price - In same row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Court Number */}
+                  <FormField control={form.control} name="court_number" render={({
+                    field
+                  }) => {
+                    // Get available courts from selected club
+                    const selectedClub = adminClubs?.find(c => c.id === selectedClubId);
+                    const availableCourts = selectedClub?.court_count || 7;
+                    const courtOptions = Array.from({ length: availableCourts }, (_, i) => i + 1);
 
-                  <FormField control={form.control} name="objective" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>Objetivo de la clase (opcional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Describe los objetivos de esta clase..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>} />
+                    return (
+                      <Card className="border-primary/20">
+                        <CardContent className="pt-6">
+                          <FormItem>
+                            <div className="flex items-center gap-2 mb-3">
+                              <MapPin className="h-5 w-5 text-primary" />
+                              <FormLabel className="text-base font-semibold">
+                                Seleccionar Pista <span className="text-red-500">*</span>
+                              </FormLabel>
+                            </div>
+                            <Select onValueChange={value => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger className="h-12">
+                                  <SelectValue placeholder="¿En qué pista?" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-background border shadow-md z-50">
+                                {courtOptions.map(court => (
+                                  <SelectItem key={court} value={court.toString()}>
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="h-4 w-4" />
+                                      Pista {court}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Disponibles: {availableCourts}
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        </CardContent>
+                      </Card>
+                    );
+                  }} />
+
+                  {/* Price */}
+                  <FormField control={form.control} name="monthly_price" render={({
+                    field
+                  }) => (
+                    <Card className="border-primary/20">
+                      <CardContent className="pt-6">
+                        <FormItem>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Euro className="h-5 w-5 text-primary" />
+                            <FormLabel className="text-base font-semibold">
+                              Precio Mensual
+                            </FormLabel>
+                          </div>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="h-12 text-lg pr-12"
+                                {...field}
+                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                                €/mes
+                              </div>
+                            </div>
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
+                            <span className="text-primary mt-0.5">ℹ</span>
+                            {field.value === 0 || !field.value ? "Clase gratuita" : "Precio mensual"}
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      </CardContent>
+                    </Card>
+                  )} />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="monthly_price" render={({
-                field
-              }) => <FormItem>
-                        <FormLabel>Precio mensual (€)</FormLabel>
+                {/* Objective - Secondary */}
+                <FormField control={form.control} name="objective" render={({
+                  field
+                }) => (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <FormItem>
+                        <div className="flex items-center gap-2 mb-3">
+                          <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                          <FormLabel className="text-sm font-medium text-muted-foreground">
+                            Objetivo de la Clase <span className="text-xs">(opcional)</span>
+                          </FormLabel>
+                        </div>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            step="0.01" 
-                            placeholder="0.00" 
-                            {...field} 
-                            onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                          <Textarea
+                            placeholder="Ej: Mejorar el saque, trabajar la volea, practicar el revés..."
+                            className="min-h-[100px] resize-none"
+                            {...field}
                           />
                         </FormControl>
-                        <FormMessage />
-                        <p className="text-sm text-muted-foreground">
-                          Si es 0, la clase será gratuita. Si tiene precio, los jugadores deberán pagar para inscribirse.
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Describe brevemente qué trabajarás en estas clases
                         </p>
-                      </FormItem>} />
-                </div>
-
-                {/* Summary */}
-                <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">Resumen de clases a crear:</h4>
-                  <div className="text-sm space-y-1">
-                    <div>• {previewDates.length} clases programadas</div>
-                    <div>• Desde {watchedValues.start_date ? format(watchedValues.start_date, "dd/MM/yyyy", {
-                    locale: es
-                  }) : "N/A"}</div>
-                    <div>• Hasta {watchedValues.end_date ? format(watchedValues.end_date, "dd/MM/yyyy", {
-                    locale: es
-                  }) : "N/A"}</div>
-                    {watchedValues.selection_type === "individual" && <div>• {watchedValues.selected_students.length} alumnos pre-inscritos</div>}
-                    {watchedValues.selection_type === "group" && watchedValues.group_id && (() => {
-                      const selectedGroup = groups?.find(g => g.id === watchedValues.group_id);
-                      return selectedGroup ? <div>• Grupo: {selectedGroup.name} ({selectedGroup.members.length} miembros)</div> : null;
-                    })()}
-                     <div>• Días: {watchedValues.selected_days?.join(", ") || "Ninguno"}</div>
-                     <div>• Pista: {watchedValues.court_number ? `Pista ${watchedValues.court_number}` : "No seleccionada"}</div>
-                     {isAdmin && (() => {
-                       const selectedClub = adminClubs?.find(c => c.id === watchedValues.club_id);
-                       return selectedClub ? <div>• Club: {selectedClub.name}</div> : null;
-                     })()}
-                     {isAdmin && watchedValues.assigned_trainer_id && watchedValues.assigned_trainer_id !== "unassigned" && (() => {
-                       const assignedTrainer = availableTrainers?.find(t => t.profile_id === watchedValues.assigned_trainer_id);
-                       return assignedTrainer ? <div>• Asignada a: {assignedTrainer.profiles?.full_name}</div> : null;
-                     })()}
-                  </div>
-                </div>
+                        <FormMessage />
+                      </FormItem>
+                    </CardContent>
+                  </Card>
+                )} />
               </div>}
 
             {/* Navigation buttons */}
-            <div className="flex justify-between pt-6">
+            <div className="flex justify-between pt-0">
               <Button type="button" variant="outline" onClick={currentStep === 1 ? onClose : prevStep}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {currentStep === 1 ? t('common.cancel') : t('classes.previous')}
@@ -848,5 +970,28 @@ export default function ScheduledClassForm({
           </form>
         </Form>
       </CardContent>
-    </Card>;
+    </>
+  );
+
+  // If showPreview is true, return split layout, otherwise return wrapped in Card
+  if (showPreview && renderPreview) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="w-full">
+            {formContent}
+          </Card>
+        </div>
+        <div className="lg:col-span-1">
+          {previewPanel}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
+      {formContent}
+    </Card>
+  );
 }

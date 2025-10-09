@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from "date-fns";
 import { Calendar, GraduationCap, Users, UserCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -13,7 +14,6 @@ import { TrainerLegend } from "./calendar/TrainerLegend";
 import { useScheduledClasses } from "@/hooks/useScheduledClasses";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import ScheduledClassForm from "@/components/ScheduledClassForm";
 import { ClassCard } from "./calendar/ClassCard";
 import { cn } from "@/lib/utils";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
@@ -33,12 +33,11 @@ interface ClassCalendarViewProps {
 }
 
 export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCalendarViewProps) {
+  const navigate = useNavigate();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ day: Date; time: string } | null>(null);
   const [selectedDayForModal, setSelectedDayForModal] = useState<Date | null>(null);
   const [timeRangeStart, setTimeRangeStart] = useState("08:00");
   const [timeRangeEnd, setTimeRangeEnd] = useState("22:00");
@@ -117,29 +116,14 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   };
 
   const handleTimeSlotClick = (day: Date, timeSlot: string) => {
-    if (isAdmin) {
-      setSelectedTimeSlot({ day, time: timeSlot });
-      setShowCreateForm(true);
-    }
-  };
-
-  const handleCloseForm = () => {
-    setShowCreateForm(false);
-    setSelectedTimeSlot(null);
-  };
-
-  // Get the day name in Spanish for the selected day
-  const getSelectedDayName = () => {
-    if (!selectedTimeSlot) return "";
-    const dayNames = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
-    return dayNames[selectedTimeSlot.day.getDay()];
-  };
-
-  // Get current club for form
-  const getCurrentClub = () => {
-    if (clubId) return clubId;
-    if (clubIds && clubIds.length > 0) return clubIds[0];
-    return profile?.club_id || "";
+    // Navigate to create page with parameters (for both admins and trainers)
+    const dayName = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"][day.getDay()];
+    const params = new URLSearchParams({
+      time: timeSlot,
+      days: dayName,
+      date: format(day, 'yyyy-MM-dd')
+    });
+    navigate(`/dashboard/scheduled-classes/new?${params.toString()}`);
   };
 
   // Aplicar todos los filtros
@@ -267,31 +251,6 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         }}
       />
 
-      {/* Create Class Form Dialog */}
-      {isAdmin && (
-        <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] md:w-full">
-            <DialogHeader className="sr-only">
-              <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
-              <DialogDescription>
-                Formulario para crear una nueva clase programada para el {getSelectedDayName()} a las {selectedTimeSlot?.time}
-              </DialogDescription>
-            </DialogHeader>
-            <ScheduledClassForm
-              onClose={handleCloseForm}
-              clubId={getCurrentClub()}
-              trainerProfileId={profile?.id || ""}
-              initialData={selectedTimeSlot ? {
-                start_time: selectedTimeSlot.time,
-                selected_days: [getSelectedDayName()],
-                start_date: selectedTimeSlot.day,
-                end_date: new Date(selectedTimeSlot.day.getTime() + (90 * 24 * 60 * 60 * 1000)) // 3 months later
-              } : undefined}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-
       {/* Fullscreen Calendar Modal */}
       <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>
         <DialogContent className="max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-2 md:p-4 flex flex-col">
@@ -367,9 +326,13 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
                   {isAdmin && (
                     <Button
                       onClick={() => {
-                        setSelectedDayForModal(null);
-                        setSelectedTimeSlot({ day: selectedDayForModal, time: "09:00" });
-                        setShowCreateForm(true);
+                        const dayName = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"][selectedDayForModal!.getDay()];
+                        const params = new URLSearchParams({
+                          time: "09:00",
+                          days: dayName,
+                          date: format(selectedDayForModal!, 'yyyy-MM-dd')
+                        });
+                        navigate(`/dashboard/scheduled-classes/new?${params.toString()}`);
                       }}
                       className="mt-4"
                     >

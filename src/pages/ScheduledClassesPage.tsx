@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Calendar, List, Search, Filter, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import ScheduledClassForm from "@/components/ScheduledClassForm";
 import { ImprovedBulkClassCreator } from "@/components/ImprovedBulkClassCreator";
 import ClassCalendarView from "@/components/ClassCalendarView";
 import ClassListView from "@/components/ClassListView";
@@ -18,7 +18,7 @@ import { useClassGroups } from "@/hooks/useClassGroups";
 import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
 import { TrainerLegend } from "@/components/calendar/TrainerLegend";
 function ScheduledClassesContent() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const navigate = useNavigate();
   const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [filteredCalendarClasses, setFilteredCalendarClasses] = useState([]);
@@ -45,9 +45,6 @@ function ScheduledClassesContent() {
   const {
     data: groups
   } = useClassGroups(currentClub?.id);
-  const handleCloseForm = () => {
-    setShowCreateForm(false);
-  };
   if (!currentClub) {
     return <div className="container mx-auto py-8">
         <Card>
@@ -94,24 +91,11 @@ function ScheduledClassesContent() {
                   <span className="xl:hidden">Masiva</span>
                 </Button>
 
-                <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      <span className="hidden xl:inline">{t('classes.createScheduledClasses')}</span>
-                      <span className="xl:hidden">Crear</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
-                    <DialogHeader className="sr-only">
-                      <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
-                      <DialogDescription>
-                        Formulario para crear una nueva clase programada con horarios recurrentes y asignación de alumnos.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <ScheduledClassForm onClose={handleCloseForm} clubId={currentClub.id} trainerProfileId={profile?.id || ""} />
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => navigate('/dashboard/scheduled-classes/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden xl:inline">{t('classes.createScheduledClasses')}</span>
+                <span className="xl:hidden">Crear</span>
+              </Button>
               </>
             )}
           </div>
@@ -141,23 +125,10 @@ function ScheduledClassesContent() {
                 <span className="hidden sm:inline">Masiva</span>
               </Button>
 
-              <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="flex-1">
-                    <Plus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Crear</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
-                  <DialogHeader className="sr-only">
-                    <DialogTitle>{t('classes.createScheduledClasses')}</DialogTitle>
-                    <DialogDescription>
-                      Formulario para crear una nueva clase programada con horarios recurrentes y asignación de alumnos.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <ScheduledClassForm onClose={handleCloseForm} clubId={currentClub.id} trainerProfileId={profile?.id || ""} />
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" className="flex-1" onClick={() => navigate('/dashboard/scheduled-classes/new')}>
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Crear</span>
+              </Button>
             </>
           )}
         </div>

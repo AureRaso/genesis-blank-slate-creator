@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar, Plus, Clock, Users, Edit, Trash2, Eye, UserPlus, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useProgrammedClasses, useDeleteProgrammedClass } from "@/hooks/useProgrammedClasses";
-import ScheduledClassForm from "@/components/ScheduledClassForm";
 import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
 import TrainerStudentsList from "@/components/TrainerStudentsList";
 import ClassGroupsManager from "@/components/ClassGroupsManager";
@@ -21,6 +21,7 @@ import { usePageStatePersistence } from "@/hooks/usePageStatePersistence";
 import { useWindowVisibility } from "@/hooks/useWindowVisibility";
 
 const TrainerDashboard = () => {
+  const navigate = useNavigate();
   const isWindowVisible = useWindowVisibility();
   const { savePageState, loadPageState, clearPageState } = usePageStatePersistence('trainer-dashboard');
 
@@ -77,8 +78,7 @@ const TrainerDashboard = () => {
     setEditingClass(undefined);
   };
   const handleCreateNewClass = () => {
-    setEditingClass(undefined);
-    setShowClassForm(true);
+    navigate('/dashboard/scheduled-classes/new');
   };
   const handleEditClass = (programmedClass: ProgrammedClass) => {
     setEditingClass(programmedClass);
