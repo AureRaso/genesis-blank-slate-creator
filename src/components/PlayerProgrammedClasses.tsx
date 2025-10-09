@@ -4,12 +4,9 @@ import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Search, Filter, CreditCard, Euro, Loader2, X } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, CreditCard, Euro, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 
@@ -21,11 +18,6 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const { data: programmedClasses, isLoading, error } = useProgrammedClasses(clubId);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [levelFilter, setLevelFilter] = useState("");
-  const [dayFilter, setDayFilter] = useState("");
-  const [trainerFilter, setTrainerFilter] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
 
   // Get user's student enrollment to filter classes where they are participants
   const userClasses = programmedClasses?.filter(programmedClass => {
@@ -33,24 +25,6 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
     // For now, we show all classes from the user's club
     return true;
   }) || [];
-
-  // Apply filters
-  const filteredClasses = userClasses.filter(programmedClass => {
-    const matchesSearch = programmedClass.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (programmedClass.custom_level && programmedClass.custom_level.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesLevel = !levelFilter || levelFilter === "all" || 
-                        (programmedClass.level_from && programmedClass.level_to && 
-                         levelFilter >= programmedClass.level_from.toString() && 
-                         levelFilter <= programmedClass.level_to.toString()) ||
-                        (programmedClass.custom_level && programmedClass.custom_level.toLowerCase().includes(levelFilter.toLowerCase()));
-    
-    const matchesDay = !dayFilter || dayFilter === "all" || programmedClass.days_of_week.includes(dayFilter);
-    
-    const matchesTrainer = !trainerFilter || trainerFilter === "all" || programmedClass.trainer_profile_id === trainerFilter;
-
-    return matchesSearch && matchesLevel && matchesDay && matchesTrainer;
-  });
 
   if (isLoading) {
     return (
@@ -62,117 +36,26 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">{t('classes.availableClasses')}</h2>
-          <p className="text-muted-foreground">
-            {t('classes.availableClassesDescription')}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {t('classes.filters')}
-        </Button>
+      <div>
+        <h2 className="text-2xl font-bold">{t('classes.availableClasses')}</h2>
+        <p className="text-muted-foreground">
+          {t('classes.availableClassesDescription')}
+        </p>
       </div>
 
-      <Collapsible open={showFilters} onOpenChange={setShowFilters}>
-        <CollapsibleContent>
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                {t('classes.searchAndFilters')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">{t('classes.search')}</label>
-                  <Input
-                    placeholder={t('classes.searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">{t('classes.level')}</label>
-                  <Select value={levelFilter} onValueChange={setLevelFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('classes.allLevels')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('classes.allLevels')}</SelectItem>
-                      <SelectItem value="1">{t('classes.level1')}</SelectItem>
-                      <SelectItem value="2">{t('classes.level2')}</SelectItem>
-                      <SelectItem value="3">{t('classes.level3')}</SelectItem>
-                      <SelectItem value="4">{t('classes.level4')}</SelectItem>
-                      <SelectItem value="5">{t('classes.level5')}</SelectItem>
-                      <SelectItem value="principiante">{t('classes.beginner')}</SelectItem>
-                      <SelectItem value="intermedio">{t('classes.intermediate')}</SelectItem>
-                      <SelectItem value="avanzado">{t('classes.advanced')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">{t('classes.dayOfWeek')}</label>
-                  <Select value={dayFilter} onValueChange={setDayFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('classes.allDays')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('classes.allDays')}</SelectItem>
-                      <SelectItem value="lunes">{t('classes.monday')}</SelectItem>
-                      <SelectItem value="martes">{t('classes.tuesday')}</SelectItem>
-                      <SelectItem value="miercoles">{t('classes.wednesday')}</SelectItem>
-                      <SelectItem value="jueves">{t('classes.thursday')}</SelectItem>
-                      <SelectItem value="viernes">{t('classes.friday')}</SelectItem>
-                      <SelectItem value="sabado">{t('classes.saturday')}</SelectItem>
-                      <SelectItem value="domingo">{t('classes.sunday')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setLevelFilter("all");
-                      setDayFilter("all");
-                      setTrainerFilter("all");
-                    }}
-                    className="w-full"
-                  >
-                    {t('classes.clearFilters')}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
-      </Collapsible>
-
-      {filteredClasses.length === 0 ? (
+      {userClasses.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t('classes.noClassesAvailable')}</h3>
             <p className="text-muted-foreground">
-              {searchTerm || levelFilter || dayFilter || trainerFilter
-                ? t('classes.noClassesFiltered')
-                : t('classes.noClassesScheduled')}
+              {t('classes.noClassesScheduled')}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClasses.map((programmedClass) => (
+          {userClasses.map((programmedClass) => (
             <ProgrammedClassCard key={programmedClass.id} programmedClass={programmedClass} />
           ))}
         </div>

@@ -163,9 +163,6 @@ function ScheduledClassesContent() {
         </div>
       </div>
 
-      {/* Filtros */}
-      <ClassFilters filters={filters} onFiltersChange={setFilters} groups={groups} trainers={[]} />
-
       {/* Main content */}
       <Tabs value={viewMode} onValueChange={value => setViewMode(value as 'calendar' | 'list')}>
         <TabsList className="hidden">

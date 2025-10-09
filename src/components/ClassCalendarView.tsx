@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, eachDayOfInterval, isSameDay } from "date-fns";
-import { Calendar } from "lucide-react";
+import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from "date-fns";
+import { Calendar, GraduationCap, Users, UserCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarGrid } from "./calendar/CalendarGrid";
@@ -32,30 +34,78 @@ interface ClassCalendarViewProps {
 
 export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCalendarViewProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ day: Date; time: string } | null>(null);
+  const [selectedDayForModal, setSelectedDayForModal] = useState<Date | null>(null);
   const [timeRangeStart, setTimeRangeStart] = useState("08:00");
   const [timeRangeEnd, setTimeRangeEnd] = useState("22:00");
   const { profile, isAdmin } = useAuth();
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const { handleClassDrop } = useClassDragDrop();
-  
+
+  // Calculate date ranges based on view mode
+  let rangeStart: Date;
+  let rangeEnd: Date;
+  let displayDays: Date[];
+
+  if (viewMode === 'day') {
+    rangeStart = currentDate;
+    rangeEnd = currentDate;
+    displayDays = [currentDate];
+  } else if (viewMode === 'week') {
+    rangeStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+    rangeEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+    displayDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
+  } else {
+    // month view
+    rangeStart = startOfMonth(currentDate);
+    rangeEnd = endOfMonth(currentDate);
+    displayDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
+  }
+
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
   
   const { data: classes, isLoading, error } = useScheduledClasses({
-    startDate: format(weekStart, 'yyyy-MM-dd'),
-    endDate: format(weekEnd, 'yyyy-MM-dd'),
+    startDate: format(rangeStart, 'yyyy-MM-dd'),
+    endDate: format(rangeEnd, 'yyyy-MM-dd'),
     clubId: clubId,
     clubIds: clubIds,
   });
 
+  const goToPrevious = () => {
+    if (viewMode === 'day') {
+      setCurrentDate(subDays(currentDate, 1));
+    } else if (viewMode === 'week') {
+      setCurrentWeek(subWeeks(currentWeek, 1));
+    } else {
+      setCurrentDate(subMonths(currentDate, 1));
+    }
+  };
+
+  const goToNext = () => {
+    if (viewMode === 'day') {
+      setCurrentDate(addDays(currentDate, 1));
+    } else if (viewMode === 'week') {
+      setCurrentWeek(addWeeks(currentWeek, 1));
+    } else {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    setCurrentDate(today);
+    setCurrentWeek(today);
+  };
+
   const goToPreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
   const goToNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
-  const goToToday = () => setCurrentWeek(new Date());
 
   const handleFullscreen = () => {
     setShowFullscreen(true);
@@ -184,28 +234,37 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         weekEnd={weekEnd}
         totalClasses={classes?.length || 0}
         filteredClassesCount={filteredClasses.length}
-        onPreviousWeek={goToPreviousWeek}
-        onNextWeek={goToNextWeek}
+        onPreviousWeek={goToPrevious}
+        onNextWeek={goToNext}
         onToday={goToToday}
         onFullscreen={handleFullscreen}
         timeRangeStart={timeRangeStart}
         timeRangeEnd={timeRangeEnd}
         onTimeRangeChange={handleTimeRangeChange}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        currentDate={currentDate}
       />
       
       {/* Show trainer legend for admins when there are multiple trainers */}
       {isAdmin && <TrainerLegend classes={filteredClasses} />}
       
       <CalendarGrid
-        weekStart={weekStart}
-        weekEnd={weekEnd}
+        weekStart={rangeStart}
+        weekEnd={rangeEnd}
         classes={filteredClasses}
         onTimeSlotClick={handleTimeSlotClick}
-        onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) => 
+        onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) =>
           handleClassDrop(classId, newDay, newTimeSlot, classes || [])
         }
         timeRangeStart={timeRangeStart}
         timeRangeEnd={timeRangeEnd}
+        viewMode={viewMode}
+        onDayClick={(day: Date) => {
+          if (viewMode === 'month') {
+            setSelectedDayForModal(day);
+          }
+        }}
       />
 
       {/* Create Class Form Dialog */}
@@ -277,6 +336,87 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
               />
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Details Modal for Month View */}
+      <Dialog open={!!selectedDayForModal} onOpenChange={(open) => !open && setSelectedDayForModal(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {selectedDayForModal && format(selectedDayForModal, "EEEE, dd 'de' MMMM yyyy", { locale: getDateFnsLocale() })}
+            </DialogTitle>
+            <DialogDescription>
+              Clases programadas para este día
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDayForModal && (() => {
+            const dayName = format(selectedDayForModal, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
+            const dayClasses = filteredClasses.filter(cls => {
+              const classDays = cls.days_of_week.map(d => d.toLowerCase().trim());
+              return classDays.includes(dayName);
+            }).sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            if (dayClasses.length === 0) {
+              return (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p>No hay clases programadas para este día</p>
+                  {isAdmin && (
+                    <Button
+                      onClick={() => {
+                        setSelectedDayForModal(null);
+                        setSelectedTimeSlot({ day: selectedDayForModal, time: "09:00" });
+                        setShowCreateForm(true);
+                      }}
+                      className="mt-4"
+                    >
+                      Crear clase
+                    </Button>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3 mt-4">
+                {dayClasses.map((cls) => (
+                  <Card key={cls.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="bg-primary/10 text-primary">
+                              {cls.start_time.slice(0, 5)}
+                            </Badge>
+                            <h3 className="font-semibold text-lg">{cls.name}</h3>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <GraduationCap className="h-4 w-4" />
+                              <span>Nivel: {cls.level || 'Todos'}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span>{cls.participants?.length || 0} participantes</span>
+                            </div>
+                            {cls.trainer_name && (
+                              <div className="flex items-center gap-1 text-muted-foreground col-span-2">
+                                <UserCheck className="h-4 w-4" />
+                                <span>Profesor: {cls.trainer_name}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

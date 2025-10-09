@@ -15,6 +15,8 @@ interface CalendarGridProps {
   onClassDrop?: (classId: string, newDay: Date, newTimeSlot: string) => void;
   timeRangeStart?: string;
   timeRangeEnd?: string;
+  viewMode?: 'day' | 'week' | 'month';
+  onDayClick?: (day: Date) => void;
 }
 
 const TIME_SLOTS = [
@@ -48,10 +50,17 @@ const DAY_MAPPING: { [key: string]: string } = {
   'saturday': 'sabado'
 };
 
-export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop, timeRangeStart = "08:00", timeRangeEnd = "22:00" }: CalendarGridProps) {
+export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop, timeRangeStart = "08:00", timeRangeEnd = "22:00", viewMode = 'week', onDayClick }: CalendarGridProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Determine column count based on view mode
+  const getGridColumns = () => {
+    if (viewMode === 'day') return 'grid-cols-[80px_1fr]';
+    if (viewMode === 'month') return 'grid-cols-8'; // Time + 7 days
+    return 'grid-cols-8'; // Default week view: Time + 7 days
+  };
 
   // Filter time slots based on the selected range
   const filteredTimeSlots = TIME_SLOTS.filter(slot => {
@@ -179,10 +188,68 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     return currentSlotIndex > classStartIndex && currentSlotIndex < classEndIndex;
   };
 
+  // For month view, render differently
+  if (viewMode === 'month') {
+    return (
+      <div className="border rounded-lg overflow-hidden bg-card p-4">
+        <div className="grid grid-cols-7 gap-2">
+          {/* Day headers */}
+          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+            <div key={day} className="text-xs font-semibold text-center text-muted-foreground p-2">
+              {day}
+            </div>
+          ))}
+          {/* Days of month */}
+          {weekDays.map((day) => {
+            const dayClasses = classes.filter(cls => {
+              const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
+              const normalizedDayName = DAY_MAPPING[dayName] || dayName;
+              return cls.days_of_week.some(d => {
+                const normalized = d.toLowerCase().trim();
+                return (DAY_MAPPING[normalized] || normalized) === normalizedDayName;
+              });
+            });
+
+            return (
+              <div
+                key={day.toISOString()}
+                onClick={() => onDayClick && onDayClick(day)}
+                className={cn(
+                  "min-h-[100px] border rounded-lg p-2 hover:bg-muted/50 transition-colors cursor-pointer",
+                  isSameDay(day, new Date()) && "border-primary bg-primary/5"
+                )}
+              >
+                <div className={cn(
+                  "text-sm font-medium mb-2",
+                  isSameDay(day, new Date()) && "text-primary"
+                )}>
+                  {format(day, "dd")}
+                </div>
+                <div className="space-y-1">
+                  {dayClasses.slice(0, 3).map((cls) => (
+                    <div key={cls.id} className="text-xs p-1 bg-primary/10 text-primary rounded truncate">
+                      {cls.start_time.slice(0, 5)} - {cls.name}
+                    </div>
+                  ))}
+                  {dayClasses.length > 3 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{dayClasses.length - 3} más
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Day and Week views
   return (
     <div className="border rounded-lg overflow-hidden bg-card h-full flex flex-col">
       {/* Header with days */}
-      <div className="grid grid-cols-8 bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90">
+      <div className={cn("grid bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90", getGridColumns())}>
         <div className="p-1 md:p-3 text-xs md:text-sm font-medium text-muted-foreground border-r bg-background/90">
           {t('classes.hour')}
         </div>
@@ -204,7 +271,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
       {/* Calendar grid */}
       <div className="flex-1 overflow-x-auto overflow-y-auto">
         {filteredTimeSlots.map((timeSlot, index) => (
-          <div key={timeSlot} className="grid grid-cols-8 border-b last:border-b-0" style={{ minHeight: `${SLOT_HEIGHT}px` }}>
+          <div key={timeSlot} className={cn("grid border-b last:border-b-0", getGridColumns())} style={{ minHeight: `${SLOT_HEIGHT}px` }}>
             <div className="p-1 md:p-2 text-xs md:text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
               {timeSlot}
             </div>

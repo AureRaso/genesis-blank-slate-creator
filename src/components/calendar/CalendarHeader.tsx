@@ -21,6 +21,9 @@ interface CalendarHeaderProps {
   timeRangeStart?: string;
   timeRangeEnd?: string;
   onTimeRangeChange?: (start: string, end: string) => void;
+  viewMode?: 'day' | 'week' | 'month';
+  onViewModeChange?: (mode: 'day' | 'week' | 'month') => void;
+  currentDate?: Date;
 }
 
 export function CalendarHeader({
@@ -36,10 +39,24 @@ export function CalendarHeader({
   showFullscreenButton = true,
   timeRangeStart = "08:00",
   timeRangeEnd = "22:00",
-  onTimeRangeChange
+  onTimeRangeChange,
+  viewMode = 'week',
+  onViewModeChange,
+  currentDate
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+
+  // Get display date range based on view mode
+  const getDisplayText = () => {
+    if (viewMode === 'day' && currentDate) {
+      return format(currentDate, "dd MMM yyyy", { locale: getDateFnsLocale() });
+    } else if (viewMode === 'month' && currentDate) {
+      return format(currentDate, "MMMM yyyy", { locale: getDateFnsLocale() });
+    } else {
+      return `${format(weekStart, "dd MMM", { locale: getDateFnsLocale() })} - ${format(weekEnd, "dd MMM yyyy", { locale: getDateFnsLocale() })}`;
+    }
+  };
   
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -61,6 +78,36 @@ export function CalendarHeader({
           </Badge>
         )}
       </div>
+
+      {/* View mode selector */}
+      {onViewModeChange && (
+        <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+          <Button
+            variant={viewMode === 'day' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('day')}
+            className="text-xs"
+          >
+            Día
+          </Button>
+          <Button
+            variant={viewMode === 'week' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('week')}
+            className="text-xs"
+          >
+            Semana
+          </Button>
+          <Button
+            variant={viewMode === 'month' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewModeChange('month')}
+            className="text-xs"
+          >
+            Mes
+          </Button>
+        </div>
+      )}
       
       {/* Time range selectors - hidden on mobile */}
       {onTimeRangeChange && (
@@ -116,7 +163,7 @@ export function CalendarHeader({
         </div>
         
         <div className="text-sm font-medium text-center sm:text-right sm:min-w-[200px]">
-          {format(weekStart, "dd MMM", { locale: getDateFnsLocale() })} - {format(weekEnd, "dd MMM yyyy", { locale: getDateFnsLocale() })}
+          {getDisplayText()}
         </div>
       </div>
     </div>
