@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateClub, useUpdateClub } from "@/hooks/useClubs";
 import { Club, CreateClubData, COURT_TYPES } from "@/types/clubs";
-import { X, Building2 } from "lucide-react";
+import { ArrowLeft, Building2 } from "lucide-react";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 interface ClubFormProps {
@@ -99,24 +99,18 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <div>
-          <CardTitle className="flex items-center">
-            <Building2 className="h-5 w-5 mr-2" />
-            {isEditing ? "Editar Club" : "Crear Nuevo Club"}
-          </CardTitle>
-          <CardDescription>
-            {isEditing
-              ? "Modifica los detalles del club"
-              : "Configura los detalles de tu nuevo club de pádel"}
-          </CardDescription>
-        </div>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <div className="flex items-center space-x-4">
         <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-      </CardHeader>
-      <CardContent>
+        <h1 className="text-2xl font-bold text-black">
+          {isEditing ? "Editar Club" : "Nuevo Club"}
+        </h1>
+      </div>
+
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre del Club *</Label>
@@ -219,10 +213,10 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
             <Button type="button" variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={createClub.isPending || updateClub.isPending || !courtTypes?.length}
-              className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+              className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
             >
               {(createClub.isPending || updateClub.isPending) 
                 ? "Guardando..." 
@@ -233,8 +227,9 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

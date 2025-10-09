@@ -37,14 +37,17 @@ const TrainersPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-black">
           Gestión de Profesores
         </h1>
-        <p className="text-muted-foreground">
-          Administra los profesores de pádel del sistema
-        </p>
+        {isAdmin && (
+          <Button onClick={handleCreateNewTrainer} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Profesor
+          </Button>
+        )}
       </div>
 
       {!isAdmin && (
@@ -57,19 +60,6 @@ const TrainersPage = () => {
           </CardHeader>
         </Card>
       )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Profesores Registrados</h2>
-          <p className="text-muted-foreground">Gestiona los profesores del sistema</p>
-        </div>
-        {isAdmin && (
-          <Button onClick={handleCreateNewTrainer} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Profesor
-          </Button>
-        )}
-      </div>
       
       <TrainersList onEditTrainer={handleEditTrainer} onCreateTrainer={handleCreateNewTrainer} />
     </div>

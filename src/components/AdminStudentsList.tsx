@@ -100,19 +100,9 @@ const AdminStudentsList = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Alumnos Disponibles
-        </CardTitle>
-        <CardDescription>
-          {students.length} alumnos inscritos en tus clubes
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
+    <div className="space-y-6">
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -167,7 +157,7 @@ const AdminStudentsList = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredStudents.map((student) => (
               <div key={student.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
@@ -181,13 +171,13 @@ const AdminStudentsList = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center text-muted-foreground">
                     <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span className="truncate">{student.email}</span>
                   </div>
-                  
+
                   <div className="flex items-center text-muted-foreground">
                     <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{student.phone}</span>
@@ -223,13 +213,6 @@ const AdminStudentsList = () => {
                       <span>{student.first_payment}€</span>
                     </div>
                   )}
-
-                  <div className="flex items-center text-muted-foreground">
-                    <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="text-xs">
-                      Estado de pagos: <Badge variant="outline" className="ml-1">Ver detalles</Badge>
-                    </span>
-                  </div>
                 </div>
 
                 {student.course && (
@@ -249,8 +232,7 @@ const AdminStudentsList = () => {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 

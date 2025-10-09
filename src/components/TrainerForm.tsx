@@ -94,12 +94,12 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
 
   if (isEditing) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold text-playtomic-orange">
+          <h1 className="text-2xl font-bold text-black">
             Editar Profesor
           </h1>
         </div>
@@ -110,9 +110,6 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
               <UserCheck className="h-5 w-5" />
               <span>Datos del Profesor</span>
             </CardTitle>
-            <CardDescription>
-              Edita la información del profesor (nombre y email no se pueden cambiar)
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...editForm}>
@@ -203,12 +200,12 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       <div className="flex items-center space-x-4">
         <Button variant="ghost" size="icon" onClick={onClose}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold text-playtomic-orange">
+        <h1 className="text-2xl font-bold text-black">
           Nuevo Profesor
         </h1>
       </div>

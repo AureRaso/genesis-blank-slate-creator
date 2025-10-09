@@ -8,7 +8,7 @@ export interface FeatureFlags {
 
 // Global feature flags - can be overridden per club in the future
 export const FEATURE_FLAGS: FeatureFlags = {
-  leagues: true, // Enabled for testing
+  leagues: false, // Temporarily disabled
   matches: false, // Temporarily disabled
 };
 

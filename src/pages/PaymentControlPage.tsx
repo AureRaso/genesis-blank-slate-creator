@@ -111,6 +111,10 @@ const PaymentControlPage = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <h1 className="text-3xl font-bold text-black">
+        Control de Pagos
+      </h1>
+
       {/* Filters */}
       <Card>
         <CardHeader className="p-3 sm:p-6">
@@ -186,13 +190,13 @@ const PaymentControlPage = () => {
 
       {/* Payments List */}
       <Card>
-        <CardHeader className="p-3 sm:p-6">
+        <CardHeader className="p-2 sm:p-4">
           <CardTitle className="text-base sm:text-lg">Registros de Pagos</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             {filteredPayments.length} registros encontrados
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-3 sm:p-6">
+        <CardContent className="p-2 sm:p-4">
           {isLoading ? (
             <div className="space-y-3 sm:space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (

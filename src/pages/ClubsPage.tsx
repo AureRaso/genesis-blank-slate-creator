@@ -20,14 +20,19 @@ const ClubsPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
-          {isPlayer ? "Mi Club" : "Gestión de Clubs"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isPlayer ? "Información de tu club de pádel" : "Administra los clubs de pádel"}
-        </p>
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-black">
+            {isPlayer ? "Mi Club" : "Gestión de Clubs"}
+          </h1>
+        </div>
+        {isAdmin && (
+          <Button onClick={handleCreateNewClub} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Club
+          </Button>
+        )}
       </div>
 
       {!isAdmin && (
@@ -37,7 +42,7 @@ const ClubsPage = () => {
               {isPlayer ? "Información de Solo Lectura" : "Acceso de Solo Lectura"}
             </CardTitle>
             <CardDescription className="text-playtomic-orange">
-              {isPlayer 
+              {isPlayer
                 ? "Aquí puedes ver la información de tu club."
                 : "Solo los administradores pueden crear y editar clubs."
               }
@@ -45,23 +50,6 @@ const ClubsPage = () => {
           </CardHeader>
         </Card>
       )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">
-            {isPlayer ? "Tu Club" : "Clubs Registrados"}
-          </h2>
-          <p className="text-muted-foreground">
-            {isPlayer ? "Información de tu club de pádel" : "Gestiona tus clubs de pádel"}
-          </p>
-        </div>
-        {isAdmin && (
-          <Button onClick={handleCreateNewClub} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Club
-          </Button>
-        )}
-      </div>
       <ClubsList onEditClub={handleEditClub} />
     </div>
   );

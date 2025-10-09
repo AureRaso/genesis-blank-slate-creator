@@ -129,169 +129,34 @@ const PlayerDashboard = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sección de Clases Programadas */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                Clases Programadas
-              </CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/dashboard/scheduled-classes')}
-              >
-                Ver todas
-              </Button>
-            </div>
-            <CardDescription>
-              Clases disponibles en tu club - Apúntate o únete a lista de espera
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PlayerClassesWidget 
-              limit={3}
-              showViewAll={true}
-              onViewAll={() => navigate('/dashboard/scheduled-classes')}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Sección de Mis Ligas mejorada */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center">
-                <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
-                Mis Ligas
-              </CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/dashboard/leagues')}
-              >
-                Ver todas
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingLeagues ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="animate-pulse p-3 border rounded-lg">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Ligas Inscritas */}
-                {enrolledLeagues.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">LIGAS INSCRITAS</h4>
-                    <div className="space-y-3">
-                      {enrolledLeagues.slice(0, 2).map((league) => (
-                        <div key={league.id} className="p-3 border rounded-lg bg-green-50 border-green-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-medium">{league.name}</div>
-                            <Badge className={getStatusColor(league.status)}>
-                              {getStatusText(league.status)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-muted-foreground">
-                              {league.start_date} - {league.end_date}
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleLeagueClick(league.id)}
-                            >
-                              Ver Liga <ArrowRight className="h-3 w-3 ml-1" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Ligas Disponibles */}
-                {availableLeagues.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">LIGAS DISPONIBLES</h4>
-                    <div className="space-y-3">
-                      {availableLeagues.slice(0, 2).map((league) => (
-                        <div key={league.id} className="p-3 border rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-medium">{league.name}</div>
-                            <Badge className={getStatusColor(league.status)}>
-                              {getStatusText(league.status)}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm text-muted-foreground">
-                              {league.start_date} - {league.end_date}
-                            </div>
-                            {league.registration_price > 0 && (
-                              <div className="flex items-center text-sm font-medium text-green-600">
-                                <DollarSign className="h-3 w-3 mr-1" />
-                                €{league.registration_price}
-                              </div>
-                            )}
-                          </div>
-                          <Button 
-                            size="sm"
-                            onClick={() => handleRegisterClick(league)}
-                            className="w-full bg-blue-600 hover:bg-blue-700"
-                          >
-                            {league.registration_price > 0 
-                              ? `Inscribirse - €${league.registration_price}`
-                              : "Inscribirse Gratis"
-                            }
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Estado vacío */}
-                {enrolledLeagues.length === 0 && availableLeagues.length === 0 && (
-                  <div className="text-center py-6">
-                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <h3 className="text-sm font-medium mb-2">No hay ligas disponibles</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      No hay ligas creadas en tu club todavía.
-                    </p>
-                    <Button 
-                      onClick={() => navigate('/dashboard/leagues')}
-                      variant="outline"
-                    >
-                      Ver Todas las Ligas
-                    </Button>
-                  </div>
-                )}
-
-                {/* Mostrar más enlace */}
-                {(enrolledLeagues.length > 2 || availableLeagues.length > 2) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate('/dashboard/leagues')}
-                  >
-                    Ver todas las ligas de mi club
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Sección de Clases Programadas */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-green-600" />
+              Clases Programadas
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dashboard/scheduled-classes')}
+            >
+              Ver todas
+            </Button>
+          </div>
+          <CardDescription>
+            Clases disponibles en tu club - Apúntate o únete a lista de espera
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PlayerClassesWidget
+            limit={3}
+            showViewAll={true}
+            onViewAll={() => navigate('/dashboard/scheduled-classes')}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal de confirmación de inscripción */}
       <LeagueRegistrationModal

@@ -122,8 +122,8 @@ const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -172,7 +172,7 @@ const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {trainers.map((trainer) => (
         <TrainerCard key={trainer.id} trainer={trainer} onEditTrainer={onEditTrainer} />
       ))}

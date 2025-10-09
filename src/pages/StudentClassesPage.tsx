@@ -133,8 +133,8 @@ const StudentClassesPage = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold flex items-center">
-            <BookOpen className="h-8 w-8 mr-3 text-blue-600" />
+          <h1 className="text-3xl font-bold flex items-center text-black">
+            <BookOpen className="h-8 w-8 mr-3 text-black" />
             Mis Clases
           </h1>
           <p className="text-muted-foreground">
@@ -152,39 +152,39 @@ const StudentClassesPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Clases Activas</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-black">
                     {participations.filter(p => p.status === 'active').length}
                   </p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-8 w-8 text-black" />
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Pagos Pendientes</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                  <p className="text-2xl font-bold text-black">
                     {participations.filter(p => p.payment_status === 'pending').length}
                   </p>
                 </div>
-                <AlertCircle className="h-8 w-8 text-yellow-600" />
+                <AlertCircle className="h-8 w-8 text-black" />
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Reservas</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-black">
                     {reservations.filter(r => r.status === 'reservado').length}
                   </p>
                 </div>
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-8 w-8 text-black" />
               </div>
             </CardContent>
           </Card>
@@ -358,7 +358,7 @@ const StudentClassesPage = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                        <Calendar className="h-5 w-5 mr-2 text-black" />
                         Clase {reservation.class_slots.day_of_week} - {reservation.class_slots.start_time}
                       </CardTitle>
                       <Badge className={getReservationStatusColor(reservation.status)}>
