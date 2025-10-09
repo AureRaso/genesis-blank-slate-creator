@@ -116,7 +116,12 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   };
 
   const handleTimeSlotClick = (day: Date, timeSlot: string) => {
-    // Navigate to create page with parameters (for both admins and trainers)
+    // Only admins and trainers can create classes
+    if (profile?.role !== 'admin' && profile?.role !== 'trainer') {
+      return;
+    }
+
+    // Navigate to create page with parameters
     const dayName = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"][day.getDay()];
     const params = new URLSearchParams({
       time: timeSlot,

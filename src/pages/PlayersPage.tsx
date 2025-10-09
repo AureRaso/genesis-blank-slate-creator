@@ -55,7 +55,7 @@ const PlayersPage = () => {
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent truncate">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
               {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground truncate">

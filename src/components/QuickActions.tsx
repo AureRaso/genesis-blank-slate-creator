@@ -17,13 +17,13 @@ const QuickActions = () => {
       action: () => navigate("/dashboard/leagues")
     }] : []),
     {
-      title: "Gestionar Jugadores",
+      title: "Jugadores",
       description: "Ver y administrar jugadores registrados",
       icon: Users,
       action: () => navigate("/dashboard/players")
     },
     {
-      title: "Gestionar Entrenadores",
+      title: "Entrenadores",
       description: "Ver y administrar entrenadores del club",
       icon: UserCheck,
       action: () => navigate("/dashboard/trainers")
@@ -62,7 +62,7 @@ const QuickActions = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="text-base font-extrabold text-[#10172a]">
+        <h3 className="text-lg font-bold text-[#10172a]">
           Acciones Rápidas
         </h3>
       </div>
@@ -79,12 +79,12 @@ const QuickActions = () => {
                 {/* Decorative background element */}
                 <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-300" />
 
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm">
+                <div className="relative z-10 flex items-center gap-3 h-full">
+                  <div className="p-3 rounded-xl bg-primary/10 flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-base text-[#10172a] mb-1 group-hover:text-primary transition-colors leading-tight">
+                    <h3 className="font-semibold text-base text-[#10172a] group-hover:text-primary transition-colors leading-tight">
                       {action.title}
                     </h3>
                   </div>

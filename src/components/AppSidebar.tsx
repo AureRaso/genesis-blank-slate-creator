@@ -32,7 +32,6 @@ const AppSidebar = () => {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"}>
@@ -126,7 +125,6 @@ const AppSidebar = () => {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Gestión</SidebarGroupLabel>
             <SidebarMenu>
               {playerNavItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location.pathname === item.url}>
@@ -204,7 +202,6 @@ const AppSidebar = () => {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Gestión</SidebarGroupLabel>
           <SidebarMenu>
             {data.navMain.map(item => <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={location.pathname === item.url}>

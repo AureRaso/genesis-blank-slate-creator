@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns";
-import { Clock, Users, MoreVertical, Eye, Trash2 } from "lucide-react";
+import { Clock, Users, MoreVertical, Eye, Trash2, Edit } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ interface ClassListViewMobileProps {
   isAdmin: boolean;
   isTrainer: boolean;
   onViewDetails: (cls: ScheduledClassWithTemplate) => void;
+  onEdit?: (cls: ScheduledClassWithTemplate) => void;
+  onManageStudents?: (cls: ScheduledClassWithTemplate) => void;
   getLevelDisplay: (cls: ScheduledClassWithTemplate) => string;
   getLevelColor: (cls: ScheduledClassWithTemplate) => string;
 }
@@ -21,6 +23,8 @@ export function ClassListViewMobile({
   isAdmin,
   isTrainer,
   onViewDetails,
+  onEdit,
+  onManageStudents,
   getLevelDisplay,
   getLevelColor
 }: ClassListViewMobileProps) {
@@ -45,18 +49,27 @@ export function ClassListViewMobile({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
-                    <DropdownMenuItem onClick={() => onViewDetails(cls)}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      {t('classes.viewDetails')}
-                    </DropdownMenuItem>
-                    {(isAdmin || isTrainer) && (
+                    {(isAdmin || isTrainer) ? (
                       <>
+                        <DropdownMenuItem onClick={() => onEdit?.(cls)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onManageStudents?.(cls)}>
+                          <Users className="h-4 w-4 mr-2" />
+                          Gestionar alumnos
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive">
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t('classes.cancelClass')}
                         </DropdownMenuItem>
                       </>
+                    ) : (
+                      <DropdownMenuItem onClick={() => onViewDetails(cls)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {t('classes.viewDetails')}
+                      </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>

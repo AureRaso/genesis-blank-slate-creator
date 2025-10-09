@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ImprovedBulkClassCreator } from "@/components/ImprovedBulkClassCreator";
 import ClassCalendarView from "@/components/ClassCalendarView";
 import ClassListView from "@/components/ClassListView";
 import ClassFilters from "@/components/ClassFilters";
@@ -19,7 +17,6 @@ import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersCo
 import { TrainerLegend } from "@/components/calendar/TrainerLegend";
 function ScheduledClassesContent() {
   const navigate = useNavigate();
-  const [showBulkCreator, setShowBulkCreator] = useState(false);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [filteredCalendarClasses, setFilteredCalendarClasses] = useState([]);
   const {
@@ -83,7 +80,7 @@ function ScheduledClassesContent() {
               <>
                 <Button
                   variant="secondary"
-                  onClick={() => setShowBulkCreator(true)}
+                  onClick={() => navigate('/dashboard/scheduled-classes/bulk/new')}
                   className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20"
                 >
                   <Zap className="h-4 w-4 mr-2" />
@@ -117,7 +114,7 @@ function ScheduledClassesContent() {
             <>
               <Button
                 variant="secondary"
-                onClick={() => setShowBulkCreator(true)}
+                onClick={() => navigate('/dashboard/scheduled-classes/bulk/new')}
                 size="sm"
                 className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 flex-1"
               >
@@ -157,28 +154,6 @@ function ScheduledClassesContent() {
           />
         </TabsContent>
       </Tabs>
-
-      {/* Dialog for bulk class creation */}
-      <Dialog open={showBulkCreator} onOpenChange={setShowBulkCreator}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[95vw] sm:w-[90vw]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm sm:text-base md:text-lg">
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-              <span className="truncate">Creación Masiva Inteligente</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
-              Selecciona múltiples pistas, entrenadores y crea clases de forma inteligente
-            </DialogDescription>
-          </DialogHeader>
-          <ImprovedBulkClassCreator
-            onClose={() => setShowBulkCreator(false)}
-            onSuccess={() => {
-              setShowBulkCreator(false);
-              // Las clases se refrescarán automáticamente
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>;
 }
 export default function ScheduledClassesPage() {

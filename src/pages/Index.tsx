@@ -332,7 +332,7 @@ const Index = () => {
         {/* Actividad Reciente */}
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-extrabold text-[#10172a]">
+            <h3 className="text-lg font-bold text-[#10172a]">
               Actividad Reciente
             </h3>
             {recentActivities && recentActivities.length > 3 && (
@@ -360,19 +360,16 @@ const Index = () => {
                 {recentActivities && recentActivities.length > 0 ? (
                   (showAllActivities ? recentActivities : recentActivities.slice(0, 3)).map((activity, index) => {
                     const Icon = activity.icon;
-                    const isOrange = activity.color === 'primary';
                     return (
                       <div
                         key={`${activity.type}-${index}`}
-                        className={`flex items-start gap-3 p-3 rounded-lg ${
-                          isOrange ? 'bg-primary/5 border border-primary/10' : 'bg-gray-50 border border-gray-100'
-                        }`}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10"
                       >
-                        <div className={`p-2 rounded-lg ${isOrange ? 'bg-primary/10' : 'bg-gray-100'} mt-0.5`}>
-                          <Icon className={`h-4 w-4 ${isOrange ? 'text-primary' : 'text-[#10172a]'}`} />
+                        <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                          <Icon className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-[#10172a]">{activity.title}</p>
+                          <p className="text-sm font-medium text-[#10172a]">{activity.title}</p>
                           <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
                           <p className="text-xs text-gray-400 mt-1">{getTimeAgo(activity.timestamp)}</p>
                         </div>
@@ -392,17 +389,17 @@ const Index = () => {
                     <Calendar className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Clase completada</p>
+                    <p className="text-sm font-medium text-[#10172a]">Clase completada</p>
                     <p className="text-xs text-gray-600 mt-1">Clase de nivel intermedio - 8 asistentes</p>
                     <p className="text-xs text-gray-400 mt-1">Hace 1 hora</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
-                    <Users className="h-4 w-4 text-[#10172a]" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <Users className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Nuevo alumno inscrito</p>
+                    <p className="text-sm font-medium text-[#10172a]">Nuevo alumno inscrito</p>
                     <p className="text-xs text-gray-600 mt-1">María González se inscribió en tus clases</p>
                     <p className="text-xs text-gray-400 mt-1">Hace 3 horas</p>
                   </div>
@@ -415,7 +412,7 @@ const Index = () => {
         {/* Resumen Semanal / Próximas Clases */}
         <div>
           <div className="mb-4">
-            <h3 className="text-lg font-extrabold text-[#10172a]">
+            <h3 className="text-lg font-bold text-[#10172a]">
               {profile?.role === 'admin' ? 'Resumen Semanal' : 'Próximas Clases'}
             </h3>
           </div>
@@ -429,7 +426,7 @@ const Index = () => {
                         <Users className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#10172a]">Nuevos Jugadores</p>
+                        <p className="text-sm font-medium text-[#10172a]">Nuevos Jugadores</p>
                         <p className="text-xs text-gray-600 mt-1">{weeklySummary.newPlayers} jugadores esta semana</p>
                         <div className="flex items-center gap-1 mt-1">
                           {weeklySummary.playersTrend >= 0 ? (
@@ -446,12 +443,12 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                      <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
-                        <Calendar className="h-4 w-4 text-[#10172a]" />
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                        <Calendar className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#10172a]">Clases Creadas</p>
+                        <p className="text-sm font-medium text-[#10172a]">Clases Creadas</p>
                         <p className="text-xs text-gray-600 mt-1">{weeklySummary.newClasses} clases esta semana</p>
                         <div className="flex items-center gap-1 mt-1">
                           {weeklySummary.classesTrend >= 0 ? (
@@ -473,7 +470,7 @@ const Index = () => {
                         <Activity className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#10172a]">Tasa de Asistencia</p>
+                        <p className="text-sm font-medium text-[#10172a]">Tasa de Asistencia</p>
                         <p className="text-xs text-gray-600 mt-1">{weeklySummary.attendanceRate}% de asistencia esta semana</p>
                         <p className="text-xs text-gray-400 mt-1">
                           {weeklySummary.attendanceRate >= 80 ? 'Excelente participación' :
@@ -496,17 +493,17 @@ const Index = () => {
                     <GraduationCap className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Clase nivel avanzado</p>
+                    <p className="text-sm font-medium text-[#10172a]">Clase nivel avanzado</p>
                     <p className="text-xs text-gray-600 mt-1">Hoy a las 18:00 - Pista 2</p>
                     <p className="text-xs text-gray-400 mt-1">6/8 alumnos confirmados</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                  <div className="p-2 rounded-lg bg-gray-100 mt-0.5">
-                    <GraduationCap className="h-4 w-4 text-[#10172a]" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
+                    <GraduationCap className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Clase nivel intermedio</p>
+                    <p className="text-sm font-medium text-[#10172a]">Clase nivel intermedio</p>
                     <p className="text-xs text-gray-600 mt-1">Mañana a las 10:00 - Pista 1</p>
                     <p className="text-xs text-gray-400 mt-1">8/8 alumnos confirmados</p>
                   </div>
@@ -516,7 +513,7 @@ const Index = () => {
                     <GraduationCap className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#10172a]">Clase principiantes</p>
+                    <p className="text-sm font-medium text-[#10172a]">Clase principiantes</p>
                     <p className="text-xs text-gray-600 mt-1">Mañana a las 16:00 - Pista 3</p>
                     <p className="text-xs text-gray-400 mt-1">4/8 alumnos confirmados</p>
                   </div>

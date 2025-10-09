@@ -148,6 +148,8 @@ export default function ClassListView({
                 isAdmin={isAdmin}
                 isTrainer={isTrainer}
                 onViewDetails={(cls) => setSelectedClass(cls)}
+                onEdit={(cls) => setEditingClass(cls)}
+                onManageStudents={(cls) => setManageStudentsClass(cls)}
                 getLevelDisplay={getLevelDisplay}
                 getLevelColor={getLevelColor}
               />
@@ -223,17 +225,28 @@ export default function ClassListView({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-background border shadow-md z-50">
-                            <DropdownMenuItem onClick={() => setSelectedClass(cls)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              {t('classes.viewDetails')}
-                            </DropdownMenuItem>
-                            {(isAdmin || isTrainer) && <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {t('classes.cancelClass')}
+                            {(isAdmin || isTrainer) ? (
+                              <>
+                                <DropdownMenuItem onClick={() => setEditingClass(cls)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setManageStudentsClass(cls)}>
+                                  <Users className="h-4 w-4 mr-2" />
+                                  Gestionar alumnos
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {t('classes.cancelClass')}
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
+                              <DropdownMenuItem onClick={() => setSelectedClass(cls)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                {t('classes.viewDetails')}
                               </DropdownMenuItem>
-                            </>}
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

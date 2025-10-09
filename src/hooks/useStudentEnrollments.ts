@@ -160,32 +160,18 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
 
       const trainerProfileIds = trainerClubsData ? [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))] : [];
 
-      // Build query to get all student enrollments from:
+      // Build query to get ALL student enrollments from admin's clubs
+      // This includes:
       // 1. Students created by trainers assigned to admin's clubs
-      // 2. Students created directly by the admin in their clubs
+      // 2. Students created directly by the admin
+      // 3. Students who self-registered via enrollment links
       let studentsQuery = supabase
         .from('student_enrollments')
         .select(`
           *,
           clubs(name, status)
-        `);
-
-      // Create conditions for both cases
-      if (trainerProfileIds.length > 0) {
-        // Include students created by trainers OR created directly by admin
-        studentsQuery = studentsQuery.or(`trainer_profile_id.in.(${trainerProfileIds.join(',')}),created_by_profile_id.eq.${userData.user.id}`);
-      } else {
-        // Only include students created directly by admin
-        studentsQuery = studentsQuery.eq('created_by_profile_id', userData.user.id);
-      }
-
-      // Filter by admin's clubs
-      studentsQuery = studentsQuery.in('club_id', clubIds);
-
-      // If specific clubId is provided, filter further
-      if (clubId) {
-        studentsQuery = studentsQuery.eq('club_id', clubId);
-      }
+        `)
+        .in('club_id', clubIds);
 
       const { data: students, error: studentsError } = await studentsQuery
         .order('created_at', { ascending: false });

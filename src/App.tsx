@@ -42,6 +42,7 @@ import TodayAttendancePage from "@/pages/TodayAttendancePage";
 import WaitlistJoinPage from "@/pages/WaitlistJoinPage";
 import GetIdsPage from "@/pages/GetIdsPage";
 import CreateScheduledClassPage from "@/pages/CreateScheduledClassPage";
+import CreateBulkClassesPage from "@/pages/CreateBulkClassesPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -161,6 +162,7 @@ function App() {
                     <Route path="/students" element={<TrainerStudentsPage />} />
                     <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
                     <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
+                    <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
                     <Route path="/today-attendance" element={<TodayAttendancePage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
@@ -184,6 +186,7 @@ function App() {
                        isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
                      } />
                      <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
+                     <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
                      {isAdmin && <Route path="/today-attendance" element={<TodayAttendancePage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />

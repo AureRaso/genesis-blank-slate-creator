@@ -2,6 +2,7 @@
 import { format, eachDayOfInterval, isSameDay } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { ClassCard } from "./ClassCard";
 import { MultiEventDropdown } from "./MultiEventDropdown";
@@ -53,7 +54,11 @@ const DAY_MAPPING: { [key: string]: string } = {
 export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop, timeRangeStart = "08:00", timeRangeEnd = "22:00", viewMode = 'week', onDayClick }: CalendarGridProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const { profile } = useAuth();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Check if user can create classes
+  const canCreateClasses = profile?.role === 'admin' || profile?.role === 'trainer';
 
   // Determine column count based on view mode
   const getGridColumns = () => {
@@ -213,9 +218,10 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
             return (
               <div
                 key={day.toISOString()}
-                onClick={() => onDayClick && onDayClick(day)}
+                onClick={() => canCreateClasses && onDayClick && onDayClick(day)}
                 className={cn(
-                  "min-h-[100px] border rounded-lg p-2 hover:bg-muted/50 transition-colors cursor-pointer",
+                  "min-h-[100px] border rounded-lg p-2 transition-colors",
+                  canCreateClasses && "cursor-pointer hover:bg-muted/50",
                   isSameDay(day, new Date()) && "border-primary bg-primary/5"
                 )}
               >
@@ -294,15 +300,16 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
               };
               
               return (
-                <div 
-                  key={`${day.toISOString()}-${timeSlot}`} 
+                <div
+                  key={`${day.toISOString()}-${timeSlot}`}
                   className={cn(
-                    "border-r last:border-r-0 relative cursor-pointer hover:bg-muted/50 transition-colors",
-                    hasContinuationClasses && "bg-muted/10"
+                    "border-r last:border-r-0 relative transition-colors",
+                    hasContinuationClasses && "bg-muted/10",
+                    canCreateClasses && "cursor-pointer hover:bg-muted/50"
                   )}
                   style={{ minHeight: `${SLOT_HEIGHT}px` }}
                   onClick={() => {
-                    if (allClasses.length === 0 && onTimeSlotClick) {
+                    if (canCreateClasses && allClasses.length === 0 && onTimeSlotClick) {
                       onTimeSlotClick(day, timeSlot);
                     }
                   }}
