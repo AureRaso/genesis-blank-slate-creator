@@ -14,6 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminTrainers } from "@/hooks/useTrainers";
 import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useAuth } from "@/contexts/AuthContext";
+import { StudentAssignmentStep } from "@/components/StudentAssignmentStep";
+import { parseISO, addDays, format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface BulkClassFormProps {
   clubId?: string;
@@ -55,8 +58,10 @@ export interface BulkClassFormData {
     level_from: number;
     level_to: number;
     selected: boolean;
+    participant_ids?: string[];
+    specific_date?: string; // Date in format YYYY-MM-DD for individual classes
   }>;
-  step: 1 | 2 | 3;
+  step: 1 | 2 | 3 | 4;
 }
 
 const DAYS_OPTIONS = [
@@ -115,7 +120,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
     ? [currentUserAsTrainer, ...clubTrainers]
     : clubTrainers;
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -144,6 +149,33 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
   const selectedClub = clubs.find(club => club.id === selectedClubId);
   const maxCourts = selectedClub?.court_count || 1;
   const availableCourts = Array.from({ length: maxCourts }, (_, i) => i + 1);
+
+  // Helper function to get specific dates based on day of week
+  const getSpecificDates = (startDateStr: string, endDateStr: string, dayOfWeekStr: string): string[] => {
+    if (!startDateStr || !endDateStr) return [];
+
+    const dayMap: Record<string, number> = {
+      'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3,
+      'jueves': 4, 'viernes': 5, 'sábado': 6
+    };
+
+    const targetDay = dayMap[dayOfWeekStr.toLowerCase()];
+    if (targetDay === undefined) return [];
+
+    const dates: string[] = [];
+    const startDate = parseISO(startDateStr);
+    const endDate = parseISO(endDateStr);
+    let currentDate = startDate;
+
+    while (currentDate <= endDate) {
+      if (currentDate.getDay() === targetDay) {
+        dates.push(format(currentDate, 'yyyy-MM-dd'));
+      }
+      currentDate = addDays(currentDate, 1);
+    }
+
+    return dates;
+  };
 
   const generateClasses = (): BulkClassFormData['generatedClasses'] => {
     if (!baseConfig.first_class_time || selectedCourtNumbers.length === 0 || selectedTrainerIds.length === 0) {
@@ -177,6 +209,9 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
       const multipliedClasses: BulkClassFormData['generatedClasses'] = [];
 
       multiplicationConfig.days_of_week.forEach(day => {
+        // Get all specific dates for this day of week within the period
+        const specificDates = getSpecificDates(baseConfig.start_date, baseConfig.end_date, day);
+
         multiplicationConfig.time_slots.forEach(timeSlot => {
           const [startHour, startMin] = timeSlot.start.split(':').map(Number);
           const [endHour, endMin] = timeSlot.end.split(':').map(Number);
@@ -189,24 +224,28 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             const min = time % 60;
             const timeStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
 
-            selectedCourtNumbers.forEach((courtNumber, index) => {
-              const trainerId = selectedTrainerIds[index % selectedTrainerIds.length];
-              const trainer = trainers.find(t => t.profile_id === trainerId);
+            // For each specific date
+            specificDates.forEach(specificDate => {
+              selectedCourtNumbers.forEach((courtNumber, index) => {
+                const trainerId = selectedTrainerIds[index % selectedTrainerIds.length];
+                const trainer = trainers.find(t => t.profile_id === trainerId);
 
-              multipliedClasses.push({
-                id: `${day}-${courtNumber}-${timeStr}`,
-                name: `${baseConfig.name} - Pista ${courtNumber}`,
-                trainer_profile_id: trainerId,
-                trainer_name: trainer?.profiles?.full_name || "Sin asignar",
-                court_number: courtNumber,
-                day_of_week: day,
-                start_time: timeStr,
-                duration_minutes: baseConfig.duration_minutes,
-                monthly_price: baseConfig.monthly_price,
-                max_participants: baseConfig.max_participants,
-                level_from: baseConfig.level_from,
-                level_to: baseConfig.level_to,
-                selected: true
+                multipliedClasses.push({
+                  id: `${specificDate}-${courtNumber}-${timeStr}`,
+                  name: `${baseConfig.name} - Pista ${courtNumber}`,
+                  trainer_profile_id: trainerId,
+                  trainer_name: trainer?.profiles?.full_name || "Sin asignar",
+                  court_number: courtNumber,
+                  day_of_week: day,
+                  start_time: timeStr,
+                  duration_minutes: baseConfig.duration_minutes,
+                  monthly_price: baseConfig.monthly_price,
+                  max_participants: baseConfig.max_participants,
+                  level_from: baseConfig.level_from,
+                  level_to: baseConfig.level_to,
+                  selected: true,
+                  specific_date: specificDate // Add specific date field
+                });
               });
             });
           }
@@ -308,15 +347,33 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
         duration_minutes: cls.duration_minutes,
         start_time: cls.start_time,
         days_of_week: [cls.day_of_week],
-        start_date: baseConfig.start_date,
-        end_date: baseConfig.end_date,
-        recurrence_type: "weekly",
+        // Use specific_date for both start and end to create single-day classes
+        start_date: cls.specific_date || baseConfig.start_date,
+        end_date: cls.specific_date || baseConfig.end_date,
+        recurrence_type: cls.specific_date ? "once" : "weekly",
         trainer_profile_id: cls.trainer_profile_id,
         club_id: selectedClubId,
         court_number: cls.court_number,
         monthly_price: cls.monthly_price,
-        max_participants: cls.max_participants
+        max_participants: cls.max_participants,
+        participant_ids: cls.participant_ids || []
       }));
+
+      console.log('🔵 Classes to create:', classesToCreate);
+      console.log('🔵 Total classes to create:', classesToCreate.length);
+      console.log('🔵 Class details:', classesToCreate.map(c => ({
+        name: c.name,
+        date: c.start_date,
+        day: c.days_of_week[0],
+        time: c.start_time,
+        court: c.court_number,
+        type: c.recurrence_type
+      })));
+      console.log('🔵 Participants summary:', classesToCreate.map(c => ({
+        name: c.name,
+        date: c.start_date,
+        participants: c.participant_ids?.length || 0
+      })));
 
       const { data, error } = await supabase.functions.invoke('intelligent-bulk-create-classes', {
         body: {
@@ -325,12 +382,26 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
         }
       });
 
+      console.log('🔵 Edge function response:', data);
+
+      if (data?.failed_classes && data.failed_classes.length > 0) {
+        console.error('🔴 Failed classes:', data.failed_classes);
+        data.failed_classes.forEach((fc: any) => {
+          console.error(`  ❌ ${fc.class_name}: ${fc.error}`);
+        });
+      }
+
       if (error) throw error;
 
+      if (data?.failed_classes && data.failed_classes.length > 0 && data.successful_classes.length === 0) {
+        throw new Error(`Todas las clases fallaron. Primer error: ${data.failed_classes[0].error}`);
+      }
+
       setProgress(100);
+      const totalParticipants = selectedClasses.reduce((sum, cls) => sum + (cls.participant_ids?.length || 0), 0);
       toast({
         title: "Clases creadas exitosamente",
-        description: `Se crearon ${selectedClasses.length} clases programadas`,
+        description: `Se crearon ${selectedClasses.length} clases programadas${totalParticipants > 0 ? ` con ${totalParticipants} alumnos asignados` : ''}`,
       });
 
       setTimeout(() => {
@@ -589,7 +660,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             <div>
               <h3 className="text-lg font-semibold">Multiplicación Inteligente</h3>
               <p className="text-sm text-muted-foreground">
-                Define tramos horarios y días para generar múltiples clases
+                Selecciona días y tramos horarios para generar múltiples clases
               </p>
             </div>
             {/* Step indicator */}
@@ -707,7 +778,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             </div>
           </div>
 
-          {generatedClasses.length > 0 && (
+          {/*{generatedClasses.length > 0 && (
             <div className="space-y-3">
               <Label className="text-sm font-medium">Vista previa</Label>
               <p className="text-xs text-muted-foreground">
@@ -726,7 +797,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
                 )}
               </div>
             </div>
-          )}
+          )}*/}
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setStep(1)}>
@@ -754,18 +825,19 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
   }
 
   // STEP 3: Individual Editing
-  return (
-    <Card>
-      <CardContent className="pt-6 space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">Edición Individual</h3>
-            <p className="text-sm text-muted-foreground">
-              Modifica cada clase individualmente antes de crear
-            </p>
-          </div>
-          {/* Step indicator */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+  if (step === 3) {
+    return (
+      <Card>
+        <CardContent className="pt-6 space-y-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Edición Individual</h3>
+              <p className="text-sm text-muted-foreground">
+                Modifica cada clase individualmente antes de crear
+              </p>
+            </div>
+            {/* Step indicator */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${step >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               1
             </div>
@@ -776,6 +848,10 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             <div className={`h-[2px] w-6 ${step >= 3 ? 'bg-primary' : 'bg-muted'}`}></div>
             <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${step >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
               3
+            </div>
+            <div className={`h-[2px] w-6 ${step >= 4 ? 'bg-primary' : 'bg-muted'}`}></div>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${step >= 4 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+              4
             </div>
           </div>
         </div>
@@ -917,13 +993,35 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             </Badge>
           </div>
           <Button
-            onClick={createClasses}
-            disabled={isCreating || generatedClasses.filter(cls => cls.selected).length === 0}
+            onClick={() => setStep(4)}
+            disabled={generatedClasses.filter(cls => cls.selected).length === 0}
           >
-            {isCreating ? "Creando..." : `Crear ${generatedClasses.filter(cls => cls.selected).length} Clases`}
+            Siguiente: Asignar Alumnos
           </Button>
         </div>
       </CardContent>
     </Card>
   );
+  }
+
+  // Step 4: Student Assignment
+  if (step === 4) {
+    const handleAssignmentChange = (classId: string, participantIds: string[]) => {
+      setGeneratedClasses(prev =>
+        prev.map(cls =>
+          cls.id === classId ? { ...cls, participant_ids: participantIds } : cls
+        )
+      );
+    };
+
+    return (
+      <StudentAssignmentStep
+        classes={generatedClasses.filter(cls => cls.selected)}
+        clubId={selectedClubId}
+        onAssignmentChange={handleAssignmentChange}
+        onNext={createClasses}
+        onBack={() => setStep(3)}
+      />
+    );
+  }
 }

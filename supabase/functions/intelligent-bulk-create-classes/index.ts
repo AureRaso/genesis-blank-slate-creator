@@ -21,6 +21,7 @@ interface ClassToCreate {
   court_number: number;
   monthly_price: number;
   max_participants: number;
+  participant_ids?: string[];
 }
 
 interface BaseConfig {
@@ -109,12 +110,12 @@ async function validateClassData(classData: ClassToCreate, supabaseClient: any, 
     throw new Error(`Formato de hora inválido en clase ${classData.name}: ${classData.start_time}`);
   }
 
-  // Validate dates
+  // Validate dates (allow same date for single-day classes)
   const startDate = new Date(classData.start_date);
   const endDate = new Date(classData.end_date);
-  
-  if (startDate >= endDate) {
-    throw new Error(`Fecha de inicio debe ser anterior a fecha de fin en clase ${classData.name}`);
+
+  if (startDate > endDate) {
+    throw new Error(`Fecha de inicio debe ser anterior o igual a fecha de fin en clase ${classData.name}`);
   }
 
   // Validate court number
@@ -125,67 +126,34 @@ async function validateClassData(classData: ClassToCreate, supabaseClient: any, 
   return true;
 }
 
-async function generateScheduledClasses(programmedClassId: string, classData: ClassToCreate, supabaseClient: any) {
-  const scheduledClasses = [];
-  const startDate = new Date(classData.start_date);
-  const endDate = new Date(classData.end_date);
-
-  // Map Spanish day names to day numbers (0 = Sunday, 1 = Monday, etc.)
-  const dayMap: Record<string, number> = {
-    'domingo': 0,
-    'lunes': 1,
-    'martes': 2,
-    'miércoles': 3,
-    'jueves': 4,
-    'viernes': 5,
-    'sábado': 6
-  };
-
-  // Get target day numbers
-  const targetDays = classData.days_of_week.map(day => dayMap[day.toLowerCase()]);
-
-  // Generate scheduled classes for each occurrence
-  let currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    const dayOfWeek = currentDate.getDay();
-
-    if (targetDays.includes(dayOfWeek)) {
-      scheduledClasses.push({
-        programmed_class_id: programmedClassId,
-        club_id: classData.club_id,
-        trainer_profile_id: classData.trainer_profile_id,
-        date: currentDate.toISOString().split('T')[0],
-        start_time: classData.start_time,
-        duration_minutes: classData.duration_minutes,
-        court_number: classData.court_number,
-        max_participants: classData.max_participants,
-        level_from: classData.level_from,
-        level_to: classData.level_to,
-        status: 'scheduled',
-        is_active: true
-      });
-    }
-
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
+async function createClassParticipants(programmedClassId: string, participantIds: string[], supabaseClient: any) {
+  if (!participantIds || participantIds.length === 0) {
+    return 0;
   }
 
-  // Insert all scheduled classes
-  if (scheduledClasses.length > 0) {
-    const { error: insertError } = await supabaseClient
-      .from('scheduled_classes')
-      .insert(scheduledClasses);
+  console.log(`🔵 Creating participants for class ${programmedClassId}:`, participantIds);
 
-    if (insertError) {
-      console.error('Error inserting scheduled classes:', insertError);
-      throw new Error(`Error al generar clases programadas: ${insertError.message}`);
-    }
+  const participants = participantIds.map(studentEnrollmentId => ({
+    class_id: programmedClassId,
+    student_enrollment_id: studentEnrollmentId,
+    status: 'active'
+  }));
 
-    console.log(`Generated ${scheduledClasses.length} scheduled classes`);
+  console.log(`🔵 Participants to insert:`, participants);
+
+  const { data: insertedData, error: insertError } = await supabaseClient
+    .from('class_participants')
+    .insert(participants)
+    .select();
+
+  if (insertError) {
+    console.error('Error inserting class participants:', insertError);
+    throw new Error(`Error al asignar participantes: ${insertError.message}`);
   }
 
-  return scheduledClasses.length;
+  console.log(`✅ Successfully assigned ${participants.length} participants to programmed class ${programmedClassId}`);
+  console.log(`🔵 Inserted data:`, insertedData);
+  return participants.length;
 }
 
 async function createSingleClass(classData: ClassToCreate, supabaseClient: any, userId: string): Promise<CreationResult> {
@@ -198,6 +166,7 @@ async function createSingleClass(classData: ClassToCreate, supabaseClient: any, 
 
   try {
     console.log(`Creating class: ${classData.name} - Court ${classData.court_number} - ${classData.start_time}`);
+    console.log(`🔵 Participants to assign: ${classData.participant_ids?.length || 0}`, classData.participant_ids);
 
     // Validate the class data before creating
     await validateClassData(classData, supabaseClient, userId);
@@ -234,10 +203,13 @@ async function createSingleClass(classData: ClassToCreate, supabaseClient: any, 
     result.class_id = createdClass.id;
     console.log(`Successfully created programmed class with ID: ${createdClass.id}`);
 
-    // Generate scheduled classes from the programmed class
-    const scheduledCount = await generateScheduledClasses(createdClass.id, classData, supabaseClient);
-    console.log(`Generated ${scheduledCount} scheduled classes for programmed class ${createdClass.id}`);
+    // Create class participants if provided
+    if (classData.participant_ids && classData.participant_ids.length > 0) {
+      const participantsCount = await createClassParticipants(createdClass.id, classData.participant_ids, supabaseClient);
+      console.log(`✅ Assigned ${participantsCount} participants to programmed class ${createdClass.id}`);
+    }
 
+    console.log(`✅ Successfully created programmed class ${classData.name} with ID: ${createdClass.id}`);
     return result;
 
   } catch (error) {
