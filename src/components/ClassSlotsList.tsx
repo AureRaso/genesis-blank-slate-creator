@@ -175,7 +175,11 @@ const ClassSlotsList = ({ onEditClassSlot }: ClassSlotsListProps) => {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => deleteClassSlot.mutate(classSlot.id)}
+                          onClick={() => {
+                            console.log('🟢 [BUTTON] Eliminar button clicked for class:', classSlot.id);
+                            console.log('🟢 [BUTTON] deleteClassSlot object:', deleteClassSlot);
+                            deleteClassSlot.mutate(classSlot.id);
+                          }}
                           className="bg-red-600 hover:bg-red-700"
                         >
                           Eliminar

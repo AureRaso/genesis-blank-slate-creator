@@ -472,165 +472,204 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Seleccionar Club
-            </Label>
-            <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecciona un club" />
-              </SelectTrigger>
-              <SelectContent>
-                {clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4 items-end">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Club
+              </Label>
+              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un club" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre base de las clases</Label>
+              <Input
+                id="name"
+                value={baseConfig.name}
+                onChange={(e) => setBaseConfig(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ej: Clase de Pádel"
+              />
+            </div>
           </div>
 
           {selectedClubId && (
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2 text-base">
-                  <MapPin className="h-4 w-4" />
-                  Pistas Seleccionadas ({selectedCourtNumbers.length})
-                </Label>
-                <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/30">
-                  {Array.from({ length: clubs.find(c => c.id === selectedClubId)?.court_count || 8 }, (_, i) => i + 1).map((courtNumber) => (
-                    <div key={courtNumber} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`court-${courtNumber}`}
-                        checked={selectedCourtNumbers.includes(courtNumber)}
-                        onCheckedChange={(checked) => handleCourtToggle(courtNumber, !!checked)}
-                      />
-                      <Label htmlFor={`court-${courtNumber}`} className="text-sm cursor-pointer">
-                        Pista {courtNumber}
-                      </Label>
+            <>
+              {/* Section: Pistas y Entrenadores */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h4 className="text-sm font-semibold text-muted-foreground">RECURSOS</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2 text-base">
+                      <MapPin className="h-4 w-4" />
+                      Pistas ({selectedCourtNumbers.length})
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/30">
+                      {Array.from({ length: clubs.find(c => c.id === selectedClubId)?.court_count || 8 }, (_, i) => i + 1).map((courtNumber) => (
+                        <div key={courtNumber} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`court-${courtNumber}`}
+                            checked={selectedCourtNumbers.includes(courtNumber)}
+                            onCheckedChange={(checked) => handleCourtToggle(courtNumber, !!checked)}
+                          />
+                          <Label htmlFor={`court-${courtNumber}`} className="text-sm cursor-pointer">
+                            Pista {courtNumber}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-base">
+                        Entrenadores ({selectedTrainerIds.length})
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Máximo: {selectedCourtNumbers.length} entrenadores
+                      </p>
+                    </div>
+                    <div className="space-y-2 p-4 border rounded-lg bg-muted/30 max-h-48 overflow-y-auto">
+                      {trainers.map((trainer) => (
+                        <div key={trainer.profile_id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`trainer-${trainer.profile_id}`}
+                            checked={selectedTrainerIds.includes(trainer.profile_id)}
+                            onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
+                            disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
+                          />
+                          <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm cursor-pointer">
+                            {trainer.profiles?.full_name || "Sin nombre"}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-base">
-                    Entrenadores Seleccionados ({selectedTrainerIds.length})
-                  </Label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Máximo: {selectedCourtNumbers.length} entrenadores
-                  </p>
+              {/* Section: Configuración de Clase */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h4 className="text-sm font-semibold text-muted-foreground">CONFIGURACIÓN DE CLASE</h4>
                 </div>
-                <div className="space-y-2 p-4 border rounded-lg bg-muted/30 max-h-48 overflow-y-auto">
-                  {trainers.map((trainer) => (
-                    <div key={trainer.profile_id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`trainer-${trainer.profile_id}`}
-                        checked={selectedTrainerIds.includes(trainer.profile_id)}
-                        onCheckedChange={(checked) => handleTrainerToggle(trainer.profile_id, !!checked)}
-                        disabled={!selectedTrainerIds.includes(trainer.profile_id) && selectedTrainerIds.length >= selectedCourtNumbers.length && selectedCourtNumbers.length > 0}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="duration">Duración (min)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="30"
+                      max="120"
+                      value={baseConfig.duration_minutes}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 60 }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="participants">Max. participantes</Label>
+                    <Input
+                      id="participants"
+                      type="number"
+                      min="1"
+                      max="8"
+                      value={baseConfig.max_participants}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 4 }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Precio mensual (€)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={baseConfig.monthly_price}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, monthly_price: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nivel de juego</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="level_from"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="0.5"
+                        value={baseConfig.level_from}
+                        onChange={(e) => setBaseConfig(prev => ({ ...prev, level_from: parseFloat(e.target.value) || 1 }))}
+                        className="w-16"
                       />
-                      <Label htmlFor={`trainer-${trainer.profile_id}`} className="text-sm cursor-pointer">
-                        {trainer.profiles?.full_name || "Sin nombre"}
-                      </Label>
+                      <span className="text-sm text-muted-foreground">-</span>
+                      <Input
+                        id="level_to"
+                        type="number"
+                        min="1"
+                        max="10"
+                        step="0.5"
+                        value={baseConfig.level_to}
+                        onChange={(e) => setBaseConfig(prev => ({ ...prev, level_to: parseFloat(e.target.value) || 10 }))}
+                        className="w-16"
+                      />
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Section: Periodo */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h4 className="text-sm font-semibold text-muted-foreground">PERIODO Y HORARIO</h4>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start_date">Fecha inicio</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={baseConfig.start_date}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, start_date: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="end_date">Fecha fin</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={baseConfig.end_date}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, end_date: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="first_time">Primera clase</Label>
+                    <Input
+                      id="first_time"
+                      type="time"
+                      value={baseConfig.first_class_time}
+                      onChange={(e) => setBaseConfig(prev => ({ ...prev, first_class_time: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
-
-          <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre base de las clases</Label>
-            <Input
-              id="name"
-              value={baseConfig.name}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Ej: Clase de Pádel"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="first_time">Hora de la primera clase</Label>
-            <Input
-              id="first_time"
-              type="time"
-              value={baseConfig.first_class_time}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, first_class_time: e.target.value }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="duration">Duración (minutos)</Label>
-            <Input
-              id="duration"
-              type="number"
-              min="30"
-              max="120"
-              value={baseConfig.duration_minutes}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 60 }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="price">Precio mensual</Label>
-            <Input
-              id="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={baseConfig.monthly_price}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, monthly_price: parseFloat(e.target.value) || 0 }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="participants">Máximo participantes</Label>
-            <Input
-              id="participants"
-              type="number"
-              min="1"
-              max="8"
-              value={baseConfig.max_participants}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 4 }))}
-            />
-          </div>
-
-          {/*<div className="space-y-2">
-            <Label htmlFor="level_from">Nivel desde</Label>
-            <Input
-              id="level_from"
-              type="number"
-              min="1"
-              max="10"
-              value={baseConfig.level_from}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, level_from: parseInt(e.target.value) || 1 }))}
-            />
-          </div>*/}
-
-          <div className="space-y-2">
-            <Label htmlFor="start_date">Fecha de inicio</Label>
-            <Input
-              id="start_date"
-              type="date"
-              value={baseConfig.start_date}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, start_date: e.target.value }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="end_date">Fecha de fin</Label>
-            <Input
-              id="end_date"
-              type="date"
-              value={baseConfig.end_date}
-              onChange={(e) => setBaseConfig(prev => ({ ...prev, end_date: e.target.value }))}
-            />
-          </div>
-          </div>
 
           <div className="flex justify-end">
             <Button

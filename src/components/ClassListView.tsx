@@ -15,6 +15,8 @@ import { ClassListViewMobile } from "@/components/ClassListViewMobile";
 import { useScheduledClasses, type ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useClassCapacity, useUserWaitlistPosition, useJoinWaitlist, useLeaveWaitlist } from "@/hooks/useWaitlist";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDeleteProgrammedClass } from "@/hooks/useProgrammedClasses";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { ClassFiltersData } from "@/contexts/ClassFiltersContext";
 interface ClassListViewProps {
   clubId?: string;
@@ -29,6 +31,9 @@ export default function ClassListView({
   const [selectedClass, setSelectedClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [editingClass, setEditingClass] = useState<ScheduledClassWithTemplate | null>(null);
+  const [deletingClass, setDeletingClass] = useState<ScheduledClassWithTemplate | null>(null);
+
+  const deleteProgrammedClass = useDeleteProgrammedClass();
   const {
     t
   } = useTranslation();
@@ -236,7 +241,10 @@ export default function ClassListView({
                                   Gestionar alumnos
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive">
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => setDeletingClass(cls)}
+                                >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   {t('classes.cancelClass')}
                                 </DropdownMenuItem>
@@ -273,6 +281,33 @@ export default function ClassListView({
 
         {/* Edit Class Modal */}
         {editingClass && <EditClassModal class={editingClass} isOpen={!!editingClass} onClose={() => setEditingClass(null)} />}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingClass} onOpenChange={() => setDeletingClass(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar clase?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminará la clase programada y todas sus instancias asociadas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deletingClass) {
+                    console.log('🟢 [DELETE] Deleting programmed class:', deletingClass.id);
+                    deleteProgrammedClass.mutate(deletingClass.id);
+                    setDeletingClass(null);
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>;
 }

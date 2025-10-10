@@ -47,7 +47,7 @@ const ClassesPage = () => {
   // Mostrar formulario de administrador
   if (showForm && isAdmin) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
         <ClassSlotForm classSlot={editingClassSlot} onClose={handleCloseForm} />
       </div>
     );
@@ -56,7 +56,7 @@ const ClassesPage = () => {
   // Vista de administrador
   if (isAdmin) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark bg-clip-text text-transparent">
@@ -66,7 +66,7 @@ const ClassesPage = () => {
               Crea y gestiona las clases de pádel para los jugadores
             </p>
           </div>
-          <Button 
+          <Button
             onClick={handleCreateNew}
             className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange transition-all duration-300 shadow-lg hover:shadow-xl"
           >

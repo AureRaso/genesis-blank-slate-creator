@@ -253,14 +253,26 @@ export const useDeleteClassSlot = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      console.log('🔴 [DELETE] Starting delete for class_slot id:', id);
+
+      const { data, error } = await supabase
         .from('class_slots')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('🔴 [DELETE] Supabase response:', { data, error });
+
+      if (error) {
+        console.error('🔴 [DELETE] Error from Supabase:', error);
+        throw error;
+      }
+
+      console.log('🔴 [DELETE] Successfully deleted class_slot');
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('🔴 [DELETE] onSuccess called with data:', data);
       queryClient.invalidateQueries({ queryKey: ['my-class-slots'] });
       queryClient.invalidateQueries({ queryKey: ['class-slots'] });
       toast({
@@ -269,7 +281,7 @@ export const useDeleteClassSlot = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting class slot:', error);
+      console.error('🔴 [DELETE] onError called with error:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la clase",
