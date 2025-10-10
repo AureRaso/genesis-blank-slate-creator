@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar } from "lucide-react";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
 import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
 
@@ -55,47 +55,67 @@ export const TodayClassesConfirmation = () => {
       day: 'numeric',
       month: 'long'
     });
-    // Capitalize first letter
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  const formatTime = (time: string) => {
+    return time.substring(0, 5);
   };
 
   if (isLoading) {
     return (
-      <Card className="border-gray-300">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-black">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
             Próximas clases
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-3">
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
-          </div>
-        </CardContent>
-      </Card>
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2].map((item) => (
+            <Card key={item} className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl animate-pulse">
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-6 bg-slate-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (todayClasses.length === 0) {
     return (
-      <Card className="border-gray-300">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-black">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
             Próximas clases
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-            <p className="text-sm text-muted-foreground">
-              No tienes clases programadas en los próximos 10 días
+          </h2>
+        </div>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl text-center">
+          <CardContent className="p-8">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">Sin clases programadas</h3>
+            <p className="text-slate-500 text-sm">
+              No tienes clases en los próximos 10 días
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-slate-400 text-xs mt-2">
               ¡Disfruta tu tiempo libre! 🎉
             </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -103,18 +123,38 @@ export const TodayClassesConfirmation = () => {
   const pendingCount = todayClasses.length - confirmedCount;
 
   return (
-    <div className="space-y-4">
-      {/* Header with title and badges */}
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-black flex items-center gap-2">
-            Próximas Clases
-          </h2>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Próximas clases</h2>
+          </div>
         </div>
       </div>
 
-      {/* Grid of class cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Reminder Banner - Always visible */}
+      <div className="w-1/2">
+        <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Confirma tu asistencia
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                Ayuda a tu entrenador a planificar mejor las clases confirmando tu disponibilidad.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      {/* Class Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {todayClasses.map((classItem: any) => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
           const scheduledDate = classItem.scheduled_date;
@@ -124,117 +164,112 @@ export const TodayClassesConfirmation = () => {
           return (
             <Card
               key={`${classItem.id}-${scheduledDate}`}
-              className="transition-all bg-white border-gray-300 hover:border-gray-400"
+              className={`
+                border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
+                ${isConfirmedForThisDate 
+                  ? 'bg-gradient-to-br from-green-50 to-emerald-100/30 border-l-4 border-l-green-400' 
+                  : isAbsent
+                    ? 'bg-gradient-to-br from-red-50 to-rose-100/30 border-l-4 border-l-red-400'
+                    : 'bg-gradient-to-br from-slate-50 to-white border-l-4 border-l-primary'
+                }
+              `}
             >
-              <CardContent className="pt-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
+              <CardContent className="p-8">
+                {/* Header Section */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-semibold text-slate-700">
+                        {formatDate(scheduledDate)}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-black" />
-                      <span className="text-sm font-medium text-black">
-                        {formatDate(scheduledDate)} - {classItem.programmed_class.start_time}
+                      <span className="text-lg font-bold text-slate-800">
+                        {formatTime(classItem.programmed_class.start_time)}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-lg text-black">{classItem.programmed_class.name}</h3>
-                    {isConfirmedForThisDate && (
-                      <Badge className="bg-green-600 text-white">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Asistiré
-                      </Badge>
-                    )}
-                    {isAbsent && (
-                      <Badge className="bg-red-600 text-white">
-                        <XCircle className="h-3 w-3 mr-1" />
-                        No asistiré
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>{classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{classItem.programmed_class.club.name}</span>
-                    </div>
-                  </div>
-
-                  {/* Show absence reason if present */}
-                  {isAbsent && classItem.absence_reason && (
-                    <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-800">
-                      <strong>Motivo:</strong> {classItem.absence_reason}
-                    </div>
-                  )}
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
+                {/* Class Details */}
+                <div className="space-y-3">
+                  {/* Class Name */}
+                  <h3 className="text-xl font-bold text-slate-800 leading-tight">
+                    {classItem.programmed_class.name}
+                  </h3>
+
+                  {/* Trainer Info */}
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <div className="p-1 bg-primary/10 rounded">
+                      <User className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">
+                      {classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200/60">
+                  {/* Attendance Checkbox - Takes half width */}
                   {!isAbsent && (
-                    <div className="flex flex-col items-center gap-2">
-                      <Checkbox
-                        id={`attendance-${classItem.id}-${scheduledDate}`}
-                        checked={isConfirmedForThisDate}
-                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
-                        disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                        className="h-6 w-6 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                      />
-                      <label
-                        htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
-                        className="text-xs text-center cursor-pointer select-none"
-                      >
-                        {isConfirmedForThisDate ? 'Asistiré' : 'Confirmar'}
-                      </label>
+                    <div className="flex items-center gap-3 w-1/2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`attendance-${classItem.id}-${scheduledDate}`}
+                          checked={isConfirmedForThisDate}
+                          onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
+                          disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
+                          className={`
+                            h-5 w-5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600
+                            border-2 border-slate-300
+                          `}
+                        />
+                        <label
+                          htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
+                          className="text-sm font-medium text-slate-700 cursor-pointer select-none"
+                        >
+                          {isConfirmedForThisDate ? 'Asistencia confirmada' : 'Confirmar asistencia'}
+                        </label>
+                      </div>
                     </div>
                   )}
 
-                  {/* Absence button */}
-                  {!isConfirmedForThisDate && !isAbsent && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenAbsenceDialog(classItem.id)}
-                      disabled={confirmAbsence.isPending}
-                      className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <XCircle className="h-3 w-3 mr-1" />
-                      No voy
-                    </Button>
-                  )}
+                  {/* Action Buttons Group */}
+                  <div className="flex items-center gap-2">
+                    {/* Absence Button */}
+                    {!isConfirmedForThisDate && !isAbsent && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenAbsenceDialog(classItem.id)}
+                        disabled={confirmAbsence.isPending}
+                        className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
+                      >
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        No voy
+                      </Button>
+                    )}
 
-                  {/* Cancel absence button */}
-                  {isAbsent && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancelAbsence(classItem.id)}
-                      disabled={cancelAbsence.isPending}
-                      className="border-gray-300"
-                    >
-                      Cancelar ausencia
-                    </Button>
-                  )}
+                    {/* Cancel Absence Button */}
+                    {isAbsent && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelAbsence(classItem.id)}
+                        disabled={cancelAbsence.isPending}
+                        className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
+                      >
+                        Cancelar asuencia
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
-
-      {pendingCount > 0 && (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            <span>
-              <strong>Recuerda:</strong> Confirma tu asistencia para que tu entrenador sepa que asistirás a clase.
-            </span>
-          </p>
-        </div>
-      )}
 
       {/* Absence confirmation dialog */}
       <ConfirmAbsenceDialog
