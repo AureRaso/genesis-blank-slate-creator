@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWaitlistCount } from "@/hooks/useWaitlistCount";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useClub } from "@/hooks/useClub";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 const AppSidebar = () => {
   const authContext = useAuth();
@@ -19,8 +20,12 @@ const AppSidebar = () => {
   const {
     isAdmin = false,
     isTrainer = false,
-    isPlayer = false
+    isPlayer = false,
+    profile
   } = authContext || {};
+
+  // Fetch club data for players
+  const { data: club } = useClub(profile?.club_id);
 
   // Si es trainer, mostrar panel personalizado con clases programadas
   if (isTrainer) {
@@ -133,6 +138,30 @@ const AppSidebar = () => {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-0">
+          {/* Información del Club */}
+          {club && (
+            <div className="border-t p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-sm">{club.name}</span>
+              </div>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  <span className="truncate">{club.address}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  <span>{club.phone}</span>
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <Badge variant="outline" className="text-xs">
+                  {club.court_count} {club.court_count === 1 ? 'pista' : 'pistas'}
+                </Badge>
+              </div>
+            </div>
+          )}
           <UserMenu />
         </SidebarFooter>
       </Sidebar>;
