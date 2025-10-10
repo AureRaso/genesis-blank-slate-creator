@@ -50,11 +50,13 @@ export const TodayClassesConfirmation = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('es-ES', {
+    const formatted = date.toLocaleDateString('es-ES', {
       weekday: 'long',
       day: 'numeric',
       month: 'long'
     });
+    // Capitalize first letter
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
   if (isLoading) {
@@ -130,7 +132,9 @@ export const TodayClassesConfirmation = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-black" />
-                      <span className="text-sm font-medium text-black">{formatDate(scheduledDate)}</span>
+                      <span className="text-sm font-medium text-black">
+                        {formatDate(scheduledDate)} - {classItem.programmed_class.start_time}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -151,14 +155,10 @@ export const TodayClassesConfirmation = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{classItem.programmed_class.start_time} ({classItem.programmed_class.duration_minutes} min)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       <span>{classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}</span>
                     </div>
-                    <div className="flex items-center gap-2 md:col-span-2">
+                    <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
                       <span>{classItem.programmed_class.club.name}</span>
                     </div>
