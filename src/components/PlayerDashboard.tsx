@@ -126,6 +126,34 @@ const PlayerDashboard = () => {
         </CardContent>
       </Card>
 
+      {/* Sección de Clases Programadas */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-green-600" />
+              Clases Programadas
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dashboard/scheduled-classes')}
+            >
+              Ver todas
+            </Button>
+          </div>
+          <CardDescription>
+            Clases disponibles en tu club - Apúntate o únete a lista de espera
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PlayerClassesWidget
+            limit={3}
+            showViewAll={true}
+            onViewAll={() => navigate('/dashboard/scheduled-classes')}
+          />
+        </CardContent>
+      </Card>
 
       {/* Modal de confirmación de inscripción */}
       <LeagueRegistrationModal

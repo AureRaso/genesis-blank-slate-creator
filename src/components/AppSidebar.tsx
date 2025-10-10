@@ -107,11 +107,6 @@ const AppSidebar = () => {
         icon: Trophy
       }] : []),
       {
-        title: t('sidebar.scheduledClasses'),
-        url: "/dashboard/scheduled-classes",
-        icon: Calendar
-      },
-      {
         title: t('sidebar.clubs'),
         url: "/dashboard/clubs",
         icon: Building2
