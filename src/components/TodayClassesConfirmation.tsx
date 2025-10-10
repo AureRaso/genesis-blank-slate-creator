@@ -62,8 +62,7 @@ export const TodayClassesConfirmation = () => {
       <Card className="border-gray-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-black">
-            <Clock className="h-5 w-5" />
-            Próximas Clases
+            Próximas clases
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -80,10 +79,8 @@ export const TodayClassesConfirmation = () => {
       <Card className="border-gray-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-black">
-            <Clock className="h-5 w-5" />
-            Próximas Clases
+            Próximas clases
           </CardTitle>
-          <CardDescription>Próximos 10 días</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
@@ -104,33 +101,34 @@ export const TodayClassesConfirmation = () => {
   const pendingCount = todayClasses.length - confirmedCount;
 
   return (
-    <Card className="border-gray-300 bg-white">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-black">
-              <Clock className="h-5 w-5" />
-              Próximas Clases - Confirma tu Asistencia
-            </CardTitle>
-            <CardDescription className="mt-1">Próximos 10 días</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            {confirmedCount > 0 && (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                {confirmedCount} confirmada{confirmedCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-            {pendingCount > 0 && (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
+    <div className="space-y-4">
+      {/* Header with title and badges */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-black flex items-center gap-2">
+            <Clock className="h-6 w-6" />
+            Próximas Clases
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">Próximos 10 días - Confirma tu asistencia</p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2">
+          {confirmedCount > 0 && (
+            <Badge className="bg-green-100 text-green-800 border-green-200">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              {confirmedCount} confirmada{confirmedCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {pendingCount > 0 && (
+            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Grid of class cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {todayClasses.map((classItem: any) => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
           const scheduledDate = classItem.scheduled_date;
@@ -138,9 +136,9 @@ export const TodayClassesConfirmation = () => {
           const isAbsent = !!classItem.absence_confirmed;
 
           return (
-            <div
+            <Card
               key={`${classItem.id}-${scheduledDate}`}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              className={`transition-all ${
                 isConfirmedForThisDate
                   ? 'bg-green-50 border-green-300'
                   : isAbsent
@@ -148,6 +146,7 @@ export const TodayClassesConfirmation = () => {
                   : 'bg-white border-gray-300 hover:border-gray-400'
               }`}
             >
+              <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -242,29 +241,30 @@ export const TodayClassesConfirmation = () => {
                   )}
                 </div>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
+      </div>
 
-        {pendingCount > 0 && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              <span>
-                <strong>Recuerda:</strong> Confirma tu asistencia para que tu entrenador sepa que asistirás a clase.
-              </span>
-            </p>
-          </div>
-        )}
+      {pendingCount > 0 && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            <span>
+              <strong>Recuerda:</strong> Confirma tu asistencia para que tu entrenador sepa que asistirás a clase.
+            </span>
+          </p>
+        </div>
+      )}
 
-        {/* Absence confirmation dialog */}
-        <ConfirmAbsenceDialog
-          open={absenceDialogOpen}
-          onOpenChange={setAbsenceDialogOpen}
-          onConfirm={handleConfirmAbsence}
-          isLoading={confirmAbsence.isPending}
-        />
-      </CardContent>
-    </Card>
+      {/* Absence confirmation dialog */}
+      <ConfirmAbsenceDialog
+        open={absenceDialogOpen}
+        onOpenChange={setAbsenceDialogOpen}
+        onConfirm={handleConfirmAbsence}
+        isLoading={confirmAbsence.isPending}
+      />
+    </div>
   );
 };
