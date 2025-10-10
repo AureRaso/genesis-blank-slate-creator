@@ -5,6 +5,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import AppSidebar from "./AppSidebar";
 import Footer from "./Footer";
 import { useLocation, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,8 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
+  const authContext = useAuth();
+  const isPlayer = authContext?.isPlayer || false;
   
   const getBreadcrumbInfo = () => {
     const path = location.pathname;
@@ -78,7 +81,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {children}
         </div>
-        <Footer />
+        {!isPlayer && <Footer />}
       </SidebarInset>
     </div>
   );
