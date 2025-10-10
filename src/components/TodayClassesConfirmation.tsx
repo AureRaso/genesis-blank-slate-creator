@@ -106,24 +106,8 @@ export const TodayClassesConfirmation = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-black flex items-center gap-2">
-            <Clock className="h-6 w-6" />
             Próximas Clases
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">Próximos 10 días - Confirma tu asistencia</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {confirmedCount > 0 && (
-            <Badge className="bg-green-100 text-green-800 border-green-200">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              {confirmedCount} confirmada{confirmedCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-          {pendingCount > 0 && (
-            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
-            </Badge>
-          )}
         </div>
       </div>
 
@@ -138,13 +122,7 @@ export const TodayClassesConfirmation = () => {
           return (
             <Card
               key={`${classItem.id}-${scheduledDate}`}
-              className={`transition-all ${
-                isConfirmedForThisDate
-                  ? 'bg-green-50 border-green-300'
-                  : isAbsent
-                  ? 'bg-red-50 border-red-300'
-                  : 'bg-white border-gray-300 hover:border-gray-400'
-              }`}
+              className="transition-all bg-white border-gray-300 hover:border-gray-400"
             >
               <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-3">
