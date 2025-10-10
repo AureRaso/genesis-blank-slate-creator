@@ -137,33 +137,6 @@ const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-0">
-          {/* Información del Club */}
-          {club && (
-            <div className="border-t p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm">{club.name}</span>
-              </div>
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span className="truncate">{club.address}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  <span>{club.phone}</span>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <Badge variant="outline" className="text-xs">
-                  {club.court_count} {club.court_count === 1 ? 'pista' : 'pistas'}
-                </Badge>
-              </div>
-            </div>
-          )}
-          <UserMenu />
-        </SidebarFooter>
       </Sidebar>;
   }
 
