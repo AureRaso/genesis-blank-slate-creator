@@ -263,14 +263,14 @@ export const useTodayClassAttendance = () => {
 export const useConfirmAttendance = () => {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
-    mutationFn: async (participantId: string) => {
+    mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
+      console.log('🟢 Confirming attendance for:', { participantId, scheduledDate });
       const { data, error } = await supabase
         .from('class_participants')
         .update({
-          attendance_confirmed_for_date: today,
+          attendance_confirmed_for_date: scheduledDate,
           attendance_confirmed_at: new Date().toISOString(),
         })
         .eq('id', participantId)
@@ -278,6 +278,7 @@ export const useConfirmAttendance = () => {
         .single();
 
       if (error) throw error;
+      console.log('🟢 Attendance confirmed:', data);
       return data;
     },
     onSuccess: () => {

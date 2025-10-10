@@ -17,11 +17,11 @@ export const TodayClassesConfirmation = () => {
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
-  const handleToggleConfirmation = (participantId: string, isConfirmed: boolean) => {
+  const handleToggleConfirmation = (participantId: string, isConfirmed: boolean, scheduledDate: string) => {
     if (isConfirmed) {
       cancelConfirmation.mutate(participantId);
     } else {
-      confirmAttendance.mutate(participantId);
+      confirmAttendance.mutate({ participantId, scheduledDate });
     }
   };
 
@@ -201,7 +201,7 @@ export const TodayClassesConfirmation = () => {
                       <Checkbox
                         id={`attendance-${classItem.id}-${scheduledDate}`}
                         checked={isConfirmedForThisDate}
-                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate)}
+                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
                         disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
                         className="h-6 w-6 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                       />
