@@ -32,23 +32,34 @@ const getDayOfWeekInSpanish = (date: Date): string => {
   return days[date.getDay()];
 };
 
-// Hook para obtener las clases del día actual del jugador
+// Hook para obtener las clases de los próximos 10 días del jugador
 export const useTodayClassAttendance = () => {
   const { profile } = useAuth();
-  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  const todayDayName = getDayOfWeekInSpanish(new Date());
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+  // Calculate next 10 days
+  const next10Days = Array.from({ length: 10 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    return {
+      dateStr: date.toISOString().split('T')[0],
+      dayName: getDayOfWeekInSpanish(date),
+      date: date
+    };
+  });
 
   return useQuery({
-    queryKey: ['today-class-attendance', profile?.id, today],
+    queryKey: ['upcoming-class-attendance', profile?.id, todayStr],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
-      console.log('🔍 DEBUG - useTodayClassAttendance:', {
+      console.log('🔍 DEBUG - useUpcomingClassAttendance:', {
         profileId: profile.id,
         profileEmail: profile.email,
         profileFullName: profile.full_name,
-        today,
-        todayDayName
+        todayStr,
+        next10Days: next10Days.map(d => ({ date: d.dateStr, day: d.dayName }))
       });
 
       // STEP 1: Get class participants using student_enrollments email match
@@ -197,38 +208,52 @@ export const useTodayClassAttendance = () => {
         return [];
       }
 
-      // Filter classes that are scheduled for today
-      const todayClasses = data?.filter((participation: any) => {
+      // Filter classes that are scheduled in the next 10 days
+      const upcomingClasses: any[] = [];
+
+      data?.forEach((participation: any) => {
         const programmedClass = participation.programmed_class;
-        if (!programmedClass) return false;
+        if (!programmedClass) return;
 
-        console.log('🔍 DEBUG - Checking class:', {
-          className: programmedClass.name,
-          daysOfWeek: programmedClass.days_of_week,
-          todayDayName,
-          includes: programmedClass.days_of_week?.includes(todayDayName),
-          startDate: programmedClass.start_date,
-          endDate: programmedClass.end_date
+        // Check each of the next 10 days
+        next10Days.forEach(({ dateStr, dayName, date }) => {
+          console.log('🔍 DEBUG - Checking class for date:', {
+            className: programmedClass.name,
+            checkingDate: dateStr,
+            checkingDay: dayName,
+            daysOfWeek: programmedClass.days_of_week,
+            includes: programmedClass.days_of_week?.includes(dayName),
+            startDate: programmedClass.start_date,
+            endDate: programmedClass.end_date
+          });
+
+          // Check if the date is within the class date range
+          const startDate = new Date(programmedClass.start_date);
+          const endDate = new Date(programmedClass.end_date);
+
+          if (date < startDate || date > endDate) {
+            console.log('❌ Class date out of range for', dateStr);
+            return;
+          }
+
+          // Check if this day of week is in the class schedule
+          if (programmedClass.days_of_week?.includes(dayName)) {
+            console.log('✅ Class scheduled for', dateStr);
+            // Add the class with the specific date information
+            upcomingClasses.push({
+              ...participation,
+              scheduled_date: dateStr,
+              day_name: dayName
+            });
+          }
         });
+      });
 
-        // Check if today is within the class date range
-        const startDate = new Date(programmedClass.start_date);
-        const endDate = new Date(programmedClass.end_date);
-        const currentDate = new Date();
+      // Sort by date
+      upcomingClasses.sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
 
-        if (currentDate < startDate || currentDate > endDate) {
-          console.log('❌ Class date out of range');
-          return false;
-        }
-
-        // Check if today's day of week is in the class schedule
-        const isToday = programmedClass.days_of_week?.includes(todayDayName);
-        console.log('✅ Is today?', isToday);
-        return isToday;
-      }) || [];
-
-      console.log('🔍 DEBUG - Final today classes:', todayClasses);
-      return todayClasses as TodayClassAttendance[];
+      console.log('🔍 DEBUG - Final upcoming classes:', upcomingClasses);
+      return upcomingClasses as TodayClassAttendance[];
     },
     enabled: !!profile?.id,
   });
@@ -256,7 +281,7 @@ export const useConfirmAttendance = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
       toast.success('✓ Asistencia confirmada correctamente');
     },
     onError: (error: any) => {
@@ -288,7 +313,7 @@ export const useCancelAttendanceConfirmation = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
       toast.success('Confirmación de asistencia cancelada');
     },
     onError: (error: any) => {
@@ -324,7 +349,7 @@ export const useConfirmAbsence = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
       toast.success('Ausencia confirmada');
     },
     onError: (error: any) => {
@@ -357,7 +382,7 @@ export const useCancelAbsenceConfirmation = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-class-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
       toast.success('Confirmación de ausencia cancelada');
     },
     onError: (error: any) => {

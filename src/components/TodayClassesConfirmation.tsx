@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
 import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
 
@@ -48,12 +48,12 @@ export const TodayClassesConfirmation = () => {
     cancelAbsence.mutate(participantId);
   };
 
-  const getCurrentDate = () => {
-    return new Date().toLocaleDateString('es-ES', {
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('es-ES', {
       weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      month: 'long'
     });
   };
 
@@ -63,7 +63,7 @@ export const TodayClassesConfirmation = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
             <Clock className="h-5 w-5" />
-            Clases de Hoy
+            Próximas Clases
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -81,18 +81,18 @@ export const TodayClassesConfirmation = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Clases de Hoy
+            Próximas Clases
           </CardTitle>
-          <CardDescription>{getCurrentDate()}</CardDescription>
+          <CardDescription>Próximos 10 días</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
             <p className="text-sm text-muted-foreground">
-              No tienes clases programadas para hoy
+              No tienes clases programadas en los próximos 10 días
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              ¡Disfruta tu día libre! 🎉
+              ¡Disfruta tu tiempo libre! 🎉
             </p>
           </div>
         </CardContent>
@@ -110,9 +110,9 @@ export const TodayClassesConfirmation = () => {
           <div>
             <CardTitle className="flex items-center gap-2 text-blue-700">
               <Clock className="h-5 w-5" />
-              Clases de Hoy - Confirma tu Asistencia
+              Próximas Clases - Confirma tu Asistencia
             </CardTitle>
-            <CardDescription className="mt-1">{getCurrentDate()}</CardDescription>
+            <CardDescription className="mt-1">Próximos 10 días</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {confirmedCount > 0 && (
@@ -131,17 +131,17 @@ export const TodayClassesConfirmation = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {todayClasses.map((classItem) => {
+        {todayClasses.map((classItem: any) => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
-          const today = new Date().toISOString().split('T')[0];
-          const isConfirmedForToday = classItem.attendance_confirmed_for_date === today;
+          const scheduledDate = classItem.scheduled_date;
+          const isConfirmedForThisDate = classItem.attendance_confirmed_for_date === scheduledDate;
           const isAbsent = !!classItem.absence_confirmed;
 
           return (
             <div
-              key={classItem.id}
+              key={`${classItem.id}-${scheduledDate}`}
               className={`p-4 rounded-lg border-2 transition-all ${
-                isConfirmedForToday
+                isConfirmedForThisDate
                   ? 'bg-green-50 border-green-300'
                   : isAbsent
                   ? 'bg-red-50 border-red-300'
@@ -151,8 +151,14 @@ export const TodayClassesConfirmation = () => {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-600">{formatDate(scheduledDate)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-lg">{classItem.programmed_class.name}</h3>
-                    {isConfirmedForToday && (
+                    {isConfirmedForThisDate && (
                       <Badge className="bg-green-600 text-white">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Asistiré
@@ -193,23 +199,23 @@ export const TodayClassesConfirmation = () => {
                   {!isAbsent && (
                     <div className="flex flex-col items-center gap-2">
                       <Checkbox
-                        id={`attendance-${classItem.id}`}
-                        checked={isConfirmedForToday}
-                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForToday)}
+                        id={`attendance-${classItem.id}-${scheduledDate}`}
+                        checked={isConfirmedForThisDate}
+                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate)}
                         disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
                         className="h-6 w-6 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                       />
                       <label
-                        htmlFor={`attendance-${classItem.id}`}
+                        htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
                         className="text-xs text-center cursor-pointer select-none"
                       >
-                        {isConfirmedForToday ? 'Asistiré' : 'Confirmar'}
+                        {isConfirmedForThisDate ? 'Asistiré' : 'Confirmar'}
                       </label>
                     </div>
                   )}
 
                   {/* Absence button */}
-                  {!isConfirmedForToday && !isAbsent && (
+                  {!isConfirmedForThisDate && !isAbsent && (
                     <Button
                       variant="outline"
                       size="sm"
