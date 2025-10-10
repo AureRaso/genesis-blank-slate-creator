@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MapPin, Trash2 } from "lucide-react";
+import { MapPin, Trash2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminTrainers } from "@/hooks/useTrainers";
@@ -692,6 +692,8 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
 
   // STEP 2: Multiplication Configuration
   if (step === 2) {
+    const hasTimeSlots = multiplicationConfig.time_slots.length > 0;
+
     return (
       <Card>
         <CardContent className="pt-6 space-y-6">
@@ -699,7 +701,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             <div>
               <h3 className="text-lg font-semibold">Multiplicación Inteligente</h3>
               <p className="text-sm text-muted-foreground">
-                Selecciona días y tramos horarios para generar múltiples clases
+                Define los tramos horarios y días para generar tus clases
               </p>
             </div>
             {/* Step indicator */}
@@ -715,80 +717,149 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
               <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${step >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                 3
               </div>
+              <div className={`h-[2px] w-6 ${step >= 4 ? 'bg-primary' : 'bg-muted'}`}></div>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${step >= 4 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                4
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Tramos Horarios</Label>
-              <Button variant="outline" size="sm" onClick={addTimeSlot}>
-                Agregar Tramo
+          {/* TRAMOS HORARIOS - Elemento Principal */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h4 className="text-base font-semibold">Tramos Horarios</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {hasTimeSlots
+                    ? `${multiplicationConfig.time_slots.length} tramo${multiplicationConfig.time_slots.length > 1 ? 's' : ''} configurado${multiplicationConfig.time_slots.length > 1 ? 's' : ''}`
+                    : 'Añade al menos un tramo para continuar'}
+                </p>
+              </div>
+              <Button
+                onClick={addTimeSlot}
+                className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+              >
+                <span className="text-lg mr-2">+</span> Añadir Tramo
               </Button>
             </div>
-            <div className="space-y-4">
-            {multiplicationConfig.time_slots.map((slot, index) => {
-              const isIncompatible = !timeSlotsValidation.isValid &&
-                timeSlotsValidation.incompatibleSlots.some(s =>
-                  s.start === slot.start && s.end === slot.end && s.interval === slot.interval
-                );
 
-              return (
-                <div key={index} className="space-y-2">
-                  <div className="grid grid-cols-4 gap-3 items-end">
-                    <div className="space-y-2">
-                      <Label>Desde</Label>
-                      <Input
-                        type="time"
-                        value={slot.start}
-                        onChange={(e) => updateTimeSlot(index, { start: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Hasta</Label>
-                      <Input
-                        type="time"
-                        value={slot.end}
-                        onChange={(e) => updateTimeSlot(index, { end: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Intervalo</Label>
-                      <Select
-                        value={slot.interval.toString()}
-                        onValueChange={(value) => updateTimeSlot(index, { interval: parseInt(value) })}
-                      >
-                        <SelectTrigger className={isIncompatible ? "border-destructive" : ""}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="30">30 min</SelectItem>
-                          <SelectItem value="60">1 hora</SelectItem>
-                          <SelectItem value="90">1.5 horas</SelectItem>
-                          <SelectItem value="120">2 horas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeTimeSlot(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            {/* Empty State */}
+            {!hasTimeSlots && (
+              <Card className="border-dashed border-2 bg-muted/30">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="rounded-full bg-primary/10 p-4 mb-4">
+                    <Clock className="h-12 w-12 text-primary" />
                   </div>
-                  {isIncompatible && (
-                    <p className="text-xs text-destructive">
-                      El intervalo de {slot.interval} min no es compatible con la duración de la clase de {baseConfig.duration_minutes} min
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-            </div>
+                  <h3 className="text-lg font-semibold mb-2">¡Añade tu primer tramo horario!</h3>
+                  <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+                    Los tramos horarios definen cuándo se crearán las clases. Por ejemplo: de 10:00 a 14:00 con intervalos de 1 hora creará 4 clases.
+                  </p>
+                  <Button
+                    onClick={addTimeSlot}
+                    size="lg"
+                    className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
+                  >
+                    <span className="text-xl mr-2">+</span> Añadir Primer Tramo
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Time Slots List */}
+            {hasTimeSlots && (
+              <div className="space-y-3">
+                {multiplicationConfig.time_slots.map((slot, index) => {
+                  const isIncompatible = !timeSlotsValidation.isValid &&
+                    timeSlotsValidation.incompatibleSlots.some(s =>
+                      s.start === slot.start && s.end === slot.end && s.interval === slot.interval
+                    );
+
+                  return (
+                    <Card key={index} className={`${isIncompatible ? 'border-destructive' : 'border-primary/20'} shadow-sm hover:shadow-md transition-shadow`}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Tramo {index + 1}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {slot.start && slot.end ? `${slot.start} - ${slot.end}` : 'Sin configurar'}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeTimeSlot(index)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Desde</Label>
+                            <Input
+                              type="time"
+                              value={slot.start}
+                              onChange={(e) => updateTimeSlot(index, { start: e.target.value })}
+                              className="h-9"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Hasta</Label>
+                            <Input
+                              type="time"
+                              value={slot.end}
+                              onChange={(e) => updateTimeSlot(index, { end: e.target.value })}
+                              className="h-9"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Intervalo</Label>
+                            <Select
+                              value={slot.interval.toString()}
+                              onValueChange={(value) => updateTimeSlot(index, { interval: parseInt(value) })}
+                            >
+                              <SelectTrigger className={`h-9 ${isIncompatible ? "border-destructive" : ""}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="30">30 min</SelectItem>
+                                <SelectItem value="60">1 hora</SelectItem>
+                                <SelectItem value="90">1.5 horas</SelectItem>
+                                <SelectItem value="120">2 horas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {isIncompatible && (
+                          <div className="mt-3 p-2 bg-destructive/10 border border-destructive/30 rounded-md">
+                            <p className="text-xs text-destructive font-medium">
+                              ⚠️ El intervalo de {slot.interval} min no es compatible con la duración de {baseConfig.duration_minutes} min
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Días de la Semana</Label>
+          {/* Días de la Semana */}
+          <div className="space-y-4">
+            <div className="border-b pb-3">
+              <h4 className="text-base font-semibold">Días de la Semana</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecciona los días en los que se crearán las clases
+              </p>
+            </div>
             <div className="grid grid-cols-4 gap-3">
               {DAYS_OPTIONS.map((day) => (
                 <div key={day.value} className="flex items-center space-x-2">
@@ -809,7 +880,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
                       }
                     }}
                   />
-                  <Label htmlFor={day.value} className="text-sm">
+                  <Label htmlFor={day.value} className="text-sm cursor-pointer">
                     {day.label}
                   </Label>
                 </div>
@@ -838,26 +909,45 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
             </div>
           )}*/}
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep(1)}>
-              Anterior
-            </Button>
-            <Button
-              onClick={() => setStep(3)}
-              disabled={generatedClasses.length === 0 || !timeSlotsValidation.isValid}
-            >
-              Editar Individualmente
-            </Button>
-          </div>
-
-          {!timeSlotsValidation.isValid && (
-            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+          {/* Validación y mensajes */}
+          {!timeSlotsValidation.isValid && hasTimeSlots && (
+            <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
               <p className="text-sm text-destructive font-medium">
                 ⚠️ Hay intervalos incompatibles con la duración de la clase ({baseConfig.duration_minutes} min).
                 Por favor, ajusta los intervalos para que sean múltiplos de la duración o viceversa.
               </p>
             </div>
           )}
+
+          {!hasTimeSlots && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 font-medium">
+                ℹ️ Debes añadir al menos un tramo horario para continuar
+              </p>
+            </div>
+          )}
+
+          {/* Preview de clases generadas */}
+          {hasTimeSlots && timeSlotsValidation.isValid && generatedClasses.length > 0 && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800 font-medium">
+                ✓ Se generarán <span className="font-bold">{generatedClasses.length} clases</span> con la configuración actual
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button variant="outline" onClick={() => setStep(1)}>
+              Anterior
+            </Button>
+            <Button
+              onClick={() => setStep(3)}
+              disabled={!hasTimeSlots || generatedClasses.length === 0 || !timeSlotsValidation.isValid}
+              className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continuar: Editar Clases
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
