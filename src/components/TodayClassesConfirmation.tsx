@@ -59,9 +59,9 @@ export const TodayClassesConfirmation = () => {
 
   if (isLoading) {
     return (
-      <Card className="border-blue-200">
+      <Card className="border-gray-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
+          <CardTitle className="flex items-center gap-2 text-black">
             <Clock className="h-5 w-5" />
             Próximas Clases
           </CardTitle>
@@ -77,9 +77,9 @@ export const TodayClassesConfirmation = () => {
 
   if (todayClasses.length === 0) {
     return (
-      <Card className="border-gray-200">
+      <Card className="border-gray-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-black">
             <Clock className="h-5 w-5" />
             Próximas Clases
           </CardTitle>
@@ -104,11 +104,11 @@ export const TodayClassesConfirmation = () => {
   const pendingCount = todayClasses.length - confirmedCount;
 
   return (
-    <Card className="border-blue-200 bg-gradient-to-br from-blue-50/50 to-white">
+    <Card className="border-gray-300 bg-white">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-blue-700">
+            <CardTitle className="flex items-center gap-2 text-black">
               <Clock className="h-5 w-5" />
               Próximas Clases - Confirma tu Asistencia
             </CardTitle>
@@ -145,19 +145,19 @@ export const TodayClassesConfirmation = () => {
                   ? 'bg-green-50 border-green-300'
                   : isAbsent
                   ? 'bg-red-50 border-red-300'
-                  : 'bg-white border-gray-200 hover:border-blue-300'
+                  : 'bg-white border-gray-300 hover:border-gray-400'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-600">{formatDate(scheduledDate)}</span>
+                      <Calendar className="h-4 w-4 text-black" />
+                      <span className="text-sm font-medium text-black">{formatDate(scheduledDate)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-lg">{classItem.programmed_class.name}</h3>
+                    <h3 className="font-semibold text-lg text-black">{classItem.programmed_class.name}</h3>
                     {isConfirmedForThisDate && (
                       <Badge className="bg-green-600 text-white">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
