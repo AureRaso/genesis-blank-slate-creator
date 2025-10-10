@@ -76,9 +76,6 @@ const PlayerDashboard = () => {
       {/* Encabezado con bienvenida */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">¡Hola, {profile?.full_name}!</h1>
-        <p className="text-muted-foreground">
-          Bienvenido a tu dashboard personal de pádel
-        </p>
       </div>
 
       {/* Confirmación de Clases de Hoy - Destacado */}
@@ -129,34 +126,6 @@ const PlayerDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Sección de Clases Programadas */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-green-600" />
-              Clases Programadas
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/dashboard/scheduled-classes')}
-            >
-              Ver todas
-            </Button>
-          </div>
-          <CardDescription>
-            Clases disponibles en tu club - Apúntate o únete a lista de espera
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PlayerClassesWidget
-            limit={3}
-            showViewAll={true}
-            onViewAll={() => navigate('/dashboard/scheduled-classes')}
-          />
-        </CardContent>
-      </Card>
 
       {/* Modal de confirmación de inscripción */}
       <LeagueRegistrationModal

@@ -224,7 +224,11 @@ export function StudentAssignmentStep({
                   )}
 
                   {/* Add students button */}
-                  <Dialog>
+                  <Dialog open={selectedGroupKey === group.key} onOpenChange={(open) => {
+                    if (!open) {
+                      setSelectedGroupKey(null);
+                    }
+                  }}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
