@@ -54,14 +54,43 @@ export const useVerifyClassPayment = () => {
 
   return useMutation({
     mutationFn: async ({ sessionId }: VerifyClassPaymentParams) => {
+      console.log('🔍 Calling verify-class-payment with sessionId:', sessionId);
+
       const { data, error } = await supabase.functions.invoke('verify-class-payment', {
         body: { sessionId }
       });
 
-      if (error) throw error;
+      console.log('🔍 verify-class-payment response:', { data, error });
+
+      if (error) {
+        console.error('🔴 verify-class-payment error details:', {
+          message: error.message,
+          context: error.context,
+          name: error.name
+        });
+
+        // Try to get response body if available
+        if (error.context instanceof Response) {
+          try {
+            const errorBody = await error.context.text();
+            console.error('🔴 Response body:', errorBody);
+          } catch (e) {
+            console.error('🔴 Could not read response body');
+          }
+        }
+
+        throw error;
+      }
+
+      if (data && !data.success) {
+        console.error('🔴 verify-class-payment returned success: false', data);
+        throw new Error(data.error || 'Payment verification failed');
+      }
+
       return data;
     },
     onSuccess: (data) => {
+      console.log('✅ Payment verification successful:', data);
       if (data.success) {
         // Invalidar cache para refrescar los datos
         queryClient.invalidateQueries({ queryKey: ['student-class-participations'] });
@@ -75,11 +104,17 @@ export const useVerifyClassPayment = () => {
         });
       }
     },
-    onError: (error) => {
-      console.error('Error verifying class payment:', error);
+    onError: (error: any) => {
+      console.error('🔴 Error verifying class payment:', error);
+      console.error('🔴 Error details:', {
+        message: error?.message,
+        context: error?.context,
+        details: error?.details
+      });
+
       toast({
         title: "Error",
-        description: "No se pudo verificar el pago.",
+        description: error?.message || "No se pudo verificar el pago.",
         variant: "destructive",
       });
     },

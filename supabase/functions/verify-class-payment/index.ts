@@ -485,11 +485,31 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in verify-class-payment", { message: errorMessage });
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: errorMessage 
+    let errorMessage = 'Unknown error occurred';
+    let errorDetails = {};
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = {
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
+      };
+    } else if (typeof error === 'object' && error !== null) {
+      errorMessage = JSON.stringify(error);
+      errorDetails = error;
+    } else {
+      errorMessage = String(error);
+    }
+
+    logStep("ERROR in verify-class-payment", {
+      message: errorMessage,
+      details: errorDetails
+    });
+
+    return new Response(JSON.stringify({
+      success: false,
+      error: errorMessage,
+      details: errorDetails
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
