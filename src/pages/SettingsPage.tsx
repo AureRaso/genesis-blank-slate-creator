@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordChangeSection } from '@/components/PasswordChangeSection';
 import { canChangePassword, getAuthProviderMessage } from '@/utils/authProviders';
+import { useNavigate } from 'react-router-dom';
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -26,6 +27,7 @@ interface ClubWithStripe {
 const SettingsPage = () => {
   const { profile, isAdmin, isPlayer, user } = useAuth();
   const { data: clubs } = useClubs();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>('');
   const [testStripeUrl, setTestStripeUrl] = useState<string>('');
@@ -148,6 +150,21 @@ const SettingsPage = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Error al actualizar el perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success('Sesión cerrada correctamente');
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Error al cerrar sesión');
     } finally {
       setLoading(false);
     }
@@ -283,6 +300,20 @@ const SettingsPage = () => {
             canChangePassword={canChangePassword(user)}
             authProviderMessage={getAuthProviderMessage(user)}
           />
+
+          {/* Logout Section */}
+          <div className="pt-4 border-t border-gray-200">
+            <Button
+              onClick={handleLogout}
+              disabled={loading}
+              variant="destructive"
+              className="w-full sm:w-auto"
+              size="default"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+            </Button>
+          </div>
         </div>
       </div>
     );
