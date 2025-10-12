@@ -123,28 +123,26 @@ export const TodayClassesConfirmation = () => {
   const pendingCount = todayClasses.length - confirmedCount;
 
   return (
-    <div className="space-y-6">
-      {/* Header with Reminder Banner in same line - 50/50 split */}
-      <div className="flex items-center gap-4">
-        <div className="w-1/2 flex items-center gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">Próximas clases</h2>
-          </div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Responsive: stacked on mobile, inline on desktop */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Próximas clases</h2>
         </div>
 
-        {/* Reminder Banner - Always visible - 50% width */}
-        <div className="w-1/2">
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+        {/* Reminder Banner - Full width on mobile, 50% on desktop */}
+        <div className="w-full md:w-1/2">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl sm:rounded-2xl">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-amber-800">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-amber-800">
                   Confirma tu asistencia
                 </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  Ayuda a tu entrenador a planificar mejor las clases confirmando tu disponibilidad.
+                <p className="text-xs text-amber-600 mt-0.5 sm:mt-1 line-clamp-2">
+                  Ayuda a tu entrenador a planificar mejor las clases.
                 </p>
               </div>
             </div>
@@ -153,8 +151,8 @@ export const TodayClassesConfirmation = () => {
       </div>
 
 
-      {/* Class Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Class Cards Grid - Single column on mobile, 2 columns on tablet/desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {todayClasses.map((classItem: any) => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
           const scheduledDate = classItem.scheduled_date;
@@ -174,69 +172,68 @@ export const TodayClassesConfirmation = () => {
                 }
               `}
             >
-              <CardContent className="p-8">
-                {/* Header Section */}
-                <div className="flex items-start justify-between mb-4">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                {/* Header Section - Responsive */}
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold text-slate-700">
+                    <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-700">
                         {formatDate(scheduledDate)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-slate-800">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
+                      <span className="text-base sm:text-lg font-bold text-slate-800">
                         {formatTime(classItem.programmed_class.start_time)}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Class Details */}
-                <div className="space-y-3">
+                {/* Class Details - Responsive */}
+                <div className="space-y-2 sm:space-y-3">
                   {/* Class Name */}
-                  <h3 className="text-xl font-bold text-slate-800 leading-tight">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight line-clamp-2">
                     {classItem.programmed_class.name}
                   </h3>
 
                   {/* Trainer Info */}
                   <div className="flex items-center gap-2 text-slate-600">
-                    <div className="p-1 bg-primary/10 rounded">
-                      <User className="h-3.5 w-3.5 text-primary" />
+                    <div className="p-1 bg-primary/10 rounded flex-shrink-0">
+                      <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
                     </div>
-                    <span className="text-sm font-medium">
+                    <span className="text-xs sm:text-sm font-medium truncate">
                       {classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}
                     </span>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200/60">
-                  {/* Attendance Checkbox - Takes half width */}
+                {/* Action Buttons - Responsive: stacked on mobile, inline on desktop */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mt-4 sm:mt-6 pt-4 border-t border-slate-200/60">
+                  {/* Attendance Checkbox */}
                   {!isAbsent && (
-                    <div className="flex items-center gap-3 w-1/2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`attendance-${classItem.id}-${scheduledDate}`}
-                          checked={isConfirmedForThisDate}
-                          onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
-                          disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                          className={`
-                            h-5 w-5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600
-                            border-2 border-slate-300
-                          `}
-                        />
-                        <label
-                          htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
-                          className="text-sm font-medium text-slate-700 cursor-pointer select-none"
-                        >
-                          {isConfirmedForThisDate ? 'Asistencia confirmada' : 'Confirmar asistencia'}
-                        </label>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`attendance-${classItem.id}-${scheduledDate}`}
+                        checked={isConfirmedForThisDate}
+                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
+                        disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
+                        className={`
+                          h-4 w-4 sm:h-5 sm:w-5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600
+                          border-2 border-slate-300 flex-shrink-0
+                        `}
+                      />
+                      <label
+                        htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
+                        className="text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none"
+                      >
+                        {isConfirmedForThisDate ? 'Confirmada' : 'Confirmar'}
+                      </label>
                     </div>
                   )}
 
                   {/* Action Buttons Group */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-end">
                     {/* Absence Button */}
                     {!isConfirmedForThisDate && !isAbsent && (
                       <Button

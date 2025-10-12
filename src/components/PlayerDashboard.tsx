@@ -63,22 +63,29 @@ const PlayerDashboard = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      {/* Encabezado con bienvenida */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">¡Hola, {profile?.full_name}!</h1>
+    <div className="min-h-screen pb-20 md:pb-0">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
+        {/* Encabezado con bienvenida - Responsive */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            ¡Hola, {profile?.full_name?.split(' ')[0]}!
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500">
+            Bienvenido a tu panel de control
+          </p>
+        </div>
+
+        {/* Confirmación de Clases de Hoy - Destacado */}
+        <TodayClassesConfirmation />
+
+        {/* Modal de confirmación de inscripción */}
+        <LeagueRegistrationModal
+          league={registrationLeague}
+          isOpen={!!registrationLeague}
+          onClose={handleCloseRegistrationModal}
+          profileId={profile?.id || ''}
+        />
       </div>
-
-      {/* Confirmación de Clases de Hoy - Destacado */}
-      <TodayClassesConfirmation />
-
-      {/* Modal de confirmación de inscripción */}
-      <LeagueRegistrationModal
-        league={registrationLeague}
-        isOpen={!!registrationLeague}
-        onClose={handleCloseRegistrationModal}
-        profileId={profile?.id || ''}
-      />
     </div>
   );
 };

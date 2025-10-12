@@ -134,25 +134,28 @@ const StudentClassesPage = () => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      <div className="space-y-6">
-        {/* Header with Summary Cards in same line */}
-        <div className="flex items-start justify-between gap-4">
+    <div className="min-h-screen pb-20 md:pb-0">
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
+        {/* Header with Summary Cards - Responsive: stacked on mobile, inline on desktop */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold flex items-center text-black">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
               Mis Pagos
             </h1>
+            <p className="text-sm sm:text-base text-gray-500">
+              Gestiona tus suscripciones
+            </p>
           </div>
 
-          {/* Summary Cards */}
-          <div className="flex gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <CheckCircle className="h-8 w-8 text-black" />
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-medium text-muted-foreground">Clases Activas</p>
-                    <p className="text-2xl font-bold text-black">
+          {/* Summary Cards - Responsive: full width on mobile, auto on desktop */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:flex">
+            <Card className="shadow-md">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+                  <div className="space-y-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Activas</p>
+                    <p className="text-xl sm:text-2xl font-bold text-black">
                       {participations.filter(p => p.status === 'active').length}
                     </p>
                   </div>
@@ -160,13 +163,13 @@ const StudentClassesPage = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <AlertCircle className="h-8 w-8 text-black" />
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-medium text-muted-foreground">Pagos Pendientes</p>
-                    <p className="text-2xl font-bold text-black">
+            <Card className="shadow-md">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-amber-600" />
+                  <div className="space-y-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Pendientes</p>
+                    <p className="text-xl sm:text-2xl font-bold text-black">
                       {participations.filter(p => p.payment_status === 'pending').length}
                     </p>
                   </div>
@@ -179,38 +182,38 @@ const StudentClassesPage = () => {
         {/* Debug Component - Remove in production */}
         <DebugStudentClasses />
 
-        <Tabs defaultValue="classes" className="space-y-6">
+        <Tabs defaultValue="classes" className="space-y-4 sm:space-y-6">
           <TabsContent value="classes">
             {participations.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No tienes clases programadas</h3>
-                  <p className="text-muted-foreground">
-                    Habla con tu profesor para que te asigne a una clase o explora las clases disponibles.
+                <CardContent className="py-8 sm:py-12 text-center">
+                  <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">No tienes clases programadas</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground px-4">
+                    Habla con tu profesor para que te asigne a una clase.
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {participations.map((participation) => (
                 <Card
                   key={participation.id}
-                  className="border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02] bg-white border-l-4 border-l-gray-300"
+                  className="border-0 shadow-lg rounded-xl sm:rounded-2xl transition-all duration-300 hover:shadow-xl sm:hover:scale-[1.02] bg-white border-l-4 border-l-gray-300"
                 >
-                  <CardContent className="p-8">
-                    {/* Header Section */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-4 w-4 text-slate-700" />
-                          <span className="text-sm font-semibold text-slate-700">
+                  <CardContent className="p-4 sm:p-6 lg:p-8">
+                    {/* Header Section - Responsive */}
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-slate-700 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm font-semibold text-slate-700">
                             {formatDaysOfWeek(participation.programmed_class.days_of_week)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Clock className="h-5 w-5 text-slate-800" />
-                          <span className="text-lg font-bold text-slate-800">
+                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-800 flex-shrink-0" />
+                          <span className="text-sm sm:text-base lg:text-lg font-bold text-slate-800">
                             {formatTime(participation.programmed_class.start_time)} ({participation.programmed_class.duration_minutes} min)
                           </span>
                         </div>
