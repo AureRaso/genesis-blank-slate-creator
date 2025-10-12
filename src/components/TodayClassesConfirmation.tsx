@@ -124,29 +124,29 @@ export const TodayClassesConfirmation = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      {/* Header with Reminder Banner in same line - 50/50 split */}
+      <div className="flex items-center gap-4">
+        <div className="w-1/2 flex items-center gap-3">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Próximas clases</h2>
           </div>
         </div>
-      </div>
 
-      {/* Reminder Banner - Always visible */}
-      <div className="w-1/2">
-        <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-amber-800">
-                Confirma tu asistencia
-              </p>
-              <p className="text-xs text-amber-600 mt-1">
-                Ayuda a tu entrenador a planificar mejor las clases confirmando tu disponibilidad.
-              </p>
+        {/* Reminder Banner - Always visible - 50% width */}
+        <div className="w-1/2">
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Confirma tu asistencia
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Ayuda a tu entrenador a planificar mejor las clases confirmando tu disponibilidad.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Improve AuthPage responsive layout for mobile devices\n\n- Change container from h-screen to min-h-screen on mobile\n- Enable vertical scroll on mobile devices\n- Reduce logo and text sizes for better mobile fit\n- Hide feature list on mobile to save space\n- Add responsive breakpoints for all text elements\n- Fix overflow issues preventing mobile scrolling\n- Center form card on mobile devices\n- Keep desktop full-height layout with internal scroll\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix: Improve AuthPage responsive layout for mobile devices\n\n- Change container from h-screen to min-h-screen on mobile\n- Enable vertical scroll on mobile devices\n- Reduce logo and text sizes for better mobile fit\n- Hide feature list on mobile to save space\n- Add responsive breakpoints for all text elements\n- Fix overflow issues preventing mobile scrolling\n- Center form card on mobile devices\n- Keep desktop full-height layout with internal scroll\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git add:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(npx supabase functions deploy:*)",
+      "Bash(npx supabase functions serve:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx supabase:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npm run screenshots:desktop:*)"
     ],
     "deny": [],
     "ask": []

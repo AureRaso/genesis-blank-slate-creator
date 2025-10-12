@@ -58,9 +58,6 @@ const PlayersPage = () => {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
               {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-              {isAdmin ? 'Alumnos inscritos en tus clubes' : 'Lista de jugadores registrados'}
-            </p>
           </div>
           {isAdmin && (
             <div className="hidden sm:flex space-x-2 flex-shrink-0">

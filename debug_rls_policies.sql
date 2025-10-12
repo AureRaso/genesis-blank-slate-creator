@@ -1,16 +1,9 @@
--- SCRIPT DE DEPURACIÓN PARA VERIFICAR POLÍTICAS RLS
--- Ejecuta esto en el SQL Editor de Supabase para verificar el estado actual
+-- ============================================================================
+-- DEBUG: Check current RLS policies on class_participants
+-- Run this in Supabase SQL Editor to see what policies are active
+-- ============================================================================
 
--- 1. Verificar si RLS está habilitado en la tabla
-SELECT
-    schemaname,
-    tablename,
-    rowsecurity,
-    hasrls
-FROM pg_tables
-WHERE tablename = 'student_enrollments';
-
--- 2. Mostrar todas las políticas actuales para student_enrollments
+-- 1. Check all policies on class_participants table
 SELECT
     schemaname,
     tablename,
@@ -21,60 +14,27 @@ SELECT
     qual,
     with_check
 FROM pg_policies
-WHERE tablename = 'student_enrollments'
+WHERE tablename = 'class_participants'
 ORDER BY policyname;
 
--- 3. Verificar estructura de campos
+-- 2. Check if RLS is enabled
 SELECT
-    column_name,
-    data_type,
-    is_nullable,
-    column_default
-FROM information_schema.columns
-WHERE table_name = 'student_enrollments'
-AND column_name IN ('weekly_days', 'preferred_times', 'enrollment_period', 'created_by_profile_id', 'trainer_profile_id');
+    schemaname,
+    tablename,
+    rowsecurity
+FROM pg_tables
+WHERE tablename = 'class_participants';
 
--- 4. Verificar si existen enrollment_tokens válidos
+-- 3. Check the is_my_enrollment function exists and its definition
 SELECT
-    token,
-    class_id,
-    available_spots,
-    used_count,
-    expires_at,
-    is_active,
-    created_at
-FROM enrollment_tokens
-WHERE is_active = true
-AND expires_at > NOW()
-ORDER BY created_at DESC
-LIMIT 5;
+    routine_name,
+    routine_type,
+    security_type
+FROM information_schema.routines
+WHERE routine_schema = 'public'
+AND routine_name = 'is_my_enrollment';
 
--- 5. Test de inserción manual (cambia los valores por datos reales)
--- NOTA: Este insert fallará si las políticas no están correctas
-/*
-INSERT INTO student_enrollments (
-    trainer_profile_id,
-    club_id,
-    created_by_profile_id,
-    full_name,
-    email,
-    phone,
-    level,
-    weekly_days,
-    preferred_times,
-    enrollment_period,
-    status
-) VALUES (
-    '00000000-0000-0000-0000-000000000000', -- reemplaza con trainer_profile_id real
-    '00000000-0000-0000-0000-000000000000', -- reemplaza con club_id real
-    '00000000-0000-0000-0000-000000000000', -- reemplaza con trainer_profile_id real
-    'Test Player',
-    'test@example.com',
-    '123456789',
-    3,
-    '{}',
-    '{}',
-    'mensual',
-    'active'
-);
-*/
+-- 4. Get function source
+SELECT pg_get_functiondef(oid)
+FROM pg_proc
+WHERE proname = 'is_my_enrollment';

@@ -97,7 +97,7 @@ const PlayersList = () => {
             No hay jugadores registrados
           </p>
         ) : (
-          <div className="space-y-2 sm:space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {players.map((player) => (
               <div
                 key={player.id}
