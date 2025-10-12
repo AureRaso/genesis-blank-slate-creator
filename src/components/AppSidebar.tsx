@@ -102,7 +102,7 @@ const AppSidebar = () => {
         isActive: true
       },
       {
-        title: "Mis Clases",
+        title: "Mis Pagos",
         url: "/dashboard/my-classes",
         icon: BookOpen
       },
@@ -110,12 +110,7 @@ const AppSidebar = () => {
         title: t('sidebar.leagues'),
         url: "/dashboard/leagues",
         icon: Trophy
-      }] : []),
-      {
-        title: t('sidebar.clubs'),
-        url: "/dashboard/clubs",
-        icon: Building2
-      }
+      }] : [])
     ];
     return <Sidebar variant="inset" className="w-64">
         <SidebarHeader className="flex items-center justify-center py-3">

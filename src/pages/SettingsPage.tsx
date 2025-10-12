@@ -156,22 +156,19 @@ const SettingsPage = () => {
   // Player view - show profile information
   if (isPlayer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
-        <div className="max-w-2xl mx-auto pt-4 sm:pt-8">
-          <div className="mb-4 sm:mb-6 md:mb-8">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Mi Perfil
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-black">
+              Configuración
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
-              Gestiona tu información personal
-            </p>
           </div>
 
-          <Card>
-            <CardHeader className="p-3 sm:p-6">
+          <Card className="border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl bg-white">
+            <CardHeader className="p-8">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                  <Settings className="h-5 w-5" />
                   Información Personal
                 </CardTitle>
                 {!isEditing ? (
@@ -190,8 +187,8 @@ const SettingsPage = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6 pt-0 sm:pt-0">
-              <div className="space-y-3 sm:space-y-4">
+            <CardContent className="p-8 pt-0">
+              <div className="space-y-4">
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="full_name" className="text-xs sm:text-sm font-medium">
                     Nombre Completo
@@ -273,15 +270,6 @@ const SettingsPage = () => {
                   <p className="text-xs text-muted-foreground">
                     Contacta al administrador para cambiar de club
                   </p>
-                </div>
-
-                <div className="space-y-1 sm:space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">
-                    Rol
-                  </Label>
-                  <Badge variant="secondary" className="capitalize text-xs sm:text-sm">
-                    {profile?.role === 'player' ? 'Jugador' : profile?.role}
-                  </Badge>
                 </div>
               </div>
             </CardContent>

@@ -63,7 +63,7 @@ const PlayerDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       {/* Encabezado con bienvenida */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">¡Hola, {profile?.full_name}!</h1>
