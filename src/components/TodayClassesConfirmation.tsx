@@ -227,7 +227,7 @@ export const TodayClassesConfirmation = () => {
                         htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
                         className="text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none"
                       >
-                        {isConfirmedForThisDate ? 'Confirmada' : 'Confirmar'}
+                        {isConfirmedForThisDate ? 'Voy' : 'Voy'}
                       </label>
                     </div>
                   )}

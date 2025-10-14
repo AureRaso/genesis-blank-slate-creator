@@ -361,68 +361,27 @@ const ClassDetailsModal = ({ programmedClass, isOpen, onClose }: {
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
-                    Plazas disponibles
-                  </Badge>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="class-notes">Notas adicionales (opcional)</Label>
-                    <Textarea
-                      id="class-notes"
-                      placeholder="Cualquier información adicional..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={2}
-                    />
+                  <div className="text-center space-y-2">
+                    <div className="text-sm text-amber-600 font-medium">
+                      Inscripciones temporalmente pausadas
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Estamos finalizando la configuración del sistema de pagos
+                    </p>
                   </div>
 
-                  {programmedClass.monthly_price > 0 ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" className="w-full">
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Inscribirse - €{programmedClass.monthly_price}/mes
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
-                          <AlertDialogDescription asChild>
-                            <div className="space-y-3">
-                              <p>Confirma tu inscripción a esta clase. Serás redirigido al pago de €{programmedClass.monthly_price}/mes.</p>
-                              <div className="bg-muted p-3 rounded-lg space-y-1 text-sm">
-                                <p><strong>Clase:</strong> {programmedClass.name}</p>
-                                <p><strong>Nivel:</strong> {getLevelDisplay(programmedClass)}</p>
-                                <p><strong>Horario:</strong> {formatDaysOfWeek(programmedClass.days_of_week)} - {programmedClass.start_time}</p>
-                                <p><strong>Entrenador:</strong> {programmedClass.trainer?.full_name || 'No asignado'}</p>
-                                <p><strong>Precio:</strong> €{programmedClass.monthly_price}/mes</p>
-                              </div>
-                            </div>
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setNotes("")}>
-                            Cancelar
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handlePaymentReservation}
-                            disabled={createPayment.isPending}
-                          >
-                            {createPayment.isPending ? "Procesando..." : "Pagar e Inscribirse"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={handleDirectReservation}
-                      disabled={createReservation.isPending}
-                      className="w-full"
-                    >
-                      {createReservation.isPending ? "Inscribiendo..." : "Inscribirse Gratis"}
-                    </Button>
+                  {programmedClass.monthly_price > 0 && (
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-muted-foreground">
+                        €{programmedClass.monthly_price}/mes
+                      </div>
+                    </div>
                   )}
+
+                  <Button disabled size="sm" className="w-full bg-muted text-muted-foreground cursor-not-allowed">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    {programmedClass.monthly_price > 0 ? "Inscribirse (En pausa)" : "Inscribirse (En pausa)"}
+                  </Button>
                 </div>
               )}
             </div>

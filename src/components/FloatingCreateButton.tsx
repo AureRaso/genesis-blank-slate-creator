@@ -36,7 +36,7 @@ export function FloatingCreateButton() {
             {/* Bulk Create Button */}
             <div className="flex items-center gap-3">
               <span className="bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
-                Creación Masiva
+                Creación masiva
               </span>
               <Button
                 onClick={handleBulkCreate}

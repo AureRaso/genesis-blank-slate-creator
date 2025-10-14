@@ -314,31 +314,30 @@ const StudentClassesPage = () => {
                                 <AlertCircle className="h-4 w-4 text-amber-600" />
                               </div>
                               <span className="text-sm font-semibold text-amber-800">
-                                Pago pendiente
+                                Inscripciones pausadas
                               </span>
                             </div>
-                            {participation.payment_method && (
-                              <Badge variant="outline" className="text-amber-700 border-amber-300">
-                                {participation.payment_method}
-                              </Badge>
-                            )}
+                          </div>
+                          <div className="mb-3">
+                            <p className="text-xs text-amber-700 mb-2">
+                              Estamos finalizando la configuración del sistema de pagos
+                            </p>
                           </div>
                           <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm font-medium text-amber-700">
+                            <div className="text-sm font-medium text-muted-foreground">
                               €{participation.programmed_class.monthly_price}/mes
                             </div>
                             <Button
-                              onClick={() => handlePayClass(participation)}
-                              disabled={createPaymentMutation.isPending}
+                              disabled
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                              className="bg-muted text-muted-foreground cursor-not-allowed"
                             >
                               <CreditCard className="h-3.5 w-3.5 mr-1.5" />
-                              {createPaymentMutation.isPending ? 'Procesando...' : 'Suscribirse'}
+                              Suscribirse (En pausa)
                             </Button>
                           </div>
-                          <div className="text-xs text-amber-600">
-                            Renovación automática mensual
+                          <div className="text-xs text-muted-foreground">
+                            Disponible próximamente
                           </div>
                         </div>
                       )}

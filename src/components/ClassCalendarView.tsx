@@ -222,7 +222,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
       {isAdmin && <TrainerLegend classes={filteredClasses} />}
 
       {/* Mobile: Calendar/List + Day/Week/Month selectors on same row */}
-      <div className="flex lg:hidden items-center justify-between gap-2 mb-4">
+      <div className="flex lg:hidden items-center gap-2 mb-4">
         {/* Calendar/List toggle */}
         <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
           <Button

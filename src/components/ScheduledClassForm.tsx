@@ -218,6 +218,17 @@ export default function ScheduledClassForm({
       form.setValue("selected_students", []);
     }
   }, [selectedClubId, isAdmin, form]);
+
+  // Debug: Monitor step changes
+  useEffect(() => {
+    console.log("🔄 Step changed to:", currentStep);
+    if (currentStep === 3) {
+      console.log("🎯 Llegamos al paso 3!");
+      console.log("📊 Form values at step 3:", form.getValues());
+      console.log("🏀 Court number value:", form.getValues().court_number);
+      console.log("💰 Price value:", form.getValues().monthly_price);
+    }
+  }, [currentStep]);
   const generatePreview = () => {
     const {
       selected_days,
@@ -263,6 +274,31 @@ export default function ScheduledClassForm({
     return dates.sort();
   };
   const onSubmit = async (data: FormData) => {
+    console.log("🔥 onSubmit LLAMADO - Inicio de validación");
+    console.log("📋 Current Step:", currentStep);
+    console.log("📋 Form Data:", data);
+    console.log("🏀 Court Number:", data.court_number);
+    console.log("💰 Monthly Price:", data.monthly_price);
+
+    // Validar que estamos en el paso 3
+    if (currentStep !== 3) {
+      console.log("❌ BLOQUEADO: No estamos en el paso 3");
+      return;
+    }
+
+    // Validar que court_number esté presente
+    if (!data.court_number || data.court_number === null) {
+      console.log("❌ BLOQUEADO: court_number no está definido");
+      toast({
+        title: "Pista requerida",
+        description: "Debes seleccionar una pista antes de crear las clases",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log("✅ Validaciones pasadas, procediendo a crear clases...");
+
     try {
       const submitData = {
         name: data.name,
@@ -284,6 +320,8 @@ export default function ScheduledClassForm({
         selected_students: data.selection_type === "individual" ? data.selected_students : [],
         monthly_price: data.monthly_price
       };
+
+      console.log("📤 Enviando datos:", submitData);
       await createMutation.mutateAsync(submitData);
 
       toast({
@@ -293,7 +331,7 @@ export default function ScheduledClassForm({
 
       onClose();
     } catch (error) {
-      console.error("Error creating programmed class:", error);
+      console.error("❌ Error creating programmed class:", error);
       toast({
         title: "Error al crear clases",
         description: "Ocurrió un error al crear las clases. Por favor intenta nuevamente.",
@@ -302,6 +340,8 @@ export default function ScheduledClassForm({
     }
   };
   const nextStep = () => {
+    console.log("➡️ nextStep llamado, currentStep:", currentStep);
+
     // Validate club selection before moving to step 2
     if (currentStep === 1 && isAdmin) {
       const currentClubId = form.getValues().club_id;
@@ -314,9 +354,11 @@ export default function ScheduledClassForm({
         return;
       }
     }
-    
+
     if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+      const nextStepNumber = currentStep + 1;
+      console.log("✅ Avanzando al paso:", nextStepNumber);
+      setCurrentStep(nextStepNumber);
     }
   };
   const prevStep = () => {
@@ -375,27 +417,44 @@ export default function ScheduledClassForm({
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            // Show toast with validation errors
-            const errorFields = Object.keys(errors);
-            const fieldNames: Record<string, string> = {
-              name: "Nombre de la clase",
-              start_time: "Hora de inicio",
-              selected_days: "Días de la semana",
-              start_date: "Fecha de inicio",
-              end_date: "Fecha de fin",
-              club_id: "Club",
-              court_number: "Pista"
-            };
+          <form onSubmit={(e) => {
+            console.log("🚨 Form onSubmit disparado!");
+            console.log("📍 Current step en form handler:", currentStep);
+            console.log("🔍 Event:", e);
+            console.log("📦 Event target:", e.target);
+            console.log("🎯 Event nativeEvent:", e.nativeEvent);
 
-            const missingFieldNames = errorFields.map(field => fieldNames[field] || field);
+            e.preventDefault();
+            e.stopPropagation();
 
-            toast({
-              title: "Faltan campos requeridos",
-              description: `Por favor completa: ${missingFieldNames.join(", ")}`,
-              variant: "destructive"
-            });
-          })} className="space-y-6">
+            // Only submit if we're on step 3
+            if (currentStep === 3) {
+              console.log("✅ Estamos en paso 3, ejecutando handleSubmit");
+              form.handleSubmit(onSubmit, (errors) => {
+                // Show toast with validation errors
+                const errorFields = Object.keys(errors);
+                const fieldNames: Record<string, string> = {
+                  name: "Nombre de la clase",
+                  start_time: "Hora de inicio",
+                  selected_days: "Días de la semana",
+                  start_date: "Fecha de inicio",
+                  end_date: "Fecha de fin",
+                  club_id: "Club",
+                  court_number: "Pista"
+                };
+
+                const missingFieldNames = errorFields.map(field => fieldNames[field] || field);
+
+                toast({
+                  title: "Faltan campos requeridos",
+                  description: `Por favor completa: ${missingFieldNames.join(", ")}`,
+                  variant: "destructive"
+                });
+              })(e);
+            } else {
+              console.log("❌ NO estamos en paso 3, bloqueando submit");
+            }
+          }} className="space-y-6">
             
             {/* Step 1: Basic Info and Recurrence */}
             {currentStep === 1 && <div className="space-y-6">
@@ -904,8 +963,11 @@ export default function ScheduledClassForm({
                                 step="0.01"
                                 placeholder="0.00"
                                 className="h-12 text-lg pr-12"
-                                {...field}
+                                value={field.value ?? 0}
                                 onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
                               />
                               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
                                 €/mes
@@ -963,7 +1025,15 @@ export default function ScheduledClassForm({
               {currentStep < 3 ? <Button type="button" onClick={nextStep}>
                   {t('classes.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button> : <Button type="submit" disabled={createMutation.isPending}>
+                </Button> : <Button
+                  type="button"
+                  disabled={createMutation.isPending}
+                  onClick={(e) => {
+                    console.log("🖱️ Submit button clicked manually");
+                    e.preventDefault();
+                    form.handleSubmit(onSubmit)();
+                  }}
+                >
                   {createMutation.isPending ? t('common.loading') : t('classes.createClasses')}
                 </Button>}
             </div>

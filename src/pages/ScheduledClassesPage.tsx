@@ -54,9 +54,9 @@ function ScheduledClassesContent() {
         </Card>
       </div>;
   }
-  return <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+  return <div className="min-h-screen overflow-y-auto flex flex-col gap-3 sm:gap-0 p-3 sm:p-4 lg:p-6">
       {/* Header */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{t('pages.scheduledClasses.title')}</h1>
@@ -85,7 +85,7 @@ function ScheduledClassesContent() {
                   className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20"
                 >
                   <Zap className="h-4 w-4 mr-2" />
-                  <span className="hidden xl:inline">Creación Masiva</span>
+                  <span className="hidden xl:inline">Creación masiva</span>
                   <span className="xl:hidden">Masiva</span>
                 </Button>
 

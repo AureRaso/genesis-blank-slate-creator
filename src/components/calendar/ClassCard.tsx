@@ -732,26 +732,27 @@ function PlayerClassDetailsModal({
         <div className="border-t pt-4">
           <div className="space-y-4">
             <div className="text-center">
-              {hasAvailableSpots ? <div className="text-sm text-green-600 font-medium mb-2">
-                  ¡Plazas disponibles!
-                </div> : <div className="text-sm text-amber-600 font-medium mb-2">
-                  Clase completa
-                </div>}
+              <div className="text-sm text-amber-600 font-medium mb-2">
+                Inscripciones temporalmente pausadas
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Estamos finalizando la configuración del sistema de pagos
+              </p>
             </div>
-            
+
             <div className="flex justify-center">
               {hasAvailableSpots ?
-            // Si hay plazas disponibles, mostrar botón de pago
+            // Si hay plazas disponibles, mostrar botón deshabilitado
             <div className="space-y-3 w-full">
                   {cls.monthly_price > 0 && <div className="text-center">
-                      <div className="text-lg font-semibold text-green-600 mb-2">
+                      <div className="text-lg font-semibold text-muted-foreground mb-2">
                         {cls.monthly_price}€/mes
                       </div>
                     </div>}
-                  <Button onClick={handleEnrollWithPayment} disabled={createPayment.isPending} className="w-full bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange">
-                    {createPayment.isPending ? "Procesando..." : cls.monthly_price > 0 ? "Pagar e Inscribirse" : "Inscribirse"}
+                  <Button disabled className="w-full bg-muted text-muted-foreground cursor-not-allowed">
+                    {cls.monthly_price > 0 ? "Pagar e Inscribirse (En pausa)" : "Inscribirse (En pausa)"}
                   </Button>
-                  
+
                   {/* También mostrar opción de lista de espera como alternativa */}
                   {!waitlistPosition && <Button variant="outline" onClick={handleJoinWaitlist} disabled={joinWaitlist.isPending} className="w-full">
                       <UserPlus className="h-4 w-4 mr-2" />
