@@ -139,7 +139,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                     )}
                   />
 
-                  <FormField
+                  {/*<FormField
                     control={editForm.control}
                     name="photo_url"
                     render={({ field }) => (
@@ -151,7 +151,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  />*/}
 
                   <FormField
                     control={editForm.control}
@@ -210,7 +210,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         </h1>
       </div>
 
-      <Card>
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <UserCheck className="h-5 w-5" />
@@ -223,7 +223,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         <CardContent>
           <Form {...createForm}>
             <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <FormField
                   control={createForm.control}
                   name="full_name"
@@ -283,7 +283,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   )}
                 />
 
-                <FormField
+                {/*<FormField
                   control={createForm.control}
                   name="photo_url"
                   render={({ field }) => (
@@ -295,53 +295,53 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                       <FormMessage />
                     </FormItem>
                   )}
+                />*/}
+
+                <FormField
+                  control={createForm.control}
+                  name="club_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Club Asignado</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="">Selecciona un club</option>
+                          {clubs?.map((club) => (
+                            <option key={club.id} value={club.id}>
+                              {club.name}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>
+                        Selecciona el club donde podrá dar clases este profesor
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={createForm.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Profesor activo</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
                 />
               </div>
-
-              <FormField
-                control={createForm.control}
-                name="club_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Club Asignado</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="">Selecciona un club</option>
-                        {clubs?.map((club) => (
-                          <option key={club.id} value={club.id}>
-                            {club.name}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormDescription>
-                      Selecciona el club donde podrá dar clases este profesor
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={createForm.control}
-                name="is_active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Profesor activo</FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
 
               <div className="flex justify-end space-x-4">
                 <Button type="button" variant="outline" onClick={onClose}>

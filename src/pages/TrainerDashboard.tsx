@@ -29,31 +29,27 @@ const TrainerDashboard = () => {
 
   const { data: todayClasses } = useTodayAttendance();
 
-  // Get total students (participants across all trainer's classes)
+  // Get total students from the club
   const { data: totalStudents } = useQuery({
-    queryKey: ['trainer-students', trainerProfile?.id, myClasses],
+    queryKey: ['club-total-students', trainerClubId],
     queryFn: async () => {
-      if (!trainerProfile?.id || !myClasses || myClasses.length === 0) return 0;
+      if (!trainerClubId) return 0;
 
-      // Get all class IDs for this trainer
-      const classIds = myClasses.map(c => c.id);
-
+      // Get all student enrollments for this club
       const { data, error } = await supabase
-        .from('class_participants')
-        .select('student_enrollment_id', { count: 'exact' })
-        .in('class_id', classIds)
+        .from('student_enrollments')
+        .select('id', { count: 'exact' })
+        .eq('club_id', trainerClubId)
         .eq('status', 'active');
 
       if (error) {
-        console.error('Error fetching students:', error);
+        console.error('Error fetching club students:', error);
         return 0;
       }
 
-      // Get unique students
-      const uniqueStudents = new Set(data?.map(p => p.student_enrollment_id) || []);
-      return uniqueStudents.size;
+      return data?.length || 0;
     },
-    enabled: !!trainerProfile?.id && !!myClasses && myClasses.length > 0
+    enabled: !!trainerClubId
   });
 
   // Fetch recent activities

@@ -261,6 +261,9 @@ export const useCreateTrainer = () => {
 
   return useMutation({
     mutationFn: async (trainerData: CreateTrainerData) => {
+      // Obtener el ID del usuario actual (admin) que está creando el profesor
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Llamar a la Edge Function para crear el usuario completo
       const { data, error } = await supabase.functions.invoke('create-trainer-user', {
         body: {
@@ -270,7 +273,8 @@ export const useCreateTrainer = () => {
           phone: trainerData.phone,
           specialty: trainerData.specialty || null,
           photo_url: trainerData.photo_url || null,
-          is_active: trainerData.is_active
+          is_active: trainerData.is_active,
+          created_by_id: user?.id // Pasar el ID del admin que crea el profesor
         }
       });
 
@@ -288,20 +292,13 @@ export const useCreateTrainer = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });
       queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
-      
-      // Mostrar información de la contraseña temporal
-      if (data && data.temporary_password) {
-        toast({
-          title: "Profesor creado correctamente",
-          description: `Usuario creado con contraseña temporal: ${data.temporary_password}`,
-          duration: 10000, // Mostrar por más tiempo para que pueda copiar la contraseña
-        });
-      } else {
-        toast({
-          title: "Éxito",
-          description: "Profesor creado correctamente",
-        });
-      }
+
+      // Mostrar mensaje de éxito con información del correo
+      toast({
+        title: "Profesor creado correctamente",
+        description: "Se ha enviado un correo con las credenciales de acceso al profesor.",
+        duration: 5000,
+      });
     },
     onError: (error) => {
       console.error('Error creating trainer:', error);
