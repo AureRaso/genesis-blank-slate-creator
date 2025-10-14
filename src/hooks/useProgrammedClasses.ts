@@ -212,22 +212,78 @@ export const useDeleteProgrammedClass = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      console.log('🔴 [DELETE] Marking programmed class as inactive:', id);
+
+      // First, check the class details and current user
+      const { data: classData } = await supabase
+        .from("programmed_classes")
+        .select("id, trainer_profile_id, created_by, is_active")
+        .eq("id", id)
+        .single();
+
+      console.log('📋 [DELETE] Class data:', classData);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 [DELETE] Current user:', user?.id);
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("id", user?.id)
+        .single();
+
+      console.log('👤 [DELETE] User profile:', profileData);
+
+      // Since RLS policies prevent hard deletion, we use soft delete (is_active = false)
+      // This ensures the class disappears from queries while preserving data integrity
+      const { data, error } = await supabase
         .from("programmed_classes")
         .update({ is_active: false })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔴 [DELETE] Failed to mark class as inactive:', error);
+        throw error;
+      }
+
+      console.log('✅ [DELETE] Update result:', data);
+
+      // Verify the update actually happened
+      const { data: verifyData } = await supabase
+        .from("programmed_classes")
+        .select("id, is_active")
+        .eq("id", id)
+        .single();
+
+      console.log('🔍 [DELETE] Verification after update:', verifyData);
+
+      if (verifyData && verifyData.is_active === true) {
+        console.error('⚠️ [DELETE] UPDATE FAILED - is_active is still true!');
+        throw new Error('No se pudo eliminar la clase. Verifica los permisos.');
+      }
+
+      console.log('✅ [DELETE] Successfully marked class as inactive');
       return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      console.log('✅ [DELETE] Invalidating queries for deleted class:', deletedId);
+
+      // Remove the queries from cache completely to force refetch
+      queryClient.removeQueries({ queryKey: ["programmed-classes"] });
+      queryClient.removeQueries({ queryKey: ["scheduled-classes"] });
+
+      // Also invalidate to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
+
       toast({
         title: "Clase eliminada",
         description: "La clase se ha eliminado correctamente.",
       });
     },
     onError: (error: any) => {
+      console.error('🔴 [DELETE] Error in mutation:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la clase: " + error.message,
