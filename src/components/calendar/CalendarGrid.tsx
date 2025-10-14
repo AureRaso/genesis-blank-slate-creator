@@ -256,16 +256,16 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
     <div className="border rounded-lg overflow-hidden bg-card h-full flex flex-col">
       {/* Header with days */}
       <div className={cn("grid bg-muted/50 border-b sticky top-0 z-30 backdrop-blur-sm bg-background/90", getGridColumns())}>
-        <div className="p-1 md:p-3 text-xs md:text-sm font-medium text-muted-foreground border-r bg-background/90">
+        <div className="p-0.5 md:p-3 text-[10px] md:text-sm font-medium text-muted-foreground border-r bg-background/90">
           {t('classes.hour')}
         </div>
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="p-1 md:p-3 text-center border-r last:border-r-0 bg-background/90">
-            <div className="text-xs font-medium text-muted-foreground">
+          <div key={day.toISOString()} className="p-0.5 md:p-3 text-center border-r last:border-r-0 bg-background/90">
+            <div className="text-[9px] md:text-xs font-medium text-muted-foreground">
               {format(day, "EEE", { locale: getDateFnsLocale() })}
             </div>
             <div className={cn(
-              "text-xs md:text-sm font-semibold mt-1",
+              "text-[10px] md:text-sm font-semibold mt-0.5 md:mt-1",
               isSameDay(day, new Date()) && "text-primary"
             )}>
               {format(day, "dd")}
@@ -278,7 +278,7 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
       <div className="flex-1 overflow-x-auto overflow-y-auto">
         {filteredTimeSlots.map((timeSlot, index) => (
           <div key={timeSlot} className={cn("grid border-b last:border-b-0", getGridColumns())} style={{ minHeight: `${SLOT_HEIGHT}px` }}>
-            <div className="p-1 md:p-2 text-xs md:text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
+            <div className="p-0.5 md:p-2 text-[9px] md:text-sm text-muted-foreground border-r bg-muted/30 flex items-center justify-center sticky left-0 z-20 backdrop-blur-sm">
               {timeSlot}
             </div>
             
@@ -318,9 +318,10 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                 >
                   {displayClass && !hasContinuationClasses && (
                     <div
-                      className="absolute top-0 p-1 w-full"
+                      className="absolute top-0 p-0.5 md:p-1 w-full overflow-hidden"
                       style={{
                         height: `${getClassHeight(displayClass.duration_minutes)}px`,
+                        maxHeight: `${getClassHeight(displayClass.duration_minutes)}px`,
                         zIndex: 10
                       }}
                     >
@@ -335,15 +336,15 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                             e.dataTransfer.effectAllowed = 'move';
                           }}
                         >
-                          <ClassCard 
-                            class={displayClass} 
+                          <ClassCard
+                            class={displayClass}
                             showAsIndicator={true}
                             eventCount={allClasses.length}
                           />
                         </MultiEventDropdown>
                       ) : (
-                        <ClassCard 
-                          class={displayClass} 
+                        <ClassCard
+                          class={displayClass}
                           showAsIndicator={false}
                           eventCount={1}
                         />

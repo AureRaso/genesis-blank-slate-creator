@@ -295,9 +295,9 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
         viewModeToggle={viewModeToggle}
       />
 
-      {/* Calendar Grid - remove side margins in mobile for month view */}
+      {/* Calendar Grid - remove side margins in mobile for month and week view */}
       <div className={cn(
-        viewMode === 'month' && "-mx-3 sm:mx-0"
+        (viewMode === 'month' || viewMode === 'week') && "-mx-3 sm:mx-0"
       )}>
         <CalendarGrid
           weekStart={rangeStart}

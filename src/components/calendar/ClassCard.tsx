@@ -104,43 +104,76 @@ export function ClassCard({
 
   // For indicator cards, render without dialog to allow dropdown
   if (showAsIndicator) {
+    // Extract class number from name (e.g., "Clases Iron 3" -> "3")
+    const getShortName = (name: string) => {
+      // Check if it's a pattern like "Clases Iron 3" or "Iron 3"
+      const ironMatch = name.match(/iron\s*(\d+)/i);
+      if (ironMatch) {
+        return `Iron ${ironMatch[1]}`;
+      }
+
+      // For other names, truncate intelligently
+      if (name.length > 15) {
+        return name.substring(0, 12) + '...';
+      }
+      return name;
+    };
+
     return <div className="relative w-full h-full">
-        <div className={cn("w-full h-full rounded-md cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", isCompact ? "p-1 text-xs" : "p-2 text-xs", getLevelColor(), "ring-2 ring-primary/20")} draggable={isAdmin || isTrainer} onDragStart={handleDragStart} onClick={() => console.log('ClassCard indicator clicked:', cls.name)} title={`${cls.name} - ${cls.start_time.slice(0, 5)} - ${getEndTime()} (${cls.duration_minutes} min) - ${enrolledCount} alumnos`}>
+        <div className={cn("w-full h-full rounded cursor-pointer hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", "p-0.5 md:p-2 text-[7px] md:text-xs", getLevelColor(), "ring-2 ring-primary/20")} draggable={isAdmin || isTrainer} onDragStart={handleDragStart} onClick={() => console.log('ClassCard indicator clicked:', cls.name)} title={`${cls.name} - ${cls.start_time.slice(0, 5)} - ${getEndTime()} (${cls.duration_minutes} min) - ${enrolledCount} alumnos`}>
           {/* Delete X button - only for admin/trainer */}
           {(isAdmin || isTrainer) && <Button variant="ghost" size="sm" onClick={e => {
           e.preventDefault();
           e.stopPropagation();
           setShowDeleteConfirm(true);
-        }} className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <X className="h-3 w-3" />
+        }} className="absolute -top-1 -right-1 h-3 md:h-5 w-3 md:w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <X className="h-2 md:h-3 w-2 md:w-3" />
             </Button>}
 
           {/* Multiple events indicator */}
-          {eventCount > 1 && <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium z-20">
+          {eventCount > 1 && <div className="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[7px] md:text-xs rounded-full h-3 md:h-5 w-3 md:w-5 flex items-center justify-center font-medium z-20">
               {eventCount}
             </div>}
 
-          <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
-            <div className={cn("font-medium truncate leading-none", isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5")}>
+          {/* Desktop: Full info layout */}
+          <div className="hidden md:block flex-1 min-h-0 overflow-hidden">
+            <div className="font-medium truncate leading-none text-sm mb-0.5">
               {cls.name}
               {eventCount > 1 && <span className="text-xs opacity-60 ml-1">+{eventCount - 1}</span>}
             </div>
-            {!isCompact && cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
+            {cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
                 {cls.club.name}
               </div>}
-            {!isCompact && <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
-                {getLevelDisplay()}
-              </div>}
-            {!isCompact && <div className="flex items-center justify-between text-xs mt-1">
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  <span>{enrolledCount}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{cls.duration_minutes}min</span>
-                </div>
-              </div>}
+            <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
+              {getLevelDisplay()}
+            </div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span>{enrolledCount}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{cls.duration_minutes}min</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile: Compact centered layout */}
+          <div className="md:hidden text-center w-full px-0.5 flex-1 flex flex-col justify-center overflow-hidden">
+            <div className="font-semibold truncate leading-tight text-[7px] mb-0.5">
+              {getShortName(cls.name)}
+            </div>
+            {cls.duration_minutes >= 60 && (
+              <div className="text-[6px] opacity-70 truncate leading-tight">
+                {cls.start_time.slice(0, 5)}
+              </div>
+            )}
+            {cls.duration_minutes >= 90 && enrolledCount > 0 && (
+              <div className="text-[6px] opacity-60 truncate leading-tight mt-0.5">
+                {enrolledCount} alum.
+              </div>
+            )}
           </div>
         </div>
 
@@ -168,42 +201,75 @@ export function ClassCard({
   }
 
   // Normal behavior with dialog when not showing as indicator
+  // Extract class number from name (e.g., "Clases Iron 3" -> "3")
+  const getShortName = (name: string) => {
+    // Check if it's a pattern like "Clases Iron 3" or "Iron 3"
+    const ironMatch = name.match(/iron\s*(\d+)/i);
+    if (ironMatch) {
+      return `Iron ${ironMatch[1]}`;
+    }
+
+    // For other names, truncate intelligently
+    if (name.length > 15) {
+      return name.substring(0, 12) + '...';
+    }
+    return name;
+  };
+
   return <>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Dialog open={showDetails} onOpenChange={setShowDetails}>
               <DialogTrigger asChild>
-                <div className={cn("w-full h-full rounded-md cursor-move hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", isCompact ? "p-1 text-xs" : "p-2 text-xs", getLevelColor())} draggable={isAdmin || isTrainer} onDragStart={handleDragStart}>
+                <div className={cn("w-full h-full rounded cursor-move hover:opacity-90 transition-all border shadow-sm relative group overflow-hidden", "flex flex-col", "p-0.5 md:p-2 text-[7px] md:text-xs", getLevelColor())} draggable={isAdmin || isTrainer} onDragStart={handleDragStart}>
                   {/* Delete X button - only for admin/trainer */}
                   {(isAdmin || isTrainer) && <Button variant="ghost" size="sm" onClick={e => {
                   e.preventDefault();
                   e.stopPropagation();
                   setShowDeleteConfirm(true);
-                }} className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <X className="h-3 w-3" />
+                }} className="absolute -top-1 -right-1 h-3 md:h-5 w-3 md:w-5 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <X className="h-2 md:h-3 w-2 md:w-3" />
                     </Button>}
 
-                  <div className={cn("flex-1 min-h-0 overflow-hidden", isCompact && "space-y-0")}>
-                    <div className={cn("font-medium truncate leading-none", isCompact ? "text-xs mb-0.5" : "text-sm mb-0.5")}>
+                  {/* Desktop: Full info layout */}
+                  <div className="hidden md:block flex-1 min-h-0 overflow-hidden">
+                    <div className="font-medium truncate leading-none text-sm mb-0.5">
                       {cls.name}
                     </div>
-                    {!isCompact && cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5 my-0">
+                    {cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5 my-0">
                         {cls.club.name}
                       </div>}
-                    {!isCompact && <div className="text-xs text-muted-foreground truncate leading-none mb-0.5 my-[8px]">
-                        {getLevelDisplay()}
-                      </div>}
-                    {!isCompact && <div className="flex items-center justify-between text-xs mt-1">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          <span>{enrolledCount}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{cls.duration_minutes}min</span>
-                        </div>
-                      </div>}
+                    <div className="text-xs text-muted-foreground truncate leading-none mb-0.5 my-[8px]">
+                      {getLevelDisplay()}
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-1">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        <span>{enrolledCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{cls.duration_minutes}min</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile: Compact centered layout */}
+                  <div className="md:hidden text-center w-full px-0.5 flex-1 flex flex-col justify-center overflow-hidden">
+                    <div className="font-semibold truncate leading-tight text-[7px] mb-0.5">
+                      {getShortName(cls.name)}
+                    </div>
+                    {cls.duration_minutes >= 60 && (
+                      <div className="text-[6px] opacity-70 truncate leading-tight">
+                        {cls.start_time.slice(0, 5)}
+                      </div>
+                    )}
+                    {cls.duration_minutes >= 90 && enrolledCount > 0 && (
+                      <div className="text-[6px] opacity-60 truncate leading-tight mt-0.5">
+                        {enrolledCount} alum.
+                      </div>
+                    )}
                   </div>
                 </div>
               </DialogTrigger>
