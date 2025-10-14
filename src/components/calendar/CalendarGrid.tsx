@@ -196,11 +196,11 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
   // For month view, render differently
   if (viewMode === 'month') {
     return (
-      <div className="border rounded-lg overflow-hidden bg-card p-4">
-        <div className="grid grid-cols-7 gap-2">
+      <div className="border rounded-lg overflow-hidden bg-card p-0 md:p-4">
+        <div className="grid grid-cols-7 gap-0 md:gap-2">
           {/* Day headers */}
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-            <div key={day} className="text-xs font-semibold text-center text-muted-foreground p-2">
+            <div key={day} className="text-[10px] md:text-xs font-semibold text-center text-muted-foreground p-1 md:p-2 border-b md:border-b-0">
               {day}
             </div>
           ))}
@@ -220,25 +220,25 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                 key={day.toISOString()}
                 onClick={() => canCreateClasses && onDayClick && onDayClick(day)}
                 className={cn(
-                  "min-h-[100px] border rounded-lg p-2 transition-colors",
+                  "min-h-[80px] md:min-h-[100px] p-1 md:p-2 transition-colors border-r border-b last:border-r-0 md:border md:rounded-lg",
                   canCreateClasses && "cursor-pointer hover:bg-muted/50",
-                  isSameDay(day, new Date()) && "border-primary bg-primary/5"
+                  isSameDay(day, new Date()) && "bg-primary/5 md:border-primary"
                 )}
               >
                 <div className={cn(
-                  "text-sm font-medium mb-2",
-                  isSameDay(day, new Date()) && "text-primary"
+                  "text-[11px] md:text-sm font-medium mb-1 md:mb-2 text-center md:text-left",
+                  isSameDay(day, new Date()) && "text-primary font-bold"
                 )}>
                   {format(day, "dd")}
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5 md:space-y-1">
                   {dayClasses.slice(0, 3).map((cls) => (
-                    <div key={cls.id} className="text-xs p-1 bg-primary/10 text-primary rounded truncate">
-                      {cls.start_time.slice(0, 5)} - {cls.name}
+                    <div key={cls.id} className="text-[9px] md:text-xs px-0.5 py-0.5 md:p-1 bg-primary/10 text-primary rounded truncate">
+                      <span className="hidden md:inline">{cls.start_time.slice(0, 5)} - </span>{cls.name}
                     </div>
                   ))}
                   {dayClasses.length > 3 && (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[9px] md:text-xs text-muted-foreground">
                       +{dayClasses.length - 3} más
                     </div>
                   )}

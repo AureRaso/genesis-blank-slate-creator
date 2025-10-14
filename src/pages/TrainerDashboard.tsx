@@ -29,16 +29,19 @@ const TrainerDashboard = () => {
 
   const { data: todayClasses } = useTodayAttendance();
 
-  // Get total students (participants across all classes)
+  // Get total students (participants across all trainer's classes)
   const { data: totalStudents } = useQuery({
-    queryKey: ['trainer-students', trainerProfile?.id],
+    queryKey: ['trainer-students', trainerProfile?.id, myClasses],
     queryFn: async () => {
-      if (!trainerProfile?.id) return 0;
+      if (!trainerProfile?.id || !myClasses || myClasses.length === 0) return 0;
+
+      // Get all class IDs for this trainer
+      const classIds = myClasses.map(c => c.id);
 
       const { data, error } = await supabase
         .from('class_participants')
-        .select('student_id', { count: 'exact' })
-        .eq('trainer_id', trainerProfile.id)
+        .select('student_enrollment_id', { count: 'exact' })
+        .in('class_id', classIds)
         .eq('status', 'active');
 
       if (error) {
@@ -47,40 +50,56 @@ const TrainerDashboard = () => {
       }
 
       // Get unique students
-      const uniqueStudents = new Set(data?.map(p => p.student_id) || []);
+      const uniqueStudents = new Set(data?.map(p => p.student_enrollment_id) || []);
       return uniqueStudents.size;
     },
-    enabled: !!trainerProfile?.id
+    enabled: !!trainerProfile?.id && !!myClasses && myClasses.length > 0
   });
 
   // Fetch recent activities
   const { data: recentActivities } = useQuery({
-    queryKey: ['trainer-recent-activities', trainerProfile?.id],
+    queryKey: ['trainer-recent-activities', trainerProfile?.id, myClasses],
     queryFn: async () => {
-      if (!trainerProfile?.id) return [];
+      if (!trainerProfile?.id || !myClasses || myClasses.length === 0) return [];
 
       const activities: any[] = [];
+      const classIds = myClasses.map(c => c.id);
 
       try {
-        // New students enrolled
+        // New students enrolled (from trainer's classes)
         const { data: newStudents, error: studentsError } = await supabase
           .from('class_participants')
-          .select('student_id, profiles(full_name), created_at')
-          .eq('trainer_id', trainerProfile.id)
+          .select('student_enrollment_id, created_at')
+          .in('class_id', classIds)
           .order('created_at', { ascending: false })
           .limit(1);
 
         if (studentsError) console.error('Error fetching students:', studentsError);
 
         if (newStudents && newStudents.length > 0) {
-          activities.push({
-            type: 'new_student',
-            icon: UserPlus,
-            title: 'Nuevo alumno inscrito',
-            description: `${newStudents[0].profiles?.full_name} se inscribió en tus clases`,
-            timestamp: newStudents[0].created_at,
-            color: 'primary'
-          });
+          // Get student enrollment and profile info
+          const { data: enrollment } = await supabase
+            .from('student_enrollments')
+            .select('profile_id')
+            .eq('id', newStudents[0].student_enrollment_id)
+            .single();
+
+          if (enrollment) {
+            const { data: studentProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', enrollment.profile_id)
+              .single();
+
+            activities.push({
+              type: 'new_student',
+              icon: UserPlus,
+              title: 'Nuevo alumno inscrito',
+              description: `${studentProfile?.full_name || 'Un alumno'} se inscribió en tus clases`,
+              timestamp: newStudents[0].created_at,
+              color: 'primary'
+            });
+          }
         }
 
         // New classes created
@@ -134,31 +153,32 @@ const TrainerDashboard = () => {
 
       return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     },
-    enabled: !!trainerProfile?.id
+    enabled: !!trainerProfile?.id && !!myClasses && myClasses.length > 0
   });
 
   // Fetch weekly summary stats
   const { data: weeklySummary } = useQuery({
-    queryKey: ['trainer-weekly-summary', trainerProfile?.id],
+    queryKey: ['trainer-weekly-summary', trainerProfile?.id, myClasses],
     queryFn: async () => {
-      if (!trainerProfile?.id) return null;
+      if (!trainerProfile?.id || !myClasses || myClasses.length === 0) return null;
 
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const classIds = myClasses.map(c => c.id);
 
       try {
-        // New students this week vs last week
+        // New students this week vs last week (from trainer's classes)
         const { data: studentsThisWeek } = await supabase
           .from('class_participants')
           .select('id', { count: 'exact' })
-          .eq('trainer_id', trainerProfile.id)
+          .in('class_id', classIds)
           .gte('created_at', oneWeekAgo.toISOString());
 
         const { data: studentsLastWeek } = await supabase
           .from('class_participants')
           .select('id', { count: 'exact' })
-          .eq('trainer_id', trainerProfile.id)
+          .in('class_id', classIds)
           .gte('created_at', twoWeeksAgo.toISOString())
           .lt('created_at', oneWeekAgo.toISOString());
 

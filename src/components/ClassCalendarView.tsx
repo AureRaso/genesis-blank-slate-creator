@@ -36,7 +36,7 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
   const navigate = useNavigate();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [selectedDayForModal, setSelectedDayForModal] = useState<Date | null>(null);
   const [timeRangeStart, setTimeRangeStart] = useState("08:00");
@@ -237,24 +237,29 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
       
       {/* Show trainer legend for admins when there are multiple trainers */}
       {isAdmin && <TrainerLegend classes={filteredClasses} />}
-      
-      <CalendarGrid
-        weekStart={rangeStart}
-        weekEnd={rangeEnd}
-        classes={filteredClasses}
-        onTimeSlotClick={handleTimeSlotClick}
-        onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) =>
-          handleClassDrop(classId, newDay, newTimeSlot, classes || [])
-        }
-        timeRangeStart={timeRangeStart}
-        timeRangeEnd={timeRangeEnd}
-        viewMode={viewMode}
-        onDayClick={(day: Date) => {
-          if (viewMode === 'month') {
-            setSelectedDayForModal(day);
+
+      {/* Calendar Grid - remove side margins in mobile for month view */}
+      <div className={cn(
+        viewMode === 'month' && "-mx-3 sm:mx-0"
+      )}>
+        <CalendarGrid
+          weekStart={rangeStart}
+          weekEnd={rangeEnd}
+          classes={filteredClasses}
+          onTimeSlotClick={handleTimeSlotClick}
+          onClassDrop={(classId: string, newDay: Date, newTimeSlot: string) =>
+            handleClassDrop(classId, newDay, newTimeSlot, classes || [])
           }
-        }}
-      />
+          timeRangeStart={timeRangeStart}
+          timeRangeEnd={timeRangeEnd}
+          viewMode={viewMode}
+          onDayClick={(day: Date) => {
+            if (viewMode === 'month') {
+              setSelectedDayForModal(day);
+            }
+          }}
+        />
+      </div>
 
       {/* Fullscreen Calendar Modal */}
       <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>

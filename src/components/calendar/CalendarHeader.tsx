@@ -67,11 +67,7 @@ export function CalendarHeader({
   
   return (
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
-          <h2 className="text-lg lg:text-xl font-semibold">{t('classes.calendarTitle')}</h2>
-        </div>
+      <div className="flex items-center gap-1">
         {filteredClassesCount !== totalClasses && (
           <Badge variant="secondary">
             {filteredClassesCount} {t('classes.of')} {totalClasses}
@@ -81,31 +77,33 @@ export function CalendarHeader({
 
       {/* View mode selector */}
       {onViewModeChange && (
-        <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-          <Button
-            variant={viewMode === 'day' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onViewModeChange('day')}
-            className="text-xs"
-          >
-            Día
-          </Button>
-          <Button
-            variant={viewMode === 'week' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onViewModeChange('week')}
-            className="text-xs"
-          >
-            Semana
-          </Button>
-          <Button
-            variant={viewMode === 'month' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onViewModeChange('month')}
-            className="text-xs"
-          >
-            Mes
-          </Button>
+        <div className="flex justify-center lg:justify-start">
+          <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === 'day' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('day')}
+              className="text-xs"
+            >
+              Día
+            </Button>
+            <Button
+              variant={viewMode === 'week' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('week')}
+              className="text-xs"
+            >
+              Semana
+            </Button>
+            <Button
+              variant={viewMode === 'month' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('month')}
+              className="text-xs"
+            >
+              Mes
+            </Button>
+          </div>
         </div>
       )}
       
