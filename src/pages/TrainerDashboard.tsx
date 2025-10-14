@@ -249,8 +249,8 @@ const TrainerDashboard = () => {
   const totalParticipants = myClasses?.reduce((sum, c) => sum + (c.participants?.length || 0), 0) || 0;
   const avgClassSize = totalProgrammedClasses > 0 ? Math.round(totalParticipants / totalProgrammedClasses) : 0;
 
-  // Stats for cards
-  const stats = [
+  // Top 3 stats for full width
+  const topStats = [
     {
       title: "Alumnos Totales",
       value: totalStudentsCount,
@@ -271,14 +271,6 @@ const TrainerDashboard = () => {
       title: "Entrenamientos Hoy",
       value: totalTodayClasses,
       icon: Clock,
-      color: "text-primary",
-      bg: "bg-primary/5",
-      border: "border-primary/20"
-    },
-    {
-      title: "Promedio por Clase",
-      value: `${avgClassSize} alumnos`,
-      icon: Activity,
       color: "text-primary",
       bg: "bg-primary/5",
       border: "border-primary/20"
@@ -309,9 +301,9 @@ const TrainerDashboard = () => {
 
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {stats.map((stat, index) => {
+      {/* Top 3 Stats Section - Full Width */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        {topStats.map((stat, index) => {
           const Icon = stat.icon;
           const isOrange = stat.color === 'text-primary';
           return (
@@ -341,15 +333,15 @@ const TrainerDashboard = () => {
         })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="h-full flex flex-col">
+      {/* Quick Actions - Full width */}
+      <div>
         <div className="mb-3 sm:mb-4">
           <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
             Acciones Rápidas
           </h3>
         </div>
         <div className="flex-1">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (

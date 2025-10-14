@@ -70,19 +70,6 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/waitlist-notifications"}>
-                <Link to="/dashboard/waitlist-notifications">
-                  <Bell className="h-4 w-4" />
-                  <span>{t('sidebar.waitlistNotifications')}</span>
-                  {waitlistCount > 0 && (
-                    <Badge variant="destructive" className="ml-2 text-xs">
-                      {waitlistCount}
-                    </Badge>
-                  )}
-                </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>

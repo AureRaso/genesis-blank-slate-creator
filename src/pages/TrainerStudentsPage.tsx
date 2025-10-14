@@ -107,24 +107,14 @@ const TrainerStudentsPage = () => {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 md:space-y-6 p-2 sm:p-0">
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:gap-4">
-        <Button variant="ghost" size="sm" asChild className="w-fit">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-            <span className="text-xs sm:text-sm">Volver al Dashboard</span>
-          </Link>
-        </Button>
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent truncate">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
               Gestión de Alumnos
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground truncate">
-              Gestiona los alumnos de {clubName}
-            </p>
           </div>
 
           <Button onClick={handleCreateNewStudent} className="bg-gradient-to-r from-primary to-primary/80 flex-shrink-0" size="sm">

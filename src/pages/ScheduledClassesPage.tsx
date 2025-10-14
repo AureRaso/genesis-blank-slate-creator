@@ -53,7 +53,7 @@ function ScheduledClassesContent() {
         </Card>
       </div>;
   }
-  return <div className="container mx-auto py-2 sm:py-4 px-2 sm:px-4 space-y-3 sm:space-y-4">
+  return <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
       {/* Header */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
