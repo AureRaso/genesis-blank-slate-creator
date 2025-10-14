@@ -24,6 +24,7 @@ interface CalendarHeaderProps {
   viewMode?: 'day' | 'week' | 'month';
   onViewModeChange?: (mode: 'day' | 'week' | 'month') => void;
   currentDate?: Date;
+  viewModeToggle?: 'calendar' | 'list';
 }
 
 export function CalendarHeader({
@@ -42,7 +43,8 @@ export function CalendarHeader({
   onTimeRangeChange,
   viewMode = 'week',
   onViewModeChange,
-  currentDate
+  currentDate,
+  viewModeToggle
 }: CalendarHeaderProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -67,7 +69,17 @@ export function CalendarHeader({
   
   return (
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-      <div className="flex items-center gap-1">
+      {/* Mobile: Badge only */}
+      <div className="flex lg:hidden items-center gap-1">
+        {filteredClassesCount !== totalClasses && (
+          <Badge variant="secondary" className="text-xs">
+            {filteredClassesCount} {t('classes.of')} {totalClasses}
+          </Badge>
+        )}
+      </div>
+
+      {/* Desktop: Original layout */}
+      <div className="hidden lg:flex items-center gap-1">
         {filteredClassesCount !== totalClasses && (
           <Badge variant="secondary">
             {filteredClassesCount} {t('classes.of')} {totalClasses}
@@ -75,9 +87,9 @@ export function CalendarHeader({
         )}
       </div>
 
-      {/* View mode selector */}
+      {/* View mode selector - desktop */}
       {onViewModeChange && (
-        <div className="flex justify-center lg:justify-start">
+        <div className="hidden lg:flex justify-start">
           <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-lg">
             <Button
               variant={viewMode === 'day' ? 'default' : 'ghost'}
@@ -106,7 +118,7 @@ export function CalendarHeader({
           </div>
         </div>
       )}
-      
+
       {/* Time range selectors - hidden on mobile */}
       {onTimeRangeChange && (
         <div className="hidden md:flex items-center gap-2">

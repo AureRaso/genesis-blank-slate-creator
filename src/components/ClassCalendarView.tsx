@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from "date-fns";
-import { Calendar, GraduationCap, Users, UserCheck } from "lucide-react";
+import { Calendar, GraduationCap, Users, UserCheck, List } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +30,10 @@ interface ClassCalendarViewProps {
   clubId?: string;
   clubIds?: string[];
   filters: ClassFiltersData;
+  viewModeToggle?: 'calendar' | 'list';
 }
 
-export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCalendarViewProps) {
+export default function ClassCalendarView({ clubId, clubIds, filters, viewModeToggle }: ClassCalendarViewProps) {
   const navigate = useNavigate();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -217,6 +218,64 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
 
   return (
     <div className="space-y-4">
+      {/* Show trainer legend for admins when there are multiple trainers */}
+      {isAdmin && <TrainerLegend classes={filteredClasses} />}
+
+      {/* Mobile: Calendar/List + Day/Week/Month selectors on same row */}
+      <div className="flex lg:hidden items-center justify-between gap-2 mb-4">
+        {/* Calendar/List toggle */}
+        <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+          <Button
+            variant={viewModeToggle === 'calendar' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => navigate('/dashboard/scheduled-classes')}
+          >
+            <Calendar className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewModeToggle === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set('view', 'list');
+              navigate(url.pathname + url.search);
+            }}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Day/Week/Month selector - only show in calendar view */}
+        {viewModeToggle === 'calendar' && (
+          <div className="inline-flex items-center gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === 'day' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('day')}
+              className="text-xs h-8"
+            >
+              Día
+            </Button>
+            <Button
+              variant={viewMode === 'week' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('week')}
+              className="text-xs h-8"
+            >
+              Semana
+            </Button>
+            <Button
+              variant={viewMode === 'month' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('month')}
+              className="text-xs h-8"
+            >
+              Mes
+            </Button>
+          </div>
+        )}
+      </div>
+
       <CalendarHeader
         currentWeek={currentWeek}
         weekStart={weekStart}
@@ -233,10 +292,8 @@ export default function ClassCalendarView({ clubId, clubIds, filters }: ClassCal
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         currentDate={currentDate}
+        viewModeToggle={viewModeToggle}
       />
-      
-      {/* Show trainer legend for admins when there are multiple trainers */}
-      {isAdmin && <TrainerLegend classes={filteredClasses} />}
 
       {/* Calendar Grid - remove side margins in mobile for month view */}
       <div className={cn(

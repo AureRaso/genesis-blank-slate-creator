@@ -15,6 +15,7 @@ import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useClassGroups } from "@/hooks/useClassGroups";
 import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
 import { TrainerLegend } from "@/components/calendar/TrainerLegend";
+import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 function ScheduledClassesContent() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
@@ -97,38 +98,6 @@ function ScheduledClassesContent() {
             )}
           </div>
         </div>
-
-        {/* Mobile Actions */}
-        <div className="flex lg:hidden items-center gap-2">
-          {/* View mode toggle */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-            <Button variant={viewMode === 'calendar' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('calendar')}>
-              <Calendar className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')}>
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {(profile?.role === 'admin' || profile?.role === 'trainer') && (
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/dashboard/scheduled-classes/bulk/new')}
-                size="sm"
-                className="bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 flex-1"
-              >
-                <Zap className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Masiva</span>
-              </Button>
-
-              <Button size="sm" className="flex-1" onClick={() => navigate('/dashboard/scheduled-classes/new')}>
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Crear</span>
-              </Button>
-            </>
-          )}
-        </div>
       </div>
 
       {/* Main content */}
@@ -143,6 +112,7 @@ function ScheduledClassesContent() {
             clubId={adminClubs?.length ? undefined : currentClub?.id}
             clubIds={adminClubs?.length ? adminClubs.map(c => c.id) : undefined}
             filters={filters}
+            viewModeToggle={viewMode}
           />
         </TabsContent>
 
@@ -154,6 +124,9 @@ function ScheduledClassesContent() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Floating Action Button - Only for admins and trainers on mobile */}
+      {(profile?.role === 'admin' || profile?.role === 'trainer') && <FloatingCreateButton />}
     </div>;
 }
 export default function ScheduledClassesPage() {
