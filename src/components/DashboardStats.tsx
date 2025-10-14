@@ -104,31 +104,31 @@ const DashboardStats = () => {
   const stats = [...coreStats, ...clubStats, ...leagueStats, ...matchStats].slice(0, 4);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         const isOrange = stat.color === 'text-primary';
         return (
           <div
             key={index}
-            className="hover:scale-[1.02] transition-all duration-300 cursor-default group relative p-5 rounded-xl bg-white border border-gray-200 hover:border-primary/40 hover:shadow-lg"
+            className="sm:hover:scale-[1.02] transition-all duration-300 cursor-default group relative p-4 sm:p-5 rounded-xl bg-white border border-gray-200 hover:border-primary/40 sm:hover:shadow-lg"
           >
             {/* Decorative gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-            <div className="flex flex-row items-center justify-between space-y-0 mb-3 relative z-10">
-              <h3 className="text-sm font-bold text-[#10172a]/70 group-hover:text-[#10172a] transition-colors">
+            <div className="flex flex-row items-center justify-between space-y-0 mb-2 sm:mb-3 relative z-10">
+              <h3 className="text-xs sm:text-sm font-bold text-[#10172a]/70 group-hover:text-[#10172a] transition-colors">
                 {stat.title}
               </h3>
-              <div className={`p-2.5 rounded-xl ${isOrange ? 'bg-primary/10' : 'bg-gray-100'} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
-                <Icon className={`h-5 w-5 ${isOrange ? 'text-primary' : 'text-[#10172a]'}`} />
+              <div className={`p-2 sm:p-2.5 rounded-xl ${isOrange ? 'bg-primary/10' : 'bg-gray-100'} group-hover:scale-110 transition-transform duration-300 shadow-sm flex-shrink-0`}>
+                <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${isOrange ? 'text-primary' : 'text-[#10172a]'}`} />
               </div>
             </div>
             <div className="relative z-10">
-              <div className="text-3xl font-bold text-[#10172a] tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
+              <div className="text-2xl sm:text-3xl font-bold text-[#10172a] tracking-tight group-hover:scale-105 transition-transform duration-300 origin-left">
                 {stat.value}
               </div>
-              <div className={`mt-2 h-1 w-10 rounded-full bg-gradient-to-r ${isOrange ? 'from-primary' : 'from-[#10172a]'} to-transparent opacity-40 group-hover:w-16 transition-all duration-300`} />
+              <div className={`mt-1.5 sm:mt-2 h-1 w-8 sm:w-10 rounded-full bg-gradient-to-r ${isOrange ? 'from-primary' : 'from-[#10172a]'} to-transparent opacity-40 group-hover:w-12 sm:group-hover:w-16 transition-all duration-300`} />
             </div>
           </div>
         );

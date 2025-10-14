@@ -316,7 +316,7 @@ const Index = () => {
 
   // Dashboard de administrador
   return (
-    <div className="h-[calc(100vh-5rem)] overflow-y-auto flex flex-col gap-6 px-1 py-1">
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
       {/* Stats Section */}
       <div>
         <DashboardStats />
@@ -328,11 +328,11 @@ const Index = () => {
       </div>
 
       {/* Activity Backlog Section - Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Actividad Reciente */}
         <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-[#10172a]">
+          <div className="mb-3 sm:mb-4 flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
               Actividad Reciente
             </h3>
             {recentActivities && recentActivities.length > 3 && (
@@ -354,7 +354,7 @@ const Index = () => {
               </Button>
             )}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {profile?.role === 'admin' ? (
               <>
                 {recentActivities && recentActivities.length > 0 ? (
@@ -363,45 +363,45 @@ const Index = () => {
                     return (
                       <div
                         key={`${activity.type}-${index}`}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10"
+                        className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10"
                       >
-                        <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                          <Icon className="h-4 w-4 text-primary" />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#10172a]">{activity.title}</p>
-                          <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
-                          <p className="text-xs text-gray-400 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                          <p className="text-xs sm:text-sm font-medium text-[#10172a]">{activity.title}</p>
+                          <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 line-clamp-2">{activity.description}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">{getTimeAgo(activity.timestamp)}</p>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">No hay actividades recientes</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <p className="text-xs sm:text-sm">No hay actividades recientes</p>
                   </div>
                 )}
               </>
             ) : (
               <>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <Calendar className="h-4 w-4 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">Clase completada</p>
-                    <p className="text-xs text-gray-600 mt-1">Clase de nivel intermedio - 8 asistentes</p>
-                    <p className="text-xs text-gray-400 mt-1">Hace 1 hora</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase completada</p>
+                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Clase de nivel intermedio - 8 asistentes</p>
+                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">Hace 1 hora</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <Users className="h-4 w-4 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">Nuevo alumno inscrito</p>
-                    <p className="text-xs text-gray-600 mt-1">María González se inscribió en tus clases</p>
-                    <p className="text-xs text-gray-400 mt-1">Hace 3 horas</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Nuevo alumno inscrito</p>
+                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">María González se inscribió en tus clases</p>
+                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">Hace 3 horas</p>
                   </div>
                 </div>
               </>
@@ -411,68 +411,68 @@ const Index = () => {
 
         {/* Resumen Semanal / Próximas Clases */}
         <div>
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-[#10172a]">
+          <div className="mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
               {profile?.role === 'admin' ? 'Resumen Semanal' : 'Próximas Clases'}
             </h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {profile?.role === 'admin' ? (
               <>
                 {weeklySummary ? (
                   <>
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                        <Users className="h-4 w-4 text-primary" />
+                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">Nuevos Jugadores</p>
-                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.newPlayers} jugadores esta semana</p>
-                        <div className="flex items-center gap-1 mt-1">
+                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Nuevos Jugadores</p>
+                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.newPlayers} jugadores esta semana</p>
+                        <div className="flex items-center gap-1 mt-0.5 sm:mt-1">
                           {weeklySummary.playersTrend >= 0 ? (
                             <>
-                              <TrendingUp className="h-3 w-3 text-green-600" />
+                              <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
                               <p className="text-xs text-green-600">+{weeklySummary.playersTrend}% vs semana anterior</p>
                             </>
                           ) : (
                             <>
-                              <TrendingDown className="h-3 w-3 text-red-600" />
+                              <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
                               <p className="text-xs text-red-600">{weeklySummary.playersTrend}% vs semana anterior</p>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                        <Calendar className="h-4 w-4 text-primary" />
+                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">Clases Creadas</p>
-                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.newClasses} clases esta semana</p>
-                        <div className="flex items-center gap-1 mt-1">
+                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clases Creadas</p>
+                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.newClasses} clases esta semana</p>
+                        <div className="flex items-center gap-1 mt-0.5 sm:mt-1">
                           {weeklySummary.classesTrend >= 0 ? (
                             <>
-                              <TrendingUp className="h-3 w-3 text-green-600" />
+                              <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
                               <p className="text-xs text-green-600">+{weeklySummary.classesTrend}% vs semana anterior</p>
                             </>
                           ) : (
                             <>
-                              <TrendingDown className="h-3 w-3 text-red-600" />
+                              <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
                               <p className="text-xs text-red-600">{weeklySummary.classesTrend}% vs semana anterior</p>
                             </>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                        <Activity className="h-4 w-4 text-primary" />
+                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                        <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">Tasa de Asistencia</p>
-                        <p className="text-xs text-gray-600 mt-1">{weeklySummary.attendanceRate}% de asistencia esta semana</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Tasa de Asistencia</p>
+                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.attendanceRate}% de asistencia esta semana</p>
+                        <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">
                           {weeklySummary.attendanceRate >= 80 ? 'Excelente participación' :
                            weeklySummary.attendanceRate >= 60 ? 'Buena participación' :
                            'Mejorar comunicación con alumnos'}
@@ -481,41 +481,41 @@ const Index = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">Cargando estadísticas semanales...</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500">
+                    <p className="text-xs sm:text-sm">Cargando estadísticas semanales...</p>
                   </div>
                 )}
               </>
             ) : (
               <>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <GraduationCap className="h-4 w-4 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">Clase nivel avanzado</p>
-                    <p className="text-xs text-gray-600 mt-1">Hoy a las 18:00 - Pista 2</p>
-                    <p className="text-xs text-gray-400 mt-1">6/8 alumnos confirmados</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase nivel avanzado</p>
+                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Hoy a las 18:00 - Pista 2</p>
+                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">6/8 alumnos confirmados</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <GraduationCap className="h-4 w-4 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">Clase nivel intermedio</p>
-                    <p className="text-xs text-gray-600 mt-1">Mañana a las 10:00 - Pista 1</p>
-                    <p className="text-xs text-gray-400 mt-1">8/8 alumnos confirmados</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase nivel intermedio</p>
+                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Mañana a las 10:00 - Pista 1</p>
+                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">8/8 alumnos confirmados</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-2 rounded-lg bg-primary/10 mt-0.5">
-                    <GraduationCap className="h-4 w-4 text-primary" />
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
+                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">Clase principiantes</p>
-                    <p className="text-xs text-gray-600 mt-1">Mañana a las 16:00 - Pista 3</p>
-                    <p className="text-xs text-gray-400 mt-1">4/8 alumnos confirmados</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase principiantes</p>
+                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Mañana a las 16:00 - Pista 3</p>
+                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">4/8 alumnos confirmados</p>
                   </div>
                 </div>
               </>
