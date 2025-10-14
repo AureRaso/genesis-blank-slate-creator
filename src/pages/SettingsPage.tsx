@@ -322,21 +322,23 @@ const SettingsPage = () => {
 
   // Admin view - full configuration
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
-      <div className="max-w-4xl mx-auto pt-4 sm:pt-8">
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Configuración
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
-            Gestiona la configuración de tu club
-          </p>
-        </div>
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      <div className="space-y-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+          Configuración
+        </h1>
+        <p className="text-sm sm:text-base text-gray-500">
+          Gestiona la configuración de tu club
+        </p>
+      </div>
 
-        <Tabs defaultValue="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
+      <div className="max-w-4xl mx-auto w-full">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+
+        <Tabs defaultValue="general" className="space-y-3 sm:space-y-4 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="payments" className="text-xs sm:text-sm">Pagos</TabsTrigger>
             <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm">Pagos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
@@ -504,21 +506,103 @@ const SettingsPage = () => {
           </TabsContent>
 
           <TabsContent value="general" className="space-y-3 sm:space-y-4 md:space-y-6">
-            <Card>
-              <CardHeader className="p-3 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Configuración General</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Próximamente podrás configurar otros aspectos de tu club aquí.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Esta sección estará disponible en futuras actualizaciones.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Información Personal Card */}
+              <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+                <CardHeader className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
+                      <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
+                      Información Personal
+                    </CardTitle>
+                    {!isEditing ? (
+                      <Button onClick={() => setIsEditing(true)} variant="outline" size="sm" className="w-full sm:w-auto">
+                        Editar
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button onClick={() => setIsEditing(false)} variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                          Cancelar
+                        </Button>
+                        <Button onClick={handleSaveProfile} disabled={loading} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
+                          {loading ? 'Guardando...' : 'Guardar'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <div className="space-y-4 sm:space-y-5">
+                    <div className="space-y-1 sm:space-y-2">
+                      <Label htmlFor="admin_full_name" className="text-xs sm:text-sm font-medium">
+                        Nombre Completo
+                      </Label>
+                      {isEditing ? (
+                        <Input
+                          id="admin_full_name"
+                          value={editedProfile.full_name}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, full_name: e.target.value })}
+                          placeholder="Tu nombre completo"
+                          className="text-sm h-9 sm:h-10"
+                        />
+                      ) : (
+                        <p className="text-sm sm:text-base">{profile?.full_name || 'No especificado'}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 sm:space-y-2">
+                      <Label htmlFor="admin_email" className="text-xs sm:text-sm font-medium">
+                        Email
+                      </Label>
+                      <p className="text-sm sm:text-base text-muted-foreground truncate">{user?.email || 'No especificado'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        El email no se puede cambiar desde aquí
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 sm:space-y-2">
+                      <Label htmlFor="admin_phone" className="text-xs sm:text-sm font-medium">
+                        Teléfono
+                      </Label>
+                      {isEditing ? (
+                        <Input
+                          id="admin_phone"
+                          value={editedProfile.phone}
+                          onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
+                          placeholder="Tu número de teléfono"
+                          className="text-sm h-9 sm:h-10"
+                        />
+                      ) : (
+                        <p className="text-sm sm:text-base">{profile?.phone || 'No especificado'}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Password Change Section */}
+              <PasswordChangeSection
+                canChangePassword={canChangePassword(user)}
+                authProviderMessage={getAuthProviderMessage(user)}
+              />
+            </div>
+
+            {/* Logout Section */}
+            <div className="pt-4 border-t border-gray-200">
+              <Button
+                onClick={handleLogout}
+                disabled={loading}
+                variant="destructive"
+                className="w-full sm:w-auto"
+                size="default"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
