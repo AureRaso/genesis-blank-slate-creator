@@ -141,15 +141,15 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">Nueva Contraseña</Label>
-              <div className="relative">
+              <Label htmlFor="new-password" className="text-xs sm:text-sm">Nueva Contraseña</Label>
+              <div className="relative max-w-md">
                 <Input
                   id="new-password"
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Introduce tu nueva contraseña"
-                  className="pr-10"
+                  className="pr-10 text-sm h-9 sm:h-10"
                   required
                 />
                 <button
@@ -163,15 +163,15 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
-              <div className="relative">
+              <Label htmlFor="confirm-password" className="text-xs sm:text-sm">Confirmar Nueva Contraseña</Label>
+              <div className="relative max-w-md">
                 <Input
                   id="confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirma tu nueva contraseña"
-                  className="pr-10"
+                  className="pr-10 text-sm h-9 sm:h-10"
                   required
                 />
                 <button
@@ -185,11 +185,12 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div>
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1"
+              className="w-auto"
+              size="sm"
             >
               {isLoading ? 'Actualizando...' : 'Cambiar Contraseña'}
             </Button>

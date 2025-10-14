@@ -173,19 +173,20 @@ const SettingsPage = () => {
   // Player and Trainer view - show profile information
   if (isPlayer || isTrainer) {
     return (
-      <div className="min-h-screen pb-20 md:pb-0">
-        <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-              Configuración
-            </h1>
-            <p className="text-sm sm:text-base text-gray-500">
-              Administra tu información personal
-            </p>
-          </div>
+      <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+        <div className="space-y-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            Configuración
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500">
+            Administra tu información personal
+          </p>
+        </div>
 
-          <Card className="border-0 shadow-lg rounded-xl sm:rounded-2xl transition-all duration-300 hover:shadow-xl bg-white">
-            <CardHeader className="p-4 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          {/* Información Personal Card */}
+          <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
                   <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -207,7 +208,7 @@ const SettingsPage = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8 pt-0">
+            <CardContent className="p-4 sm:p-6 pt-0">
               <div className="space-y-4 sm:space-y-5">
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="full_name" className="text-xs sm:text-sm font-medium">
@@ -300,20 +301,20 @@ const SettingsPage = () => {
             canChangePassword={canChangePassword(user)}
             authProviderMessage={getAuthProviderMessage(user)}
           />
+        </div>
 
-          {/* Logout Section */}
-          <div className="pt-4 border-t border-gray-200">
-            <Button
-              onClick={handleLogout}
-              disabled={loading}
-              variant="destructive"
-              className="w-full sm:w-auto"
-              size="default"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
-            </Button>
-          </div>
+        {/* Logout Section */}
+        <div className="pt-4 border-t border-gray-200">
+          <Button
+            onClick={handleLogout}
+            disabled={loading}
+            variant="destructive"
+            className="w-full sm:w-auto"
+            size="default"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+          </Button>
         </div>
       </div>
     );

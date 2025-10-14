@@ -165,6 +165,7 @@ function App() {
                     <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
                     <Route path="/today-attendance" element={<TodayAttendancePage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (
