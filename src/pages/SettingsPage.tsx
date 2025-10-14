@@ -170,8 +170,8 @@ const SettingsPage = () => {
     }
   };
 
-  // Player view - show profile information
-  if (isPlayer) {
+  // Player and Trainer view - show profile information
+  if (isPlayer || (!isAdmin && profile?.role === 'trainer')) {
     return (
       <div className="min-h-screen pb-20 md:pb-0">
         <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
@@ -319,29 +319,7 @@ const SettingsPage = () => {
     );
   }
 
-  // Non-admin, non-player users (trainers) - restricted access
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
-        <div className="max-w-2xl mx-auto pt-12 sm:pt-20">
-          <Card>
-            <CardHeader className="p-3 sm:p-6">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-                Acceso Limitado
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                La configuración avanzada solo está disponible para administradores.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
+  // Admin view - full configuration
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-2 sm:p-4">
       <div className="max-w-4xl mx-auto pt-4 sm:pt-8">
