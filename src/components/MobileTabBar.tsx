@@ -1,11 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, CreditCard, Settings, User } from "lucide-react";
+import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MobileTabBar = () => {
   const location = useLocation();
+  const { isPlayer, isTrainer } = useAuth();
 
-  const tabs = [
+  // Tabs for players
+  const playerTabs = [
     {
       name: "Inicio",
       path: "/dashboard",
@@ -16,16 +19,40 @@ const MobileTabBar = () => {
       path: "/dashboard/my-classes",
       icon: CreditCard,
     },
+  ];
+
+  // Tabs for trainers
+  const trainerTabs = [
     {
-      name: "Configuración",
-      path: "/dashboard/settings",
-      icon: Settings,
+      name: "Inicio",
+      path: "/dashboard",
+      icon: Home,
+    },
+    {
+      name: "Alumnos",
+      path: "/dashboard/students",
+      icon: Users,
+    },
+    {
+      name: "Clases",
+      path: "/dashboard/scheduled-classes",
+      icon: Calendar,
+    },
+    {
+      name: "Asistencia",
+      path: "/dashboard/today-attendance",
+      icon: ClipboardCheck,
     },
   ];
 
+  const tabs = isTrainer ? trainerTabs : playerTabs;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
-      <div className="grid grid-cols-3 h-16">
+      <div className={cn(
+        "grid h-16",
+        isTrainer ? "grid-cols-4" : "grid-cols-2"
+      )}>
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
           const Icon = tab.icon;

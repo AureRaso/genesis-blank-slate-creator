@@ -7,10 +7,12 @@ import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useTodayAttendance } from "@/hooks/useTodayAttendance";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TrainerDashboard = () => {
   const navigate = useNavigate();
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const { profile } = useAuth();
 
   const {
     data: trainerProfile,
@@ -301,6 +303,16 @@ const TrainerDashboard = () => {
 
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      {/* Welcome message - Only visible on mobile */}
+      <div className="md:hidden mb-2">
+        <h1 className="text-xl font-bold text-[#10172a]">
+          Hola, {profile?.full_name?.split(' ')[0] || 'Entrenador'}
+        </h1>
+        <p className="text-sm text-gray-600 mt-1">
+          Bienvenido a tu panel de control
+        </p>
+      </div>
+
       {/* Top 3 Stats Section - Full Width */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {topStats.map((stat, index) => {

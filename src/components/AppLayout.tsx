@@ -7,6 +7,17 @@ import Footer from "./Footer";
 import MobileTabBar from "./MobileTabBar";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Settings } from "lucide-react";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 
 interface AppLayoutProps {
@@ -17,7 +28,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
   const authContext = useAuth();
   const isPlayer = authContext?.isPlayer || false;
-  
+  const isTrainer = authContext?.isTrainer || false;
+  const { profile, signOut } = useAuth();
+
   const getBreadcrumbInfo = () => {
     const path = location.pathname;
     switch (path) {
@@ -55,16 +68,48 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const breadcrumbInfo = getBreadcrumbInfo();
 
-  // Layout for players - Mobile-first with tab bar
-  if (isPlayer) {
+  // Layout for players and trainers - Mobile-first with tab bar
+  if (isPlayer || isTrainer) {
     return (
       <>
         <div className="flex min-h-screen w-full flex-col">
           {/* Mobile Header - Only visible on mobile */}
-          <header className="md:hidden flex h-14 shrink-0 items-center justify-center border-b bg-sidebar shadow-sm sticky top-0 z-40">
+          <header className="md:hidden flex h-14 shrink-0 items-center justify-between px-4 border-b bg-sidebar shadow-sm sticky top-0 z-40">
             <Link to="/dashboard" className="flex items-center">
               <img src={PadeLockLogo} alt="PadeLock" className="h-10 object-contain" />
             </Link>
+
+            {/* Mobile User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-primary text-white">
+                    <span className="text-sm font-semibold">
+                      {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div>
+                    <p className="font-medium">{profile?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configuración</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
 
           <div className="flex flex-1 min-h-0">
@@ -111,7 +156,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     );
   }
 
-  // Layout for admins and trainers - Original layout
+  // Layout for admins - Original layout
   return (
     <div className="flex min-h-screen w-full">
       <AppSidebar />
