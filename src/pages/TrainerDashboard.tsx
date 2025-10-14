@@ -195,23 +195,6 @@ const TrainerDashboard = () => {
         </div>
       </div>
 
-      {/* Club Card */}
-      {trainerProfile && <Card>
-          <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
-              <span>Mi Club</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-            <Badge variant="outline" className="text-playtomic-orange border-playtomic-orange text-xs sm:text-sm">
-              {clubName}
-            </Badge>
-            {trainerProfile.trainer_clubs && trainerProfile.trainer_clubs.length > 0 && <div className="mt-2 text-xs sm:text-sm text-muted-foreground truncate">
-                Asignado al club: {trainerProfile.trainer_clubs[0]?.clubs?.name}
-              </div>}
-          </CardContent>
-        </Card>}
-
       {/* Debug Section - Remove in production */}
       <WaitlistDebugger />
 

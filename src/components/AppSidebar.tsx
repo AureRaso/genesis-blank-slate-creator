@@ -87,6 +87,15 @@ const AppSidebar = () => {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-0">
+          {/* Información del Club */}
+          {club && (
+            <div className="border-t border-sidebar-border p-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-sm">{club.name}</span>
+              </div>
+            </div>
+          )}
           <UserMenu />
         </SidebarFooter>
       </Sidebar>;
