@@ -6,10 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, MessageCircle, ChevronDown, ChevronUp, AlertTriangle, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 const TodayAttendancePage = () => {
   const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
@@ -17,10 +28,70 @@ const TodayAttendancePage = () => {
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
 
+  // Estados para diálogos de confirmación
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'attendance' | 'absence' | 'clear';
+    participantId: string;
+    participantName: string;
+    scheduledDate?: string;
+  }>({
+    open: false,
+    type: 'attendance',
+    participantId: '',
+    participantName: '',
+  });
+
   // Hooks para acciones del profesor
   const markAttendance = useTrainerMarkAttendance();
   const markAbsence = useTrainerMarkAbsence();
   const clearStatus = useTrainerClearStatus();
+
+  // Handlers con confirmación
+  const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'attendance',
+      participantId,
+      participantName,
+      scheduledDate,
+    });
+  };
+
+  const handleConfirmAbsence = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'absence',
+      participantId,
+      participantName,
+    });
+  };
+
+  const handleConfirmClear = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'clear',
+      participantId,
+      participantName,
+    });
+  };
+
+  const executeAction = () => {
+    if (confirmDialog.type === 'attendance' && confirmDialog.scheduledDate) {
+      markAttendance.mutate({
+        participantId: confirmDialog.participantId,
+        scheduledDate: confirmDialog.scheduledDate,
+      });
+    } else if (confirmDialog.type === 'absence') {
+      markAbsence.mutate({
+        participantId: confirmDialog.participantId,
+        reason: 'Marcado por profesor',
+      });
+    } else if (confirmDialog.type === 'clear') {
+      clearStatus.mutate(confirmDialog.participantId);
+    }
+    setConfirmDialog({ ...confirmDialog, open: false });
+  };
 
   const handleNotifyWhatsApp = (classData: any) => {
     if (!whatsappGroup?.group_chat_id) {
@@ -239,130 +310,161 @@ const TodayAttendancePage = () => {
                       No hay alumnos inscritos en esta clase
                     </p>
                   ) : (
-                    <div className="space-y-2">
-                      <h4 className="text-xs sm:text-sm font-medium mb-3">Alumnos ({totalCount})</h4>
-                      <div className="grid gap-2">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-slate-700">Lista de Alumnos</h4>
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {totalCount} {totalCount === 1 ? 'alumno' : 'alumnos'}
+                        </Badge>
+                      </div>
+                      <div className="grid gap-3">
                         {validParticipants.map((participant) => {
                           const isConfirmed = !!participant.attendance_confirmed_for_date;
                           const isAbsent = !!participant.absence_confirmed;
+                          const isPending = !isConfirmed && !isAbsent;
 
                           const today = new Date().toISOString().split('T')[0];
 
                           return (
                             <div
                               key={participant.id}
-                              className={`p-2 sm:p-3 rounded-lg border ${
+                              className={`group relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                                 isConfirmed
-                                  ? 'bg-green-50 border-green-200'
+                                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm hover:shadow-md'
                                   : isAbsent
-                                  ? 'bg-red-50 border-red-200'
-                                  : 'bg-gray-50 border-gray-200'
+                                  ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300 shadow-sm hover:shadow-md'
+                                  : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
                               }`}
                             >
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                                  {isConfirmed ? (
-                                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-                                  ) : isAbsent ? (
-                                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
-                                  ) : (
-                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <p className="font-medium text-xs sm:text-sm truncate">
-                                        {participant.student_enrollment!.full_name}
-                                      </p>
-                                      {participant.is_substitute && (
-                                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-300 flex-shrink-0">
-                                          Sustituto
-                                        </Badge>
+                              {/* Indicator Bar */}
+                              <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                                isConfirmed ? 'bg-green-500' : isAbsent ? 'bg-red-500' : 'bg-slate-300'
+                              }`} />
+
+                              <div className="p-4 pl-5">
+                                {/* Header Row: Info + Actions */}
+                                <div className="flex items-start justify-between gap-3">
+                                  {/* Student Info */}
+                                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    {/* Status Icon */}
+                                    <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                                      isConfirmed
+                                        ? 'bg-green-100 text-green-600'
+                                        : isAbsent
+                                        ? 'bg-red-100 text-red-600'
+                                        : 'bg-slate-100 text-slate-400'
+                                    }`}>
+                                      {isConfirmed ? (
+                                        <CheckCircle2 className="h-5 w-5" />
+                                      ) : isAbsent ? (
+                                        <XCircle className="h-5 w-5" />
+                                      ) : (
+                                        <Clock className="h-5 w-5" />
                                       )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground truncate hidden sm:block">
-                                      {participant.student_enrollment!.email}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  {/* Status Badge */}
-                                  <div className="text-right hidden sm:block">
-                                    {isConfirmed ? (
-                                      <Badge variant="default" className="bg-green-600 text-xs">
-                                        Confirmado
-                                      </Badge>
-                                    ) : isAbsent ? (
-                                      <Badge variant="destructive" className="bg-red-600 text-xs">
-                                        No asistirá
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-gray-600 text-xs">
-                                        Pendiente
-                                      </Badge>
-                                    )}
-                                    {participant.attendance_confirmed_at && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {format(new Date(participant.attendance_confirmed_at), 'HH:mm')}
+
+                                    {/* Name and Email */}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2 mb-0.5">
+                                        <p className="font-semibold text-sm text-slate-900 truncate">
+                                          {participant.student_enrollment!.full_name}
+                                        </p>
+                                        {participant.is_substitute && (
+                                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                            Sustituto
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-slate-500 truncate">
+                                        {participant.student_enrollment!.email}
                                       </p>
-                                    )}
-                                    {participant.absence_confirmed_at && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {format(new Date(participant.absence_confirmed_at), 'HH:mm')}
-                                      </p>
-                                    )}
+
+                                      {/* Timestamp */}
+                                      {(participant.attendance_confirmed_at || participant.absence_confirmed_at) && (
+                                        <div className="flex items-center gap-1 mt-1">
+                                          <Clock className="h-3 w-3 text-slate-400" />
+                                          <p className="text-xs text-slate-400">
+                                            {participant.attendance_confirmed_at
+                                              ? format(new Date(participant.attendance_confirmed_at), 'HH:mm')
+                                              : format(new Date(participant.absence_confirmed_at!), 'HH:mm')
+                                            }
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
 
-                                  {/* Action Buttons para Profesor/Admin */}
-                                  <div className="flex items-center gap-1">
-                                    {/* Botón Confirmar Asistencia */}
+                                  {/* Action Buttons */}
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {/* Presente Button */}
                                     <Button
                                       size="sm"
-                                      variant={isConfirmed ? "default" : "outline"}
-                                      onClick={() => markAttendance.mutate({ participantId: participant.id, scheduledDate: today })}
+                                      onClick={() => handleConfirmAttendance(
+                                        participant.id,
+                                        participant.student_enrollment!.full_name,
+                                        today
+                                      )}
                                       disabled={markAttendance.isPending || isConfirmed}
-                                      className={`h-7 w-7 p-0 ${isConfirmed ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                                      title="Marcar asistencia"
+                                      className={`h-9 px-3 gap-1.5 font-medium transition-all ${
+                                        isConfirmed
+                                          ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                                          : 'bg-white border-2 border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
+                                      }`}
                                     >
-                                      <CheckCircle2 className="h-3.5 w-3.5" />
+                                      <CheckCircle2 className="h-4 w-4" />
+                                      <span className="hidden sm:inline">Presente</span>
                                     </Button>
 
-                                    {/* Botón Marcar Ausencia */}
+                                    {/* Ausente Button */}
                                     <Button
                                       size="sm"
-                                      variant={isAbsent ? "destructive" : "outline"}
-                                      onClick={() => markAbsence.mutate({ participantId: participant.id, reason: 'Marcado por profesor' })}
+                                      onClick={() => handleConfirmAbsence(
+                                        participant.id,
+                                        participant.student_enrollment!.full_name
+                                      )}
                                       disabled={markAbsence.isPending || isAbsent}
-                                      className="h-7 w-7 p-0"
-                                      title="Marcar ausencia"
+                                      className={`h-9 px-3 gap-1.5 font-medium transition-all ${
+                                        isAbsent
+                                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
+                                          : 'bg-white border-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300'
+                                      }`}
                                     >
-                                      <XCircle className="h-3.5 w-3.5" />
+                                      <XCircle className="h-4 w-4" />
+                                      <span className="hidden sm:inline">Ausente</span>
                                     </Button>
 
-                                    {/* Botón Limpiar Estado */}
+                                    {/* Reset Button */}
                                     {(isConfirmed || isAbsent) && (
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => clearStatus.mutate(participant.id)}
+                                        onClick={() => handleConfirmClear(
+                                          participant.id,
+                                          participant.student_enrollment!.full_name
+                                        )}
                                         disabled={clearStatus.isPending}
-                                        className="h-7 w-7 p-0"
-                                        title="Limpiar estado"
+                                        className="h-9 w-9 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                        title="Restablecer"
                                       >
-                                        <RotateCcw className="h-3.5 w-3.5" />
+                                        <RotateCcw className="h-4 w-4" />
                                       </Button>
                                     )}
                                   </div>
                                 </div>
-                              </div>
 
-                              {/* Show absence reason if present */}
-                              {isAbsent && participant.absence_reason && (
-                                <div className="mt-2 pt-2 border-t border-red-200">
-                                  <p className="text-xs text-red-800">
-                                    <strong>Motivo:</strong> {participant.absence_reason}
-                                  </p>
-                                </div>
-                              )}
+                                {/* Absence Reason */}
+                                {isAbsent && participant.absence_reason && (
+                                  <div className="mt-3 pt-3 border-t border-red-200/50">
+                                    <div className="flex items-start gap-2">
+                                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs font-medium text-red-900 mb-0.5">Motivo de ausencia</p>
+                                        <p className="text-xs text-red-700">{participant.absence_reason}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -391,7 +493,7 @@ const TodayAttendancePage = () => {
                               className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:w-auto"
                               title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
                             >
-                              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                              <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                               <span className="hidden sm:inline">Notificar Disponibilidad</span>
                               <span className="sm:hidden ml-2">Notificar</span>
                             </Button>
@@ -435,6 +537,57 @@ const TodayAttendancePage = () => {
           })}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.type === 'attendance' && '¿Marcar como presente?'}
+              {confirmDialog.type === 'absence' && '¿Marcar como ausente?'}
+              {confirmDialog.type === 'clear' && '¿Restablecer estado?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.type === 'attendance' && (
+                <>
+                  Vas a confirmar la asistencia de <strong>{confirmDialog.participantName}</strong> para esta clase.
+                  <br /><br />
+                  El alumno verá este cambio reflejado inmediatamente en su dashboard.
+                </>
+              )}
+              {confirmDialog.type === 'absence' && (
+                <>
+                  Vas a marcar a <strong>{confirmDialog.participantName}</strong> como ausente.
+                  <br /><br />
+                  Esta acción se reflejará en el dashboard del alumno y en las estadísticas de asistencia.
+                </>
+              )}
+              {confirmDialog.type === 'clear' && (
+                <>
+                  Vas a restablecer el estado de <strong>{confirmDialog.participantName}</strong> a pendiente.
+                  <br /><br />
+                  Esto eliminará la confirmación de asistencia o ausencia actual.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeAction}
+              className={
+                confirmDialog.type === 'attendance'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : confirmDialog.type === 'absence'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : ''
+              }
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
