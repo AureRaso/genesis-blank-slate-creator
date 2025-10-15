@@ -11,6 +11,7 @@ export interface TodayClassAttendance {
   absence_confirmed: boolean | null;
   absence_reason: string | null;
   absence_confirmed_at: string | null;
+  absence_locked: boolean | null; // Si la ausencia está bloqueada por notificación WhatsApp
   programmed_class: {
     id: string;
     name: string;
@@ -88,7 +89,7 @@ export const useTodayClassAttendance = () => {
 
       const { data: participantsBasic, error: errorBasic } = await supabase
         .from('class_participants')
-        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at, absence_confirmed, absence_reason, absence_confirmed_at')
+        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at, absence_confirmed, absence_reason, absence_confirmed_at, absence_locked')
         .in('student_enrollment_id', enrollmentIds)
         .eq('status', 'active');
 
@@ -182,6 +183,7 @@ export const useTodayClassAttendance = () => {
           absence_confirmed: participant.absence_confirmed,
           absence_reason: participant.absence_reason,
           absence_confirmed_at: participant.absence_confirmed_at,
+          absence_locked: participant.absence_locked, // Agregamos el campo de bloqueo
           programmed_class: {
             id: programmedClass.id,
             name: programmedClass.name,
@@ -368,6 +370,19 @@ export const useCancelAbsenceConfirmation = () => {
 
   return useMutation({
     mutationFn: async (participantId: string) => {
+      // Primero verificamos si la ausencia está bloqueada
+      const { data: participant, error: checkError } = await supabase
+        .from('class_participants')
+        .select('absence_locked')
+        .eq('id', participantId)
+        .single();
+
+      if (checkError) throw checkError;
+
+      if (participant?.absence_locked) {
+        throw new Error('No puedes cambiar tu ausencia porque el profesor ya notificó tu plaza disponible al grupo de WhatsApp');
+      }
+
       const { data, error } = await supabase
         .from('class_participants')
         .update({
@@ -388,7 +403,7 @@ export const useCancelAbsenceConfirmation = () => {
     },
     onError: (error: any) => {
       console.error('Error canceling absence confirmation:', error);
-      toast.error('Error al cancelar confirmación de ausencia');
+      toast.error(error.message || 'Error al cancelar confirmación de ausencia');
     },
   });
 };

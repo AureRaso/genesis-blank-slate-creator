@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useTodayAttendance } from "@/hooks/useTodayAttendance";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, MessageCircle, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, MessageCircle, ChevronDown, ChevronUp, AlertTriangle, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -16,6 +16,11 @@ const TodayAttendancePage = () => {
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
+
+  // Hooks para acciones del profesor
+  const markAttendance = useTrainerMarkAttendance();
+  const markAbsence = useTrainerMarkAbsence();
+  const clearStatus = useTrainerClearStatus();
 
   const handleNotifyWhatsApp = (classData: any) => {
     if (!whatsappGroup?.group_chat_id) {
@@ -36,7 +41,8 @@ const TodayAttendancePage = () => {
       classTime: classData.start_time,
       trainerName: classData.trainer?.full_name || 'Profesor',
       waitlistUrl,
-      availableSlots: absentCount
+      availableSlots: absentCount,
+      classId: classData.id // Agregamos el ID de la clase para bloquear ausencias
     });
   };
 
@@ -93,8 +99,7 @@ const TodayAttendancePage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-playtomic-orange flex-shrink-0" />
-              <span className="truncate">Asistencia de Hoy</span>
+              <span className="truncate">Asistencia de hoy</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 capitalize truncate">{formattedDate}</p>
           </div>
@@ -195,7 +200,7 @@ const TodayAttendancePage = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {classes.map((classData) => {
             const validParticipants = classData.participants.filter(p => p.student_enrollment);
             const confirmedCount = validParticipants.filter(
@@ -241,6 +246,8 @@ const TodayAttendancePage = () => {
                           const isConfirmed = !!participant.attendance_confirmed_for_date;
                           const isAbsent = !!participant.absence_confirmed;
 
+                          const today = new Date().toISOString().split('T')[0];
+
                           return (
                             <div
                               key={participant.id}
@@ -259,7 +266,7 @@ const TodayAttendancePage = () => {
                                   ) : isAbsent ? (
                                     <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0" />
                                   ) : (
-                                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                                   )}
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -277,30 +284,74 @@ const TodayAttendancePage = () => {
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                  {isConfirmed ? (
-                                    <Badge variant="default" className="bg-green-600 text-xs hidden sm:inline-flex">
-                                      Confirmado
-                                    </Badge>
-                                  ) : isAbsent ? (
-                                    <Badge variant="destructive" className="bg-red-600 text-xs hidden sm:inline-flex">
-                                      No asistirá
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="text-gray-600 text-xs hidden sm:inline-flex">
-                                      Pendiente
-                                    </Badge>
-                                  )}
-                                  {participant.attendance_confirmed_at && (
-                                    <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                                      {format(new Date(participant.attendance_confirmed_at), 'HH:mm')}
-                                    </p>
-                                  )}
-                                  {participant.absence_confirmed_at && (
-                                    <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
-                                      {format(new Date(participant.absence_confirmed_at), 'HH:mm')}
-                                    </p>
-                                  )}
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {/* Status Badge */}
+                                  <div className="text-right hidden sm:block">
+                                    {isConfirmed ? (
+                                      <Badge variant="default" className="bg-green-600 text-xs">
+                                        Confirmado
+                                      </Badge>
+                                    ) : isAbsent ? (
+                                      <Badge variant="destructive" className="bg-red-600 text-xs">
+                                        No asistirá
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-gray-600 text-xs">
+                                        Pendiente
+                                      </Badge>
+                                    )}
+                                    {participant.attendance_confirmed_at && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {format(new Date(participant.attendance_confirmed_at), 'HH:mm')}
+                                      </p>
+                                    )}
+                                    {participant.absence_confirmed_at && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {format(new Date(participant.absence_confirmed_at), 'HH:mm')}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Action Buttons para Profesor/Admin */}
+                                  <div className="flex items-center gap-1">
+                                    {/* Botón Confirmar Asistencia */}
+                                    <Button
+                                      size="sm"
+                                      variant={isConfirmed ? "default" : "outline"}
+                                      onClick={() => markAttendance.mutate({ participantId: participant.id, scheduledDate: today })}
+                                      disabled={markAttendance.isPending || isConfirmed}
+                                      className={`h-7 w-7 p-0 ${isConfirmed ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                      title="Marcar asistencia"
+                                    >
+                                      <CheckCircle2 className="h-3.5 w-3.5" />
+                                    </Button>
+
+                                    {/* Botón Marcar Ausencia */}
+                                    <Button
+                                      size="sm"
+                                      variant={isAbsent ? "destructive" : "outline"}
+                                      onClick={() => markAbsence.mutate({ participantId: participant.id, reason: 'Marcado por profesor' })}
+                                      disabled={markAbsence.isPending || isAbsent}
+                                      className="h-7 w-7 p-0"
+                                      title="Marcar ausencia"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5" />
+                                    </Button>
+
+                                    {/* Botón Limpiar Estado */}
+                                    {(isConfirmed || isAbsent) && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => clearStatus.mutate(participant.id)}
+                                        disabled={clearStatus.isPending}
+                                        className="h-7 w-7 p-0"
+                                        title="Limpiar estado"
+                                      >
+                                        <RotateCcw className="h-3.5 w-3.5" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 

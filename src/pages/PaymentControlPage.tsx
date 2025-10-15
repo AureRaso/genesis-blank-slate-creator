@@ -110,10 +110,15 @@ const PaymentControlPage = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      <h1 className="text-3xl font-bold text-black">
-        Control de Pagos
-      </h1>
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      <div className="space-y-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+          Control de Pagos
+        </h1>
+        <p className="text-sm sm:text-base text-gray-500">
+          Gestiona los pagos de las clases programadas
+        </p>
+      </div>
 
       {/* Filters */}
       <Card>

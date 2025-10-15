@@ -10,6 +10,7 @@ interface SendWhatsAppParams {
   trainerName: string;
   waitlistUrl: string;
   availableSlots: number;
+  classId: string; // ID de la clase para bloquear ausencias
 }
 
 interface WhatsAppResponse {
@@ -66,6 +67,18 @@ export const useSendWhatsAppNotification = () => {
         throw new Error('No hay sesión activa');
       }
 
+      // Primero bloqueamos las ausencias confirmadas antes de enviar el mensaje
+      const { error: lockError } = await supabase
+        .from('class_participants')
+        .update({ absence_locked: true })
+        .eq('class_id', params.classId)
+        .eq('absence_confirmed', true);
+
+      if (lockError) {
+        console.error('Error locking absences:', lockError);
+        throw new Error('Error al bloquear ausencias: ' + lockError.message);
+      }
+
       // Call the Edge Function
       const response = await supabase.functions.invoke<WhatsAppResponse>(
         'send-whatsapp-notification',
@@ -102,7 +115,7 @@ export const useSendWhatsAppNotification = () => {
       return data;
     },
     onSuccess: () => {
-      toast.success('✓ Mensaje enviado al grupo de WhatsApp');
+      toast.success('✓ Mensaje enviado y ausencias bloqueadas');
     },
     onError: (error: any) => {
       console.error('Error sending WhatsApp notification:', error);

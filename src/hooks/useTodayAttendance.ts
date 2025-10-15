@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export interface TodayAttendanceClass {
   id: string;
@@ -178,4 +179,123 @@ export const useTodayAttendance = () => {
   }, [profile?.id, today, queryClient]);
 
   return query;
+};
+
+// Hook para que el profesor/admin marque asistencia manualmente del jugador
+export const useTrainerMarkAttendance = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
+      console.log('👨‍🏫 Trainer marking attendance for:', { participantId, scheduledDate });
+
+      const { data, error } = await supabase
+        .from('class_participants')
+        .update({
+          attendance_confirmed_for_date: scheduledDate,
+          attendance_confirmed_at: new Date().toISOString(),
+          // Limpiar ausencia si existía
+          absence_confirmed: false,
+          absence_reason: null,
+          absence_confirmed_at: null,
+        })
+        .eq('id', participantId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      console.log('✅ Attendance marked by trainer:', data);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      toast.success('✓ Asistencia confirmada por el profesor');
+    },
+    onError: (error: any) => {
+      console.error('Error marking attendance:', error);
+      toast.error('Error al confirmar asistencia');
+    },
+  });
+};
+
+// Hook para que el profesor/admin marque ausencia manualmente del jugador
+export const useTrainerMarkAbsence = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async ({ participantId, reason }: { participantId: string; reason?: string }) => {
+      console.log('👨‍🏫 Trainer marking absence for:', { participantId, reason });
+
+      const { data, error } = await supabase
+        .from('class_participants')
+        .update({
+          absence_confirmed: true,
+          absence_reason: reason || 'Marcado por profesor',
+          absence_confirmed_at: new Date().toISOString(),
+          // Limpiar confirmación de asistencia si existía
+          attendance_confirmed_for_date: null,
+          attendance_confirmed_at: null,
+        })
+        .eq('id', participantId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      console.log('✅ Absence marked by trainer:', data);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      toast.success('✓ Ausencia marcada por el profesor');
+    },
+    onError: (error: any) => {
+      console.error('Error marking absence:', error);
+      toast.error('Error al marcar ausencia');
+    },
+  });
+};
+
+// Hook para que el profesor/admin limpie el estado (volver a pendiente)
+export const useTrainerClearStatus = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async (participantId: string) => {
+      console.log('👨‍🏫 Trainer clearing status for:', participantId);
+
+      const { data, error } = await supabase
+        .from('class_participants')
+        .update({
+          attendance_confirmed_for_date: null,
+          attendance_confirmed_at: null,
+          absence_confirmed: false,
+          absence_reason: null,
+          absence_confirmed_at: null,
+        })
+        .eq('id', participantId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      console.log('✅ Status cleared by trainer:', data);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      toast.success('✓ Estado limpiado');
+    },
+    onError: (error: any) => {
+      console.error('Error clearing status:', error);
+      toast.error('Error al limpiar estado');
+    },
+  });
 };

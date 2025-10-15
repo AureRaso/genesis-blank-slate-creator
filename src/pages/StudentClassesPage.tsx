@@ -134,18 +134,17 @@ const StudentClassesPage = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
-      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
-        {/* Header with Summary Cards - Responsive: stacked on mobile, inline on desktop */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-              Mis Pagos
-            </h1>
-            <p className="text-sm sm:text-base text-gray-500">
-              Gestiona tus suscripciones
-            </p>
-          </div>
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      {/* Header with Summary Cards - Responsive: stacked on mobile, inline on desktop */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            Mis Pagos
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500">
+            Gestiona tus suscripciones
+          </p>
+        </div>
 
           {/* Summary Cards - Responsive: full width on mobile, auto on desktop */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:flex">
@@ -420,7 +419,6 @@ const StudentClassesPage = () => {
             )}
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 };

@@ -210,55 +210,64 @@ export const TodayClassesConfirmation = () => {
 
                 {/* Action Buttons - Responsive: stacked on mobile, inline on desktop */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mt-4 sm:mt-6 pt-4 border-t border-slate-200/60">
-                  {/* Attendance Checkbox */}
-                  {!isAbsent && (
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id={`attendance-${classItem.id}-${scheduledDate}`}
-                        checked={isConfirmedForThisDate}
-                        onCheckedChange={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
-                        disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                        className={`
-                          h-4 w-4 sm:h-5 sm:w-5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600
-                          border-2 border-slate-300 flex-shrink-0
-                        `}
-                      />
-                      <label
-                        htmlFor={`attendance-${classItem.id}-${scheduledDate}`}
-                        className="text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none"
-                      >
-                        {isConfirmedForThisDate ? 'Voy' : 'Voy'}
-                      </label>
-                    </div>
-                  )}
-
                   {/* Action Buttons Group */}
-                  <div className="flex items-center gap-2 justify-end">
-                    {/* Absence Button */}
-                    {!isConfirmedForThisDate && !isAbsent && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenAbsenceDialog(classItem.id)}
-                        disabled={confirmAbsence.isPending}
-                        className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
-                      >
-                        <XCircle className="h-3.5 w-3.5 mr-1" />
-                        No voy
-                      </Button>
-                    )}
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="flex items-center gap-2">
+                      {/* Attendance Button */}
+                      {!isAbsent && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
+                          disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
+                          className={`
+                            px-3 py-1 h-8
+                            ${isConfirmedForThisDate
+                              ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 hover:border-green-400'
+                              : 'border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-300'
+                            }
+                          `}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                          Voy
+                        </Button>
+                      )}
 
-                    {/* Cancel Absence Button */}
-                    {isAbsent && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCancelAbsence(classItem.id)}
-                        disabled={cancelAbsence.isPending}
-                        className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
-                      >
-                        Cancelar asuencia
-                      </Button>
+                      {/* Absence Button */}
+                      {!isConfirmedForThisDate && !isAbsent && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenAbsenceDialog(classItem.id)}
+                          disabled={confirmAbsence.isPending}
+                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
+                        >
+                          <XCircle className="h-3.5 w-3.5 mr-1" />
+                          No voy
+                        </Button>
+                      )}
+
+                      {/* Cancel Absence Button */}
+                      {isAbsent && !classItem.absence_locked && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelAbsence(classItem.id)}
+                          disabled={cancelAbsence.isPending}
+                          className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
+                        >
+                          Cancelar ausencia
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Locked Absence Warning */}
+                    {isAbsent && classItem.absence_locked && (
+                      <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                        <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-800">
+                        Tu ausencia ha sido registrada correctamente. No es posible realizar cambios en este momento. ¡Gracias por avisar!                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
