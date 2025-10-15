@@ -61,9 +61,15 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
     rangeEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
     displayDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
   } else {
-    // month view
-    rangeStart = startOfMonth(currentDate);
-    rangeEnd = endOfMonth(currentDate);
+    // month view - ensure grid starts on Monday
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+
+    // Get the Monday of the week containing the first day of the month
+    rangeStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    // Get the Sunday of the week containing the last day of the month
+    rangeEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
     displayDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
   }
 
