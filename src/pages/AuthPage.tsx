@@ -20,6 +20,11 @@ export const AuthPage = () => {
   const [level, setLevel] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Estados para errores inline
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [clubError, setClubError] = useState("");
   const {
     signIn,
     signInWithGoogle,
@@ -115,6 +120,11 @@ export const AuthPage = () => {
       passwordLength: password.length
     });
 
+    // Clear previous errors
+    setEmailError("");
+    setPasswordError("");
+    setClubError("");
+
     // Validaciones
     if (!email || !confirmEmail || !password || !confirmPassword || !fullName || !level) {
       toast({
@@ -126,6 +136,7 @@ export const AuthPage = () => {
     }
 
     if (email !== confirmEmail) {
+      setEmailError("Los emails no coinciden");
       toast({
         title: "Error",
         description: "Los emails no coinciden",
@@ -135,6 +146,7 @@ export const AuthPage = () => {
     }
 
     if (password !== confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden");
       toast({
         title: "Error",
         description: "Las contraseñas no coinciden",
@@ -161,6 +173,7 @@ export const AuthPage = () => {
     }
 
     if (!selectedClubId) {
+      setClubError("Debes seleccionar un club para completar el registro");
       toast({
         title: "Error",
         description: "Debes seleccionar un club para completar el registro.",
@@ -454,11 +467,29 @@ export const AuthPage = () => {
                   id="signup-confirm-email"
                   type="email"
                   value={confirmEmail}
-                  onChange={e => setConfirmEmail(e.target.value)}
+                  onChange={e => {
+                    setConfirmEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onBlur={() => {
+                    if (confirmEmail && email && email !== confirmEmail) {
+                      setEmailError("Los emails no coinciden");
+                    }
+                  }}
                   placeholder="Confirma tu email"
-                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all ${
+                    emailError
+                      ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20'
+                  }`}
                   required
                 />
+                {emailError && (
+                  <p className="text-sm font-medium text-red-600 flex items-center gap-1.5">
+                    <span className="inline-block w-1 h-1 bg-red-600 rounded-full"></span>
+                    {emailError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -489,11 +520,29 @@ export const AuthPage = () => {
                   id="signup-confirm-password"
                   type="password"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={e => {
+                    setConfirmPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                  }}
+                  onBlur={() => {
+                    if (confirmPassword && password && password !== confirmPassword) {
+                      setPasswordError("Las contraseñas no coinciden");
+                    }
+                  }}
                   placeholder="Repite tu contraseña"
-                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all ${
+                    passwordError
+                      ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : 'border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20'
+                  }`}
                   required
                 />
+                {passwordError && (
+                  <p className="text-sm font-medium text-red-600 flex items-center gap-1.5">
+                    <span className="inline-block w-1 h-1 bg-red-600 rounded-full"></span>
+                    {passwordError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -504,10 +553,12 @@ export const AuthPage = () => {
                 onValueChange={value => {
                   console.log('🔧 ClubSelector - Value changed to:', value);
                   setSelectedClubId(value);
+                  if (clubError) setClubError("");
                 }}
                 label="Club"
                 placeholder="Selecciona tu club"
                 required
+                error={clubError}
               />
             </div>
 

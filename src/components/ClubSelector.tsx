@@ -10,18 +10,20 @@ interface ClubSelectorProps {
   label?: string;
   placeholder?: string;
   required?: boolean;
+  error?: string;
 }
 
-const ClubSelector = ({ 
-  value, 
-  onValueChange, 
-  label = "Club", 
+const ClubSelector = ({
+  value,
+  onValueChange,
+  label = "Club",
   placeholder = "Selecciona un club",
-  required = false 
+  required = false,
+  error
 }: ClubSelectorProps) => {
   console.log('🔧 ClubSelector - Component rendering with props:', { value, label, placeholder, required });
 
-  const { data: clubs, isLoading, error } = useQuery({
+  const { data: clubs, isLoading, error: queryError } = useQuery({
     queryKey: ['active-clubs'],
     queryFn: async () => {
       console.log('🔧 ClubSelector - Starting query for clubs...');
@@ -48,11 +50,11 @@ const ClubSelector = ({
     },
   });
 
-  console.log('🔧 ClubSelector - Render state:', { 
-    clubs: clubs?.length || 0, 
-    isLoading, 
-    error: error?.message,
-    value 
+  console.log('🔧 ClubSelector - Render state:', {
+    clubs: clubs?.length || 0,
+    isLoading,
+    error: queryError?.message,
+    value
   });
 
   if (isLoading) {
@@ -69,7 +71,7 @@ const ClubSelector = ({
     );
   }
 
-  if (error) {
+  if (queryError) {
     return (
       <div className="space-y-2">
         <Label htmlFor="club-selector" className="text-gray-700 font-medium">
@@ -77,7 +79,7 @@ const ClubSelector = ({
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>
         <div className="h-12 bg-red-50 border border-red-200 rounded-xl flex items-center px-3">
-          <span className="text-red-600 text-sm">Error: {error.message}</span>
+          <span className="text-red-600 text-sm">Error: {queryError.message}</span>
         </div>
       </div>
     );
@@ -105,9 +107,13 @@ const ClubSelector = ({
       </Label>
 
       <Select value={value} onValueChange={onValueChange} required={required}>
-        <SelectTrigger 
-          id="club-selector" 
-          className="h-12 border-2 border-gray-200 rounded-xl focus:border-blue-500 transition-all duration-300 bg-white"
+        <SelectTrigger
+          id="club-selector"
+          className={`h-12 border-2 rounded-xl transition-all duration-300 bg-white ${
+            error
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+              : 'border-gray-200 focus:border-blue-500'
+          }`}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -125,6 +131,13 @@ const ClubSelector = ({
           })}
         </SelectContent>
       </Select>
+
+      {error && (
+        <p className="text-sm font-medium text-red-600 flex items-center gap-1.5">
+          <span className="inline-block w-1 h-1 bg-red-600 rounded-full"></span>
+          {error}
+        </p>
+      )}
     </div>
   );
 };
