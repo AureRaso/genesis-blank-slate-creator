@@ -67,6 +67,35 @@ export const useWhatsAppGroup = (clubId?: string, trainerId?: string) => {
 };
 
 /**
+ * Hook to get ALL active WhatsApp groups for admins
+ * Used when admin needs to select which group to notify
+ */
+export const useAllWhatsAppGroups = () => {
+  return useQuery({
+    queryKey: ["all-whatsapp-groups"],
+    queryFn: async () => {
+      console.log('📱 Fetching all WhatsApp groups...');
+
+      const { data, error } = await supabase
+        .from("whatsapp_groups")
+        .select("*")
+        .eq("is_active", true)
+        .order("group_name", { ascending: true });
+
+      if (error) {
+        console.error('❌ Error fetching groups:', error);
+        throw error;
+      }
+
+      console.log('✅ WhatsApp groups fetched:', data?.length, 'groups');
+      console.log('📋 Groups:', data);
+
+      return data as WhatsAppGroupData[];
+    },
+  });
+};
+
+/**
  * Hook to get the active WhatsApp group for the current user
  * Automatically detects if user is trainer or admin and fetches appropriate group
  */

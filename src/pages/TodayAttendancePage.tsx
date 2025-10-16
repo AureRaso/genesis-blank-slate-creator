@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
-import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
+import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ const TodayAttendancePage = () => {
   const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups();
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;
@@ -45,6 +46,13 @@ const TodayAttendancePage = () => {
     open: false,
     classId: '',
     className: '',
+  });
+  const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
+    open: boolean;
+    classData: any | null;
+  }>({
+    open: false,
+    classData: null,
   });
 
   // Solo administradores pueden notificar por WhatsApp
@@ -128,11 +136,33 @@ const TodayAttendancePage = () => {
   };
 
   const handleNotifyWhatsApp = (classData: any) => {
+    console.log('🔔 handleNotifyWhatsApp called');
+    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
+    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
+    console.log('📊 whatsappGroup:', whatsappGroup);
+
+    // Si hay múltiples grupos, mostrar diálogo de selección
+    if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
+      setWhatsappGroupDialog({
+        open: true,
+        classData: classData,
+      });
+      return;
+    }
+
+    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
+
+    // Si solo hay un grupo, enviarlo directamente
     if (!whatsappGroup?.group_chat_id) {
       console.error("No WhatsApp group configured");
       return;
     }
 
+    sendNotificationToGroup(whatsappGroup.group_chat_id, classData);
+  };
+
+  const sendNotificationToGroup = (groupChatId: string, classData: any) => {
     const today = new Date().toISOString().split('T')[0];
     const absentCount = classData.participants.filter((p: any) => p.absence_confirmed).length;
     const substituteCount = classData.participants.filter((p: any) => p.is_substitute).length;
@@ -142,15 +172,18 @@ const TodayAttendancePage = () => {
     const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
 
     sendWhatsApp({
-      groupChatId: whatsappGroup.group_chat_id,
+      groupChatId: groupChatId,
       className: classData.name,
       classDate: today,
       classTime: classData.start_time,
       trainerName: classData.trainer?.full_name || 'Profesor',
       waitlistUrl,
       availableSlots: availableSlots,
-      classId: classData.id // Agregamos el ID de la clase para bloquear ausencias
+      classId: classData.id
     });
+
+    // Cerrar el diálogo si estaba abierto
+    setWhatsappGroupDialog({ open: false, classData: null });
   };
 
   const toggleWaitlist = (classId: string) => {
@@ -633,6 +666,37 @@ const TodayAttendancePage = () => {
           })}
         </div>
       )}
+
+      {/* WhatsApp Group Selection Dialog */}
+      <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seleccionar grupo de WhatsApp</DialogTitle>
+            <DialogDescription>
+              Elige el grupo al que deseas enviar la notificación
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            {loadingAllGroups ? (
+              <div className="text-center py-8 text-slate-500">Cargando grupos...</div>
+            ) : allWhatsAppGroups && allWhatsAppGroups.length > 0 ? (
+              allWhatsAppGroups.map((group) => (
+                <Button
+                  key={group.id}
+                  variant="outline"
+                  className="w-full justify-center text-center h-auto py-3 px-4"
+                  onClick={() => sendNotificationToGroup(group.group_chat_id, whatsappGroupDialog.classData)}
+                  disabled={isSendingWhatsApp}
+                >
+                  <span className="font-semibold">{group.group_name}</span>
+                </Button>
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-500">No hay grupos disponibles</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Substitute Search Dialog */}
       <Dialog open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
