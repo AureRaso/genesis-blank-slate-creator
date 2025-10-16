@@ -66,12 +66,33 @@ export const TodayClassesConfirmation = () => {
     const scheduledDate = classItem.scheduled_date;
     const startTime = classItem.programmed_class.start_time;
     const endTime = classItem.programmed_class.end_time;
+    const duration = classItem.programmed_class.duration_minutes || 60; // Duración por defecto 60 min
     const className = classItem.programmed_class.name;
     const trainerName = classItem.programmed_class.trainer?.full_name || 'Entrenador';
 
-    // Crear objetos Date en hora local
-    const startDateTime = new Date(`${scheduledDate}T${startTime}`);
-    const endDateTime = new Date(`${scheduledDate}T${endTime}`);
+    // Normalizar tiempos (asegurar formato HH:MM:SS)
+    const normalizeTime = (time: string) => {
+      if (!time) return '00:00:00';
+      const parts = time.split(':');
+      if (parts.length === 2) return `${time}:00`;
+      return time;
+    };
+
+    const normalizedStartTime = normalizeTime(startTime);
+
+    // Crear fecha de inicio
+    const startDateTime = new Date(`${scheduledDate}T${normalizedStartTime}`);
+
+    // Calcular fecha de fin
+    let endDateTime: Date;
+    if (endTime) {
+      // Si hay end_time, usarlo
+      const normalizedEndTime = normalizeTime(endTime);
+      endDateTime = new Date(`${scheduledDate}T${normalizedEndTime}`);
+    } else {
+      // Si no hay end_time, calcular usando la duración
+      endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 1000));
+    }
 
     // Formatear en formato Google Calendar (YYYYMMDDTHHmmss) en hora local
     const formatForGoogleCalendar = (date: Date) => {
