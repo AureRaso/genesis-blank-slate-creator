@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users } from "lucide-react";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
 import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
 
@@ -60,6 +60,28 @@ export const TodayClassesConfirmation = () => {
 
   const formatTime = (time: string) => {
     return time.substring(0, 5);
+  };
+
+  const addToGoogleCalendar = (classItem: any) => {
+    const scheduledDate = classItem.scheduled_date;
+    const startTime = classItem.programmed_class.start_time;
+    const endTime = classItem.programmed_class.end_time;
+    const className = classItem.programmed_class.name;
+    const trainerName = classItem.programmed_class.trainer?.full_name || 'Entrenador';
+
+    // Formatear fechas en formato ISO para Google Calendar
+    const startDateTime = `${scheduledDate}T${startTime}:00`;
+    const endDateTime = `${scheduledDate}T${endTime}:00`;
+
+    // Crear la URL de Google Calendar
+    const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+    googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
+    googleCalendarUrl.searchParams.append('text', `${className}`);
+    googleCalendarUrl.searchParams.append('details', `Clase de pádel con ${trainerName}`);
+    googleCalendarUrl.searchParams.append('dates', `${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}`);
+
+    // Abrir en nueva ventana
+    window.open(googleCalendarUrl.toString(), '_blank');
   };
 
   if (isLoading) {
@@ -212,7 +234,7 @@ export const TodayClassesConfirmation = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mt-4 sm:mt-6 pt-4 border-t border-slate-200/60">
                   {/* Action Buttons Group */}
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {/* Attendance Button */}
                       {!isAbsent && (
                         <Button
@@ -259,6 +281,17 @@ export const TodayClassesConfirmation = () => {
                           Cancelar ausencia
                         </Button>
                       )}
+
+                      {/* Add to Google Calendar Button - Visible on mobile */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addToGoogleCalendar(classItem)}
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 px-3 py-1 h-8 md:hidden"
+                      >
+                        <CalendarPlus className="h-3.5 w-3.5 mr-1" />
+                        Agregar
+                      </Button>
                     </div>
 
                     {/* Locked Absence Warning */}
