@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus } from "@/hooks/useTodayAttendance";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,22 +17,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
+import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const TodayAttendancePage = () => {
+  const { profile } = useAuth();
   const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
+  const [substituteDialog, setSubstituteDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+  });
+
+  // Solo administradores pueden notificar por WhatsApp
+  const isAdmin = profile?.role === 'admin';
 
   // Estados para diálogos de confirmación
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    type: 'attendance' | 'absence' | 'clear';
+    type: 'attendance' | 'absence' | 'clear' | 'remove';
     participantId: string;
     participantName: string;
     scheduledDate?: string;
@@ -46,6 +68,7 @@ const TodayAttendancePage = () => {
   const markAttendance = useTrainerMarkAttendance();
   const markAbsence = useTrainerMarkAbsence();
   const clearStatus = useTrainerClearStatus();
+  const removeParticipant = useRemoveParticipant();
 
   // Handlers con confirmación
   const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
@@ -76,6 +99,15 @@ const TodayAttendancePage = () => {
     });
   };
 
+  const handleConfirmRemove = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'remove',
+      participantId,
+      participantName,
+    });
+  };
+
   const executeAction = () => {
     if (confirmDialog.type === 'attendance' && confirmDialog.scheduledDate) {
       markAttendance.mutate({
@@ -89,6 +121,8 @@ const TodayAttendancePage = () => {
       });
     } else if (confirmDialog.type === 'clear') {
       clearStatus.mutate(confirmDialog.participantId);
+    } else if (confirmDialog.type === 'remove') {
+      removeParticipant.mutate(confirmDialog.participantId);
     }
     setConfirmDialog({ ...confirmDialog, open: false });
   };
@@ -101,6 +135,8 @@ const TodayAttendancePage = () => {
 
     const today = new Date().toISOString().split('T')[0];
     const absentCount = classData.participants.filter((p: any) => p.absence_confirmed).length;
+    const substituteCount = classData.participants.filter((p: any) => p.is_substitute).length;
+    const availableSlots = absentCount - substituteCount;
 
     // Generate waitlist URL
     const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
@@ -112,7 +148,7 @@ const TodayAttendancePage = () => {
       classTime: classData.start_time,
       trainerName: classData.trainer?.full_name || 'Profesor',
       waitlistUrl,
-      availableSlots: absentCount,
+      availableSlots: availableSlots,
       classId: classData.id // Agregamos el ID de la clase para bloquear ausencias
     });
   };
@@ -190,8 +226,8 @@ const TodayAttendancePage = () => {
         </div>
       </div>
 
-      {/* WhatsApp Group Warning */}
-      {!loadingWhatsAppGroup && !whatsappGroup && (
+      {/* WhatsApp Group Warning - Solo para administradores */}
+      {isAdmin && !loadingWhatsAppGroup && !whatsappGroup && (
         <Alert variant="destructive" className="text-xs sm:text-sm">
           <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
           <AlertDescription className="text-xs sm:text-sm">
@@ -322,8 +358,17 @@ const TodayAttendancePage = () => {
                           const isConfirmed = !!participant.attendance_confirmed_for_date;
                           const isAbsent = !!participant.absence_confirmed;
                           const isPending = !isConfirmed && !isAbsent;
+                          const isSubstitute = !!participant.is_substitute;
 
                           const today = new Date().toISOString().split('T')[0];
+
+                          console.log('👤 DEBUG - Participante:', participant.student_enrollment?.full_name, {
+                            isConfirmed,
+                            isAbsent,
+                            isPending,
+                            isSubstitute,
+                            is_substitute_field: participant.is_substitute
+                          });
 
                           return (
                             <div
@@ -434,7 +479,7 @@ const TodayAttendancePage = () => {
                                     </Button>
 
                                     {/* Reset Button */}
-                                    {(isConfirmed || isAbsent) && (
+                                    {(isConfirmed || isAbsent) && !participant.is_substitute && (
                                       <Button
                                         size="sm"
                                         variant="ghost"
@@ -447,6 +492,23 @@ const TodayAttendancePage = () => {
                                         title="Restablecer"
                                       >
                                         <RotateCcw className="h-4 w-4" />
+                                      </Button>
+                                    )}
+
+                                    {/* Delete Button - Solo para sustitutos */}
+                                    {participant.is_substitute && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleConfirmRemove(
+                                          participant.id,
+                                          participant.student_enrollment!.full_name
+                                        )}
+                                        disabled={removeParticipant.isPending}
+                                        className="h-9 w-9 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                        title="Eliminar sustituto"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
                                       </Button>
                                     )}
                                   </div>
@@ -472,56 +534,90 @@ const TodayAttendancePage = () => {
                     </div>
                   )}
 
-                  {/* WhatsApp Notification and Waitlist Management */}
+                  {/* Substitute Search and WhatsApp Notification */}
                   {(() => {
                     const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
+                    const substituteCount = validParticipants.filter(p => p.is_substitute).length;
+                    const availableSlots = absentCount - substituteCount;
                     const today = new Date().toISOString().split('T')[0];
 
-                    return absentCount > 0 && (
+                    console.log('🔍 DEBUG - Clase:', classData.name, {
+                      totalParticipants: validParticipants.length,
+                      absentCount,
+                      substituteCount,
+                      availableSlots,
+                      participants: validParticipants.map(p => ({
+                        name: p.student_enrollment?.full_name,
+                        isSubstitute: p.is_substitute,
+                        isAbsent: p.absence_confirmed
+                      }))
+                    });
+
+                    return availableSlots > 0 && (
                       <div className="mt-4 space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          {/* Badge de plazas disponibles */}
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
-                              {absentCount} {absentCount === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                              {availableSlots} {availableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
                             </Badge>
                           </div>
-                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                            <Button
-                              size="sm"
-                              onClick={() => handleNotifyWhatsApp(classData)}
-                              disabled={isSendingWhatsApp || !whatsappGroup}
-                              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:w-auto"
-                              title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
-                            >
-                              <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Notificar Disponibilidad</span>
-                              <span className="sm:hidden ml-2">Notificar</span>
-                            </Button>
+
+                          {/* Botones en columna para mobile, fila para desktop */}
+                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                            {/* Botón buscar sustituto - Para todos (admin y trainer) */}
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => toggleWaitlist(classData.id)}
-                              className="text-xs sm:text-sm w-full sm:w-auto"
+                              onClick={() => setSubstituteDialog({
+                                open: true,
+                                classId: classData.id,
+                                className: classData.name,
+                              })}
+                              className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
                             >
-                              {expandedWaitlist === classData.id ? (
-                                <>
-                                  <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                                  <span className="hidden sm:inline">Ocultar Lista</span>
-                                  <span className="sm:hidden ml-2">Ocultar</span>
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                                  <span className="hidden sm:inline">Ver Lista de Espera</span>
-                                  <span className="sm:hidden ml-2">Ver Lista</span>
-                                </>
-                              )}
+                              <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                              Añadir sustituto
                             </Button>
+
+                            {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
+                            {isAdmin && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleNotifyWhatsApp(classData)}
+                                  disabled={isSendingWhatsApp || !whatsappGroup}
+                                  className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                  title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
+                                >
+                                  <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                  Notificar ausencia
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => toggleWaitlist(classData.id)}
+                                  className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                >
+                                  {expandedWaitlist === classData.id ? (
+                                    <>
+                                      <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                      Ocultar
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                      Ver lista de espera
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
 
-                        {/* Waitlist Management Panel */}
-                        {expandedWaitlist === classData.id && (
+                        {/* Waitlist Management Panel - Solo para administradores */}
+                        {isAdmin && expandedWaitlist === classData.id && (
                           <WaitlistManagement
                             classId={classData.id}
                             classDate={today}
@@ -538,6 +634,25 @@ const TodayAttendancePage = () => {
         </div>
       )}
 
+      {/* Substitute Search Dialog */}
+      <Dialog open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Buscar Sustituto</DialogTitle>
+            <DialogDescription>
+              Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          {profile?.club_id && (
+            <SubstituteStudentSearch
+              classId={substituteDialog.classId}
+              clubId={profile.club_id}
+              onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
         <AlertDialogContent>
@@ -546,6 +661,7 @@ const TodayAttendancePage = () => {
               {confirmDialog.type === 'attendance' && '¿Marcar como presente?'}
               {confirmDialog.type === 'absence' && '¿Marcar como ausente?'}
               {confirmDialog.type === 'clear' && '¿Restablecer estado?'}
+              {confirmDialog.type === 'remove' && '¿Eliminar alumno de la clase?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog.type === 'attendance' && (
@@ -569,6 +685,13 @@ const TodayAttendancePage = () => {
                   Esto eliminará la confirmación de asistencia o ausencia actual.
                 </>
               )}
+              {confirmDialog.type === 'remove' && (
+                <>
+                  Vas a eliminar a <strong>{confirmDialog.participantName}</strong> de esta clase.
+                  <br /><br />
+                  Esta acción es permanente y liberará la plaza para otros alumnos.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -578,7 +701,7 @@ const TodayAttendancePage = () => {
               className={
                 confirmDialog.type === 'attendance'
                   ? 'bg-green-600 hover:bg-green-700'
-                  : confirmDialog.type === 'absence'
+                  : confirmDialog.type === 'absence' || confirmDialog.type === 'remove'
                   ? 'bg-red-600 hover:bg-red-700'
                   : ''
               }

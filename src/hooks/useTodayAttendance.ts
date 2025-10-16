@@ -107,6 +107,22 @@ export const useTodayAttendance = () => {
 
       console.log('📊 Today attendance data:', { data, error });
 
+      // Debug detallado de los participantes
+      if (data && data.length > 0) {
+        data.forEach(classItem => {
+          console.log('📋 Clase:', classItem.name);
+          classItem.participants?.forEach(p => {
+            console.log('  👤 Participante:', {
+              id: p.id,
+              name: p.student_enrollment?.full_name,
+              is_substitute: p.is_substitute,
+              absence_confirmed: p.absence_confirmed,
+              attendance_confirmed_for_date: p.attendance_confirmed_for_date
+            });
+          });
+        });
+      }
+
       if (error) {
         console.error('❌ Error fetching today attendance:', error);
         throw error;
@@ -128,7 +144,9 @@ export const useTodayAttendance = () => {
             attendance_confirmed_at: p.attendance_confirmed_at,
             absence_confirmed: p.absence_confirmed,
             absence_reason: p.absence_reason,
-            absence_confirmed_at: p.absence_confirmed_at
+            absence_confirmed_at: p.absence_confirmed_at,
+            is_substitute: p.is_substitute,
+            joined_from_waitlist_at: p.joined_from_waitlist_at
           }))
       })) as TodayAttendanceClass[];
 
@@ -296,6 +314,36 @@ export const useTrainerClearStatus = () => {
     onError: (error: any) => {
       console.error('Error clearing status:', error);
       toast.error('Error al limpiar estado');
+    },
+  });
+};
+
+// Hook para eliminar un participante (sustituto) de la clase
+export const useRemoveParticipant = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async (participantId: string) => {
+      console.log('🗑️ Removing participant:', participantId);
+
+      const { error } = await supabase
+        .from('class_participants')
+        .delete()
+        .eq('id', participantId);
+
+      if (error) throw error;
+      console.log('✅ Participant removed');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      toast.success('✓ Alumno eliminado de la clase');
+    },
+    onError: (error: any) => {
+      console.error('Error removing participant:', error);
+      toast.error('Error al eliminar alumno');
     },
   });
 };

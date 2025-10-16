@@ -20,7 +20,7 @@ interface WhatsAppResponse {
 }
 
 const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
-  const { className, classDate, classTime, trainerName, waitlistUrl, availableSlots } = params;
+  const { className, classDate, classTime, trainerName, waitlistUrl } = params;
 
   // Format date nicely
   const date = new Date(classDate);
@@ -31,28 +31,28 @@ const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
     day: 'numeric'
   }).format(date);
 
-  // Calculate cutoff time (5 hours before class)
+  // Format class time without seconds (HH:MM)
+  const formattedClassTime = classTime.substring(0, 5);
+
+  // Calculate cutoff time (3 hours before class)
   const [hours, minutes] = classTime.split(':');
   const classDateTime = new Date(date);
   classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
-  const cutoffTime = new Date(classDateTime.getTime() - 5 * 60 * 60 * 1000);
+  const cutoffTime = new Date(classDateTime.getTime() - 3 * 60 * 60 * 1000);
   const cutoffTimeStr = cutoffTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
-  return `🎾 *¡${availableSlots > 1 ? 'Plazas disponibles' : 'Plaza disponible'}!*
+  return `🎾 ¡Plaza en clase de recuperación disponible!
 
-*Clase:* ${className}
-*Fecha:* ${formattedDate}
-*Hora:* ${classTime}
-*Profesor:* ${trainerName}
+Fecha: ${formattedDate}
+Hora: ${formattedClassTime}
+Profesor: ${trainerName}
 
-${availableSlots > 1 ? `Hay ${availableSlots} plazas disponibles` : 'Un alumno ha cancelado su asistencia'}.
-
-👉 *Apúntate a la lista de espera en el siguiente enlace:*
+👉 Apúntate a la lista de espera en el siguiente enlace:
 ${waitlistUrl}
 
 ⏰ Disponible hasta las ${cutoffTimeStr}
 
-_Las plazas se asignan a criterio del profesor._`;
+Las plazas se asignan a criterio del profesor.`;
 };
 
 export const useSendWhatsAppNotification = () => {
