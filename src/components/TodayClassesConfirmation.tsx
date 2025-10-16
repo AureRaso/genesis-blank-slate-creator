@@ -69,16 +69,31 @@ export const TodayClassesConfirmation = () => {
     const className = classItem.programmed_class.name;
     const trainerName = classItem.programmed_class.trainer?.full_name || 'Entrenador';
 
-    // Formatear fechas en formato ISO para Google Calendar
-    const startDateTime = `${scheduledDate}T${startTime}:00`;
-    const endDateTime = `${scheduledDate}T${endTime}:00`;
+    // Crear objetos Date en hora local
+    const startDateTime = new Date(`${scheduledDate}T${startTime}`);
+    const endDateTime = new Date(`${scheduledDate}T${endTime}`);
+
+    // Formatear en formato Google Calendar (YYYYMMDDTHHmmss) en hora local
+    const formatForGoogleCalendar = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+    };
+
+    const startFormatted = formatForGoogleCalendar(startDateTime);
+    const endFormatted = formatForGoogleCalendar(endDateTime);
 
     // Crear la URL de Google Calendar
     const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
     googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
     googleCalendarUrl.searchParams.append('text', `${className}`);
     googleCalendarUrl.searchParams.append('details', `Clase de pádel con ${trainerName}`);
-    googleCalendarUrl.searchParams.append('dates', `${startDateTime.replace(/[-:]/g, '')}/${endDateTime.replace(/[-:]/g, '')}`);
+    googleCalendarUrl.searchParams.append('dates', `${startFormatted}/${endFormatted}`);
+    googleCalendarUrl.searchParams.append('ctz', 'Europe/Madrid');
 
     // Abrir en nueva ventana
     window.open(googleCalendarUrl.toString(), '_blank');
