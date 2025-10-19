@@ -18,25 +18,44 @@ export const CompleteProfile = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
+  console.log('🔧 CompleteProfile - Component rendering:', {
+    user: user?.id,
+    profile: profile?.id,
+    profileRole: profile?.role,
+    profileClubId: profile?.club_id,
+    profileLevel: profile?.level,
+    selectedClubId,
+    level
+  });
+
   // Redirect if not authenticated
   useEffect(() => {
+    console.log('🔧 CompleteProfile - Auth check:', { hasUser: !!user });
     if (!user) {
+      console.log('🔧 CompleteProfile - No user, redirecting to auth');
       navigate("/auth", { replace: true });
     }
   }, [user, navigate]);
 
   // Redirect if profile is already complete or user is not a player
   useEffect(() => {
+    console.log('🔧 CompleteProfile - Profile check:', {
+      hasProfile: !!profile,
+      role: profile?.role,
+      clubId: profile?.club_id,
+      level: profile?.level
+    });
+
     if (profile) {
       // Only players need to complete profile with club and level
       if (profile.role !== 'player') {
-        console.log('User is not a player, redirecting to dashboard');
+        console.log('🔧 CompleteProfile - User is not a player, redirecting to dashboard');
         navigate("/dashboard", { replace: true });
         return;
       }
 
       if (profile.club_id && profile.level) {
-        console.log('Player profile already complete, redirecting to dashboard');
+        console.log('🔧 CompleteProfile - Player profile already complete, redirecting to dashboard');
         navigate("/dashboard", { replace: true });
       }
     }
@@ -45,8 +64,11 @@ export const CompleteProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('🔧 CompleteProfile - Form submitted:', { level, selectedClubId });
+
     // Validations
     if (!level || !selectedClubId) {
+      console.log('🔧 CompleteProfile - Validation failed: missing fields');
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
@@ -57,6 +79,7 @@ export const CompleteProfile = () => {
 
     const numLevel = parseFloat(level);
     if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
+      console.log('🔧 CompleteProfile - Validation failed: invalid level', { numLevel });
       toast({
         title: "Error",
         description: "El nivel debe ser un número entre 1.0 y 10.0",
@@ -65,9 +88,16 @@ export const CompleteProfile = () => {
       return;
     }
 
+    console.log('🔧 CompleteProfile - Validation passed, updating profile...');
     setIsLoading(true);
 
     try {
+      console.log('🔧 CompleteProfile - Updating profile with:', {
+        club_id: selectedClubId,
+        level: numLevel,
+        user_id: user!.id
+      });
+
       // Update the profile with club_id and level
       const { error } = await supabase
         .from('profiles')
@@ -79,7 +109,7 @@ export const CompleteProfile = () => {
         .eq('id', user!.id);
 
       if (error) {
-        console.error('Error updating profile:', error);
+        console.error('🔧 CompleteProfile - Error updating profile:', error);
         toast({
           title: "Error",
           description: "No se pudo actualizar el perfil: " + error.message,
@@ -88,18 +118,22 @@ export const CompleteProfile = () => {
         return;
       }
 
+      console.log('🔧 CompleteProfile - Profile updated successfully');
+
       toast({
         title: "¡Perfil completado!",
         description: "Tu perfil ha sido actualizado correctamente"
       });
 
       // Wait a moment for the profile to update in the context
+      console.log('🔧 CompleteProfile - Waiting before redirect...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Force a page reload to ensure fresh data
+      console.log('🔧 CompleteProfile - Redirecting to dashboard...');
       window.location.href = "/dashboard";
     } catch (error: any) {
-      console.error('Error completing profile:', error);
+      console.error('🔧 CompleteProfile - Exception in handleSubmit:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error inesperado",
