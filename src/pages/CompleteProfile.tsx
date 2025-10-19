@@ -99,7 +99,7 @@ export const CompleteProfile = () => {
       });
 
       // Update the profile with club_id and level
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           club_id: selectedClubId,
@@ -108,17 +108,104 @@ export const CompleteProfile = () => {
         })
         .eq('id', user!.id);
 
-      if (error) {
-        console.error('🔧 CompleteProfile - Error updating profile:', error);
+      if (profileError) {
+        console.error('🔧 CompleteProfile - Error updating profile:', profileError);
         toast({
           title: "Error",
-          description: "No se pudo actualizar el perfil: " + error.message,
+          description: "No se pudo actualizar el perfil: " + profileError.message,
           variant: "destructive"
         });
         return;
       }
 
       console.log('🔧 CompleteProfile - Profile updated successfully');
+
+      // Create student_enrollment if it doesn't exist
+      console.log('🔧 CompleteProfile - Checking for existing student enrollment...');
+      console.log('🔧 CompleteProfile - User email:', user!.email);
+
+      // First check if enrollment already exists
+      const { data: existingEnrollment, error: checkError } = await supabase
+        .from('student_enrollments')
+        .select('id')
+        .eq('email', user!.email!)
+        .maybeSingle();
+
+      console.log('🔧 CompleteProfile - Existing enrollment check:', {
+        existingEnrollment,
+        checkError,
+        hasExisting: !!existingEnrollment
+      });
+
+      if (!existingEnrollment) {
+        // First, get a trainer from the selected club
+        console.log('🔧 CompleteProfile - Finding trainer for club:', selectedClubId);
+
+        const { data: trainers, error: trainerError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('club_id', selectedClubId)
+          .eq('role', 'trainer')
+          .limit(1);
+
+        console.log('🔧 CompleteProfile - Trainer query result:', { trainers, trainerError });
+
+        if (trainerError || !trainers || trainers.length === 0) {
+          console.error('🔧 CompleteProfile - No trainer found for club');
+          toast({
+            title: "Error",
+            description: "No se encontró un entrenador para este club. Contacta con el administrador.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const trainerId = trainers[0].id;
+        console.log('🔧 CompleteProfile - Using trainer:', trainerId);
+
+        const enrollmentData = {
+          trainer_profile_id: trainerId,
+          created_by_profile_id: user!.id,
+          email: user!.email!,
+          full_name: user!.user_metadata?.full_name || user!.email!,
+          phone: user!.user_metadata?.phone || '',
+          level: numLevel,
+          club_id: selectedClubId,
+          status: 'active'
+        };
+
+        console.log('🔧 CompleteProfile - Creating enrollment with data:', enrollmentData);
+
+        const { data: insertedData, error: enrollmentError } = await supabase
+          .from('student_enrollments')
+          .insert(enrollmentData)
+          .select();
+
+        console.log('🔧 CompleteProfile - Enrollment insert result:', {
+          insertedData,
+          enrollmentError
+        });
+
+        if (enrollmentError) {
+          console.error('🔧 CompleteProfile - Error creating enrollment:', enrollmentError);
+          console.error('🔧 CompleteProfile - Error details:', {
+            message: enrollmentError.message,
+            details: enrollmentError.details,
+            hint: enrollmentError.hint,
+            code: enrollmentError.code
+          });
+          // Don't fail the whole process if enrollment fails, just log it
+          toast({
+            title: "Advertencia",
+            description: "Perfil actualizado pero hubo un problema al crear el enrollment: " + enrollmentError.message,
+            variant: "destructive"
+          });
+        } else {
+          console.log('🔧 CompleteProfile - ✅ Student enrollment created successfully:', insertedData);
+        }
+      } else {
+        console.log('🔧 CompleteProfile - Student enrollment already exists, skipping creation');
+      }
 
       toast({
         title: "¡Perfil completado!",
