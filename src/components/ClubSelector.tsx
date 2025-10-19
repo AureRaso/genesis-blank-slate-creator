@@ -27,21 +27,22 @@ const ClubSelector = ({
     queryKey: ['active-clubs'],
     queryFn: async () => {
       console.log('🔧 ClubSelector - Starting query for clubs...');
-      
+
       try {
         const { data, error } = await supabase
           .from('clubs')
           .select('*')
           .eq('status', 'active')
+          .eq('id', '7b6f49ae-d496-407b-bca1-f5f1e9370610')  // Solo mostrar club Hespérides
           .order('name', { ascending: true });
-        
+
         console.log('🔧 ClubSelector - Query completed:', { data, error, count: data?.length });
-        
+
         if (error) {
           console.error('🔧 ClubSelector - Query error:', error);
           throw error;
         }
-        
+
         return data || [];
       } catch (err) {
         console.error('🔧 ClubSelector - Exception in queryFn:', err);
