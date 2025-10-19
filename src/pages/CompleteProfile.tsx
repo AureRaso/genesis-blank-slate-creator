@@ -13,7 +13,7 @@ import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const CompleteProfile = () => {
   const [level, setLevel] = useState("");
-  const [selectedClubId, setSelectedClubId] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState("7b6f49ae-d496-407b-bca1-f5f1e9370610"); // Pre-select Hespérides
   const [isLoading, setIsLoading] = useState(false);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
