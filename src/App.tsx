@@ -43,6 +43,13 @@ import WaitlistJoinPage from "@/pages/WaitlistJoinPage";
 import GetIdsPage from "@/pages/GetIdsPage";
 import CreateScheduledClassPage from "@/pages/CreateScheduledClassPage";
 import CreateBulkClassesPage from "@/pages/CreateBulkClassesPage";
+import OwnerProtectedRoute from "@/components/OwnerProtectedRoute";
+import OwnerDashboard from "@/pages/owner/OwnerDashboard";
+import OwnerMetricsPage from "@/pages/owner/OwnerMetricsPage";
+import OwnerClubsPage from "@/pages/owner/OwnerClubsPage";
+import OwnerUsersPage from "@/pages/owner/OwnerUsersPage";
+import OwnerSystemPage from "@/pages/owner/OwnerSystemPage";
+import OwnerSettingsPage from "@/pages/owner/OwnerSettingsPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -90,10 +97,10 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 function App() {
-  const { isAdmin, isPlayer, isTrainer, loading, user, authError, retryAuth } = useAuth();
+  const { isAdmin, isPlayer, isTrainer, isOwner, loading, user, authError, retryAuth } = useAuth();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
-  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, loading, user: user?.email, authError });
+  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, isOwner, loading, user: user?.email, authError });
 
   if (loading) {
     return (
@@ -150,8 +157,26 @@ function App() {
               <Route path="/get-ids" element={<GetIdsPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
+
+        {/* ============================================ */}
+        {/* RUTAS DE OWNER - COMPLETAMENTE NUEVAS */}
+        {/* NO AFECTAN ninguna funcionalidad existente */}
+        {/* ============================================ */}
+        <Route path="/owner" element={<OwnerProtectedRoute />}>
+          <Route index element={<OwnerDashboard />} />
+          <Route path="metrics" element={<OwnerMetricsPage />} />
+          <Route path="clubs" element={<OwnerClubsPage />} />
+          <Route path="users" element={<OwnerUsersPage />} />
+          <Route path="system" element={<OwnerSystemPage />} />
+          <Route path="settings" element={<OwnerSettingsPage />} />
+        </Route>
+
         <Route path="/dashboard/*" element={
           <ProtectedRoute>
+            {/* REDIRECCIÓN AUTOMÁTICA PARA OWNERS */}
+            {isOwner ? (
+              <Navigate to="/owner" replace />
+            ) : (
             <AppLayout>
               <Routes>
                 {isTrainer ? (
@@ -195,6 +220,7 @@ function App() {
                 )}
               </Routes>
             </AppLayout>
+            )}
           </ProtectedRoute>
         } />
       </Routes>

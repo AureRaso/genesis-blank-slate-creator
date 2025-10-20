@@ -18,6 +18,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isPlayer: boolean;
   isTrainer: boolean;
+  isOwner: boolean; // NUEVO: Para panel de owner
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -288,16 +289,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = profile?.role === 'admin';
   const isPlayer = profile?.role === 'player';
   const isTrainer = profile?.role === 'trainer';
+  const isOwner = profile?.role === 'owner'; // NUEVO: Para panel de owner
 
-  console.log('AuthContext - Current state:', { 
-    loading, 
-    hasUser: !!user, 
-    hasProfile: !!profile, 
+  console.log('AuthContext - Current state:', {
+    loading,
+    hasUser: !!user,
+    hasProfile: !!profile,
     role: profile?.role,
     authError,
     isAdmin,
     isPlayer,
-    isTrainer 
+    isTrainer
   });
 
   const value = {
@@ -313,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isPlayer,
     isTrainer,
+    isOwner, // NUEVO: Para panel de owner
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

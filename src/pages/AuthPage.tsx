@@ -427,7 +427,7 @@ export const AuthPage = () => {
             <div className="space-y-3">
               <Label htmlFor="signup-name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Nombre y Apellidos
+                Nombre y Apellidos *
               </Label>
               <Input
                 id="signup-name"
@@ -445,7 +445,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Email
+                  Email *
                 </Label>
                 <Input
                   id="signup-email"
@@ -461,7 +461,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-confirm-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Confirmar Email
+                  Confirmar Email *
                 </Label>
                 <Input
                   id="signup-confirm-email"
@@ -498,7 +498,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Contraseña
+                  Contraseña *
                 </Label>
                 <Input
                   id="signup-password"
@@ -514,7 +514,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Confirmar Contraseña
+                  Confirmar Contraseña *
                 </Label>
                 <Input
                   id="signup-confirm-password"
@@ -566,7 +566,7 @@ export const AuthPage = () => {
             <div className="space-y-3">
               <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <Target className="h-4 w-4" />
-                Nivel de Juego (Playtomic)
+                Nivel de Juego (Playtomic) *
               </Label>
               <Input
                 id="signup-level"
