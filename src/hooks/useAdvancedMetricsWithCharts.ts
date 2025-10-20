@@ -21,17 +21,17 @@ interface GrowthMetrics {
   currentMonth: {
     newUsers: number;
     newClubs: number;
-    newEnrollments: number;
+    newClasses: number;
   };
   lastMonth: {
     newUsers: number;
     newClubs: number;
-    newEnrollments: number;
+    newClasses: number;
   };
   growth: {
     usersGrowth: number;
     clubsGrowth: number;
-    enrollmentsGrowth: number;
+    classesGrowth: number;
   };
   monthlyTrend: MonthlyData[];
 }
@@ -80,10 +80,10 @@ interface UserDistribution {
   totalActive: number;
 }
 
-export const useAdvancedMetricsWithCharts = () => {
+export const useAdvancedMetricsWithCharts = (monthsRange: number = 6) => {
   // Métricas de crecimiento con tendencia mensual
   const { data: growthMetrics, isLoading: growthLoading } = useQuery({
-    queryKey: ["advanced-growth-metrics-charts"],
+    queryKey: ["advanced-growth-metrics-charts", monthsRange],
     queryFn: async (): Promise<GrowthMetrics> => {
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -113,13 +113,13 @@ export const useAdvancedMetricsWithCharts = () => {
         .gte("created_at", lastMonthStart.toISOString())
         .lte("created_at", lastMonthEnd.toISOString());
 
-      const { count: currentMonthEnrollments } = await supabase
-        .from("student_enrollments")
+      const { count: currentMonthClasses } = await supabase
+        .from("programmed_classes")
         .select("*", { count: "exact", head: true })
         .gte("created_at", currentMonthStart.toISOString());
 
-      const { count: lastMonthEnrollments } = await supabase
-        .from("student_enrollments")
+      const { count: lastMonthClasses } = await supabase
+        .from("programmed_classes")
         .select("*", { count: "exact", head: true })
         .gte("created_at", lastMonthStart.toISOString())
         .lte("created_at", lastMonthEnd.toISOString());
@@ -131,13 +131,13 @@ export const useAdvancedMetricsWithCharts = () => {
       const clubsGrowth = lastMonthClubs
         ? ((currentMonthClubs! - lastMonthClubs) / lastMonthClubs) * 100
         : 0;
-      const enrollmentsGrowth = lastMonthEnrollments
-        ? ((currentMonthEnrollments! - lastMonthEnrollments) / lastMonthEnrollments) * 100
+      const classesGrowth = lastMonthClasses
+        ? ((currentMonthClasses! - lastMonthClasses) / lastMonthClasses) * 100
         : 0;
 
-      // Generar datos de los últimos 6 meses para el gráfico
+      // Generar datos de los últimos N meses para el gráfico
       const monthlyTrend: MonthlyData[] = [];
-      for (let i = 5; i >= 0; i--) {
+      for (let i = monthsRange - 1; i >= 0; i--) {
         const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
         const monthName = monthStart.toLocaleDateString("es-ES", { month: "short" });
@@ -180,17 +180,17 @@ export const useAdvancedMetricsWithCharts = () => {
         currentMonth: {
           newUsers: currentMonthUsers || 0,
           newClubs: currentMonthClubs || 0,
-          newEnrollments: currentMonthEnrollments || 0,
+          newClasses: currentMonthClasses || 0,
         },
         lastMonth: {
           newUsers: lastMonthUsers || 0,
           newClubs: lastMonthClubs || 0,
-          newEnrollments: lastMonthEnrollments || 0,
+          newClasses: lastMonthClasses || 0,
         },
         growth: {
           usersGrowth: Number(usersGrowth.toFixed(1)),
           clubsGrowth: Number(clubsGrowth.toFixed(1)),
-          enrollmentsGrowth: Number(enrollmentsGrowth.toFixed(1)),
+          classesGrowth: Number(classesGrowth.toFixed(1)),
         },
         monthlyTrend,
       };
@@ -290,10 +290,10 @@ export const useAdvancedMetricsWithCharts = () => {
       const clubsWithMetrics = await Promise.all(
         clubs.map(async (club) => {
           const { count: studentsCount } = await supabase
-            .from("student_enrollments")
+            .from("profiles")
             .select("*", { count: "exact", head: true })
             .eq("club_id", club.id)
-            .eq("status", "active");
+            .eq("role", "player");
 
           const { count: classesCount } = await supabase
             .from("programmed_classes")

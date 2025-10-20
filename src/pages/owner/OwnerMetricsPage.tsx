@@ -5,10 +5,12 @@
  * Incluye KPIs, tendencias y visualizaciones interactivas usando Recharts.
  */
 
+import { useState } from "react";
 import { OwnerLayout } from "@/components/OwnerLayout";
 import { useAdvancedMetricsWithCharts } from "@/hooks/useAdvancedMetricsWithCharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Users, Building2, GraduationCap, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Users, Building2, Calendar, Activity, GraduationCap } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -27,7 +29,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+type TimeRange = 3 | 6 | 12;
+
 export const OwnerMetricsPage = () => {
+  const [timeRange, setTimeRange] = useState<TimeRange>(6);
+
   const {
     growthMetrics,
     growthLoading,
@@ -37,7 +43,7 @@ export const OwnerMetricsPage = () => {
     clubLoading,
     userDistribution,
     userLoading,
-  } = useAdvancedMetricsWithCharts();
+  } = useAdvancedMetricsWithCharts(timeRange);
 
   const getTrendColor = (value: number | undefined) => {
     if (!value) return "text-slate-500";
@@ -169,21 +175,21 @@ export const OwnerMetricsPage = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Nuevas Inscripciones</p>
+                    <p className="text-sm font-medium text-slate-500">Nuevas Clases</p>
                     <p className="text-3xl font-bold text-slate-800 mt-1">
-                      {growthMetrics?.currentMonth.newEnrollments || 0}
+                      {growthMetrics?.currentMonth.newClasses || 0}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className={`flex items-center gap-1 text-sm font-semibold ${getTrendColor(growthMetrics?.growth.enrollmentsGrowth)}`}>
-                        {getTrendIcon(growthMetrics?.growth.enrollmentsGrowth)}
-                        {Math.abs(growthMetrics?.growth.enrollmentsGrowth || 0)}%
+                      <span className={`flex items-center gap-1 text-sm font-semibold ${getTrendColor(growthMetrics?.growth.classesGrowth)}`}>
+                        {getTrendIcon(growthMetrics?.growth.classesGrowth)}
+                        {Math.abs(growthMetrics?.growth.classesGrowth || 0)}%
                       </span>
                       <span className="text-xs text-slate-500">
-                        vs mes anterior ({growthMetrics?.lastMonth.newEnrollments || 0})
+                        vs mes anterior ({growthMetrics?.lastMonth.newClasses || 0})
                       </span>
                     </div>
                   </div>
-                  <GraduationCap className="h-10 w-10 text-green-500/30" />
+                  <Calendar className="h-10 w-10 text-green-500/30" />
                 </div>
               </CardContent>
             </Card>
@@ -193,10 +199,40 @@ export const OwnerMetricsPage = () => {
         {/* Gráfico de Tendencia Mensual */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Tendencia de Crecimiento (Últimos 6 Meses)</CardTitle>
-            <CardDescription>
-              Evolución de usuarios, clubes e inscripciones mensuales
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl">Tendencia de Crecimiento (Últimos {timeRange} Meses)</CardTitle>
+                <CardDescription>
+                  Evolución de usuarios, clubes y clases programadas mensuales
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={timeRange === 3 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(3)}
+                  className={timeRange === 3 ? "bg-playtomic-orange hover:bg-orange-600" : ""}
+                >
+                  3M
+                </Button>
+                <Button
+                  variant={timeRange === 6 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(6)}
+                  className={timeRange === 6 ? "bg-playtomic-orange hover:bg-orange-600" : ""}
+                >
+                  6M
+                </Button>
+                <Button
+                  variant={timeRange === 12 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(12)}
+                  className={timeRange === 12 ? "bg-playtomic-orange hover:bg-orange-600" : ""}
+                >
+                  12M
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {growthLoading ? (
@@ -215,7 +251,7 @@ export const OwnerMetricsPage = () => {
                       <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.8} />
                       <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="colorEnrollments" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorClasses" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={COLORS.tertiary} stopOpacity={0.8} />
                       <stop offset="95%" stopColor={COLORS.tertiary} stopOpacity={0} />
                     </linearGradient>
@@ -249,11 +285,11 @@ export const OwnerMetricsPage = () => {
                   />
                   <Area
                     type="monotone"
-                    dataKey="enrollments"
+                    dataKey="classes"
                     stroke={COLORS.tertiary}
                     fillOpacity={1}
-                    fill="url(#colorEnrollments)"
-                    name="Inscripciones"
+                    fill="url(#colorClasses)"
+                    name="Clases"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -445,7 +481,7 @@ export const OwnerMetricsPage = () => {
                 <Building2 className="h-5 w-5 text-blue-500" />
                 Distribución de Clubes
               </CardTitle>
-              <CardDescription>Clasificación por número de alumnos</CardDescription>
+              <CardDescription>Clasificación por número de jugadores</CardDescription>
             </CardHeader>
             <CardContent>
               {clubLoading ? (
@@ -512,7 +548,7 @@ export const OwnerMetricsPage = () => {
                 </svg>
                 Top 5 Clubes
               </CardTitle>
-              <CardDescription>Por número de alumnos activos</CardDescription>
+              <CardDescription>Por número de jugadores activos</CardDescription>
             </CardHeader>
             <CardContent>
               {clubLoading ? (
@@ -536,7 +572,7 @@ export const OwnerMetricsPage = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-xl font-bold text-playtomic-orange">{club.studentsCount}</p>
-                        <p className="text-xs text-slate-500">alumnos</p>
+                        <p className="text-xs text-slate-500">jugadores</p>
                       </div>
                     </div>
                   ))}
