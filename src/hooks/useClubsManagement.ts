@@ -59,12 +59,12 @@ export const useClubsManagement = () => {
         // Para cada club, obtener métricas
         const clubsWithMetrics = await Promise.all(
           clubsData.map(async (club) => {
-            // Total de estudiantes (enrollments activos)
+            // Total de jugadores (players en el club)
             const { count: totalStudents } = await supabase
-              .from("student_enrollments")
+              .from("profiles")
               .select("*", { count: "exact", head: true })
               .eq("club_id", club.id)
-              .eq("status", "active");
+              .eq("role", "player");
 
             // Total de trainers
             const { count: totalTrainers } = await supabase
@@ -83,15 +83,16 @@ export const useClubsManagement = () => {
               .eq("club_id", club.id)
               .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0]);
 
-            // Estudiantes este mes
+            // Jugadores nuevos este mes
             const currentMonthStart = new Date();
             currentMonthStart.setDate(1);
             currentMonthStart.setHours(0, 0, 0, 0);
 
             const { count: studentsThisMonth } = await supabase
-              .from("student_enrollments")
+              .from("profiles")
               .select("*", { count: "exact", head: true })
               .eq("club_id", club.id)
+              .eq("role", "player")
               .gte("created_at", currentMonthStart.toISOString());
 
             // Distribución por nivel

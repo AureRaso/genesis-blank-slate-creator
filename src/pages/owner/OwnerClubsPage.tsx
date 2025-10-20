@@ -84,7 +84,7 @@ export const OwnerClubsPage = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Total Estudiantes</p>
+                    <p className="text-sm font-medium text-slate-500">Total Jugadores</p>
                     <p className="text-3xl font-bold text-slate-800 mt-1">
                       {stats?.totalStudentsAcrossClubs || 0}
                     </p>
@@ -112,7 +112,7 @@ export const OwnerClubsPage = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Media Estudiantes</p>
+                    <p className="text-sm font-medium text-slate-500">Media Jugadores</p>
                     <p className="text-3xl font-bold text-slate-800 mt-1">
                       {stats?.averageStudentsPerClub || 0}
                     </p>
@@ -136,7 +136,7 @@ export const OwnerClubsPage = () => {
                     {stats.mostActiveClub.name}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {stats.mostActiveClub.studentCount} estudiantes activos
+                    {stats.mostActiveClub.studentCount} jugadores activos
                   </p>
                 </div>
               </div>
@@ -191,7 +191,7 @@ export const OwnerClubsPage = () => {
                     <TableRow>
                       <TableHead>Club</TableHead>
                       <TableHead>Tamaño</TableHead>
-                      <TableHead className="text-center">Estudiantes</TableHead>
+                      <TableHead className="text-center">Jugadores</TableHead>
                       <TableHead className="text-center">Entrenadores</TableHead>
                       <TableHead className="text-center">Clases (30d)</TableHead>
                       <TableHead className="text-center">Nuevos Este Mes</TableHead>
@@ -276,7 +276,7 @@ export const OwnerClubsPage = () => {
               <div className="text-sm text-blue-800">
                 <p className="font-semibold mb-1">Uso Comercial</p>
                 <p>
-                  Esta vista te permite demostrar a nuevos clubes la cantidad de estudiantes,
+                  Esta vista te permite demostrar a nuevos clubes la cantidad de jugadores,
                   distribución por niveles y actividad general de tu plataforma. Ideal para
                   presentaciones a inversores o nuevos clientes potenciales.
                 </p>
