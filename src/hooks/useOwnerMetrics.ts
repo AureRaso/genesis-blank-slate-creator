@@ -67,7 +67,7 @@ export const useOwnerMetrics = () => {
         const { count } = await supabase
           .from("programmed_classes")
           .select("*", { count: "exact", head: true })
-          .eq("date", today);
+          .eq("start_date", today);
         todayClassesCount = count || 0;
       } catch (error) {
         console.warn("Error fetching today's classes count:", error);

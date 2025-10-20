@@ -81,7 +81,7 @@ export const useClubsManagement = () => {
               .from("programmed_classes")
               .select("*", { count: "exact", head: true })
               .eq("club_id", club.id)
-              .gte("date", thirtyDaysAgo.toISOString().split("T")[0]);
+              .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0]);
 
             // Estudiantes este mes
             const currentMonthStart = new Date();

@@ -163,8 +163,8 @@ export const useAdvancedMetricsWithCharts = () => {
         const { count: monthClasses } = await supabase
           .from("programmed_classes")
           .select("*", { count: "exact", head: true })
-          .gte("date", monthStart.toISOString().split("T")[0])
-          .lte("date", monthEnd.toISOString().split("T")[0]);
+          .gte("start_date", monthStart.toISOString().split("T")[0])
+          .lte("start_date", monthEnd.toISOString().split("T")[0]);
 
         monthlyTrend.push({
           month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
@@ -209,7 +209,7 @@ export const useAdvancedMetricsWithCharts = () => {
       const { count: totalClasses } = await supabase
         .from("programmed_classes")
         .select("*", { count: "exact", head: true })
-        .gte("date", thirtyDaysAgo.toISOString().split("T")[0]);
+        .gte("start_date", thirtyDaysAgo.toISOString().split("T")[0]);
 
       const { count: totalParticipants } = await supabase
         .from("class_participants")
@@ -244,8 +244,8 @@ export const useAdvancedMetricsWithCharts = () => {
         const { count: weekClasses } = await supabase
           .from("programmed_classes")
           .select("*", { count: "exact", head: true })
-          .gte("date", weekStart.toISOString().split("T")[0])
-          .lte("date", weekEnd.toISOString().split("T")[0]);
+          .gte("start_date", weekStart.toISOString().split("T")[0])
+          .lte("start_date", weekEnd.toISOString().split("T")[0]);
 
         const { count: weekParticipants } = await supabase
           .from("class_participants")
