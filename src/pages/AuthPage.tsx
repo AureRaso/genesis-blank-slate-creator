@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2 } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
@@ -20,6 +20,10 @@ export const AuthPage = () => {
   const [level, setLevel] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Estados para visibilidad de contraseñas
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Estados para errores inline
   const [emailError, setEmailError] = useState("");
@@ -326,15 +330,25 @@ export const AuthPage = () => {
                   <Lock className="h-4 w-4" />
                   Contraseña
                 </Label>
-                <Input
-                  id="signin-password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Tu contraseña"
-                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="signin-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Tu contraseña"
+                    className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -500,15 +514,25 @@ export const AuthPage = () => {
                   <Lock className="h-4 w-4" />
                   Contraseña *
                 </Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="signup-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -516,27 +540,37 @@ export const AuthPage = () => {
                   <Lock className="h-4 w-4" />
                   Confirmar Contraseña *
                 </Label>
-                <Input
-                  id="signup-confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => {
-                    setConfirmPassword(e.target.value);
-                    if (passwordError) setPasswordError("");
-                  }}
-                  onBlur={() => {
-                    if (confirmPassword && password && password !== confirmPassword) {
-                      setPasswordError("Las contraseñas no coinciden");
-                    }
-                  }}
-                  placeholder="Repite tu contraseña"
-                  className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all ${
-                    passwordError
-                      ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
+                <div className="relative">
+                  <Input
+                    id="signup-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={e => {
+                      setConfirmPassword(e.target.value);
+                      if (passwordError) setPasswordError("");
+                    }}
+                    onBlur={() => {
+                      if (confirmPassword && password && password !== confirmPassword) {
+                        setPasswordError("Las contraseñas no coinciden");
+                      }
+                    }}
+                    placeholder="Repite tu contraseña"
+                    className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all pr-10 ${
+                      passwordError
+                        ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
                       : 'border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20'
                   }`}
                   required
                 />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
                 {passwordError && (
                   <p className="text-sm font-medium text-red-600 flex items-center gap-1.5">
                     <span className="inline-block w-1 h-1 bg-red-600 rounded-full"></span>
