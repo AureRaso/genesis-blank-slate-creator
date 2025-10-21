@@ -33,7 +33,7 @@ const ClubSelector = ({
           .from('clubs')
           .select('*')
           .eq('status', 'active')
-          .eq('id', '7b6f49ae-d496-407b-bca1-f5f1e9370610')  // Solo mostrar club Hespérides
+          .ilike('name', '%hespérides%')  // Solo mostrar el club Hespérides
           .order('name', { ascending: true });
 
         console.log('🔧 ClubSelector - Query completed:', { data, error, count: data?.length });

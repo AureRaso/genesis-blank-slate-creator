@@ -21,6 +21,7 @@ const AppSidebar = () => {
     isAdmin = false,
     isTrainer = false,
     isPlayer = false,
+    isGuardian = false,
     profile
   } = authContext || {};
 
@@ -88,8 +89,8 @@ const AppSidebar = () => {
       </Sidebar>;
   }
 
-  // Si es jugador, mostrar panel personalizado sin profesores
-  if (isPlayer) {
+  // Si es jugador o guardian, mostrar panel personalizado sin profesores
+  if (isPlayer || isGuardian) {
     const playerNavItems = [
       {
         title: t('sidebar.dashboard'),
@@ -102,6 +103,11 @@ const AppSidebar = () => {
         url: "/dashboard/my-classes",
         icon: BookOpen
       },
+      ...(isGuardian ? [{
+        title: "Mis Hijos",
+        url: "/dashboard/my-children",
+        icon: Users
+      }] : []),
       ...(leaguesEnabled ? [{
         title: t('sidebar.leagues'),
         url: "/dashboard/leagues",

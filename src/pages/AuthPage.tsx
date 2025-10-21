@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
@@ -19,6 +20,7 @@ export const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [level, setLevel] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
+  const [userType, setUserType] = useState<'player' | 'guardian'>('player');
   const [isLoading, setIsLoading] = useState(false);
 
   // Estados para visibilidad de contraseñas
@@ -41,7 +43,14 @@ export const AuthPage = () => {
   // Redirect to home if user is already authenticated
   useEffect(() => {
     if (user && profile) {
-      console.log('User is authenticated, checking profile completion...');
+      console.log('User is authenticated, checking profile completion and role...');
+
+      // Check if user is a guardian - redirect to setup page
+      if (profile.role === 'guardian') {
+        console.log('Guardian detected, redirecting to guardian setup');
+        navigate("/guardian/setup", { replace: true });
+        return;
+      }
 
       // Only check profile completion for players
       if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
@@ -130,10 +139,20 @@ export const AuthPage = () => {
     setClubError("");
 
     // Validaciones
-    if (!email || !confirmEmail || !password || !confirmPassword || !fullName || !level) {
+    if (!email || !confirmEmail || !password || !confirmPassword || !fullName) {
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // El nivel solo es obligatorio para players, no para guardians
+    if (userType === 'player' && !level) {
+      toast({
+        title: "Error",
+        description: "El nivel es obligatorio para jugadores",
         variant: "destructive"
       });
       return;
@@ -159,21 +178,25 @@ export const AuthPage = () => {
       return;
     }
 
-    const numLevel = parseFloat(level);
-    console.log('🔍 DEBUG - Level validation:', {
-      levelString: level,
-      levelNumber: numLevel,
-      isNaN: isNaN(numLevel),
-      isValid: !isNaN(numLevel) && numLevel >= 1.0 && numLevel <= 10.0
-    });
-
-    if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
-      toast({
-        title: "Error",
-        description: "El nivel debe ser un número entre 1.0 y 10.0",
-        variant: "destructive"
+    // Validar nivel solo para players
+    let numLevel = 1.0; // Valor por defecto para guardians
+    if (userType === 'player') {
+      numLevel = parseFloat(level);
+      console.log('🔍 DEBUG - Level validation:', {
+        levelString: level,
+        levelNumber: numLevel,
+        isNaN: isNaN(numLevel),
+        isValid: !isNaN(numLevel) && numLevel >= 1.0 && numLevel <= 10.0
       });
-      return;
+
+      if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
+        toast({
+          title: "Error",
+          description: "El nivel debe ser un número entre 1.0 y 10.0",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (!selectedClubId) {
@@ -191,12 +214,13 @@ export const AuthPage = () => {
       fullName,
       selectedClubId,
       numLevel,
-      numLevelType: typeof numLevel
+      numLevelType: typeof numLevel,
+      userType
     });
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName, selectedClubId, numLevel);
+      const { error } = await signUp(email, password, fullName, selectedClubId, numLevel, userType);
       console.log('🔍 DEBUG - signUp completed with error:', error);
       if (error) {
         toast({
@@ -437,6 +461,28 @@ export const AuthPage = () => {
               </div>
             </div>
 
+            {/* Tipo de usuario */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                ¿Cómo vas a usar PadeLock? *
+              </Label>
+              <RadioGroup value={userType} onValueChange={(value) => setUserType(value as 'player' | 'guardian')}>
+                <div className="flex items-center space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:border-playtomic-orange/50 transition-all cursor-pointer">
+                  <RadioGroupItem value="player" id="player" />
+                  <Label htmlFor="player" className="flex-1 cursor-pointer font-normal">
+                    Soy jugador/a
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:border-playtomic-orange/50 transition-all cursor-pointer">
+                  <RadioGroupItem value="guardian" id="guardian" />
+                  <Label htmlFor="guardian" className="flex-1 cursor-pointer font-normal">
+                    Soy padre/madre (voy a inscribir a mis hijos)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {/* Nombre completo */}
             <div className="space-y-3">
               <Label htmlFor="signup-name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -596,32 +642,34 @@ export const AuthPage = () => {
               />
             </div>
 
-            {/* Nivel de juego */}
-            <div className="space-y-3">
-              <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Nivel de Juego (Playtomic) *
-              </Label>
-              <Input
-                id="signup-level"
-                type="text"
-                inputMode="decimal"
-                value={level}
-                onChange={e => {
-                  const value = e.target.value;
-                  // Allow only numbers and one decimal point
-                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                    setLevel(value);
-                  }
-                }}
-                placeholder="Ej: 3.5"
-                className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
-                required
-              />
-              <p className="text-xs text-slate-500">
-                Introduce tu nivel Playtomic (1.0 - 10.0)
-              </p>
-            </div>
+            {/* Nivel de juego - Solo para players */}
+            {userType === 'player' && (
+              <div className="space-y-3">
+                <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Nivel de Juego (Playtomic) *
+                </Label>
+                <Input
+                  id="signup-level"
+                  type="text"
+                  inputMode="decimal"
+                  value={level}
+                  onChange={e => {
+                    const value = e.target.value;
+                    // Allow only numbers and one decimal point
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setLevel(value);
+                    }
+                  }}
+                  placeholder="Ej: 3.5"
+                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                  required
+                />
+                <p className="text-xs text-slate-500">
+                  Introduce tu nivel Playtomic (1.0 - 10.0)
+                </p>
+              </div>
+            )}
 
             {/* Checkbox de términos y condiciones */}
             <div className="space-y-3 pt-2">

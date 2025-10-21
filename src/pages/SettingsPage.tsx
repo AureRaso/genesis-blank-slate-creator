@@ -25,7 +25,7 @@ interface ClubWithStripe {
 }
 
 const SettingsPage = () => {
-  const { profile, isAdmin, isPlayer, isTrainer, user } = useAuth();
+  const { profile, isAdmin, isPlayer, isTrainer, isGuardian, user } = useAuth();
   const { data: clubs } = useClubs();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -170,8 +170,8 @@ const SettingsPage = () => {
     }
   };
 
-  // Player and Trainer view - show profile information
-  if (isPlayer || isTrainer) {
+  // Player, Trainer and Guardian view - show profile information without admin features
+  if (isPlayer || isTrainer || isGuardian) {
     return (
       <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
         <div className="space-y-2">

@@ -12,13 +12,14 @@ interface AuthContextType {
   authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, clubId?: string, level?: number) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, clubId?: string, level?: number, role?: 'player' | 'guardian') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   retryAuth: () => void;
   isAdmin: boolean;
   isPlayer: boolean;
   isTrainer: boolean;
-  isOwner: boolean; // NUEVO: Para panel de owner
+  isOwner: boolean;
+  isGuardian: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -221,13 +222,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, clubId?: string, level?: number) => {
+  const signUp = async (email: string, password: string, fullName: string, clubId?: string, level?: number, role: 'player' | 'guardian' = 'player') => {
     console.log('🔍 DEBUG - AuthContext signUp called with:', {
       email,
       fullName,
       clubId,
       level,
-      levelType: typeof level
+      levelType: typeof level,
+      role
     });
 
     const redirectUrl = `${window.location.origin}/`;
@@ -235,7 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userData = {
       full_name: fullName,
       club_id: clubId,
-      level: level
+      level: level,
+      role: role
     };
 
     console.log('🔍 DEBUG - userData being sent to Supabase:', userData);
@@ -289,7 +292,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = profile?.role === 'admin';
   const isPlayer = profile?.role === 'player';
   const isTrainer = profile?.role === 'trainer';
-  const isOwner = profile?.role === 'owner'; // NUEVO: Para panel de owner
+  const isOwner = profile?.role === 'owner';
+  const isGuardian = profile?.role === 'guardian';
 
   console.log('AuthContext - Current state:', {
     loading,
@@ -299,7 +303,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authError,
     isAdmin,
     isPlayer,
-    isTrainer
+    isTrainer,
+    isOwner,
+    isGuardian
   });
 
   const value = {
@@ -315,7 +321,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isPlayer,
     isTrainer,
-    isOwner, // NUEVO: Para panel de owner
+    isOwner,
+    isGuardian,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

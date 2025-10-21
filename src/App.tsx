@@ -50,6 +50,11 @@ import OwnerClubsPage from "@/pages/owner/OwnerClubsPage";
 import OwnerUsersPage from "@/pages/owner/OwnerUsersPage";
 import OwnerSystemPage from "@/pages/owner/OwnerSystemPage";
 import OwnerSettingsPage from "@/pages/owner/OwnerSettingsPage";
+import GuardianDashboard from "@/pages/GuardianDashboard";
+import GuardianClassesDashboard from "@/pages/GuardianClassesDashboard";
+import GuardianSetupPage from "@/pages/GuardianSetupPage";
+import { GuardianRouter } from "@/components/GuardianRouter";
+import MyChildrenPage from "@/pages/MyChildrenPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -97,10 +102,10 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 function App() {
-  const { isAdmin, isPlayer, isTrainer, isOwner, loading, user, authError, retryAuth } = useAuth();
+  const { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, profile, loading, user, authError, retryAuth } = useAuth();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
-  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, isOwner, loading, user: user?.email, authError });
+  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, loading, user: user?.email, authError });
 
   if (loading) {
     return (
@@ -171,9 +176,19 @@ function App() {
           <Route path="settings" element={<OwnerSettingsPage />} />
         </Route>
 
+        {/* ============================================ */}
+        {/* RUTAS DE GUARDIAN - PARA PADRES/TUTORES */}
+        {/* ============================================ */}
+        {/* Ruta de setup inicial para guardians (agregar hijos después del registro) */}
+        <Route path="/guardian/setup" element={
+          <ProtectedRoute>
+            <GuardianSetupPage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/dashboard/*" element={
           <ProtectedRoute>
-            {/* REDIRECCIÓN AUTOMÁTICA PARA OWNERS */}
+            {/* REDIRECCIÓN AUTOMÁTICA SOLO PARA OWNERS */}
             {isOwner ? (
               <Navigate to="/owner" replace />
             ) : (
@@ -199,6 +214,7 @@ function App() {
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<Index />} />
                     <Route path="/my-classes" element={<StudentClassesPage />} />
+                    <Route path="/my-children" element={<MyChildrenPage />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
                     {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
@@ -209,7 +225,7 @@ function App() {
                      <Route path="/trainers" element={<TrainersPage />} />
                      <Route path="/payment-control" element={<PaymentControlPage />} />
                      <Route path="/scheduled-classes" element={
-                       isPlayer ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
+                       (isPlayer || isGuardian) ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
                      } />
                      <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
                      <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
