@@ -23,6 +23,7 @@ export const AuthPage = () => {
   const [selectedClubId, setSelectedClubId] = useState("");
   const [userType, setUserType] = useState<'player' | 'guardian'>('player');
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
 
   // Estados para visibilidad de contraseñas
   const [showPassword, setShowPassword] = useState(false);
@@ -43,80 +44,128 @@ export const AuthPage = () => {
 
   // Redirect to home if user is already authenticated
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let hasRedirected = false;
+
+    // 🧪 TEST MODE: Detectar parámetros de prueba en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const testMode = urlParams.get('test');
+    const testDelay = parseInt(urlParams.get('testDelay') || '0');
+
+    const safeRedirect = (path: string) => {
+      if (!hasRedirected) {
+        hasRedirected = true;
+        clearTimeout(timeoutId);
+        setIsVerifyingAccount(false);
+        navigate(path, { replace: true });
+      }
+    };
+
     const checkGuardianSetup = async () => {
       if (user && profile) {
-        console.log('User is authenticated, checking profile completion and role...');
+        setIsVerifyingAccount(true);
 
-        // Check if user is a guardian - verify if they need setup
-        if (profile.role === 'guardian') {
-          console.log('🔍 STEP 1: Guardian detected, checking if setup is needed...');
-          console.log('📋 STEP 2: Guardian details:', {
-            userId: user.id,
-            email: user.email,
-            profileRole: profile.role,
-            profileId: profile.id
-          });
+        // 🧪 TEST MODE: Simular diferentes escenarios
+        if (testMode) {
+          console.log('🧪 TEST MODE ACTIVATED:', testMode);
 
-          // Check if guardian already has children
-          console.log('🔎 STEP 3: Querying account_dependents table...');
-          const { data: children, error: childrenError } = await supabase
-            .from('account_dependents')
-            .select('dependent_profile_id, guardian_profile_id')
-            .eq('guardian_profile_id', user.id);
-
-          console.log('👶 STEP 4: Children query result:', {
-            children,
-            childrenCount: children?.length || 0,
-            error: childrenError,
-            errorDetails: childrenError ? {
-              message: childrenError.message,
-              code: childrenError.code,
-              details: childrenError.details
-            } : null
-          });
-
-          if (childrenError) {
-            console.error('❌ STEP 5: Error fetching children:', childrenError);
-            // En caso de error, redirigir al dashboard por seguridad
-            console.log('⚠️ Redirecting to dashboard due to error');
-            navigate("/dashboard", { replace: true });
+          if (testMode === 'timeout') {
+            // Simula un hang infinito - el timeout de 5s debería rescatarlo
+            console.log('🧪 Simulating infinite hang...');
+            await new Promise(() => {}); // Never resolves
             return;
           }
 
-          if (!children || children.length === 0) {
-            console.log('⚠️ STEP 6: Guardian has NO children (count: 0), redirecting to SETUP');
-            navigate("/guardian/setup", { replace: true });
+          if (testMode === 'slow') {
+            // Simula una respuesta lenta pero exitosa
+            const delay = testDelay || 3000;
+            console.log(`🧪 Simulating slow response (${delay}ms)...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            console.log('🧪 Slow response completed, redirecting...');
+            safeRedirect("/dashboard");
             return;
+          }
+
+          if (testMode === 'error') {
+            // Simula un error en la consulta
+            console.log('🧪 Simulating database error...');
+            throw new Error('Simulated database error');
+          }
+
+          if (testMode === 'guardian-check-error') {
+            // Simula un error específico al verificar children
+            console.log('🧪 Simulating guardian children check error...');
+            if (profile.role === 'guardian') {
+              throw new Error('Simulated guardian check error');
+            }
+          }
+        }
+
+        // Safety timeout: Si después de 5 segundos no se redirige, forzar ir al dashboard
+        timeoutId = setTimeout(() => {
+          if (!hasRedirected) {
+            console.warn('⏱️ Timeout reached, forcing redirect to dashboard');
+            safeRedirect("/dashboard");
+          }
+        }, 5000);
+
+        try {
+          // Check if user is a guardian - verify if they need setup
+          if (profile.role === 'guardian') {
+            try {
+              // Check if guardian already has children
+              const { data: children, error: childrenError } = await supabase
+                .from('account_dependents')
+                .select('dependent_profile_id, guardian_profile_id')
+                .eq('guardian_profile_id', user.id);
+
+              if (childrenError) {
+                console.error('Error fetching children, redirecting to dashboard:', childrenError);
+                safeRedirect("/dashboard");
+                return;
+              }
+
+              if (!children || children.length === 0) {
+                safeRedirect("/guardian/setup");
+                return;
+              } else {
+                safeRedirect("/dashboard");
+                return;
+              }
+            } catch (error) {
+              console.error('Exception checking guardian children:', error);
+              safeRedirect("/dashboard");
+              return;
+            }
+          }
+
+          // Only check profile completion for players
+          if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
+            safeRedirect("/complete-profile");
+            return;
+          }
+
+          // Check for redirect URL
+          const redirectUrl = localStorage.getItem('redirectAfterLogin');
+          if (redirectUrl) {
+            localStorage.removeItem('redirectAfterLogin');
+            safeRedirect(redirectUrl);
           } else {
-            console.log(`✅ STEP 7: Guardian HAS ${children.length} children, redirecting to DASHBOARD`);
-            console.log('👶 Children IDs:', children.map(c => c.dependent_profile_id));
-            navigate("/dashboard", { replace: true });
-            return;
+            safeRedirect("/dashboard");
           }
-        }
-
-        // Only check profile completion for players
-        if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
-          console.log('Player profile incomplete, redirecting to complete-profile');
-          navigate("/complete-profile", { replace: true });
-          return;
-        }
-
-        const redirectUrl = localStorage.getItem('redirectAfterLogin');
-        if (redirectUrl) {
-          localStorage.removeItem('redirectAfterLogin');
-          navigate(redirectUrl, {
-            replace: true
-          });
-        } else {
-          navigate("/dashboard", {
-            replace: true
-          });
+        } catch (error) {
+          console.error('Unexpected error in checkGuardianSetup:', error);
+          safeRedirect("/dashboard");
         }
       }
     };
 
     checkGuardianSetup();
+
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [user, profile, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -291,6 +340,42 @@ export const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loading screen while verifying account
+  if (isVerifyingAccount) {
+    // 🧪 Detectar modo de prueba para mostrar info
+    const urlParams = new URLSearchParams(window.location.search);
+    const testMode = urlParams.get('test');
+    const testDelay = urlParams.get('testDelay');
+
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 flex items-center justify-center p-4">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-playtomic-orange mx-auto"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-playtomic-orange/20 mx-auto"></div>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-white">Verificando tu cuenta...</h2>
+            <p className="text-slate-300 text-sm">Esto solo tomará unos segundos</p>
+
+            {/* 🧪 Indicador de modo de prueba */}
+            {testMode && (
+              <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <p className="text-yellow-300 text-xs font-mono">
+                  🧪 TEST MODE: {testMode}
+                  {testDelay && ` (delay: ${testDelay}ms)`}
+                </p>
+                <p className="text-yellow-200/60 text-xs mt-1">
+                  Safety timeout activará en 5 segundos
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen lg:h-screen w-full bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 flex items-center justify-center p-4 py-6 relative overflow-x-hidden">
