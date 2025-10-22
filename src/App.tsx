@@ -55,6 +55,7 @@ import GuardianClassesDashboard from "@/pages/GuardianClassesDashboard";
 import GuardianSetupPage from "@/pages/GuardianSetupPage";
 import { GuardianRouter } from "@/components/GuardianRouter";
 import MyChildrenPage from "@/pages/MyChildrenPage";
+import ClearCachePage from "@/pages/ClearCachePage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -149,6 +150,7 @@ function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/clear-cache" element={<ClearCachePage />} />
               <Route path="/complete-profile" element={
                 <ProtectedRoute>
                   <CompleteProfile />
