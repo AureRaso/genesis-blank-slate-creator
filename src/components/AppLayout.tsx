@@ -29,6 +29,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const authContext = useAuth();
   const isPlayer = authContext?.isPlayer || false;
   const isTrainer = authContext?.isTrainer || false;
+  const isGuardian = authContext?.isGuardian || false;
   const { profile, signOut } = useAuth();
 
   const getBreadcrumbInfo = () => {
@@ -68,8 +69,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const breadcrumbInfo = getBreadcrumbInfo();
 
-  // Layout for players and trainers - Mobile-first with tab bar
-  if (isPlayer || isTrainer) {
+  // Layout for players, trainers, and guardians - Mobile-first with tab bar
+  if (isPlayer || isTrainer || isGuardian) {
     return (
       <>
         <div className="flex min-h-screen w-full flex-col">

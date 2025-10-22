@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const MobileTabBar = () => {
   const location = useLocation();
-  const { isPlayer, isTrainer } = useAuth();
+  const { isPlayer, isTrainer, isGuardian } = useAuth();
 
   // Tabs for players
   const playerTabs = [
@@ -19,6 +19,11 @@ const MobileTabBar = () => {
       path: "/dashboard/my-classes",
       icon: CreditCard,
     },
+    ...(isGuardian ? [{
+      name: "Mis Hijos",
+      path: "/dashboard/my-children",
+      icon: Users,
+    }] : []),
   ];
 
   // Tabs for trainers
@@ -45,13 +50,14 @@ const MobileTabBar = () => {
     },
   ];
 
+  // Guardians use the same tabs as players
   const tabs = isTrainer ? trainerTabs : playerTabs;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
       <div className={cn(
         "grid h-16",
-        isTrainer ? "grid-cols-4" : "grid-cols-2"
+        isTrainer ? "grid-cols-4" : isGuardian ? "grid-cols-3" : "grid-cols-2"
       )}>
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;
