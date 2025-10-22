@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users } from "lucide-react";
 import ClubSelector from "@/components/ClubSelector";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -42,35 +43,80 @@ export const AuthPage = () => {
 
   // Redirect to home if user is already authenticated
   useEffect(() => {
-    if (user && profile) {
-      console.log('User is authenticated, checking profile completion and role...');
+    const checkGuardianSetup = async () => {
+      if (user && profile) {
+        console.log('User is authenticated, checking profile completion and role...');
 
-      // Check if user is a guardian - redirect to setup page
-      if (profile.role === 'guardian') {
-        console.log('Guardian detected, redirecting to guardian setup');
-        navigate("/guardian/setup", { replace: true });
-        return;
-      }
+        // Check if user is a guardian - verify if they need setup
+        if (profile.role === 'guardian') {
+          console.log('🔍 STEP 1: Guardian detected, checking if setup is needed...');
+          console.log('📋 STEP 2: Guardian details:', {
+            userId: user.id,
+            email: user.email,
+            profileRole: profile.role,
+            profileId: profile.id
+          });
 
-      // Only check profile completion for players
-      if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
-        console.log('Player profile incomplete, redirecting to complete-profile');
-        navigate("/complete-profile", { replace: true });
-        return;
-      }
+          // Check if guardian already has children
+          console.log('🔎 STEP 3: Querying account_dependents table...');
+          const { data: children, error: childrenError } = await supabase
+            .from('account_dependents')
+            .select('dependent_profile_id, guardian_profile_id')
+            .eq('guardian_profile_id', user.id);
 
-      const redirectUrl = localStorage.getItem('redirectAfterLogin');
-      if (redirectUrl) {
-        localStorage.removeItem('redirectAfterLogin');
-        navigate(redirectUrl, {
-          replace: true
-        });
-      } else {
-        navigate("/dashboard", {
-          replace: true
-        });
+          console.log('👶 STEP 4: Children query result:', {
+            children,
+            childrenCount: children?.length || 0,
+            error: childrenError,
+            errorDetails: childrenError ? {
+              message: childrenError.message,
+              code: childrenError.code,
+              details: childrenError.details
+            } : null
+          });
+
+          if (childrenError) {
+            console.error('❌ STEP 5: Error fetching children:', childrenError);
+            // En caso de error, redirigir al dashboard por seguridad
+            console.log('⚠️ Redirecting to dashboard due to error');
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+
+          if (!children || children.length === 0) {
+            console.log('⚠️ STEP 6: Guardian has NO children (count: 0), redirecting to SETUP');
+            navigate("/guardian/setup", { replace: true });
+            return;
+          } else {
+            console.log(`✅ STEP 7: Guardian HAS ${children.length} children, redirecting to DASHBOARD`);
+            console.log('👶 Children IDs:', children.map(c => c.dependent_profile_id));
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+        }
+
+        // Only check profile completion for players
+        if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
+          console.log('Player profile incomplete, redirecting to complete-profile');
+          navigate("/complete-profile", { replace: true });
+          return;
+        }
+
+        const redirectUrl = localStorage.getItem('redirectAfterLogin');
+        if (redirectUrl) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectUrl, {
+            replace: true
+          });
+        } else {
+          navigate("/dashboard", {
+            replace: true
+          });
+        }
       }
-    }
+    };
+
+    checkGuardianSetup();
   }, [user, profile, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {

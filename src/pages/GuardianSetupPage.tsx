@@ -35,11 +35,13 @@ const GuardianSetupPage = () => {
   const handleAddChild = (data: any) => {
     addChild(data, {
       onSuccess: () => {
-        // Esperar 2 segundos antes de cerrar el modal para que el usuario vea el proceso completo
-        // y la UI tenga tiempo de actualizarse con el nuevo hijo
-        setTimeout(() => {
-          setIsAddChildModalOpen(false);
-        }, 2000);
+        // Cerrar el modal inmediatamente
+        setIsAddChildModalOpen(false);
+
+        // Recargar la página INMEDIATAMENTE para mantener la sesión del guardian
+        // La sesión del guardian ya fue restaurada en el hook
+        console.log('🔄 Reloading page to restore guardian session...');
+        window.location.reload();
       }
     });
   };

@@ -190,63 +190,62 @@ export const useGuardianChildren = () => {
         throw new Error('No se pudo crear el usuario');
       }
 
-      console.log('Created auth user:', authData.user.id);
+      console.log('✅ Created auth user:', authData.user.id);
 
-      // IMPORTANTE: Restaurar la sesión del guardian inmediatamente
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: guardianSession.access_token,
-        refresh_token: guardianSession.refresh_token
-      });
-
-      if (sessionError) {
-        console.error('Error restoring guardian session:', sessionError);
-        throw new Error('Error al restaurar la sesión del guardian');
-      }
-
-      console.log('✅ Guardian session restored');
-
-      // Forzar verificación de sesión para actualizar el contexto
-      await supabase.auth.getSession();
-
-      // 3. El trigger handle_new_user creará automáticamente el perfil
-      // Esperamos un momento para que el trigger se ejecute Y para que el AuthContext se actualice
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 3. Esperar a que el trigger handle_new_user cree el perfil (250ms debería ser suficiente)
+      await new Promise(resolve => setTimeout(resolve, 250));
 
       // 4. Verificar que el perfil se creó
-      const { data: newProfile, error: profileError } = await supabase
+      const { data: newProfile, error: profileError} = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authData.user.id)
         .single();
 
       if (profileError || !newProfile) {
-        console.error('Error fetching created profile:', profileError);
+        console.error('❌ Error fetching created profile:', profileError);
         throw new Error('El perfil del hijo no se creó correctamente');
       }
 
-      console.log('Created child profile:', newProfile);
+      console.log('✅ Created child profile:', newProfile.full_name);
 
-      // 5. Crear la relación en account_dependents
-      // Ahora auth.uid() debería ser el ID del guardian de nuevo
+      // 5. IMPORTANTE: Restaurar la sesión del guardian ANTES de crear la relación
+      // Esto es necesario porque las políticas RLS de account_dependents verifican auth.uid()
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: guardianSession.access_token,
+        refresh_token: guardianSession.refresh_token
+      });
+
+      if (sessionError) {
+        console.error('❌ Error restoring guardian session:', sessionError);
+        throw new Error('Error al restaurar la sesión del guardian');
+      }
+
+      console.log('✅ Guardian session restored');
+
+      // Pequeña espera para que la sesión se propague
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 6. Ahora crear la relación en account_dependents (con la sesión del guardian activa)
       const { data: relationship, error: relationshipError } = await supabase
         .from('account_dependents')
         .insert({
           guardian_profile_id: guardianId,
           dependent_profile_id: newProfile.id,
           relationship_type: 'child',
-          birth_date: null // Ya no pedimos fecha de nacimiento
+          birth_date: null
         })
         .select()
         .single();
 
       if (relationshipError) {
-        console.error('Error creating relationship:', relationshipError);
+        console.error('❌ Error creating relationship:', relationshipError);
         // Si falla la relación, eliminar el perfil creado
         await supabase.from('profiles').delete().eq('id', newProfile.id);
         throw relationshipError;
       }
 
-      console.log('Created relationship:', relationship);
+      console.log('✅ Created relationship successfully - ready to reload');
 
       return { profile: newProfile, relationship };
     },

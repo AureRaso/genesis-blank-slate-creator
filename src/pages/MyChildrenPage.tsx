@@ -15,7 +15,13 @@ const MyChildrenPage = () => {
   const handleAddChild = (data: any) => {
     addChild(data, {
       onSuccess: () => {
+        // Cerrar el modal inmediatamente
         setIsAddChildModalOpen(false);
+
+        // Recargar la página INMEDIATAMENTE para mantener la sesión del guardian
+        // La sesión del guardian ya fue restaurada en el hook
+        console.log('🔄 Reloading page to restore guardian session...');
+        window.location.reload();
       }
     });
   };

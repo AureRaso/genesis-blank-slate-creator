@@ -41,14 +41,27 @@ export const AddChildModal = ({
       level: numLevel,
     });
 
-    // Reset form
-    setFullName('');
-    setLevel('');
+    // NO resetear el formulario aquí - se reseteará cuando el modal se cierre
+  };
+
+  // Resetear formulario cuando el modal se cierra
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isLoading) {
+      // Solo resetear si no está cargando
+      setFullName('');
+      setLevel('');
+    }
+    onOpenChange(newOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[450px]" onInteractOutside={(e) => {
+        // Prevenir cerrar el modal haciendo clic fuera mientras está cargando
+        if (isLoading) {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <UserPlus className="h-6 w-6 text-playtomic-orange" />
@@ -73,6 +86,7 @@ export const AddChildModal = ({
               placeholder="Ej: María García López"
               className="h-12"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -96,6 +110,7 @@ export const AddChildModal = ({
               placeholder="Ej: 2.5"
               className="h-12"
               required
+              disabled={isLoading}
             />
             <p className="text-xs text-slate-500">
               Nivel aproximado de tu hijo/a (1.0 - 10.0)
@@ -107,7 +122,7 @@ export const AddChildModal = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               className="flex-1"
               disabled={isLoading}
             >
