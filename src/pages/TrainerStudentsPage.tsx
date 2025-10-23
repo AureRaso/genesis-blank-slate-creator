@@ -300,10 +300,12 @@ const TrainerStudentsPage = () => {
                     <span className="truncate">{getPeriodLabel(student.enrollment_period)}</span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground flex-shrink-0">Días:</span>
-                    <span className="text-right truncate">{student.weekly_days.join(", ")}</span>
-                  </div>
+                  {student.weekly_days && student.weekly_days.length > 0 && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground flex-shrink-0">Días:</span>
+                      <span className="text-right truncate">{student.weekly_days.join(", ")}</span>
+                    </div>
+                  )}
 
                   {student.first_payment && (
                     <div className="flex items-center justify-between gap-2">
