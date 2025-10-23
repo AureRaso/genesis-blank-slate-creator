@@ -304,6 +304,12 @@ const TrainerDashboard = () => {
       action: () => navigate("/dashboard/students")
     },
     {
+      title: "Programar Clases",
+      description: "Configurar clases",
+      icon: GraduationCap,
+      action: () => navigate("/dashboard/scheduled-classes")
+    },
+    {
       title: "Asistencia Hoy",
       description: "Ver asistencia",
       icon: Clock,
@@ -363,7 +369,7 @@ const TrainerDashboard = () => {
           </h3>
         </div>
         <div className="flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
