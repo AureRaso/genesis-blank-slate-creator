@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Calendar, List, Search, Filter, Zap, Sparkles } from "lucide-react";
+import { Plus, Calendar, List, Search, Filter, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,11 @@ import { useClassGroups } from "@/hooks/useClassGroups";
 import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
 import { TrainerLegend } from "@/components/calendar/TrainerLegend";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
-import AIClassCreatorModal from "@/components/AIClassCreatorModal";
+
 function ScheduledClassesContent() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [filteredCalendarClasses, setFilteredCalendarClasses] = useState([]);
-  const [showAIModal, setShowAIModal] = useState(false);
   const {
     t
   } = useTranslation();
@@ -82,18 +81,6 @@ function ScheduledClassesContent() {
 
             {(profile?.role === 'admin' || profile?.role === 'trainer') && (
               <>
-                {/* AI Button - Only for ivan@gmail.com */}
-                {user?.email === 'ivan@gmail.com' && (
-                  <Button
-                    onClick={() => setShowAIModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    <span className="hidden xl:inline">Crear con IA</span>
-                    <span className="xl:hidden">IA</span>
-                  </Button>
-                )}
-
                 {/* Bulk creation - Only for admins */}
                 {profile?.role === 'admin' && (
                   <Button
@@ -145,14 +132,6 @@ function ScheduledClassesContent() {
 
       {/* Floating Action Button - Only for admins and trainers on mobile */}
       {(profile?.role === 'admin' || profile?.role === 'trainer') && <FloatingCreateButton />}
-
-      {/* AI Class Creator Modal - Only for ivan@gmail.com */}
-      {user?.email === 'ivan@gmail.com' && (
-        <AIClassCreatorModal
-          isOpen={showAIModal}
-          onClose={() => setShowAIModal(false)}
-        />
-      )}
     </div>;
 }
 export default function ScheduledClassesPage() {
