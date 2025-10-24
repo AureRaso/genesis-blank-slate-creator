@@ -140,9 +140,6 @@ const PromotionsPage = () => {
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Ir a la promoción
                 </Button>
-                <div className="text-xs text-muted-foreground pt-2 border-t">
-                  Creada el {new Date(promotion.created_at).toLocaleDateString('es-ES')}
-                </div>
               </CardContent>
             </Card>
           ))}
