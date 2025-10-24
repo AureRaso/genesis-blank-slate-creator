@@ -11,22 +11,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus, User, Target } from 'lucide-react';
 import { AddChildData } from '@/hooks/useGuardianChildren';
+import ClubCodeInput from '@/components/ClubCodeInput';
 
 interface AddChildModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddChild: (data: AddChildData) => void;
   isLoading: boolean;
+  mode?: 'setup' | 'add'; // 'setup' pide código de club (primera vez), 'add' usa el club del guardian (por defecto)
 }
 
 export const AddChildModal = ({
   open,
   onOpenChange,
   onAddChild,
-  isLoading
+  isLoading,
+  mode = 'add' // Por defecto, no pedir código de club
 }: AddChildModalProps) => {
   const [fullName, setFullName] = useState('');
   const [level, setLevel] = useState('');
+  const [clubCode, setClubCode] = useState('');
+  const [selectedClubId, setSelectedClubId] = useState('');
+  const [clubError, setClubError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +42,16 @@ export const AddChildModal = ({
       return;
     }
 
+    // Solo validar código de club en modo 'setup'
+    if (mode === 'setup' && !selectedClubId) {
+      setClubError('Debes ingresar un código de club válido');
+      return;
+    }
+
     onAddChild({
       fullName,
       level: numLevel,
+      clubId: mode === 'setup' ? selectedClubId : undefined, // Solo enviar clubId en modo setup
     });
 
     // NO resetear el formulario aquí - se reseteará cuando el modal se cierre
@@ -50,6 +63,9 @@ export const AddChildModal = ({
       // Solo resetear si no está cargando
       setFullName('');
       setLevel('');
+      setClubCode('');
+      setSelectedClubId('');
+      setClubError('');
     }
     onOpenChange(newOpen);
   };
@@ -68,7 +84,9 @@ export const AddChildModal = ({
             Añadir Hijo/a
           </DialogTitle>
           <DialogDescription>
-            Crea un perfil para tu hijo/a. El club será asignado automáticamente.
+            {mode === 'setup'
+              ? 'Crea un perfil para tu hijo/a. Necesitarás el código del club proporcionado por su entrenador.'
+              : 'Crea un perfil para tu hijo/a. Se añadirá al mismo club que tus otros hijos.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,6 +107,24 @@ export const AddChildModal = ({
               disabled={isLoading}
             />
           </div>
+
+          {/* Código de club - Solo en modo setup */}
+          {mode === 'setup' && (
+            <div className="space-y-2">
+              <ClubCodeInput
+                value={clubCode}
+                onValueChange={(code, clubId, clubName) => {
+                  setClubCode(code);
+                  setSelectedClubId(clubId || '');
+                  if (clubError) setClubError('');
+                }}
+                label="Código de Club"
+                placeholder="ABC"
+                required
+                error={clubError}
+              />
+            </div>
+          )}
 
           {/* Nivel */}
           <div className="space-y-2">

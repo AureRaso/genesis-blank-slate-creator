@@ -20,6 +20,7 @@ export interface GuardianChild {
 export interface AddChildData {
   fullName: string;
   level: number;
+  clubId?: string; // Opcional para mantener compatibilidad con guardians que usan el club del guardian
 }
 
 export const useGuardianChildren = () => {
@@ -128,8 +129,9 @@ export const useGuardianChildren = () => {
         throw new Error('No user authenticated');
       }
 
-      if (!profile?.club_id) {
-        throw new Error('El guardian no tiene un club asignado');
+      // Verificar que haya un club_id disponible (del guardian o del código ingresado)
+      if (!childData.clubId && !profile?.club_id) {
+        throw new Error('Debes proporcionar un código de club válido');
       }
 
       console.log('🔍 Adding child:', childData);
@@ -173,7 +175,7 @@ export const useGuardianChildren = () => {
         options: {
           data: {
             full_name: childData.fullName,
-            club_id: profile.club_id,
+            club_id: childData.clubId || profile.club_id,
             level: childData.level,
             role: 'player'
           },

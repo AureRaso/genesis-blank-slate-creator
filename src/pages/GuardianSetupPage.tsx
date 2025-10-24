@@ -217,6 +217,7 @@ const GuardianSetupPage = () => {
         onOpenChange={setIsAddChildModalOpen}
         onAddChild={handleAddChild}
         isLoading={isAddingChild}
+        mode="setup" // Pedir código de club en el primer setup
       />
     </div>
   );

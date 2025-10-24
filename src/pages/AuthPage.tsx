@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users } from "lucide-react";
-import ClubSelector from "@/components/ClubSelector";
+import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,7 +20,9 @@ export const AuthPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [level, setLevel] = useState("");
+  const [clubCode, setClubCode] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
+  const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
   const [userType, setUserType] = useState<'player' | 'guardian'>('player');
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
@@ -295,10 +297,10 @@ export const AuthPage = () => {
     }
 
     if (!selectedClubId) {
-      setClubError("Debes seleccionar un club para completar el registro");
+      setClubError("Debes ingresar un código de club válido");
       toast({
         title: "Error",
-        description: "Debes seleccionar un club para completar el registro.",
+        description: "El código de club ingresado no es válido. Verifica con tu entrenador.",
         variant: "destructive"
       });
       return;
@@ -757,17 +759,19 @@ export const AuthPage = () => {
               </div>
             </div>
 
-            {/* Club selector */}
+            {/* Club code input */}
             <div className="space-y-3">
-              <ClubSelector
-                value={selectedClubId}
-                onValueChange={value => {
-                  console.log('🔧 ClubSelector - Value changed to:', value);
-                  setSelectedClubId(value);
+              <ClubCodeInput
+                value={clubCode}
+                onValueChange={(code, clubId, clubName) => {
+                  console.log('🔧 ClubCodeInput - Value changed:', { code, clubId, clubName });
+                  setClubCode(code);
+                  setSelectedClubId(clubId || "");
+                  setSelectedClubName(clubName);
                   if (clubError) setClubError("");
                 }}
-                label="Club"
-                placeholder="Selecciona tu club"
+                label="Código de Club"
+                placeholder="ABC"
                 required
                 error={clubError}
               />

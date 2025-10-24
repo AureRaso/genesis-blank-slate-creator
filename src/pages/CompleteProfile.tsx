@@ -7,13 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Target, CheckCircle2 } from "lucide-react";
-import ClubSelector from "@/components/ClubSelector";
+import ClubCodeInput from "@/components/ClubCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const CompleteProfile = () => {
   const [level, setLevel] = useState("");
-  const [selectedClubId, setSelectedClubId] = useState("7b6f49ae-d496-407b-bca1-f5f1e9370610"); // Pre-select Hespérides
+  const [clubCode, setClubCode] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState("");
+  const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
+  const [clubError, setClubError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +72,9 @@ export const CompleteProfile = () => {
     // Validations
     if (!level || !selectedClubId) {
       console.log('🔧 CompleteProfile - Validation failed: missing fields');
+      if (!selectedClubId) {
+        setClubError("Debes ingresar un código de club válido");
+      }
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
@@ -313,20 +319,24 @@ export const CompleteProfile = () => {
                 </p>
               </div>
 
-              {/* Club selector */}
+              {/* Club code input */}
               <div className="space-y-2">
-                <ClubSelector
-                  value={selectedClubId}
-                  onValueChange={value => {
-                    console.log('🔧 ClubSelector - Value changed to:', value);
-                    setSelectedClubId(value);
+                <ClubCodeInput
+                  value={clubCode}
+                  onValueChange={(code, clubId, clubName) => {
+                    console.log('🔧 ClubCodeInput - Value changed:', { code, clubId, clubName });
+                    setClubCode(code);
+                    setSelectedClubId(clubId || "");
+                    setSelectedClubName(clubName);
+                    if (clubError) setClubError("");
                   }}
-                  label="Club *"
-                  placeholder="Selecciona tu club"
+                  label="Código de Club"
+                  placeholder="ABC"
                   required
+                  error={clubError}
                 />
                 <p className="text-xs text-slate-500">
-                  Selecciona el club al que perteneces
+                  Ingresa el código de 3 letras que te proporcionó tu entrenador
                 </p>
               </div>
 
