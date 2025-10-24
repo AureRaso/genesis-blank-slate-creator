@@ -144,30 +144,59 @@ export const CompleteProfile = () => {
       });
 
       if (!existingEnrollment) {
-        // First, get a trainer from the selected club
+        // First, try to get a trainer from the selected club
         console.log('🔧 CompleteProfile - Finding trainer for club:', selectedClubId);
 
-        const { data: trainers, error: trainerError } = await supabase
-          .from('profiles')
-          .select('id')
+        // Try to find trainer assigned to this club via trainer_clubs
+        const { data: trainerClubs } = await supabase
+          .from('trainer_clubs')
+          .select('trainer_profile_id')
           .eq('club_id', selectedClubId)
-          .eq('role', 'trainer')
           .limit(1);
 
-        console.log('🔧 CompleteProfile - Trainer query result:', { trainers, trainerError });
+        let trainerId: string | null = null;
 
-        if (trainerError || !trainers || trainers.length === 0) {
-          console.error('🔧 CompleteProfile - No trainer found for club');
+        if (trainerClubs && trainerClubs.length > 0) {
+          trainerId = trainerClubs[0].trainer_profile_id;
+          console.log('🔧 CompleteProfile - Found trainer via trainer_clubs:', trainerId);
+        } else {
+          // Fallback: try to find any trainer with this club_id
+          const { data: trainers } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('club_id', selectedClubId)
+            .eq('role', 'trainer')
+            .limit(1);
+
+          if (trainers && trainers.length > 0) {
+            trainerId = trainers[0].id;
+            console.log('🔧 CompleteProfile - Found trainer via profiles:', trainerId);
+          } else {
+            // Last fallback: use an admin
+            const { data: admins } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('role', 'admin')
+              .limit(1);
+
+            if (admins && admins.length > 0) {
+              trainerId = admins[0].id;
+              console.log('🔧 CompleteProfile - Using admin as fallback:', trainerId);
+            }
+          }
+        }
+
+        if (!trainerId) {
+          console.error('🔧 CompleteProfile - No trainer or admin found');
           toast({
             title: "Error",
-            description: "No se encontró un entrenador para este club. Contacta con el administrador.",
+            description: "No se encontró un entrenador o administrador. Contacta con soporte.",
             variant: "destructive"
           });
           return;
         }
 
-        const trainerId = trainers[0].id;
-        console.log('🔧 CompleteProfile - Using trainer:', trainerId);
+        console.log('🔧 CompleteProfile - Using trainer/admin:', trainerId);
 
         const enrollmentData = {
           trainer_profile_id: trainerId,
