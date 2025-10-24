@@ -1,11 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck } from "lucide-react";
+import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useHasPromotions } from "@/hooks/usePromotions";
 
 const MobileTabBar = () => {
   const location = useLocation();
-  const { isPlayer, isTrainer, isGuardian } = useAuth();
+  const { isPlayer, isTrainer, isGuardian, profile } = useAuth();
+
+  // Check if club has promotions
+  const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
 
   // Tabs for players
   const playerTabs = [
@@ -23,6 +27,11 @@ const MobileTabBar = () => {
       name: "Mis Hijos",
       path: "/dashboard/my-children",
       icon: Users,
+    }] : []),
+    ...(hasPromotions ? [{
+      name: "Promociones",
+      path: "/dashboard/promotions",
+      icon: Tag,
     }] : []),
   ];
 
@@ -53,11 +62,20 @@ const MobileTabBar = () => {
   // Guardians use the same tabs as players
   const tabs = isTrainer ? trainerTabs : playerTabs;
 
+  // Dynamic grid columns based on number of tabs
+  const getGridCols = () => {
+    const count = tabs.length;
+    if (count === 2) return "grid-cols-2";
+    if (count === 3) return "grid-cols-3";
+    if (count === 4) return "grid-cols-4";
+    return "grid-cols-5"; // For 5 or more tabs
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
       <div className={cn(
         "grid h-16",
-        isTrainer ? "grid-cols-4" : isGuardian ? "grid-cols-3" : "grid-cols-2"
+        getGridCols()
       )}>
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.path;

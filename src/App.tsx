@@ -56,6 +56,7 @@ import GuardianSetupPage from "@/pages/GuardianSetupPage";
 import { GuardianRouter } from "@/components/GuardianRouter";
 import MyChildrenPage from "@/pages/MyChildrenPage";
 import ClearCachePage from "@/pages/ClearCachePage";
+import PromotionsPage from "@/pages/PromotionsPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -225,6 +226,7 @@ function App() {
                      <Route path="/clubs/new" element={<ClubFormPage />} />
                      <Route path="/clubs/edit/:id" element={<ClubFormPage />} />
                      <Route path="/trainers" element={<TrainersPage />} />
+                     <Route path="/promotions" element={<PromotionsPage />} />
                      <Route path="/payment-control" element={<PaymentControlPage />} />
                      <Route path="/scheduled-classes" element={
                        (isPlayer || isGuardian) ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />

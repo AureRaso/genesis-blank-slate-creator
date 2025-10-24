@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -8,6 +8,7 @@ import { useWaitlistCount } from "@/hooks/useWaitlistCount";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useClub } from "@/hooks/useClub";
+import { useHasPromotions } from "@/hooks/usePromotions";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 const AppSidebar = () => {
   const authContext = useAuth();
@@ -27,6 +28,9 @@ const AppSidebar = () => {
 
   // Fetch club data for players
   const { data: club } = useClub(profile?.club_id);
+
+  // Check if club has promotions (for players and guardians)
+  const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
 
   // Si es trainer, mostrar panel personalizado con clases programadas
   if (isTrainer) {
@@ -107,6 +111,11 @@ const AppSidebar = () => {
         title: "Mis Hijos",
         url: "/dashboard/my-children",
         icon: Users
+      }] : []),
+      ...(hasPromotions ? [{
+        title: "Promociones",
+        url: "/dashboard/promotions",
+        icon: Tag
       }] : []),
       ...(leaguesEnabled ? [{
         title: t('sidebar.leagues'),
@@ -197,6 +206,11 @@ const AppSidebar = () => {
         title: t('sidebar.clubs'),
         url: "/dashboard/clubs",
         icon: Building2
+      },
+      {
+        title: "Promociones",
+        url: "/dashboard/promotions",
+        icon: Tag
       }
     ]
   };
