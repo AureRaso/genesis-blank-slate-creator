@@ -101,6 +101,35 @@ const AdminStudentsList = () => {
 
   return (
     <div className="space-y-6">
+      {/* Counter */}
+      <Card className="bg-gradient-to-r from-playtomic-orange/10 to-orange-600/10 border-playtomic-orange/20">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-playtomic-orange/20 rounded-full">
+                <Users className="h-6 w-6 text-playtomic-orange" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Alumnos</p>
+                <p className="text-3xl font-bold text-playtomic-dark">
+                  {filteredStudents.length}
+                  {filteredStudents.length !== students.length && (
+                    <span className="text-lg text-muted-foreground ml-2">
+                      / {students.length}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            {filteredStudents.length !== students.length && (
+              <Badge variant="secondary" className="text-sm">
+                {filteredStudents.length} de {students.length} mostrados
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
