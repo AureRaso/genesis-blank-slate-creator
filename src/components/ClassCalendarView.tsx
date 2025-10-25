@@ -387,8 +387,25 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
           {selectedDayForModal && (() => {
             const dayName = format(selectedDayForModal, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
             const dayClasses = filteredClasses.filter(cls => {
+              // Check if day of week matches
               const classDays = cls.days_of_week.map(d => d.toLowerCase().trim());
-              return classDays.includes(dayName);
+              const dayMatches = classDays.includes(dayName);
+
+              if (!dayMatches) return false;
+
+              // Check if the date is within the class date range
+              const checkDate = new Date(selectedDayForModal);
+              checkDate.setHours(0, 0, 0, 0);
+
+              const startDate = new Date(cls.start_date);
+              startDate.setHours(0, 0, 0, 0);
+
+              const endDate = new Date(cls.end_date);
+              endDate.setHours(0, 0, 0, 0);
+
+              const dateInRange = checkDate >= startDate && checkDate <= endDate;
+
+              return dateInRange;
             }).sort((a, b) => a.start_time.localeCompare(b.start_time));
 
             if (dayClasses.length === 0) {
