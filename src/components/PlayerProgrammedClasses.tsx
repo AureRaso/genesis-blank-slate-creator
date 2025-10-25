@@ -9,6 +9,8 @@ import { Calendar, Clock, Users, MapPin, CreditCard, Euro, Loader2 } from "lucid
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PlayerProgrammedClassesProps {
   clubId?: string;
@@ -19,11 +21,42 @@ const PlayerProgrammedClasses = ({ clubId }: PlayerProgrammedClassesProps) => {
   const { t } = useTranslation();
   const { data: programmedClasses, isLoading, error } = useProgrammedClasses(clubId);
 
-  // Get user's student enrollment to filter classes where they are participants
+  // Get user's student enrollment ID
+  const { data: userStudentEnrollment } = useQuery({
+    queryKey: ['user-student-enrollment', profile?.email],
+    queryFn: async () => {
+      if (!profile?.email) return null;
+
+      const { data, error } = await supabase
+        .from('student_enrollments')
+        .select('id, email')
+        .eq('email', profile.email)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching student enrollment:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!profile?.email,
+  });
+
+  // Filter classes where the user is a participant
   const userClasses = programmedClasses?.filter(programmedClass => {
-    // This would need to be enhanced to check if the user is actually enrolled in the class
-    // For now, we show all classes from the user's club
-    return true;
+    // Check if user has a student enrollment
+    if (!userStudentEnrollment?.id) {
+      // If no student enrollment, show all club classes (fallback for compatibility)
+      return true;
+    }
+
+    // Check if the user's student enrollment ID exists in the class participants
+    const isParticipant = programmedClass.participants?.some(participant =>
+      participant.student_enrollment?.id === userStudentEnrollment.id
+    );
+
+    return isParticipant;
   }) || [];
 
   if (isLoading) {
