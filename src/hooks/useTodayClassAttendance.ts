@@ -33,9 +33,9 @@ const getDayOfWeekInSpanish = (date: Date): string => {
   return days[date.getDay()];
 };
 
-// Hook para obtener las clases de los próximos 10 días del jugador
+// Hook para obtener las clases de los próximos 10 días del jugador (o hijos si es guardian)
 export const useTodayClassAttendance = () => {
-  const { profile } = useAuth();
+  const { profile, isGuardian } = useAuth();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
@@ -51,7 +51,7 @@ export const useTodayClassAttendance = () => {
   });
 
   return useQuery({
-    queryKey: ['upcoming-class-attendance', profile?.id, todayStr],
+    queryKey: ['upcoming-class-attendance', profile?.id, todayStr, isGuardian],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
@@ -59,20 +59,113 @@ export const useTodayClassAttendance = () => {
         profileId: profile.id,
         profileEmail: profile.email,
         profileFullName: profile.full_name,
+        isGuardian,
         todayStr,
         next10Days: next10Days.map(d => ({ date: d.dateStr, day: d.dayName }))
       });
 
-      // STEP 1: Get class participants using student_enrollments email match
-      console.log('📍 STEP 1: Fetching class participants...');
+      // STEP 1: Get profile IDs and emails to search for
+      let emailsToSearch: string[] = [profile.email];
+      let profileIdsToSearch: string[] = [profile.id];
 
-      // Get enrollments that match this user's email
+      if (isGuardian) {
+        console.log('🔍 User is guardian - fetching children...');
+        // Get children's profile IDs and emails
+        const { data: children, error: childrenError } = await supabase
+          .from('account_dependents')
+          .select(`
+            dependent_profile_id,
+            profiles!account_dependents_dependent_profile_id_fkey (
+              id,
+              email
+            )
+          `)
+          .eq('guardian_profile_id', profile.id);
+
+        if (childrenError) {
+          console.error('❌ Error fetching children:', childrenError);
+          throw childrenError;
+        }
+
+        if (children && children.length > 0) {
+          const childrenData = children
+            .map(c => (c.profiles as any))
+            .filter(Boolean);
+
+          profileIdsToSearch = childrenData.map((c: any) => c.id);
+          emailsToSearch = childrenData.map((c: any) => c.email);
+
+          console.log('✅ Guardian children IDs:', profileIdsToSearch);
+          console.log('✅ Guardian children emails:', emailsToSearch);
+        } else {
+          console.log('ℹ️ Guardian has no children');
+          return [];
+        }
+      }
+
+      console.log('📧 Profile IDs to search:', profileIdsToSearch);
+      console.log('📧 Emails to search:', emailsToSearch);
+
+      // STEP 2: Get class participants using BOTH student_profile_id AND email
+      console.log('📍 STEP 2: Fetching class participants...');
+
+      // DEBUG: First, let's check ALL student_enrollments to see what exists
+      console.log('🔍 DEBUG - Fetching ALL student_enrollments for inspection...');
+      const { data: allEnrollments, error: allError } = await supabase
+        .from('student_enrollments')
+        .select('id, email, full_name, student_profile_id');
+
+      console.log('📊 ALL student_enrollments in database:', {
+        count: allEnrollments?.length || 0,
+        enrollments: allEnrollments,
+        error: allError
+      });
+
+      // DEBUG: Test query by student_profile_id ONLY
+      console.log('🔍 DEBUG - Testing query by student_profile_id ONLY...');
+      const { data: byProfileId, error: profileIdError } = await supabase
+        .from('student_enrollments')
+        .select('id, email, full_name, student_profile_id')
+        .in('student_profile_id', profileIdsToSearch);
+
+      console.log('📊 Query by student_profile_id result:', {
+        searchIds: profileIdsToSearch,
+        count: byProfileId?.length || 0,
+        enrollments: byProfileId,
+        error: profileIdError
+      });
+
+      // DEBUG: Test query by email ONLY
+      console.log('🔍 DEBUG - Testing query by email ONLY...');
+      const { data: byEmail, error: emailError } = await supabase
+        .from('student_enrollments')
+        .select('id, email, full_name, student_profile_id')
+        .in('email', emailsToSearch);
+
+      console.log('📊 Query by email result:', {
+        searchEmails: emailsToSearch,
+        count: byEmail?.length || 0,
+        enrollments: byEmail,
+        error: emailError
+      });
+
+      // Now try the combined OR query with detailed logging
+      const orQueryString = `student_profile_id.in.(${profileIdsToSearch.join(',')}),email.in.(${emailsToSearch.map(e => `"${e}"`).join(',')})`;
+      console.log('🔍 DEBUG - OR query string:', orQueryString);
+
+      // Get enrollments that match either student_profile_id OR email
       const { data: enrollments, error: enrollmentError } = await supabase
         .from('student_enrollments')
-        .select('id, email, full_name')
-        .eq('email', profile.email);
+        .select('id, email, full_name, student_profile_id')
+        .or(orQueryString);
 
-      console.log('📊 Enrollments found by email:', { enrollments, enrollmentError, searchEmail: profile.email });
+      console.log('📊 Enrollments found:', {
+        enrollments,
+        enrollmentError,
+        searchProfileIds: profileIdsToSearch,
+        searchEmails: emailsToSearch,
+        foundCount: enrollments?.length || 0
+      });
 
       if (enrollmentError) {
         console.error('❌ Error fetching enrollments:', enrollmentError);
@@ -163,6 +256,7 @@ export const useTodayClassAttendance = () => {
       const trainersMap = new Map(trainersResult.data?.map(t => [t.id, t]) || []);
       const clubsMap = new Map(clubsResult.data?.map(c => [c.id, c]) || []);
       const classesMap = new Map(programmedClasses?.map(c => [c.id, c]) || []);
+      const enrollmentsMap = new Map(enrollments.map(e => [e.id, e]) || []);
 
       const data = participantsBasic.map(participant => {
         const programmedClass = classesMap.get(participant.class_id);
@@ -175,6 +269,8 @@ export const useTodayClassAttendance = () => {
           return null;
         }
 
+        const enrollment = enrollmentsMap.get(participant.student_enrollment_id);
+
         return {
           id: participant.id,
           class_id: participant.class_id,
@@ -184,6 +280,12 @@ export const useTodayClassAttendance = () => {
           absence_reason: participant.absence_reason,
           absence_confirmed_at: participant.absence_confirmed_at,
           absence_locked: participant.absence_locked, // Agregamos el campo de bloqueo
+          student_enrollment: enrollment ? {
+            id: enrollment.id,
+            student_profile_id: enrollment.student_profile_id,
+            full_name: enrollment.full_name,
+            email: enrollment.email
+          } : undefined,
           programmed_class: {
             id: programmedClass.id,
             name: programmedClass.name,
@@ -230,10 +332,17 @@ export const useTodayClassAttendance = () => {
           });
 
           // Check if the date is within the class date range
-          const startDate = new Date(programmedClass.start_date);
-          const endDate = new Date(programmedClass.end_date);
+          // Normalize all dates to midnight for accurate comparison
+          const checkDate = new Date(date);
+          checkDate.setHours(0, 0, 0, 0);
 
-          if (date < startDate || date > endDate) {
+          const startDate = new Date(programmedClass.start_date);
+          startDate.setHours(0, 0, 0, 0);
+
+          const endDate = new Date(programmedClass.end_date);
+          endDate.setHours(0, 0, 0, 0);
+
+          if (checkDate < startDate || checkDate > endDate) {
             console.log('❌ Class date out of range for', dateStr);
             return;
           }
