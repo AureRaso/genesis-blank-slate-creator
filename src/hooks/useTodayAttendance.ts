@@ -52,7 +52,8 @@ export const useTodayAttendance = () => {
         profileRole: profile.role,
         profileClubId: profile.club_id,
         today,
-        todayDayName
+        todayDayName,
+        todayDate: new Date(today)
       });
 
       // Get all programmed classes for today in the user's club(s)
@@ -105,7 +106,63 @@ export const useTodayAttendance = () => {
 
       const { data, error } = await query;
 
-      console.log('📊 Today attendance data:', { data, error });
+      console.log('📊 Today attendance data:', {
+        data,
+        error,
+        query: {
+          todayDayName,
+          today,
+          filters: {
+            days_of_week_contains: todayDayName,
+            start_date_lte: today,
+            end_date_gte: today
+          }
+        }
+      });
+
+      // Debug: Let's also fetch ALL classes without date filters to see what's in the DB
+      const { data: allClasses, error: allError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, days_of_week, start_date, end_date, club_id')
+        .eq('is_active', true)
+        .eq('club_id', profile.club_id || '')
+        .contains('days_of_week', [todayDayName]);
+
+      console.log('🔍 DEBUG - ALL classes for', todayDayName, ':', {
+        allClasses,
+        allError,
+        count: allClasses?.length || 0
+      });
+
+      // Debug: Let's fetch ALL active classes without ANY filters
+      const { data: allActiveClasses, error: activeError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, days_of_week, start_date, end_date, club_id, created_at')
+        .eq('is_active', true)
+        .eq('club_id', profile.club_id || '')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      console.log('🔍 DEBUG - ALL ACTIVE classes in club (last 10):', {
+        allActiveClasses,
+        activeError,
+        count: allActiveClasses?.length || 0,
+        todayIs: todayDayName,
+        todayDate: today
+      });
+
+      // Log each class individually for better visibility
+      allActiveClasses?.forEach((cls, index) => {
+        console.log(`📋 Class ${index + 1}:`, {
+          name: cls.name,
+          days_of_week: cls.days_of_week,
+          days_of_week_stringified: JSON.stringify(cls.days_of_week),
+          start_date: cls.start_date,
+          end_date: cls.end_date,
+          created_at: cls.created_at,
+          matchesToday: cls.days_of_week?.includes(todayDayName)
+        });
+      });
 
       // Debug detallado de los participantes
       if (data && data.length > 0) {

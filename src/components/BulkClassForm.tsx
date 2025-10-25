@@ -67,10 +67,10 @@ export interface BulkClassFormData {
 const DAYS_OPTIONS = [
   { value: "lunes", label: "Lunes" },
   { value: "martes", label: "Martes" },
-  { value: "miércoles", label: "Miércoles" },
+  { value: "miercoles", label: "Miércoles" },
   { value: "jueves", label: "Jueves" },
   { value: "viernes", label: "Viernes" },
-  { value: "sábado", label: "Sábado" },
+  { value: "sabado", label: "Sábado" },
   { value: "domingo", label: "Domingo" }
 ];
 
@@ -155,8 +155,8 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
     if (!startDateStr || !endDateStr) return [];
 
     const dayMap: Record<string, number> = {
-      'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3,
-      'jueves': 4, 'viernes': 5, 'sábado': 6
+      'domingo': 0, 'lunes': 1, 'martes': 2, 'miercoles': 3,
+      'jueves': 4, 'viernes': 5, 'sabado': 6
     };
 
     const targetDay = dayMap[dayOfWeekStr.toLowerCase()];

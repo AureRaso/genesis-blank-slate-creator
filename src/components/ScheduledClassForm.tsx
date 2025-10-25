@@ -300,6 +300,15 @@ export default function ScheduledClassForm({
     console.log("✅ Validaciones pasadas, procediendo a crear clases...");
 
     try {
+      // Normalize days of week to ensure consistency (remove accents)
+      const normalizeDayOfWeek = (day: string): string => {
+        const normalizedDays: Record<string, string> = {
+          'sábado': 'sabado',
+          'miércoles': 'miercoles'
+        };
+        return normalizedDays[day] || day;
+      };
+
       const submitData = {
         name: data.name,
         level_from: data.level_format === "numeric" ? data.level_from : undefined,
@@ -307,7 +316,7 @@ export default function ScheduledClassForm({
         custom_level: data.level_format === "levante" ? data.custom_level : undefined,
         duration_minutes: data.duration_minutes,
         start_time: data.start_time,
-        days_of_week: data.selected_days,
+        days_of_week: data.selected_days.map(normalizeDayOfWeek),
         start_date: format(data.start_date, 'yyyy-MM-dd'),
         end_date: format(data.end_date, 'yyyy-MM-dd'),
         recurrence_type: data.recurrence_type,
