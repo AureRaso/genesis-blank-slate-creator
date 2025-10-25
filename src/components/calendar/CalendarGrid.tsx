@@ -209,10 +209,28 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
             const dayClasses = classes.filter(cls => {
               const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
               const normalizedDayName = DAY_MAPPING[dayName] || dayName;
-              return cls.days_of_week.some(d => {
+
+              // Check if day of week matches
+              const dayMatches = cls.days_of_week.some(d => {
                 const normalized = d.toLowerCase().trim();
                 return (DAY_MAPPING[normalized] || normalized) === normalizedDayName;
               });
+
+              if (!dayMatches) return false;
+
+              // Check if the date is within the class date range
+              const checkDate = new Date(day);
+              checkDate.setHours(0, 0, 0, 0);
+
+              const startDate = new Date(cls.start_date);
+              startDate.setHours(0, 0, 0, 0);
+
+              const endDate = new Date(cls.end_date);
+              endDate.setHours(0, 0, 0, 0);
+
+              const dateInRange = checkDate >= startDate && checkDate <= endDate;
+
+              return dateInRange;
             });
 
             return (
