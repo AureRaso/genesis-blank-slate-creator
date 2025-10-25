@@ -216,7 +216,8 @@ export const useTodayClassAttendance = () => {
           trainer_profile_id,
           club_id
         `)
-        .in('id', classIds);
+        .in('id', classIds)
+        .eq('is_active', true);
 
       console.log('📊 STEP 2 Result:', {
         programmedClasses,

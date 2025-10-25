@@ -385,13 +385,65 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
           </DialogHeader>
 
           {selectedDayForModal && (() => {
-            const dayName = format(selectedDayForModal, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
-            const dayClasses = filteredClasses.filter(cls => {
-              // Check if day of week matches
-              const classDays = cls.days_of_week.map(d => d.toLowerCase().trim());
-              const dayMatches = classDays.includes(dayName);
+            console.log('🔍 ========== MODAL OPENED ==========');
+            console.log('🔍 Selected day raw:', selectedDayForModal);
+            console.log('🔍 Selected day ISO:', selectedDayForModal.toISOString());
+            console.log('🔍 Locale:', getDateFnsLocale());
 
-              if (!dayMatches) return false;
+            const dayName = format(selectedDayForModal, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
+
+            // Day mapping to handle different locales
+            const DAY_MAPPING: { [key: string]: string } = {
+              'sunday': 'domingo', 'monday': 'lunes', 'tuesday': 'martes',
+              'wednesday': 'miercoles', 'thursday': 'jueves', 'friday': 'viernes', 'saturday': 'sabado',
+              'domingo': 'domingo', 'lunes': 'lunes', 'martes': 'martes',
+              'miércoles': 'miercoles', 'miercoles': 'miercoles',
+              'jueves': 'jueves', 'viernes': 'viernes',
+              'sábado': 'sabado', 'sabado': 'sabado'
+            };
+
+            const normalizedDayName = DAY_MAPPING[dayName] || dayName;
+
+            console.log('🔍 Modal filter debug:', {
+              selectedDay: selectedDayForModal,
+              selectedDayString: selectedDayForModal.toString(),
+              dayNameRaw: dayName,
+              dayNameNormalized: normalizedDayName,
+              totalFilteredClasses: filteredClasses.length,
+              classesDetails: filteredClasses.map(cls => ({
+                name: cls.name,
+                days_of_week: cls.days_of_week,
+                days_of_week_raw: JSON.stringify(cls.days_of_week),
+                start_date: cls.start_date,
+                end_date: cls.end_date,
+                start_time: cls.start_time
+              }))
+            });
+
+            const dayClasses = filteredClasses.filter(cls => {
+              console.log('🔍 ===== Checking class:', cls.name, '=====');
+
+              // Check if day of week matches
+              const classDays = cls.days_of_week.map(d => {
+                const normalized = d.toLowerCase().trim();
+                const mapped = DAY_MAPPING[normalized] || normalized;
+                console.log('🔍   Day mapping:', { original: d, normalized, mapped });
+                return mapped;
+              });
+              const dayMatches = classDays.includes(normalizedDayName);
+
+              console.log('🔍   Day match result:', {
+                className: cls.name,
+                classDays,
+                normalizedDayName,
+                dayMatches,
+                includes: classDays.includes(normalizedDayName)
+              });
+
+              if (!dayMatches) {
+                console.log('🔍   ❌ REJECTED: Day does not match');
+                return false;
+              }
 
               // Check if the date is within the class date range
               const checkDate = new Date(selectedDayForModal);
@@ -405,8 +457,30 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
 
               const dateInRange = checkDate >= startDate && checkDate <= endDate;
 
-              return dateInRange;
+              console.log('🔍   Date range check:', {
+                className: cls.name,
+                checkDate: checkDate.toISOString(),
+                checkDateString: checkDate.toString(),
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                comparison: {
+                  'checkDate >= startDate': checkDate >= startDate,
+                  'checkDate <= endDate': checkDate <= endDate,
+                },
+                dateInRange
+              });
+
+              if (!dateInRange) {
+                console.log('🔍   ❌ REJECTED: Date out of range');
+                return false;
+              }
+
+              console.log('🔍   ✅ ACCEPTED: Class passed all filters');
+              return true;
             }).sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            console.log('🔍 Final dayClasses count:', dayClasses.length);
+            console.log('🔍 Final dayClasses:', dayClasses.map(c => ({ name: c.name, time: c.start_time })));
 
             if (dayClasses.length === 0) {
               return (

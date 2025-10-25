@@ -92,6 +92,12 @@ export const useProgrammedClasses = (clubId?: string) => {
         trainer?: { full_name: string };
       })[];
     },
+    // Auto-refetch every 30 seconds to keep data fresh across different user sessions
+    refetchInterval: 30000,
+    // Refetch when window regains focus
+    refetchOnWindowFocus: true,
+    // Keep data fresh
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 };
 
@@ -272,10 +278,31 @@ export const useDeleteProgrammedClass = () => {
       // Remove the queries from cache completely to force refetch
       queryClient.removeQueries({ queryKey: ["programmed-classes"] });
       queryClient.removeQueries({ queryKey: ["scheduled-classes"] });
+      queryClient.removeQueries({ queryKey: ["user-student-enrollment"] });
+      queryClient.removeQueries({ queryKey: ["class-participants"] });
+      queryClient.removeQueries({ queryKey: ["class-capacity"] });
 
-      // Also invalidate to trigger refetch
-      queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
-      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
+      // Also invalidate to trigger refetch with refetchType: 'all' to ensure all instances refetch
+      queryClient.invalidateQueries({
+        queryKey: ["programmed-classes"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["scheduled-classes"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-student-enrollment"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["class-participants"],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["class-capacity"],
+        refetchType: 'all'
+      });
 
       toast({
         title: "Clase eliminada",
