@@ -144,14 +144,11 @@ export function ClassCard({
             {cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5">
                 {cls.club.name}
               </div>}
-            <div className="text-xs text-muted-foreground truncate leading-none mb-0.5">
-              {getLevelDisplay()}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground truncate leading-none mb-0.5">
+              <Users className="h-3 w-3" />
+              <span>{enrolledCount} {enrolledCount === 1 ? 'jugador' : 'jugadores'}</span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                <span>{enrolledCount}</span>
-              </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>{cls.duration_minutes}min</span>
@@ -240,14 +237,11 @@ export function ClassCard({
                     {cls.club && <div className="text-xs text-muted-foreground truncate font-medium leading-none mb-0.5 my-0">
                         {cls.club.name}
                       </div>}
-                    <div className="text-xs text-muted-foreground truncate leading-none mb-0.5 my-[8px]">
-                      {getLevelDisplay()}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate leading-none mb-0.5 my-[8px]">
+                      <Users className="h-3 w-3" />
+                      <span>{enrolledCount} {enrolledCount === 1 ? 'jugador' : 'jugadores'}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs mt-1">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        <span>{enrolledCount}</span>
-                      </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         <span>{cls.duration_minutes}min</span>
