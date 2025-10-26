@@ -61,11 +61,21 @@ const PlayersPage = () => {
           </div>
           {isAdmin && (
             <div className="hidden sm:flex space-x-2 flex-shrink-0">
-              <Button onClick={() => setShowStudentForm(true)} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
+              <Button
+                onClick={() => setShowStudentForm(true)}
+                className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
+                disabled
+                title="Funcionalidad próximamente disponible"
+              >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Nueva Inscripción
               </Button>
-              <Button onClick={() => setShowBulkUpload(true)} variant="outline">
+              <Button
+                onClick={() => setShowBulkUpload(true)}
+                variant="outline"
+                disabled
+                title="Funcionalidad próximamente disponible"
+              >
                 <Upload className="mr-2 h-4 w-4" />
                 Subida Masiva
               </Button>
@@ -80,6 +90,8 @@ const PlayersPage = () => {
               onClick={() => setShowStudentForm(true)}
               className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark flex-1 text-sm"
               size="sm"
+              disabled
+              title="Funcionalidad próximamente disponible"
             >
               <UserPlus className="mr-2 h-4 w-4" />
               Nueva Inscripción
@@ -89,6 +101,8 @@ const PlayersPage = () => {
               variant="outline"
               className="flex-1 text-sm"
               size="sm"
+              disabled
+              title="Funcionalidad próximamente disponible"
             >
               <Upload className="mr-2 h-4 w-4" />
               Subida Masiva

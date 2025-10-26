@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
-import { useClassParticipants } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useDeleteClassParticipant } from "@/hooks/useClassParticipants";
 import { useStudentClassParticipations } from "@/hooks/useStudentClasses";
 
 interface ClassCardProps {
@@ -326,8 +326,10 @@ function AdminClassDetailsModal({
     profile
   } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
+  const deleteParticipantMutation = useDeleteClassParticipant();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
+  const [participantToDelete, setParticipantToDelete] = useState<string | null>(null);
   const getLevelDisplay = () => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
@@ -368,6 +370,18 @@ function AdminClassDetailsModal({
     deleteClassMutation.mutate(cls.id);
     setShowDeleteConfirm(false);
   };
+
+  const handleRemoveParticipant = (participantId: string) => {
+    setParticipantToDelete(participantId);
+  };
+
+  const confirmRemoveParticipant = () => {
+    if (participantToDelete) {
+      deleteParticipantMutation.mutate(participantToDelete);
+      setParticipantToDelete(null);
+    }
+  };
+
   return <DialogContent className="max-w-4xl">
       <DialogHeader className="relative">
         <DialogTitle className="flex items-center justify-between pr-20">
@@ -520,7 +534,12 @@ function AdminClassDetailsModal({
                           <Badge variant={participant.payment_status === 'paid' ? 'default' : 'secondary'} className="text-xs">
                             {participant.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
                           </Badge>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveParticipant(participant.id)}
+                          >
                             <UserMinus className="h-4 w-4" />
                           </Button>
                         </div>
@@ -565,6 +584,24 @@ function AdminClassDetailsModal({
             <AlertDialogCancel>No, mantener</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteClass} disabled={deleteClassMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteClassMutation.isPending ? "Eliminando..." : "Sí, cancelar clase"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Participant Confirmation AlertDialog */}
+      <AlertDialog open={participantToDelete !== null} onOpenChange={(open) => !open && setParticipantToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar alumno de la clase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará al alumno de esta clase. El alumno dejará de ver la clase en su dashboard y no podrá confirmar asistencia.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveParticipant} disabled={deleteParticipantMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteParticipantMutation.isPending ? "Eliminando..." : "Sí, eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

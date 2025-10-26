@@ -288,7 +288,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
   const addTimeSlot = () => {
     setMultiplicationConfig(prev => ({
       ...prev,
-      time_slots: [...prev.time_slots, { start: "10:00", end: "22:00", interval: 60 }]
+      time_slots: [...prev.time_slots, { start: baseConfig.first_class_time || "10:00", end: "22:00", interval: 60 }]
     }));
   };
 

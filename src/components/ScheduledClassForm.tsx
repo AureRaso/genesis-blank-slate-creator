@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -109,6 +109,7 @@ export default function ScheduledClassForm({
   const [previewDates, setPreviewDates] = useState<string[]>([]);
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState("");
   
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
@@ -842,7 +843,7 @@ export default function ScheduledClassForm({
                 {/* Student Selection - Only when selection_type is "individual" */}
                 {watchedValues.selection_type === "individual" && <div className="space-y-4">
                   <FormLabel>Seleccionar alumnos</FormLabel>
-                  
+
                   {/* Show message if admin hasn't selected a club yet */}
                   {isAdmin && !selectedClubId && (
                     <div className="border rounded-lg p-4 bg-muted/50">
@@ -851,28 +852,48 @@ export default function ScheduledClassForm({
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Show students when club is selected or for non-admin users */}
                   {(!isAdmin || selectedClubId) && (
-                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                      {students && students.length > 0 ? <div className="space-y-3">
-                          {students.map(student => <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
-                              <Checkbox id={`student-${student.id}`} checked={watchedValues.selected_students.includes(student.id)} onCheckedChange={checked => handleStudentSelection(student.id, checked as boolean)} />
-                              <div className="flex-1">
-                                <label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
-                                  {student.full_name}
-                                </label>
-                                <div className="text-xs text-muted-foreground">
-                                  Nivel {student.level} • {student.email}
+                    <>
+                      {/* Search input */}
+                      {students && students.length > 0 && (
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar alumno por nombre o email..."
+                            value={studentSearchTerm}
+                            onChange={(e) => setStudentSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      )}
+
+                      <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
+                        {students && students.length > 0 ? <div className="space-y-3">
+                            {students
+                              .filter(student =>
+                                student.full_name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+                                student.email.toLowerCase().includes(studentSearchTerm.toLowerCase())
+                              )
+                              .map(student => <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
+                                <Checkbox id={`student-${student.id}`} checked={watchedValues.selected_students.includes(student.id)} onCheckedChange={checked => handleStudentSelection(student.id, checked as boolean)} />
+                                <div className="flex-1">
+                                  <label htmlFor={`student-${student.id}`} className="text-sm font-medium cursor-pointer">
+                                    {student.full_name}
+                                  </label>
+                                  <div className="text-xs text-muted-foreground">
+                                    Nivel {student.level} • {student.email}
+                                  </div>
                                 </div>
-                              </div>
-                            </div>)}
-                        </div> : <div className="text-center py-4 text-muted-foreground">
-                          {isAdmin ? "No hay alumnos en este club" : "No hay alumnos disponibles"}
-                        </div>}
-                    </div>
+                              </div>)}
+                          </div> : <div className="text-center py-4 text-muted-foreground">
+                            {isAdmin ? "No hay alumnos en este club" : "No hay alumnos disponibles"}
+                          </div>}
+                      </div>
+                    </>
                   )}
-                  
+
                   {watchedValues.selected_students.length > 0 && <div className="text-sm text-muted-foreground">
                       {watchedValues.selected_students.length} alumno(s) seleccionado(s)
                     </div>}
