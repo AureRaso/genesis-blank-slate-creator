@@ -79,6 +79,26 @@ export const useSendWhatsAppNotification = () => {
         throw new Error('Error al bloquear ausencias: ' + lockError.message);
       }
 
+      // Marcar todas las notificaciones pendientes de esta clase como "manual_sent"
+      // para evitar que se envíen automáticamente después
+      console.log('🔔 Marking pending notifications as manual_sent for class:', params.classId);
+
+      const { error: notificationError } = await supabase
+        .from('pending_whatsapp_notifications')
+        .update({
+          status: 'manual_sent',
+          sent_at: new Date().toISOString()
+        })
+        .eq('class_id', params.classId)
+        .eq('status', 'pending');
+
+      if (notificationError) {
+        console.warn('⚠️ Warning: Could not update pending notifications:', notificationError);
+        // No lanzar error, solo advertir porque el envío principal es más importante
+      } else {
+        console.log('✅ Pending notifications marked as manual_sent');
+      }
+
       // Call the Edge Function
       const response = await supabase.functions.invoke<WhatsAppResponse>(
         'send-whatsapp-notification',

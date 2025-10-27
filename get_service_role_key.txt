@@ -1,0 +1,11 @@
+Para obtener tu Service Role Key:
+
+1. Ve a Supabase Dashboard
+2. Settings > API
+3. Project API keys
+4. Copia "service_role" key (NO la anon key)
+
+Es una key que empieza con: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+pero MÁS LARGA que la anon key
+
+⚠️ IMPORTANTE: Esta key tiene permisos de administrador, nunca la expongas en el frontend
