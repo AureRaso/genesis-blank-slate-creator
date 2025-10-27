@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Plus, GraduationCap } from "lucide-react";
+import { Plus, GraduationCap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,15 +10,17 @@ import ClassBooking from "@/components/ClassBooking";
 import MyReservations from "@/components/MyReservations";
 import ClubSelection from "@/components/ClubSelection";
 import ClubClassesView from "@/components/ClubClassesView";
+import AIClassCreatorModal from "@/components/AIClassCreatorModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayerReservationStatus } from "@/hooks/usePlayerReservationStatus";
 import { ClassSlot } from "@/hooks/useClassSlots";
 
 const ClassesPage = () => {
   const [showForm, setShowForm] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const [editingClassSlot, setEditingClassSlot] = useState<ClassSlot | undefined>();
   const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { data: reservationStatus, isLoading: isLoadingStatus } = usePlayerReservationStatus();
 
   const handleCloseForm = () => {
@@ -55,6 +57,9 @@ const ClassesPage = () => {
 
   // Vista de administrador
   if (isAdmin) {
+    // Check if user is ivan@gmail.com for AI features
+    const isIvanUser = user?.email === 'ivan@gmail.com';
+
     return (
       <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
         <div className="flex items-center justify-between">
@@ -66,15 +71,34 @@ const ClassesPage = () => {
               Crea y gestiona las clases de pádel para los jugadores
             </p>
           </div>
-          <Button
-            onClick={handleCreateNew}
-            className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange transition-all duration-300 shadow-lg hover:shadow-xl"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva Clase
-          </Button>
+          <div className="flex gap-2">
+            {isIvanUser && (
+              <Button
+                onClick={() => setShowAIModal(true)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Crear con IA
+              </Button>
+            )}
+            <Button
+              onClick={handleCreateNew}
+              className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Clase
+            </Button>
+          </div>
         </div>
         <ClassSlotsList onEditClassSlot={handleEditClassSlot} />
+
+        {/* AI Class Creator Modal - Only for ivan@gmail.com */}
+        {isIvanUser && (
+          <AIClassCreatorModal
+            isOpen={showAIModal}
+            onClose={() => setShowAIModal(false)}
+          />
+        )}
       </div>
     );
   }

@@ -35,6 +35,10 @@ const UserMenu = () => {
         return 'Administrador';
       case 'trainer':
         return 'Entrenador';
+      case 'guardian':
+        return 'Tutor';
+      case 'owner':
+        return 'Propietario';
       default:
         return 'Jugador';
     }

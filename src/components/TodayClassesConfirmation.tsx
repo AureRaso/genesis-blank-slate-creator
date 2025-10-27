@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,9 +6,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
 import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
-export const TodayClassesConfirmation = () => {
-  const { data: todayClasses = [], isLoading } = useTodayClassAttendance();
+interface TodayClassesConfirmationProps {
+  selectedChildId?: string;
+}
+
+export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfirmationProps) => {
+  const { isGuardian } = useAuth();
+  const { data: allClasses = [], isLoading } = useTodayClassAttendance();
+
+  // Filter classes based on selected child
+  const todayClasses = useMemo(() => {
+    if (!isGuardian || !selectedChildId || selectedChildId === "all") {
+      return allClasses;
+    }
+
+    // Filter classes that belong to the selected child
+    return allClasses.filter((classItem: any) => {
+      return classItem.student_enrollment?.student_profile_id === selectedChildId;
+    });
+  }, [allClasses, selectedChildId, isGuardian]);
   const confirmAttendance = useConfirmAttendance();
   const cancelConfirmation = useCancelAttendanceConfirmation();
   const confirmAbsence = useConfirmAbsence();

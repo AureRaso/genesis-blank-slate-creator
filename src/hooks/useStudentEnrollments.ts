@@ -480,12 +480,66 @@ export const useUpdateStudentEnrollment = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateStudentEnrollmentData> }) => {
-      const { error } = await supabase
+      console.log('🔄 useUpdateStudentEnrollment - Updating enrollment:', { id, data });
+
+      // 1. Update student_enrollments table
+      const { error: enrollmentError } = await supabase
         .from("student_enrollments")
         .update(data)
         .eq('id', id);
 
-      if (error) throw error;
+      if (enrollmentError) {
+        console.error('❌ Error updating student_enrollments:', enrollmentError);
+        throw enrollmentError;
+      }
+
+      console.log('✅ student_enrollments updated');
+
+      // 2. If updating level, also update the profiles table
+      if (data.level !== undefined) {
+        console.log('🔄 Also updating profile level...');
+
+        // Get the student email from student_enrollments
+        const { data: enrollment, error: getError } = await supabase
+          .from("student_enrollments")
+          .select('email')
+          .eq('id', id)
+          .single();
+
+        if (getError) {
+          console.error('❌ Error getting enrollment email:', getError);
+          throw getError;
+        }
+
+        console.log('📧 Student email:', enrollment.email);
+
+        // Get user_id from profiles using email
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select('id')
+          .eq('email', enrollment.email)
+          .single();
+
+        if (profileError) {
+          console.error('❌ Error getting profile:', profileError);
+          // Don't throw, continue anyway
+        } else if (profile) {
+          console.log('👤 Updating profile for user_id:', profile.id);
+
+          // Update the profile level
+          const { error: updateProfileError } = await supabase
+            .from("profiles")
+            .update({ level: data.level })
+            .eq('id', profile.id);
+
+          if (updateProfileError) {
+            console.error('❌ Error updating profile level:', updateProfileError);
+            // Don't throw, enrollment was already updated
+          } else {
+            console.log('✅ Profile level updated successfully');
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });

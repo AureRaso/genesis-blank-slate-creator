@@ -2,28 +2,35 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Users, 
-  Search, 
-  Mail, 
-  Phone, 
+import {
+  Users,
+  Search,
+  Mail,
   Calendar,
   Clock,
   Euro,
   CreditCard,
   CheckCircle,
   AlertTriangle,
-  Building2
+  Building2,
+  Edit,
+  Check,
+  X
 } from "lucide-react";
-import { useAdminStudentEnrollments, StudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { toast } from "@/hooks/use-toast";
 
 const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [editingLevel, setEditingLevel] = useState<string>("");
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
+  const updateStudentMutation = useUpdateStudentEnrollment();
   
   console.log('📋 AdminStudentsList Data:', {
     studentsCount: students.length,
@@ -68,6 +75,55 @@ const AdminStudentsList = () => {
       case "anual": return "Anual";
       default: return period;
     }
+  };
+
+  const handleLevelChange = (value: string) => {
+    // Permitir valor vacío o solo números enteros
+    if (value === "" || /^\d+$/.test(value)) {
+      setEditingLevel(value);
+    }
+  };
+
+  const handleSaveLevel = async (studentId: string) => {
+    const levelNum = parseInt(editingLevel);
+    const student = students.find(s => s.id === studentId);
+
+    console.log('🔄 Saving level:', {
+      studentId,
+      student,
+      editingLevel,
+      levelNum,
+      isValid: !isNaN(levelNum) && levelNum >= 1 && levelNum <= 10
+    });
+
+    if (editingLevel === "" || isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
+      toast({
+        title: "Error",
+        description: "El nivel debe ser un número entero entre 1 y 10",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('📤 Calling updateStudentMutation with:', { id: studentId, data: { level: levelNum } });
+
+      await updateStudentMutation.mutateAsync({
+        id: studentId,
+        data: { level: levelNum }
+      });
+
+      console.log('✅ Level updated successfully');
+      setEditingStudentId(null);
+      setEditingLevel("");
+    } catch (error) {
+      console.error('❌ Error updating level:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStudentId(null);
+    setEditingLevel("");
   };
 
   if (isLoading) {
@@ -193,7 +249,50 @@ const AdminStudentsList = () => {
                   <div className="flex-1">
                     <h4 className="font-medium text-lg">{student.full_name}</h4>
                     <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-sm text-muted-foreground">Nivel {student.level}</span>
+                      {editingStudentId === student.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            step="1"
+                            value={editingLevel}
+                            onChange={(e) => handleLevelChange(e.target.value)}
+                            className="w-20 h-8"
+                            placeholder="1-10"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveLevel(student.id)}
+                            disabled={updateStudentMutation.isPending}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCancelEdit}
+                            disabled={updateStudentMutation.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Nivel {student.level}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingStudentId(student.id);
+                              setEditingLevel(student.level.toString());
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                       <Badge variant={getStatusBadgeVariant(student.status)}>
                         {getStatusLabel(student.status)}
                       </Badge>
@@ -208,18 +307,8 @@ const AdminStudentsList = () => {
                   </div>
 
                   <div className="flex items-center text-muted-foreground">
-                    <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{student.phone}</span>
-                  </div>
-
-                  <div className="flex items-center text-muted-foreground">
                     <Building2 className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{student.club_name}</span>
-                    {student.club_status && (
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        {student.club_status}
-                      </Badge>
-                    )}
                   </div>
 
                   {student.enrollment_period && (
