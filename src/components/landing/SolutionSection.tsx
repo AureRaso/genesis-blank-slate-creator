@@ -4,16 +4,7 @@ import { Button } from "@/components/ui/button";
 const SolutionSection = () => {
   const features = [
     {
-      role: "Profesores",
-      description: "Gestión de clases, asistencia y comunicación directa por WhatsApp",
-      benefits: [
-        "Pasa lista en segundos",
-        "Comunica con alumnos sin cambiar de app",
-        "Ve tu horario completo de un vistazo"
-      ]
-    },
-    {
-      role: "Entrenadores",
+      role: "Academia",
       description: "Visión global de la academia: horarios, pagos y rendimiento",
       benefits: [
         "Control total de asistencia y recuperaciones",
@@ -22,7 +13,16 @@ const SolutionSection = () => {
       ]
     },
     {
-      role: "Jugadores",
+      role: "Profesor",
+      description: "Gestión de clases, asistencia y comunicación directa por WhatsApp",
+      benefits: [
+        "Pasa lista en segundos",
+        "Comunica con alumnos sin cambiar de app",
+        "Ve tu horario completo de un vistazo"
+      ]
+    },
+    {
+      role: "Jugador",
       description: "Calendario personal, notificaciones y comunicación fluida",
       benefits: [
         "Recibe avisos de cambios al instante",
@@ -49,7 +49,7 @@ const SolutionSection = () => {
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Reduce a la mitad las horas de gestión, mejorando la experiencia de
-              jugadores, entrenadores y responsables
+              academias, profesores y jugadores
             </p>
           </div>
 
@@ -83,7 +83,7 @@ const SolutionSection = () => {
           {/* Key Differentiator */}
           <div className="bg-playtomic-orange/10 border-2 border-playtomic-orange/20 rounded-2xl p-8 text-center">
             <p className="text-lg text-playtomic-dark font-medium mb-2">
-              A diferencia de herramientas genéricas como Playtomic
+              A diferencia del Excel, WhatsApp o software genérico
             </p>
             <p className="text-xl font-bold text-playtomic-orange">
               Padelock entiende las dinámicas reales de una academia

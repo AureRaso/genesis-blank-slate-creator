@@ -26,6 +26,12 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar que la API key de Resend esté configurada
+    if (!RESEND_API_KEY) {
+      console.error("❌ RESEND_API_KEY no está configurada");
+      throw new Error("RESEND_API_KEY is not configured. Please set it in Supabase Function Secrets.");
+    }
+
     const formData: ContactFormData = await req.json();
 
     console.log("📧 Sending contact form email:", {

@@ -4,9 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Users, BarChart3, Calendar } from "lucide-react";
 
 const ProductSection = () => {
-  const [activeTab, setActiveTab] = useState("profesor");
+  const [activeTab, setActiveTab] = useState("academia");
 
   const roles = [
+    {
+      id: "academia",
+      title: "Academia",
+      icon: BarChart3,
+      description: "Control total de tu academia desde un solo panel",
+      features: [
+        "Dashboard con métricas en tiempo real de asistencia",
+        "Control completo de pagos y facturación",
+        "Visión global de todos los horarios y profesores",
+        "Gestión automatizada de recuperaciones",
+        "Informes detallados sobre rendimiento de la academia",
+        "Asignación inteligente de alumnos por nivel"
+      ],
+      benefits: "Ahorra 4 horas diarias en tareas administrativas"
+    },
     {
       id: "profesor",
       title: "Profesor",
@@ -20,21 +35,6 @@ const ProductSection = () => {
         "Accede a la información de tus alumnos al instante"
       ],
       benefits: "Reduce el tiempo de gestión de 30 minutos a 2 minutos por clase"
-    },
-    {
-      id: "entrenador",
-      title: "Entrenador",
-      icon: BarChart3,
-      description: "Control total de tu academia desde un solo panel",
-      features: [
-        "Dashboard con métricas en tiempo real de asistencia",
-        "Control completo de pagos y facturación",
-        "Visión global de todos los horarios y profesores",
-        "Gestión automatizada de recuperaciones",
-        "Informes detallados sobre rendimiento de la academia",
-        "Asignación inteligente de alumnos por nivel"
-      ],
-      benefits: "Ahorra 4 horas diarias en tareas administrativas"
     },
     {
       id: "jugador",
@@ -63,7 +63,7 @@ const ProductSection = () => {
               Diseñado para cada rol
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Profesores, entrenadores y jugadores tienen experiencias optimizadas para sus necesidades específicas
+              Academias, profesores y jugadores tienen experiencias optimizadas para sus necesidades específicas
             </p>
           </div>
 

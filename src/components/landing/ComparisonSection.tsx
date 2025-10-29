@@ -3,18 +3,18 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const ComparisonSection = () => {
   const features = [
-    { category: "Gestión de Clases", feature: "Pasar lista digital", excel: false, playtomic: false, padelock: true },
-    { category: "Gestión de Clases", feature: "Horarios personalizados por profesor", excel: "partial", playtomic: false, padelock: true },
-    { category: "Gestión de Clases", feature: "Control de asistencia automático", excel: false, playtomic: false, padelock: true },
-    { category: "Comunicación", feature: "WhatsApp integrado", excel: false, playtomic: false, padelock: true },
-    { category: "Comunicación", feature: "Notificaciones automáticas", excel: false, playtomic: true, padelock: true },
-    { category: "Recuperaciones", feature: "Sistema de lista de espera", excel: false, playtomic: false, padelock: true },
-    { category: "Recuperaciones", feature: "Asignación automática por nivel", excel: false, playtomic: false, padelock: true },
-    { category: "Gestión Administrativa", feature: "Control de pagos", excel: "partial", playtomic: true, padelock: true },
-    { category: "Gestión Administrativa", feature: "Dashboard con métricas", excel: false, playtomic: "partial", padelock: true },
-    { category: "Gestión Administrativa", feature: "Gestión multi-club", excel: false, playtomic: false, padelock: true },
-    { category: "Experiencia", feature: "Diseñado para academias", excel: false, playtomic: false, padelock: true },
-    { category: "Experiencia", feature: "Soporte incluido", excel: false, playtomic: "partial", padelock: true },
+    { category: "Gestión de Clases", feature: "Pasar lista digital", excel: false, generic: false, padelock: true },
+    { category: "Gestión de Clases", feature: "Horarios personalizados por profesor", excel: "partial", generic: false, padelock: true },
+    { category: "Gestión de Clases", feature: "Control de asistencia automático", excel: false, generic: false, padelock: true },
+    { category: "Comunicación", feature: "WhatsApp integrado", excel: false, generic: false, padelock: true },
+    { category: "Comunicación", feature: "Notificaciones automáticas", excel: false, generic: true, padelock: true },
+    { category: "Recuperaciones", feature: "Sistema de lista de espera", excel: false, generic: false, padelock: true },
+    { category: "Recuperaciones", feature: "Asignación automática por nivel", excel: false, generic: false, padelock: true },
+    { category: "Gestión Administrativa", feature: "Control de pagos", excel: "partial", generic: true, padelock: true },
+    { category: "Gestión Administrativa", feature: "Dashboard con métricas", excel: false, generic: "partial", padelock: true },
+    { category: "Gestión Administrativa", feature: "Gestión multi-club", excel: false, generic: false, padelock: true },
+    { category: "Experiencia", feature: "Diseñado para academias", excel: false, generic: false, padelock: true },
+    { category: "Experiencia", feature: "Soporte incluido", excel: false, generic: "partial", padelock: true },
   ];
 
   const renderIcon = (value: boolean | string) => {
@@ -46,7 +46,7 @@ const ComparisonSection = () => {
               ¿Por qué Padelock?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Playtomic es genial para reservas de pistas. Padelock está diseñado específicamente para gestionar academias.
+              Comparación entre métodos tradicionales, herramientas genéricas y Padelock
             </p>
           </div>
 
@@ -56,8 +56,8 @@ const ComparisonSection = () => {
               {/* Table Header */}
               <div className="grid grid-cols-4 bg-gray-50 border-b-2 border-gray-200">
                 <div className="p-4 font-semibold text-gray-700">Funcionalidad</div>
-                <div className="p-4 text-center font-semibold text-gray-700 border-l">Excel</div>
-                <div className="p-4 text-center font-semibold text-gray-700 border-l">Playtomic</div>
+                <div className="p-4 text-center font-semibold text-gray-700 border-l">Excel/WhatsApp</div>
+                <div className="p-4 text-center font-semibold text-gray-700 border-l">Software Genérico</div>
                 <div className="p-4 text-center font-semibold bg-playtomic-orange/10 text-playtomic-orange border-l-2 border-playtomic-orange/30">
                   Padelock
                 </div>
@@ -84,7 +84,7 @@ const ComparisonSection = () => {
                         {renderIcon(item.excel)}
                       </div>
                       <div className="p-4 border-l flex items-center justify-center">
-                        {renderIcon(item.playtomic)}
+                        {renderIcon(item.generic)}
                       </div>
                       <div className="p-4 bg-playtomic-orange/5 border-l-2 border-playtomic-orange/30 flex items-center justify-center">
                         {renderIcon(item.padelock)}
@@ -116,10 +116,10 @@ const ComparisonSection = () => {
           <div className="mt-12 text-center">
             <div className="inline-block bg-playtomic-orange/10 border-2 border-playtomic-orange/20 rounded-2xl p-8">
               <p className="text-xl text-playtomic-dark font-medium mb-2">
-                Padelock complementa perfectamente a Playtomic
+                Diseñado específicamente para academias de pádel
               </p>
               <p className="text-gray-600">
-                Usa Playtomic para reservas de pistas y Padelock para gestionar tu academia
+                No más Excel, WhatsApp o software genérico que no entiende tu negocio
               </p>
             </div>
           </div>
