@@ -146,7 +146,7 @@ export const Footer = () => {
             <div className="space-y-4 text-sm">
               <div className="flex items-start space-x-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>sefaca24@gmail.com</span>
+                <span>infopadelock@gmail.com</span>
               </div>
               <div className="flex items-start space-x-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />

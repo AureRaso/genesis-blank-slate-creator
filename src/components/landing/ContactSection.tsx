@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Phone, MapPin, Send, CheckCircle, Calendar, Clock, User, Users, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 export const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -32,28 +33,50 @@ export const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "¡Solicitud enviada!",
-      description: "Nos pondremos en contacto contigo en las próximas 24 horas."
-    });
+    try {
+      console.log("📧 Enviando solicitud de demo...", formData);
 
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        clubName: "",
-        clubSize: "",
-        role: "",
-        message: ""
+      // Llamar a la Edge Function para enviar el email
+      const { data, error } = await supabase.functions.invoke("send-contact-email", {
+        body: formData,
       });
-    }, 3000);
+
+      if (error) {
+        console.error("❌ Error al enviar email:", error);
+        throw error;
+      }
+
+      console.log("✅ Email enviado correctamente:", data);
+
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      toast({
+        title: "¡Solicitud enviada!",
+        description: "Nos pondremos en contacto contigo en las próximas 24 horas."
+      });
+
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          clubName: "",
+          clubSize: "",
+          role: "",
+          message: ""
+        });
+      }, 3000);
+    } catch (error) {
+      console.error("❌ Error al procesar la solicitud:", error);
+      setIsSubmitting(false);
+      toast({
+        title: "Error al enviar",
+        description: "Hubo un problema al enviar tu solicitud. Por favor, intenta de nuevo o escríbenos directamente a infopadelock@gmail.com",
+        variant: "destructive"
+      });
+    }
   };
   if (isSubmitted) {
     return <section id="contact" className="py-20 bg-gradient-to-br from-primary/5 to-accent/5">
@@ -265,7 +288,9 @@ export const ContactSection = () => {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Escríbenos</h3>
-            <p className="text-muted-foreground">sefaca24@gmail.com</p>
+            <a href="mailto:infopadelock@gmail.com" className="text-primary hover:text-primary/80 transition-colors">
+              infopadelock@gmail.com
+            </a>
             <p className="text-sm text-muted-foreground mt-1">Respuesta en 24h</p>
           </div>
 

@@ -6,11 +6,10 @@ import ProductSection from "@/components/landing/ProductSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import TeamSection from "@/components/landing/TeamSection";
 import { ContactSection } from "@/components/landing/ContactSection";
-import { Footer } from "@/components/landing/Footer";
 
-const LandingPage = () => {
+const Landing = () => {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
+    <div className="min-h-screen">
       <HeroSection />
       <ProblemSection />
       <SolutionSection />
@@ -19,9 +18,8 @@ const LandingPage = () => {
       <ComparisonSection />
       <TeamSection />
       <ContactSection />
-      <Footer />
     </div>
   );
 };
 
-export default LandingPage;
+export default Landing;
