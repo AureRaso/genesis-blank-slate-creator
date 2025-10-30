@@ -33,6 +33,14 @@ const AdminStudentsList = () => {
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
   const updateStudentMutation = useUpdateStudentEnrollment();
+
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
   
   console.log('📋 AdminStudentsList Data:', {
     studentsCount: students.length,
@@ -43,8 +51,9 @@ const AdminStudentsList = () => {
 
   const filteredAndSortedStudents = students
     .filter((student) => {
-      const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const normalizedSearch = normalizeText(searchTerm);
+      const matchesSearch = normalizeText(student.full_name).includes(normalizedSearch) ||
+                           normalizeText(student.email).includes(normalizedSearch);
       const matchesStatus = statusFilter === "all" || student.status === statusFilter;
       const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
 

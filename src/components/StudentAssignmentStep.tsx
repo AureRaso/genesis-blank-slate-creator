@@ -50,6 +50,14 @@ export function StudentAssignmentStep({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
   // Group classes by day + time + court (to assign same students to all dates)
   const groupedClasses = classes.reduce((acc, cls) => {
     const key = `${cls.day_of_week}-${cls.start_time}-${cls.court_number}`;
@@ -87,9 +95,10 @@ export function StudentAssignmentStep({
   const getStudentById = (id: string) => allStudents.find(s => s.id === id);
 
   const filteredStudents = allStudents.filter(student => {
+    const normalizedSearch = normalizeText(searchTerm);
     const matchesSearch =
-      student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizeText(student.full_name).includes(normalizedSearch) ||
+      normalizeText(student.email).includes(normalizedSearch);
 
     // If a group is selected, filter by level compatibility
     if (selectedGroup) {

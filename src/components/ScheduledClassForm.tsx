@@ -110,7 +110,15 @@ export default function ScheduledClassForm({
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [isAlternativeFormatOpen, setIsAlternativeFormatOpen] = useState(false);
   const [studentSearchTerm, setStudentSearchTerm] = useState("");
-  
+
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
   // Get trainer profile to get the correct club
   const { data: trainerProfile } = useMyTrainerProfile();
   const trainerClubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
@@ -872,10 +880,11 @@ export default function ScheduledClassForm({
                       <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                         {students && students.length > 0 ? <div className="space-y-3">
                             {students
-                              .filter(student =>
-                                student.full_name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
-                                student.email.toLowerCase().includes(studentSearchTerm.toLowerCase())
-                              )
+                              .filter(student => {
+                                const normalizedSearch = normalizeText(studentSearchTerm);
+                                return normalizeText(student.full_name).includes(normalizedSearch) ||
+                                  normalizeText(student.email).includes(normalizedSearch);
+                              })
                               .map(student => <div key={student.id} className="flex items-center space-x-3 p-2 hover:bg-muted rounded">
                                 <Checkbox id={`student-${student.id}`} checked={watchedValues.selected_students.includes(student.id)} onCheckedChange={checked => handleStudentSelection(student.id, checked as boolean)} />
                                 <div className="flex-1">

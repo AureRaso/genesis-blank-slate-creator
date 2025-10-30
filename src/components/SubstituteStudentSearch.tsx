@@ -20,9 +20,17 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
   const { profile } = useAuth();
   const today = new Date().toISOString().split('T')[0];
 
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
   // Buscar alumnos del club
   const { data: students, isLoading: loadingStudents } = useQuery({
-    queryKey: ['club-students', clubId, searchTerm],
+    queryKey: ['club-students', clubId],
     queryFn: async () => {
       let query = supabase
         .from('student_enrollments')
@@ -31,11 +39,7 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
         .eq('status', 'active')
         .order('full_name', { ascending: true });
 
-      if (searchTerm.trim()) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await query.limit(20);
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];
@@ -113,9 +117,19 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
     },
   });
 
-  const filteredStudents = students?.filter(
-    student => !enrolledStudents?.includes(student.id)
-  ) || [];
+  const filteredStudents = students?.filter(student => {
+    // Filter out already enrolled students
+    if (enrolledStudents?.includes(student.id)) return false;
+
+    // Apply search filter with normalization
+    if (searchTerm.trim()) {
+      const normalizedSearch = normalizeText(searchTerm);
+      return normalizeText(student.full_name).includes(normalizedSearch) ||
+        normalizeText(student.email).includes(normalizedSearch);
+    }
+
+    return true;
+  }) || [];
 
   return (
     <div className="space-y-4">
