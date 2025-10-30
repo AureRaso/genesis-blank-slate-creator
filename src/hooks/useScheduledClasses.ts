@@ -52,61 +52,82 @@ export const useScheduledClasses = (filters?: {
     queryKey: ["scheduled-classes", filters],
     queryFn: async () => {
       console.log("Fetching classes with filters:", filters);
-      
-      let query = supabase
-        .from("programmed_classes")
-        .select(`
-          *,
-          participants:class_participants(
+
+      // Fetch all data in batches to avoid server-side limits
+      let allData: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from("programmed_classes")
+          .select(`
             *,
-            student_enrollment:student_enrollments!student_enrollment_id(
-              full_name,
-              email
+            participants:class_participants(
+              *,
+              student_enrollment:student_enrollments!student_enrollment_id(
+                full_name,
+                email
+              )
+            ),
+            trainer:profiles!trainer_profile_id(
+              full_name
+            ),
+            club:clubs!club_id(
+              name
             )
-          ),
-          trainer:profiles!trainer_profile_id(
-            full_name
-          ),
-          club:clubs!club_id(
-            name
-          )
-        `)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+          `)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-      // Filter by club(s) if provided
-      if (filters?.clubId) {
-        query = query.eq("club_id", filters.clubId);
-      } else if (filters?.clubIds && filters.clubIds.length > 0) {
-        query = query.in("club_id", filters.clubIds);
+        // Filter by club(s) if provided
+        if (filters?.clubId) {
+          query = query.eq("club_id", filters.clubId);
+        } else if (filters?.clubIds && filters.clubIds.length > 0) {
+          query = query.in("club_id", filters.clubIds);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching classes:", error);
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          allData = [...allData, ...data];
+          // If we got less than PAGE_SIZE results, we've reached the end
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        }
       }
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching classes:", error);
-        throw error;
-      }
-
-      console.log("Raw classes data:", data);
+      console.log("Raw classes data:", allData);
 
       // Filter classes that are active during the requested date range
-      let filteredClasses = data as any[];
-      
+      let filteredClasses = allData as any[];
+
       if (filters?.startDate && filters?.endDate) {
         const weekStart = parseISO(filters.startDate);
         const weekEnd = parseISO(filters.endDate);
-        
+
         filteredClasses = filteredClasses.filter(cls => {
           const classStart = parseISO(cls.start_date);
           const classEnd = parseISO(cls.end_date);
-          
+
           // Check if class period overlaps with the requested week
-          const overlaps = 
+          const overlaps =
             (classStart <= weekEnd && classEnd >= weekStart) ||
             isWithinInterval(weekStart, { start: classStart, end: classEnd }) ||
             isWithinInterval(weekEnd, { start: classStart, end: classEnd });
-          
+
           return overlaps;
         });
       }

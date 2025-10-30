@@ -60,34 +60,56 @@ export const useProgrammedClasses = (clubId?: string) => {
   return useQuery({
     queryKey: ["programmed-classes", clubId],
     queryFn: async () => {
-      let query = supabase
-        .from("programmed_classes")
-        .select(`
-          *,
-          participants:class_participants(
-            id,
-            status,
-            student_enrollment:student_enrollments(
-              id,
-              full_name,
-              email
-            )
-          ),
-          trainer:profiles!trainer_profile_id(
-            full_name
-          )
-        `)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+      // Fetch all data in batches to avoid server-side limits
+      let allData: any[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      let hasMore = true;
 
-      if (clubId) {
-        query = query.eq("club_id", clubId);
+      while (hasMore) {
+        let query = supabase
+          .from("programmed_classes")
+          .select(`
+            *,
+            participants:class_participants(
+              id,
+              status,
+              student_enrollment:student_enrollments(
+                id,
+                full_name,
+                email
+              )
+            ),
+            trainer:profiles!trainer_profile_id(
+              full_name
+            )
+          `)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (clubId) {
+          query = query.eq("club_id", clubId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          allData = [...allData, ...data];
+          // If we got less than PAGE_SIZE results, we've reached the end
+          if (data.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        }
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as (ProgrammedClass & {
+      return allData as (ProgrammedClass & {
         participants?: any[];
         trainer?: { full_name: string };
       })[];

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown, Search, X, Filter } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown, Search, X, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,10 @@ export default function ClassListView({
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+
   const deleteProgrammedClass = useDeleteProgrammedClass();
   const {
     t
@@ -76,6 +80,11 @@ export default function ClassListView({
       }
     }
   }, [classes, selectedClass?.id]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedDay, selectedTime, selectedLevel, startDate, endDate, filters]);
 
   // Function to normalize text (remove accents)
   const normalizeText = (text: string): string => {
@@ -268,7 +277,14 @@ export default function ClassListView({
     setSelectedLevel("all");
     setStartDate(undefined);
     setEndDate(undefined);
+    setCurrentPage(1); // Reset to first page when clearing filters
   };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedClasses.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedClasses = sortedClasses.slice(startIndex, endIndex);
 
   return <Card>
       <CardHeader>
@@ -447,7 +463,7 @@ export default function ClassListView({
             {/* Mobile View */}
             <div className="block md:hidden">
               <ClassListViewMobile
-                classes={sortedClasses}
+                classes={paginatedClasses}
                 isAdmin={isAdmin}
                 isTrainer={isTrainer}
                 onViewDetails={(cls) => setSelectedClass(cls)}
@@ -472,7 +488,7 @@ export default function ClassListView({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedClasses.map(cls => {
+                  {paginatedClasses.map(cls => {
                     const enrolledCount = cls.participants?.length || 0;
                     return <TableRow key={cls.id}>
                       <TableCell>
@@ -561,6 +577,73 @@ export default function ClassListView({
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1}-{Math.min(endIndex, sortedClasses.length)} de {sortedClasses.length} clases
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={currentPage === pageNumber ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
+                    })}
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <>
+                        <span className="px-2">...</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {totalPages}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Siguiente
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </>}
 
         {/* Class details modal */}
