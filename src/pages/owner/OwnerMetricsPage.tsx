@@ -29,7 +29,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-type TimeRange = 3 | 6 | 12;
+type TimeRange = 1 | 3 | 6 | 12;
 
 export const OwnerMetricsPage = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>(6);
@@ -207,6 +207,14 @@ export const OwnerMetricsPage = () => {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant={timeRange === 1 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTimeRange(1)}
+                  className={timeRange === 1 ? "bg-playtomic-orange hover:bg-orange-600" : ""}
+                >
+                  1M
+                </Button>
                 <Button
                   variant={timeRange === 3 ? "default" : "outline"}
                   size="sm"
