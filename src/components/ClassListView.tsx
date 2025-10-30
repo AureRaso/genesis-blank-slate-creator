@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -32,6 +33,7 @@ export default function ClassListView({
   const [manageStudentsClass, setManageStudentsClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [editingClass, setEditingClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [deletingClass, setDeletingClass] = useState<ScheduledClassWithTemplate | null>(null);
+  const [sortOrder, setSortOrder] = useState<string>("date"); // "date", "day", "time", "level", "name"
 
   const deleteProgrammedClass = useDeleteProgrammedClass();
   const {
@@ -105,6 +107,51 @@ export default function ClassListView({
     }
     return true;
   }) || [];
+
+  // Ordenar las clases según el criterio seleccionado
+  const sortedClasses = [...filteredClasses].sort((a, b) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (sortOrder) {
+      case "date": {
+        // Ordenar por fecha más cercana a hoy (start_date)
+        const dateA = new Date(a.start_date);
+        const dateB = new Date(b.start_date);
+        dateA.setHours(0, 0, 0, 0);
+        dateB.setHours(0, 0, 0, 0);
+
+        const diffA = Math.abs(dateA.getTime() - today.getTime());
+        const diffB = Math.abs(dateB.getTime() - today.getTime());
+        return diffA - diffB;
+      }
+      case "day": {
+        // Ordenar por día de la semana (lunes a domingo)
+        const dayOrder = ['lunes', 'martes', 'miércoles', 'miercoles', 'jueves', 'viernes', 'sábado', 'sabado', 'domingo'];
+        const firstDayA = a.days_of_week[0]?.toLowerCase() || '';
+        const firstDayB = b.days_of_week[0]?.toLowerCase() || '';
+        const indexA = dayOrder.indexOf(firstDayA);
+        const indexB = dayOrder.indexOf(firstDayB);
+        return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+      }
+      case "time": {
+        // Ordenar por hora de inicio
+        return a.start_time.localeCompare(b.start_time);
+      }
+      case "level": {
+        // Ordenar por nivel (de menor a mayor)
+        const levelA = a.level_from || 0;
+        const levelB = b.level_from || 0;
+        return levelA - levelB;
+      }
+      case "name": {
+        // Ordenar alfabéticamente por nombre
+        return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      }
+      default:
+        return 0;
+    }
+  });
   const getLevelDisplay = (cls: ScheduledClassWithTemplate) => {
     if (cls.custom_level) {
       return cls.custom_level.replace('_', ' ');
@@ -138,18 +185,37 @@ export default function ClassListView({
   }
   return <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-          <span>{t('classes.classList')} ({filteredClasses.length})</span>
-        </CardTitle>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <CardTitle className="text-base sm:text-lg">
+            {t('classes.classList')} ({sortedClasses.length})
+          </CardTitle>
+
+          {/* Sort selector */}
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="w-full sm:w-56">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                <SelectValue placeholder="Ordenar por" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">Fecha más cercana</SelectItem>
+              <SelectItem value="day">Día de la semana</SelectItem>
+              <SelectItem value="time">Hora de inicio</SelectItem>
+              <SelectItem value="level">Nivel</SelectItem>
+              <SelectItem value="name">Nombre (A-Z)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
-        {filteredClasses.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
+        {sortedClasses.length === 0 ? <div className="text-center py-8 text-muted-foreground text-sm">
             {t('classes.noClassesFound')}
           </div> : <>
             {/* Mobile View */}
             <div className="block md:hidden">
               <ClassListViewMobile
-                classes={filteredClasses}
+                classes={sortedClasses}
                 isAdmin={isAdmin}
                 isTrainer={isTrainer}
                 onViewDetails={(cls) => setSelectedClass(cls)}
@@ -174,7 +240,7 @@ export default function ClassListView({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredClasses.map(cls => {
+                  {sortedClasses.map(cls => {
                     const enrolledCount = cls.participants?.length || 0;
                     return <TableRow key={cls.id}>
                       <TableCell>
