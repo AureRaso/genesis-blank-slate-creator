@@ -5,9 +5,9 @@ name: Daily Attendance Reminder
 on:
   schedule:
     # Cron sintaxis: minuto hora día mes día-de-semana
-    # 0 8 * * * = 8:00 AM UTC cada día = 9:00 AM Madrid (invierno UTC+1)
-    # Para horario de verano (UTC+2), cambiar a: 0 7 * * *
-    - cron: '0 8 * * *'
+    # TEMPORAL PARA TESTING: 45 12 * * * = 12:45 UTC = 13:45 Madrid (invierno UTC+1)
+    # PRODUCCIÓN: 0 8 * * * = 8:00 AM UTC = 9:00 AM Madrid (invierno UTC+1)
+    - cron: '45 12 * * *'
 
   # Permite ejecutar manualmente para testing
   workflow_dispatch:

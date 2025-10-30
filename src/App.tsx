@@ -57,6 +57,7 @@ import { GuardianRouter } from "@/components/GuardianRouter";
 import MyChildrenPage from "@/pages/MyChildrenPage";
 import ClearCachePage from "@/pages/ClearCachePage";
 import PromotionsPage from "@/pages/PromotionsPage";
+import TestReminderPage from "@/pages/TestReminderPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -163,6 +164,7 @@ function App() {
               <Route path="/enroll/:token" element={<ClassEnrollmentPage />} />
               <Route path="/waitlist/:classId/:date" element={<WaitlistJoinPage />} />
               <Route path="/get-ids" element={<GetIdsPage />} />
+              <Route path="/test-reminder" element={<TestReminderPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
 
