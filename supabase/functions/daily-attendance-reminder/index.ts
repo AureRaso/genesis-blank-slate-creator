@@ -116,21 +116,13 @@ serve(async (req) => {
       day: 'numeric'
     });
 
-    const message = `🎾 ¡Buenos días!
+    const message = `👋 ¡Buenos días, equipo!
 
-📅 Hoy es *${formattedDate}*
+Recordad confirmar vuestra asistencia a la clase de hoy desde PadeLock 💪
 
-⏰ *Recordatorio de asistencia*
+👉 https://www.padelock.com/auth
 
-Por favor, confirma tu asistencia a las clases de hoy entrando en la aplicación:
-👉 ${appBaseUrl}
-
-✅ Confirmar asistencia
-❌ Notificar ausencia
-
-Es importante que confirmes lo antes posible para que podamos organizar mejor las clases.
-
-¡Nos vemos en la pista! 🎾`;
+Si tenéis cualquier duda con la aplicación, podéis escribirnos a este número por privado.`;
 
     // Send message to each group
     const results = [];
