@@ -240,8 +240,8 @@ export function StudentAssignmentStep({
                         {assignedCount > 0 ? "Editar Alumnos" : "Añadir Alumnos"}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-                      <DialogHeader className="flex-shrink-0">
+                    <DialogContent className="max-w-2xl max-h-[90vh]">
+                      <DialogHeader>
                         <DialogTitle>Asignar Alumnos - {group.name}</DialogTitle>
                         <div className="text-sm text-muted-foreground">
                           {getDayLabel(group.day_of_week)} {group.start_time} • Pista {group.court_number} • Nivel {group.level_from}-{group.level_to}
@@ -254,9 +254,9 @@ export function StudentAssignmentStep({
                         </div>
                       </DialogHeader>
 
-                      <div className="flex flex-col space-y-4 flex-1 overflow-hidden">
+                      <div className="space-y-4">
                         {/* Search */}
-                        <div className="relative flex-shrink-0">
+                        <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="Buscar alumno por nombre o email..."
@@ -267,55 +267,54 @@ export function StudentAssignmentStep({
                         </div>
 
                         {/* Selection counter */}
-                        <div className="flex items-center justify-between p-3 bg-muted rounded-lg flex-shrink-0">
+                        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                           <span className="text-sm">Alumnos seleccionados:</span>
                           <Badge variant={selectedStudents.length >= group.max_participants ? "default" : "secondary"}>
                             {selectedStudents.length}/{group.max_participants}
                           </Badge>
                         </div>
 
-                        {/* Student list */}
-                        <ScrollArea className="flex-1 pr-4">
-                          <div className="space-y-2">
-                            {filteredStudents.length === 0 ? (
-                              <div className="text-center py-8 text-muted-foreground">
-                                No hay alumnos disponibles
-                              </div>
-                            ) : (
-                              filteredStudents.map(student => {
-                                const isSelected = selectedStudents.includes(student.id);
-                                const isDisabled = !isSelected && selectedGroup && selectedStudents.length >= selectedGroup.max_participants;
+                        {/* Student list with fixed height and scroll */}
+                        <div className="border rounded-lg">
+                          <ScrollArea className="h-[400px]">
+                            <div className="space-y-2 p-4">
+                              {filteredStudents.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                  No hay alumnos disponibles
+                                </div>
+                              ) : (
+                                filteredStudents.map(student => {
+                                  const isSelected = selectedStudents.includes(student.id);
+                                  const isDisabled = !isSelected && selectedGroup && selectedStudents.length >= selectedGroup.max_participants;
 
-                                return (
-                                  <div
-                                    key={student.id}
-                                    className={`flex items-center space-x-3 p-3 border rounded-lg ${
-                                      isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/50'
-                                    }`}
-                                  >
-                                    <Checkbox
-                                      checked={isSelected}
-                                      disabled={isDisabled}
-                                      onCheckedChange={() => !isDisabled && handleToggleStudent(student.id)}
-                                      className="cursor-pointer"
-                                    />
+                                  return (
                                     <div
-                                      className="flex-1 min-w-0 cursor-pointer"
+                                      key={student.id}
+                                      className={`flex items-center space-x-3 p-3 border rounded-lg ${
+                                        isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/50 cursor-pointer'
+                                      }`}
                                       onClick={() => !isDisabled && handleToggleStudent(student.id)}
                                     >
-                                      <div className="font-medium truncate">{student.full_name}</div>
-                                      <div className="text-sm text-muted-foreground truncate">{student.email}</div>
+                                      <Checkbox
+                                        checked={isSelected}
+                                        disabled={isDisabled}
+                                        onCheckedChange={() => !isDisabled && handleToggleStudent(student.id)}
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{student.full_name}</div>
+                                        <div className="text-sm text-muted-foreground truncate">{student.email}</div>
+                                      </div>
+                                      <Badge variant="outline">Nivel {student.level}</Badge>
                                     </div>
-                                    <Badge variant="outline">Nivel {student.level}</Badge>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        </ScrollArea>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
 
                         {/* Actions */}
-                        <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
+                        <div className="flex justify-end gap-2 pt-4 border-t">
                           <Button
                             variant="outline"
                             onClick={() => setSelectedGroupKey(null)}
