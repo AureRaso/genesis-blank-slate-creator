@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PromotionModal from "@/components/PromotionModal";
-import { usePromotions, usePromotionsByClub, useDeletePromotion } from "@/hooks/usePromotions";
+import { usePromotionsByClub, useDeletePromotion } from "@/hooks/usePromotions";
 import { Promotion } from "@/types/promotions";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,12 +24,9 @@ const PromotionsPage = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
   const [promotionToDelete, setPromotionToDelete] = useState<string | null>(null);
 
-  // Admins see all promotions, others see only their club's promotions
-  const { data: allPromotions, isLoading: isLoadingAll } = usePromotions();
-  const { data: clubPromotions, isLoading: isLoadingClub } = usePromotionsByClub(profile?.club_id);
-
-  const promotions = isAdmin ? allPromotions : clubPromotions;
-  const isLoading = isAdmin ? isLoadingAll : isLoadingClub;
+  // Everyone (including admins) see only their club's promotions
+  const { data: clubPromotions, isLoading } = usePromotionsByClub(profile?.club_id);
+  const promotions = clubPromotions;
 
   const deleteMutation = useDeletePromotion();
 
