@@ -17,7 +17,8 @@ import {
   Building2,
   Edit,
   Check,
-  X
+  X,
+  ArrowUpDown
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { toast } from "@/hooks/use-toast";
@@ -26,6 +27,7 @@ const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<string>("arrival"); // "arrival" or "alphabetical"
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
 
@@ -39,14 +41,26 @@ const AdminStudentsList = () => {
     firstFewStudents: students.slice(0, 3).map(s => ({ id: s.id, name: s.full_name, club_id: s.club_id }))
   });
 
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
-    
-    return matchesSearch && matchesStatus && matchesPeriod;
-  });
+  const filteredAndSortedStudents = students
+    .filter((student) => {
+      const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+      const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
+
+      return matchesSearch && matchesStatus && matchesPeriod;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "alphabetical") {
+        // Ordenar alfabéticamente por nombre
+        return a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' });
+      } else {
+        // Ordenar por orden de llegada (created_at descendente - más recientes primero)
+        // Si no hay created_at, usar el orden original
+        if (!a.created_at || !b.created_at) return 0;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -168,8 +182,8 @@ const AdminStudentsList = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total de Alumnos</p>
                 <p className="text-3xl font-bold text-playtomic-dark">
-                  {filteredStudents.length}
-                  {filteredStudents.length !== students.length && (
+                  {filteredAndSortedStudents.length}
+                  {filteredAndSortedStudents.length !== students.length && (
                     <span className="text-lg text-muted-foreground ml-2">
                       / {students.length}
                     </span>
@@ -177,9 +191,9 @@ const AdminStudentsList = () => {
                 </p>
               </div>
             </div>
-            {filteredStudents.length !== students.length && (
+            {filteredAndSortedStudents.length !== students.length && (
               <Badge variant="secondary" className="text-sm">
-                {filteredStudents.length} de {students.length} mostrados
+                {filteredAndSortedStudents.length} de {students.length} mostrados
               </Badge>
             )}
           </div>
@@ -199,7 +213,7 @@ const AdminStudentsList = () => {
               />
             </div>
           </div>
-          
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-40">
               <SelectValue placeholder="Estado" />
@@ -225,17 +239,30 @@ const AdminStudentsList = () => {
               <SelectItem value="anual">Anual</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="w-full md:w-48">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                <SelectValue placeholder="Ordenar" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="arrival">Orden de llegada</SelectItem>
+              <SelectItem value="alphabetical">Alfabético (A-Z)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Students List */}
-        {filteredStudents.length === 0 ? (
+        {filteredAndSortedStudents.length === 0 ? (
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">
               {students.length === 0 ? "No hay alumnos inscritos" : "No se encontraron alumnos"}
             </h3>
             <p className="text-muted-foreground">
-              {students.length === 0 
+              {students.length === 0
                 ? "Los alumnos inscritos en tus clubes aparecerán aquí"
                 : "Prueba a cambiar los filtros de búsqueda"
               }
@@ -243,7 +270,7 @@ const AdminStudentsList = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredStudents.map((student) => (
+            {filteredAndSortedStudents.map((student) => (
               <div key={student.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
