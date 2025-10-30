@@ -242,102 +242,108 @@ export default function ClassListView({
 
   return <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="text-base sm:text-lg">
-            {t('classes.classList')} ({sortedClasses.length})
-          </CardTitle>
+        <CardTitle className="text-base sm:text-lg mb-4">
+          {t('classes.classList')} ({sortedClasses.length})
+        </CardTitle>
 
-          {/* Sort selector */}
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-full sm:w-56">
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4" />
-                <SelectValue placeholder="Ordenar por" />
+        {/* Filters and Sort Section - All in one line */}
+        <div className="space-y-3">
+          {/* Filtrado */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground min-w-[70px]">
+              Filtrado:
+            </span>
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              {/* Search input - más compacto */}
+              <div className="relative w-full sm:w-48">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-9 pl-8 text-sm"
+                />
               </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="date">Fecha más cercana</SelectItem>
-              <SelectItem value="day">Día de la semana</SelectItem>
-              <SelectItem value="time">Hora de inicio</SelectItem>
-              <SelectItem value="level">Nivel</SelectItem>
-              <SelectItem value="name">Nombre (A-Z)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
-        {/* Filters Section */}
-        <div className="mt-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Search input */}
-            <div className="relative lg:col-span-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre, profesor o alumno..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              {/* Day selector */}
+              <Select value={selectedDay} onValueChange={setSelectedDay}>
+                <SelectTrigger className="h-9 w-full sm:w-36">
+                  <SelectValue placeholder="Día" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los días</SelectItem>
+                  {uniqueDays.map(day => (
+                    <SelectItem key={day} value={day.toLowerCase()}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Time selector */}
+              <Select value={selectedTime} onValueChange={setSelectedTime}>
+                <SelectTrigger className="h-9 w-full sm:w-28">
+                  <SelectValue placeholder="Hora" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {uniqueTimes.map(time => (
+                    <SelectItem key={time} value={time}>
+                      {time.slice(0, 5)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Level selector */}
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <SelectTrigger className="h-9 w-full sm:w-32">
+                  <SelectValue placeholder="Nivel" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {uniqueLevels.filter(l => l > 0).map(level => (
+                    <SelectItem key={level} value={level.toString()}>
+                      Nivel {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Clear filters button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-9 px-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-
-            {/* Day selector */}
-            <Select value={selectedDay} onValueChange={setSelectedDay}>
-              <SelectTrigger>
-                <SelectValue placeholder="Día" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los días</SelectItem>
-                {uniqueDays.map(day => (
-                  <SelectItem key={day} value={day.toLowerCase()}>
-                    {day}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Time selector */}
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Hora" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las horas</SelectItem>
-                {uniqueTimes.map(time => (
-                  <SelectItem key={time} value={time}>
-                    {time.slice(0, 5)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            {/* Level selector */}
-            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Nivel" />
+          {/* Ordenado */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground min-w-[70px]">
+              Ordenado:
+            </span>
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="h-9 w-full sm:w-48">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  <SelectValue placeholder="Ordenar por" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los niveles</SelectItem>
-                {uniqueLevels.filter(l => l > 0).map(level => (
-                  <SelectItem key={level} value={level.toString()}>
-                    Nivel {level}
-                  </SelectItem>
-                ))}
+                <SelectItem value="date">Fecha más cercana</SelectItem>
+                <SelectItem value="day">Día de la semana</SelectItem>
+                <SelectItem value="time">Hora de inicio</SelectItem>
+                <SelectItem value="level">Nivel</SelectItem>
+                <SelectItem value="name">Nombre (A-Z)</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Clear filters button */}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="flex-shrink-0"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Limpiar filtros
-              </Button>
-            )}
           </div>
         </div>
       </CardHeader>
