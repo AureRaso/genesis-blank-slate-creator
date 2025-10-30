@@ -642,6 +642,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
                     <Input
                       id="start_date"
                       type="date"
+                      min={new Date().toISOString().split('T')[0]}
                       value={baseConfig.start_date}
                       onChange={(e) => setBaseConfig(prev => ({ ...prev, start_date: e.target.value }))}
                     />
@@ -652,6 +653,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
                     <Input
                       id="end_date"
                       type="date"
+                      min={baseConfig.start_date || new Date().toISOString().split('T')[0]}
                       value={baseConfig.end_date}
                       onChange={(e) => setBaseConfig(prev => ({ ...prev, end_date: e.target.value }))}
                     />
