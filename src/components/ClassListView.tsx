@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown, Search, X } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown, Search, X, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -41,6 +44,9 @@ export default function ClassListView({
   const [selectedDay, setSelectedDay] = useState<string>("all");
   const [selectedTime, setSelectedTime] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   const deleteProgrammedClass = useDeleteProgrammedClass();
   const {
@@ -119,6 +125,28 @@ export default function ClassListView({
     if (selectedLevel !== "all") {
       const levelValue = parseInt(selectedLevel);
       if (cls.level_from !== levelValue) return false;
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+      const classStartDate = new Date(cls.start_date);
+      const classEndDate = new Date(cls.end_date);
+      classStartDate.setHours(0, 0, 0, 0);
+      classEndDate.setHours(0, 0, 0, 0);
+
+      if (startDate) {
+        const filterStartDate = new Date(startDate);
+        filterStartDate.setHours(0, 0, 0, 0);
+        // La clase debe terminar después de la fecha de inicio del filtro
+        if (classEndDate < filterStartDate) return false;
+      }
+
+      if (endDate) {
+        const filterEndDate = new Date(endDate);
+        filterEndDate.setHours(0, 0, 0, 0);
+        // La clase debe empezar antes de la fecha de fin del filtro
+        if (classStartDate > filterEndDate) return false;
+      }
     }
 
     // Filtro por tamaño de grupo
@@ -231,109 +259,174 @@ export default function ClassListView({
         </CardHeader>
       </Card>;
   }
-  const hasActiveFilters = searchTerm || selectedDay !== "all" || selectedTime !== "all" || selectedLevel !== "all";
+  const hasActiveFilters = searchTerm || selectedDay !== "all" || selectedTime !== "all" || selectedLevel !== "all" || startDate || endDate;
 
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedDay("all");
     setSelectedTime("all");
     setSelectedLevel("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
   };
 
   return <Card>
       <CardHeader>
-        <CardTitle className="text-base sm:text-lg mb-4">
-          {t('classes.classList')} ({sortedClasses.length})
-        </CardTitle>
+        {/* Single line with title, filters button and sort */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <CardTitle className="text-base sm:text-lg">
+            {t('classes.classList')} ({sortedClasses.length})
+          </CardTitle>
 
-        {/* Filters and Sort Section - All in one line */}
-        <div className="space-y-3">
-          {/* Filtrado */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground min-w-[70px]">
-              Filtrado:
-            </span>
-            <div className="flex flex-wrap items-center gap-2 flex-1">
-              {/* Search input - más compacto */}
-              <div className="relative w-full sm:w-48">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 pl-8 text-sm"
-                />
-              </div>
-
-              {/* Day selector */}
-              <Select value={selectedDay} onValueChange={setSelectedDay}>
-                <SelectTrigger className="h-9 w-full sm:w-36">
-                  <SelectValue placeholder="Día" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los días</SelectItem>
-                  {uniqueDays.map(day => (
-                    <SelectItem key={day} value={day.toLowerCase()}>
-                      {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Time selector */}
-              <Select value={selectedTime} onValueChange={setSelectedTime}>
-                <SelectTrigger className="h-9 w-full sm:w-28">
-                  <SelectValue placeholder="Hora" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {uniqueTimes.map(time => (
-                    <SelectItem key={time} value={time}>
-                      {time.slice(0, 5)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Level selector */}
-              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger className="h-9 w-full sm:w-32">
-                  <SelectValue placeholder="Nivel" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {uniqueLevels.filter(l => l > 0).map(level => (
-                    <SelectItem key={level} value={level.toString()}>
-                      Nivel {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Clear filters button */}
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-9 px-2"
-                >
-                  <X className="h-4 w-4" />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Filters button with badge */}
+            <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="relative">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtrar
+                  {hasActiveFilters && (
+                    <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-primary">
+                      {[searchTerm, selectedDay !== "all", selectedTime !== "all", selectedLevel !== "all", startDate, endDate].filter(Boolean).length}
+                    </Badge>
+                  )}
                 </Button>
-              )}
-            </div>
-          </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Filtros de clases</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {/* Search input */}
+                  <div className="space-y-2">
+                    <Label>Buscar</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Nombre, profesor o alumno..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
 
-          {/* Ordenado */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground min-w-[70px]">
-              Ordenado:
-            </span>
+                  {/* Day selector */}
+                  <div className="space-y-2">
+                    <Label>Día de la semana</Label>
+                    <Select value={selectedDay} onValueChange={setSelectedDay}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los días" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los días</SelectItem>
+                        {uniqueDays.map(day => (
+                          <SelectItem key={day} value={day.toLowerCase()}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Time selector */}
+                  <div className="space-y-2">
+                    <Label>Hora de inicio</Label>
+                    <Select value={selectedTime} onValueChange={setSelectedTime}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas las horas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las horas</SelectItem>
+                        {uniqueTimes.map(time => (
+                          <SelectItem key={time} value={time}>
+                            {time.slice(0, 5)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Level selector */}
+                  <div className="space-y-2">
+                    <Label>Nivel</Label>
+                    <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los niveles" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los niveles</SelectItem>
+                        {uniqueLevels.filter(l => l > 0).map(level => (
+                          <SelectItem key={level} value={level.toString()}>
+                            Nivel {level}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date range */}
+                  <div className="space-y-2">
+                    <Label>Rango de fechas</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="justify-start text-left font-normal">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {startDate ? format(startDate, "dd/MM/yyyy") : "Desde"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="justify-start text-left font-normal">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {endDate ? format(endDate, "dd/MM/yyyy") : "Hasta"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={endDate}
+                            onSelect={setEndDate}
+                            initialFocus
+                            disabled={(date) => startDate ? date < startDate : false}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  {/* Clear filters button */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      onClick={clearFilters}
+                      className="w-full"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Limpiar todos los filtros
+                    </Button>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Sort selector */}
             <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className="h-9 w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <div className="flex items-center gap-2">
-                  <ArrowUpDown className="h-3.5 w-3.5" />
-                  <SelectValue placeholder="Ordenar por" />
+                  <ArrowUpDown className="h-4 w-4" />
+                  <SelectValue placeholder="Ordenar" />
                 </div>
               </SelectTrigger>
               <SelectContent>
