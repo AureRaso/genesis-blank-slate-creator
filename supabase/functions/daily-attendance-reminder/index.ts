@@ -27,11 +27,28 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     console.log('✓ Supabase client created');
 
+    // Log to database for debugging
+    await supabaseClient.from('cron_debug_logs').insert({
+      function_name: 'daily-attendance-reminder',
+      log_level: 'info',
+      message: 'Function started',
+      details: {
+        timestamp: new Date().toISOString(),
+        hasSupabaseUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      }
+    });
+
     // Get Whapi credentials from environment
     const whapiToken = Deno.env.get('WHAPI_TOKEN');
     const whapiEndpoint = Deno.env.get('WHAPI_ENDPOINT') || 'https://gate.whapi.cloud';
 
     if (!whapiToken) {
+      await supabaseClient.from('cron_debug_logs').insert({
+        function_name: 'daily-attendance-reminder',
+        log_level: 'error',
+        message: 'WHAPI_TOKEN not configured'
+      });
       throw new Error('WHAPI_TOKEN not configured');
     }
     console.log('✓ WHAPI credentials present');
@@ -40,7 +57,7 @@ serve(async (req) => {
     const appBaseUrl = Deno.env.get('APP_BASE_URL') || 'https://genesis-blank-slate-creator.lovable.app';
 
     // Fetch all active WhatsApp groups
-    const { data: whatsappGroups, error: groupsError } = await supabaseClient
+    const { data: whatsappGroups, error: groupsError} = await supabaseClient
       .from('whatsapp_groups')
       .select(`
         id,
@@ -53,6 +70,18 @@ serve(async (req) => {
         )
       `)
       .eq('is_active', true);
+
+    // Log groups fetched
+    await supabaseClient.from('cron_debug_logs').insert({
+      function_name: 'daily-attendance-reminder',
+      log_level: 'info',
+      message: 'WhatsApp groups fetched',
+      details: {
+        groupsCount: whatsappGroups?.length || 0,
+        hasError: !!groupsError,
+        error: groupsError
+      }
+    });
 
     if (groupsError) {
       console.error('Error fetching WhatsApp groups:', groupsError);
