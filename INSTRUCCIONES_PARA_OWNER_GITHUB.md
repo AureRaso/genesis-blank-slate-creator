@@ -14,9 +14,24 @@ Necesitamos configurar UN secret en GitHub para que los recordatorios diarios de
 3. En el menú lateral izquierdo, expande **"Secrets and variables"**
 4. Click en **"Actions"**
 
-### 2. Crear el Secret
+### 2. Obtener el Service Role Key de Supabase
 
-1. Click en el botón verde **"New repository secret"**
+⚠️ **IMPORTANTE**: Primero necesitas obtener la key correcta desde Supabase:
+
+1. Ve a: **https://supabase.com/dashboard/project/hwwvtxyezhgmhyxjpnvl/settings/api**
+2. En la sección **"Project API keys"**
+3. Busca la fila que dice **"service_role"** (con etiqueta "secret")
+4. Click en el icono del ojo 👁️ para revelar la key completa
+5. **Copia toda la key** (es un texto largo que empieza con `eyJ...`)
+
+### 3. Crear/Actualizar el Secret en GitHub
+
+1. Si ya existe un secret con ese nombre:
+   - Click en **"SUPABASE_SERVICE_ROLE_KEY"**
+   - Click en **"Update"**
+
+   Si no existe:
+   - Click en el botón verde **"New repository secret"**
 
 2. Rellena los campos:
 
@@ -27,12 +42,13 @@ Necesitamos configurar UN secret en GitHub para que los recordatorios diarios de
 
    **Secret** (valor del secret):
    ```
-   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d3Z0eHllemhnbWh5eGpwbnZsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxOTc0MjY4NSwiZXhwIjoyMDM1MzE4Njg1fQ.Lh-LKVpEFjVz1r5f9FdLHu9OJ4Mg_KS8JvBX-ZCZ-i4
+   [PEGA AQUÍ LA KEY QUE COPIASTE DE SUPABASE EN EL PASO 2]
    ```
+   ⚠️ NO uses la key del ejemplo de arriba, usa la que acabas de copiar de Supabase
 
-3. Click en **"Add secret"**
+3. Click en **"Add secret"** (o **"Update secret"** si ya existía)
 
-### 3. Verificar que funciona (opcional pero recomendado)
+### 4. Verificar que funciona (IMPORTANTE)
 
 1. Ve a: **https://github.com/AureRaso/genesis-blank-slate-creator/actions**
 2. En el menú lateral, click en **"Daily Attendance Reminder"**
