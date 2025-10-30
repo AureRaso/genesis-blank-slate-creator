@@ -701,17 +701,19 @@ const TodayAttendancePage = () => {
                                   </Button>
                                 )}
 
-                                {/* Botón nuevo: Comunicar hueco libre */}
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleNotifyFreeSpot(classData)}
-                                  disabled={isSendingWhatsApp || !whatsappGroup}
-                                  className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                                  title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Comunicar hueco libre al grupo"}
-                                >
-                                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                  Comunicar hueco libre
-                                </Button>
+                                {/* Botón "Comunicar hueco libre": Solo si hay plazas por CAPACIDAD, no por ausencias */}
+                                {slotsByCapacity > 0 && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleNotifyFreeSpot(classData)}
+                                    disabled={isSendingWhatsApp || !whatsappGroup}
+                                    className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                    title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Comunicar hueco libre al grupo"}
+                                  >
+                                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                    Comunicar hueco libre
+                                  </Button>
+                                )}
 
                                 <Button
                                   size="sm"

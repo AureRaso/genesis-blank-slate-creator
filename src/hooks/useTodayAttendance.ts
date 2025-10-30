@@ -122,10 +122,37 @@ export const useTodayAttendance = () => {
         }
       });
 
+      // DEBUG: Log each class with max_participants specifically
+      if (data && data.length > 0) {
+        console.log('🔍 DEBUG - Raw class data from Supabase:');
+        data.forEach((cls: any, idx: number) => {
+          console.log(`  Class ${idx + 1} (${cls.name}):`, {
+            id: cls.id,
+            max_participants: cls.max_participants,
+            has_max_participants: 'max_participants' in cls,
+            all_keys: Object.keys(cls)
+          });
+        });
+      }
+
+      // DEBUG: Direct query to verify max_participants field exists in database
+      const { data: testClass, error: testError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, max_participants')
+        .eq('name', 'Test')
+        .single();
+
+      console.log('🧪 DEBUG - Direct query for Test class:', {
+        testClass,
+        testError,
+        has_max_participants: testClass && 'max_participants' in testClass,
+        max_participants_value: testClass?.max_participants
+      });
+
       // Debug: Let's also fetch ALL classes without date filters to see what's in the DB
       const { data: allClasses, error: allError } = await supabase
         .from('programmed_classes')
-        .select('id, name, days_of_week, start_date, end_date, club_id')
+        .select('id, name, days_of_week, start_date, end_date, club_id, max_participants')
         .eq('is_active', true)
         .eq('club_id', profile.club_id || '')
         .contains('days_of_week', [todayDayName]);
@@ -139,7 +166,7 @@ export const useTodayAttendance = () => {
       // Debug: Let's fetch ALL active classes without ANY filters
       const { data: allActiveClasses, error: activeError } = await supabase
         .from('programmed_classes')
-        .select('id, name, days_of_week, start_date, end_date, club_id, created_at')
+        .select('id, name, days_of_week, start_date, end_date, club_id, created_at, max_participants')
         .eq('is_active', true)
         .eq('club_id', profile.club_id || '')
         .order('created_at', { ascending: false })
@@ -162,6 +189,8 @@ export const useTodayAttendance = () => {
           start_date: cls.start_date,
           end_date: cls.end_date,
           created_at: cls.created_at,
+          max_participants: cls.max_participants,
+          has_max_participants: 'max_participants' in cls,
           matchesToday: cls.days_of_week?.includes(todayDayName)
         });
       });

@@ -324,6 +324,7 @@ export default function ScheduledClassForm({
         level_to: data.level_format === "numeric" ? data.level_to : undefined,
         custom_level: data.level_format === "levante" ? data.custom_level : undefined,
         duration_minutes: data.duration_minutes,
+        max_participants: data.max_participants,
         start_time: data.start_time,
         days_of_week: data.selected_days.map(normalizeDayOfWeek),
         start_date: format(data.start_date, 'yyyy-MM-dd'),
