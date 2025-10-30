@@ -11,6 +11,7 @@ interface SendWhatsAppParams {
   waitlistUrl: string;
   availableSlots: number;
   classId: string; // ID de la clase para bloquear ausencias
+  notificationType?: 'absence' | 'free_spot'; // Tipo de notificación
 }
 
 interface WhatsAppResponse {
@@ -55,10 +56,52 @@ ${waitlistUrl}
 Las plazas se asignan a criterio del profesor.`;
 };
 
+const generateFreeSpotMessage = (params: SendWhatsAppParams): string => {
+  const { className, classDate, classTime, trainerName, waitlistUrl, availableSlots } = params;
+
+  // Format date nicely
+  const date = new Date(classDate);
+  const formattedDate = new Intl.DateTimeFormat('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date);
+
+  // Format class time without seconds (HH:MM)
+  const formattedClassTime = classTime.substring(0, 5);
+
+  // Calculate cutoff time (3 hours before class)
+  const [hours, minutes] = classTime.split(':');
+  const classDateTime = new Date(date);
+  classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+  const cutoffTime = new Date(classDateTime.getTime() - 3 * 60 * 60 * 1000);
+  const cutoffTimeStr = cutoffTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  const slotText = availableSlots === 1 ? '1 plaza disponible' : `${availableSlots} plazas disponibles`;
+
+  return `🎾 ¡${slotText} en clase!
+
+📅 Fecha: ${formattedDate}
+🕐 Hora: ${formattedClassTime}
+👨‍🏫 Profesor: ${trainerName}
+📍 Clase: ${className}
+
+👉 Apúntate a la lista de espera en el siguiente enlace:
+${waitlistUrl}
+
+⏰ Disponible hasta las ${cutoffTimeStr}
+
+Las plazas se asignan a criterio del profesor.`;
+};
+
 export const useSendWhatsAppNotification = () => {
   return useMutation({
     mutationFn: async (params: SendWhatsAppParams) => {
-      const message = generateWhatsAppMessage(params);
+      // Elegir el mensaje según el tipo de notificación
+      const message = params.notificationType === 'free_spot'
+        ? generateFreeSpotMessage(params)
+        : generateWhatsAppMessage(params);
 
       // Get the current session to pass auth token
       const { data: { session } } = await supabase.auth.getSession();
@@ -67,36 +110,39 @@ export const useSendWhatsAppNotification = () => {
         throw new Error('No hay sesión activa');
       }
 
-      // Primero bloqueamos las ausencias confirmadas antes de enviar el mensaje
-      const { error: lockError } = await supabase
-        .from('class_participants')
-        .update({ absence_locked: true })
-        .eq('class_id', params.classId)
-        .eq('absence_confirmed', true);
+      // SOLO bloquear ausencias si es notificación de ausencia
+      if (params.notificationType !== 'free_spot') {
+        // Primero bloqueamos las ausencias confirmadas antes de enviar el mensaje
+        const { error: lockError } = await supabase
+          .from('class_participants')
+          .update({ absence_locked: true })
+          .eq('class_id', params.classId)
+          .eq('absence_confirmed', true);
 
-      if (lockError) {
-        console.error('Error locking absences:', lockError);
-        throw new Error('Error al bloquear ausencias: ' + lockError.message);
-      }
+        if (lockError) {
+          console.error('Error locking absences:', lockError);
+          throw new Error('Error al bloquear ausencias: ' + lockError.message);
+        }
 
-      // Marcar todas las notificaciones pendientes de esta clase como "manual_sent"
-      // para evitar que se envíen automáticamente después
-      console.log('🔔 Marking pending notifications as manual_sent for class:', params.classId);
+        // Marcar todas las notificaciones pendientes de esta clase como "manual_sent"
+        // para evitar que se envíen automáticamente después
+        console.log('🔔 Marking pending notifications as manual_sent for class:', params.classId);
 
-      const { error: notificationError } = await supabase
-        .from('pending_whatsapp_notifications')
-        .update({
-          status: 'manual_sent',
-          sent_at: new Date().toISOString()
-        })
-        .eq('class_id', params.classId)
-        .eq('status', 'pending');
+        const { error: notificationError } = await supabase
+          .from('pending_whatsapp_notifications')
+          .update({
+            status: 'manual_sent',
+            sent_at: new Date().toISOString()
+          })
+          .eq('class_id', params.classId)
+          .eq('status', 'pending');
 
-      if (notificationError) {
-        console.warn('⚠️ Warning: Could not update pending notifications:', notificationError);
-        // No lanzar error, solo advertir porque el envío principal es más importante
-      } else {
-        console.log('✅ Pending notifications marked as manual_sent');
+        if (notificationError) {
+          console.warn('⚠️ Warning: Could not update pending notifications:', notificationError);
+          // No lanzar error, solo advertir porque el envío principal es más importante
+        } else {
+          console.log('✅ Pending notifications marked as manual_sent');
+        }
       }
 
       // Call the Edge Function
@@ -134,8 +180,12 @@ export const useSendWhatsAppNotification = () => {
 
       return data;
     },
-    onSuccess: () => {
-      toast.success('✓ Mensaje enviado y ausencias bloqueadas');
+    onSuccess: (_data, variables) => {
+      if (variables.notificationType === 'free_spot') {
+        toast.success('✓ Notificación de hueco libre enviada');
+      } else {
+        toast.success('✓ Mensaje enviado y ausencias bloqueadas');
+      }
     },
     onError: (error: any) => {
       console.error('Error sending WhatsApp notification:', error);

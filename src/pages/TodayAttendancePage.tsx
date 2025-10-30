@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -50,9 +50,11 @@ const TodayAttendancePage = () => {
   const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
     open: boolean;
     classData: any | null;
+    notificationType?: 'absence' | 'free_spot';
   }>({
     open: false,
     classData: null,
+    notificationType: 'absence',
   });
 
   // Solo administradores pueden notificar por WhatsApp
@@ -147,6 +149,7 @@ const TodayAttendancePage = () => {
       setWhatsappGroupDialog({
         open: true,
         classData: classData,
+        notificationType: 'absence',
       });
       return;
     }
@@ -160,6 +163,34 @@ const TodayAttendancePage = () => {
     }
 
     sendNotificationToGroup(whatsappGroup.group_chat_id, classData);
+  };
+
+  const handleNotifyFreeSpot = (classData: any) => {
+    console.log('📢 handleNotifyFreeSpot called');
+    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
+    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
+    console.log('📊 whatsappGroup:', whatsappGroup);
+
+    // Si hay múltiples grupos, mostrar diálogo de selección
+    if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
+      setWhatsappGroupDialog({
+        open: true,
+        classData: classData,
+        notificationType: 'free_spot',
+      });
+      return;
+    }
+
+    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
+
+    // Si solo hay un grupo, enviarlo directamente
+    if (!whatsappGroup?.group_chat_id) {
+      console.error("No WhatsApp group configured");
+      return;
+    }
+
+    sendFreeSpotNotification(whatsappGroup.group_chat_id, classData);
   };
 
   const sendNotificationToGroup = (groupChatId: string, classData: any) => {
@@ -183,7 +214,35 @@ const TodayAttendancePage = () => {
     });
 
     // Cerrar el diálogo si estaba abierto
-    setWhatsappGroupDialog({ open: false, classData: null });
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
+  };
+
+  const sendFreeSpotNotification = (groupChatId: string, classData: any) => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Calculate total available slots
+    const maxParticipants = classData.max_participants || 8;
+    const validParticipants = classData.participants.filter((p: any) => p.student_enrollment);
+    const enrolledCount = validParticipants.length;
+    const totalAvailableSlots = maxParticipants - enrolledCount;
+
+    // Generate waitlist URL
+    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+
+    sendWhatsApp({
+      groupChatId: groupChatId,
+      className: classData.name,
+      classDate: today,
+      classTime: classData.start_time,
+      trainerName: classData.trainer?.full_name || 'Profesor',
+      waitlistUrl,
+      availableSlots: totalAvailableSlots,
+      classId: classData.id,
+      notificationType: 'free_spot'
+    });
+
+    // Cerrar el diálogo si estaba abierto
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
   };
 
   const toggleWaitlist = (classId: string) => {
@@ -571,14 +630,26 @@ const TodayAttendancePage = () => {
                   {(() => {
                     const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
                     const substituteCount = validParticipants.filter(p => p.is_substitute).length;
-                    const availableSlots = absentCount - substituteCount;
+                    const slotsByAbsence = absentCount - substituteCount;
+
+                    // Calculate available slots by capacity
+                    const maxParticipants = classData.max_participants || 8;
+                    const enrolledCount = validParticipants.length;
+                    const slotsByCapacity = maxParticipants - enrolledCount;
+
+                    // Total available slots is the maximum of both
+                    const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
                     const today = new Date().toISOString().split('T')[0];
 
                     console.log('🔍 DEBUG - Clase:', classData.name, {
                       totalParticipants: validParticipants.length,
+                      maxParticipants,
+                      enrolledCount,
                       absentCount,
                       substituteCount,
-                      availableSlots,
+                      slotsByAbsence,
+                      slotsByCapacity,
+                      totalAvailableSlots,
                       participants: validParticipants.map(p => ({
                         name: p.student_enrollment?.full_name,
                         isSubstitute: p.is_substitute,
@@ -586,13 +657,13 @@ const TodayAttendancePage = () => {
                       }))
                     });
 
-                    return availableSlots > 0 && (
+                    return totalAvailableSlots > 0 && (
                       <div className="mt-4 space-y-3">
                         <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                           {/* Badge de plazas disponibles */}
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
-                              {availableSlots} {availableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                              {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
                             </Badge>
                           </div>
 
@@ -616,16 +687,32 @@ const TodayAttendancePage = () => {
                             {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
                             {isAdmin && (
                               <>
+                                {/* Mostrar "Notificar ausencia" solo si hay ausencias sin cubrir */}
+                                {slotsByAbsence > 0 && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleNotifyWhatsApp(classData)}
+                                    disabled={isSendingWhatsApp || !whatsappGroup}
+                                    className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                    title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
+                                  >
+                                    <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                    Notificar ausencia
+                                  </Button>
+                                )}
+
+                                {/* Botón nuevo: Comunicar hueco libre */}
                                 <Button
                                   size="sm"
-                                  onClick={() => handleNotifyWhatsApp(classData)}
+                                  onClick={() => handleNotifyFreeSpot(classData)}
                                   disabled={isSendingWhatsApp || !whatsappGroup}
-                                  className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                                  title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
+                                  className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                  title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Comunicar hueco libre al grupo"}
                                 >
-                                  <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                  Notificar ausencia
+                                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                  Comunicar hueco libre
                                 </Button>
+
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -685,7 +772,14 @@ const TodayAttendancePage = () => {
                   key={group.id}
                   variant="outline"
                   className="w-full justify-center text-center h-auto py-3 px-4"
-                  onClick={() => sendNotificationToGroup(group.group_chat_id, whatsappGroupDialog.classData)}
+                  onClick={() => {
+                    // Decidir qué función llamar según el tipo de notificación
+                    if (whatsappGroupDialog.notificationType === 'free_spot') {
+                      sendFreeSpotNotification(group.group_chat_id, whatsappGroupDialog.classData);
+                    } else {
+                      sendNotificationToGroup(group.group_chat_id, whatsappGroupDialog.classData);
+                    }
+                  }}
                   disabled={isSendingWhatsApp}
                 >
                   <span className="font-semibold">{group.group_name}</span>
