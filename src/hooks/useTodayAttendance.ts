@@ -9,6 +9,7 @@ export interface TodayAttendanceClass {
   name: string;
   start_time: string;
   duration_minutes: number;
+  max_participants?: number;
   trainer: {
     full_name: string;
   } | null;
@@ -68,6 +69,7 @@ export const useTodayAttendance = () => {
           start_date,
           end_date,
           club_id,
+          max_participants,
           trainer:profiles!trainer_profile_id(
             full_name
           ),
@@ -191,6 +193,7 @@ export const useTodayAttendance = () => {
         name: classData.name,
         start_time: classData.start_time,
         duration_minutes: classData.duration_minutes,
+        max_participants: classData.max_participants,
         trainer: classData.trainer,
         participants: (classData.participants || [])
           .filter((p: any) => p.status === 'active')
