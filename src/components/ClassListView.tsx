@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Edit, Trash2, Eye, UserPlus, UserMinus, MoreVertical, ArrowUpDown, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -34,6 +35,12 @@ export default function ClassListView({
   const [editingClass, setEditingClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [deletingClass, setDeletingClass] = useState<ScheduledClassWithTemplate | null>(null);
   const [sortOrder, setSortOrder] = useState<string>("date"); // "date", "day", "time", "level", "name"
+
+  // Local filters (in addition to context filters)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDay, setSelectedDay] = useState<string>("all");
+  const [selectedTime, setSelectedTime] = useState<string>("all");
+  const [selectedLevel, setSelectedLevel] = useState<string>("all");
 
   const deleteProgrammedClass = useDeleteProgrammedClass();
   const {
@@ -64,13 +71,54 @@ export default function ClassListView({
     }
   }, [classes, selectedClass?.id]);
 
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Get unique values for filters
+  const uniqueDays = Array.from(new Set(classes?.flatMap(c => c.days_of_week) || []));
+  const uniqueTimes = Array.from(new Set(classes?.map(c => c.start_time) || [])).sort();
+  const uniqueLevels = Array.from(new Set(classes?.map(c => c.level_from || 0) || [])).sort((a, b) => a - b);
+
   // Aplicar todos los filtros
   const filteredClasses = classes?.filter(cls => {
-    // Filtro de búsqueda existente
+    // Filtro de búsqueda existente (context)
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = cls.name.toLowerCase().includes(searchLower) || cls.participants?.some(p => p.student_enrollment?.full_name?.toLowerCase().includes(searchLower));
       if (!matchesSearch) return false;
+    }
+
+    // Local search filter (nuevo)
+    if (searchTerm) {
+      const normalizedSearch = normalizeText(searchTerm);
+      const matchesName = normalizeText(cls.name).includes(normalizedSearch);
+      const matchesTrainer = cls.trainer_profile?.profiles?.full_name && normalizeText(cls.trainer_profile.profiles.full_name).includes(normalizedSearch);
+      const matchesStudent = cls.participants?.some(p =>
+        p.student_enrollment?.full_name && normalizeText(p.student_enrollment.full_name).includes(normalizedSearch)
+      );
+      if (!matchesName && !matchesTrainer && !matchesStudent) return false;
+    }
+
+    // Local day filter
+    if (selectedDay !== "all") {
+      const hasDay = cls.days_of_week.some(day => day.toLowerCase() === selectedDay.toLowerCase());
+      if (!hasDay) return false;
+    }
+
+    // Local time filter
+    if (selectedTime !== "all") {
+      if (cls.start_time !== selectedTime) return false;
+    }
+
+    // Local level filter
+    if (selectedLevel !== "all") {
+      const levelValue = parseInt(selectedLevel);
+      if (cls.level_from !== levelValue) return false;
     }
 
     // Filtro por tamaño de grupo
@@ -183,6 +231,15 @@ export default function ClassListView({
         </CardHeader>
       </Card>;
   }
+  const hasActiveFilters = searchTerm || selectedDay !== "all" || selectedTime !== "all" || selectedLevel !== "all";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedDay("all");
+    setSelectedTime("all");
+    setSelectedLevel("all");
+  };
+
   return <Card>
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -206,6 +263,82 @@ export default function ClassListView({
               <SelectItem value="name">Nombre (A-Z)</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Filters Section */}
+        <div className="mt-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Search input */}
+            <div className="relative lg:col-span-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre, profesor o alumno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Day selector */}
+            <Select value={selectedDay} onValueChange={setSelectedDay}>
+              <SelectTrigger>
+                <SelectValue placeholder="Día" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los días</SelectItem>
+                {uniqueDays.map(day => (
+                  <SelectItem key={day} value={day.toLowerCase()}>
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Time selector */}
+            <Select value={selectedTime} onValueChange={setSelectedTime}>
+              <SelectTrigger>
+                <SelectValue placeholder="Hora" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las horas</SelectItem>
+                {uniqueTimes.map(time => (
+                  <SelectItem key={time} value={time}>
+                    {time.slice(0, 5)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            {/* Level selector */}
+            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Nivel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los niveles</SelectItem>
+                {uniqueLevels.filter(l => l > 0).map(level => (
+                  <SelectItem key={level} value={level.toString()}>
+                    Nivel {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Clear filters button */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="flex-shrink-0"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
