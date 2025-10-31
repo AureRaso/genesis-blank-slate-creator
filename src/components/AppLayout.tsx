@@ -144,7 +144,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               </header>
 
               {/* Main Content */}
-              <div className="flex-1 w-full md:p-0">
+              <div className="flex-1 w-full md:p-0 pb-20">
                 {children}
               </div>
             </SidebarInset>
