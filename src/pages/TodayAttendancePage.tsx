@@ -17,12 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import OpenClassesTab from "@/components/OpenClassesTab";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +38,7 @@ const TodayAttendancePage = () => {
   const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups();
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(profile?.club_id || undefined);
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;
@@ -229,7 +231,7 @@ const TodayAttendancePage = () => {
     // Generate waitlist URL
     const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
 
-    sendWhatsApp({
+    const params = {
       groupChatId: groupChatId,
       className: classData.name,
       classDate: today,
@@ -238,8 +240,12 @@ const TodayAttendancePage = () => {
       waitlistUrl,
       availableSlots: totalAvailableSlots,
       classId: classData.id,
-      notificationType: 'free_spot'
-    });
+      notificationType: 'free_spot' as const
+    };
+
+    console.log('📤 Sending free spot notification with params:', params);
+
+    sendWhatsApp(params);
 
     // Cerrar el diálogo si estaba abierto
     setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
@@ -298,7 +304,7 @@ const TodayAttendancePage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <span className="truncate">Asistencia de hoy</span>
+              <span className="truncate">Gestión de Clases</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 capitalize truncate">{formattedDate}</p>
           </div>
@@ -317,6 +323,21 @@ const TodayAttendancePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="attendance" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="attendance" className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Asistencia Hoy</span>
+          </TabsTrigger>
+          <TabsTrigger value="open-classes" className="flex items-center gap-2">
+            <LockOpen className="h-4 w-4" />
+            <span>Clases Abiertas</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="attendance" className="space-y-4 sm:space-y-6 mt-0">{/* Contenido de asistencia */}
 
       {/* WhatsApp Group Warning - Solo para administradores */}
       {isAdmin && !loadingWhatsAppGroup && !whatsappGroup && (
@@ -871,6 +892,13 @@ const TodayAttendancePage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </TabsContent>
+
+        {/* Tab de Clases Abiertas */}
+        <TabsContent value="open-classes" className="mt-0">
+          <OpenClassesTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -214,10 +214,12 @@ export const useTodayClassAttendance = () => {
           start_date,
           end_date,
           trainer_profile_id,
-          club_id
+          club_id,
+          is_open
         `)
         .in('id', classIds)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .or('is_open.eq.false,is_open.is.null'); // Solo mostrar clases NO abiertas para inscripción pública
 
       console.log('📊 STEP 2 Result:', {
         programmedClasses,
