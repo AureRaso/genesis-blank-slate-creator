@@ -23,6 +23,9 @@ export interface ProgrammedClass {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  is_open?: boolean;
+  max_participants?: number;
+  monthly_price?: number;
 }
 
 export interface ClassParticipant {
@@ -339,5 +342,71 @@ export const useDeleteProgrammedClass = () => {
         variant: "destructive",
       });
     },
+  });
+};
+
+/**
+ * Hook para obtener clases disponibles (is_open = true) filtradas por club del jugador
+ * Solo muestra clases activas y abiertas para inscripción pública del club del usuario
+ */
+export const useAvailableProgrammedClasses = () => {
+  return useQuery({
+    queryKey: ["available-programmed-classes"],
+    queryFn: async () => {
+      // Obtener el perfil del usuario actual para filtrar por su club
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // Obtener el club_id del usuario
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('club_id, role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      if (!profileData.club_id) throw new Error('Usuario sin club asignado');
+
+      // Obtener clases programadas abiertas del club del jugador
+      const { data, error } = await supabase
+        .from("programmed_classes")
+        .select(`
+          *,
+          participants:class_participants(
+            id,
+            status,
+            student_enrollment:student_enrollments(
+              id,
+              full_name,
+              email
+            )
+          ),
+          trainer:profiles!trainer_profile_id(
+            full_name
+          ),
+          clubs!inner(
+            name
+          )
+        `)
+        .eq("is_active", true)
+        .eq("is_open", true)
+        .eq("club_id", profileData.club_id)
+        .order("start_time", { ascending: true });
+
+      if (error) throw error;
+
+      return data as (ProgrammedClass & {
+        participants?: any[];
+        trainer?: { full_name: string };
+        clubs?: { name: string };
+      })[];
+    },
+    // Refetch automáticamente cada 30 segundos para mantener los datos actualizados
+    refetchInterval: 30000,
+    // Refetch cuando la ventana recupera el foco
+    refetchOnWindowFocus: true,
+    // Considerar datos obsoletos después de 10 segundos
+    staleTime: 10000,
   });
 };
