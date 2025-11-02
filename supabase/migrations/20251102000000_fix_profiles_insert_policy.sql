@@ -5,8 +5,9 @@
 -- Solution: Grant BYPASSRLS to the postgres role for the handle_new_user function
 -- This allows the trigger to insert profiles without being blocked by RLS
 
--- First, drop the old restrictive policy
+-- First, drop ALL existing INSERT policies on profiles
 DROP POLICY IF EXISTS "Only admins can insert profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow profile creation during signup" ON public.profiles;
 
 -- Recreate handle_new_user function with proper privileges
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
