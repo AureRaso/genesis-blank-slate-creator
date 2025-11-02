@@ -349,6 +349,7 @@ export const useDeleteProgrammedClass = () => {
 /**
  * Hook para obtener clases disponibles (is_open = true) filtradas por club del jugador
  * Solo muestra clases activas y abiertas para inscripción pública del club del usuario
+ * Excluye clases donde el jugador ya está inscrito como participante activo
  */
 export const useAvailableProgrammedClasses = () => {
   return useQuery({
@@ -359,15 +360,38 @@ export const useAvailableProgrammedClasses = () => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // Obtener el club_id del usuario
+      // Obtener el club_id y email del usuario
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('club_id, role')
+        .select('club_id, role, email')
         .eq('id', userData.user.id)
         .single();
 
       if (profileError) throw profileError;
       if (!profileData.club_id) throw new Error('Usuario sin club asignado');
+
+      // Obtener los enrollment IDs del usuario actual
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from('student_enrollments')
+        .select('id')
+        .or(`student_profile_id.eq.${userData.user.id},email.eq."${profileData.email}"`);
+
+      if (enrollmentError) throw enrollmentError;
+
+      const enrollmentIds = enrollments?.map(e => e.id) || [];
+
+      // Obtener los IDs de las clases donde el usuario ya está inscrito como participante activo
+      let enrolledClassIds: string[] = [];
+      if (enrollmentIds.length > 0) {
+        const { data: participants, error: participantsError } = await supabase
+          .from('class_participants')
+          .select('class_id')
+          .in('student_enrollment_id', enrollmentIds)
+          .eq('status', 'active');
+
+        if (participantsError) throw participantsError;
+        enrolledClassIds = participants?.map(p => p.class_id) || [];
+      }
 
       // Obtener clases programadas abiertas del club del jugador
       const { data, error } = await supabase
@@ -397,7 +421,12 @@ export const useAvailableProgrammedClasses = () => {
 
       if (error) throw error;
 
-      return data as (ProgrammedClass & {
+      // Filtrar las clases donde el usuario ya está inscrito
+      const filteredData = data?.filter(classItem =>
+        !enrolledClassIds.includes(classItem.id)
+      ) || [];
+
+      return filteredData as (ProgrammedClass & {
         participants?: any[];
         trainer?: { full_name: string };
         clubs?: { name: string };

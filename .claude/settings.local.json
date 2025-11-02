@@ -18,7 +18,8 @@
       "Bash(node test-reminder.js)",
       "Bash(git reflog:*)",
       "Bash(git gc:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

@@ -218,8 +218,9 @@ export const useTodayClassAttendance = () => {
           is_open
         `)
         .in('id', classIds)
-        .eq('is_active', true)
-        .or('is_open.eq.false,is_open.is.null'); // Solo mostrar clases NO abiertas para inscripción pública
+        .eq('is_active', true);
+        // NOTE: No filtramos por is_open aquí porque si el jugador está inscrito (class_participant),
+        // debe ver la clase en "Mis Clases" sin importar si is_open es true o false
 
       console.log('📊 STEP 2 Result:', {
         programmedClasses,
