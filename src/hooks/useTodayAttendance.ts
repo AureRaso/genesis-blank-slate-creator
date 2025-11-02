@@ -10,6 +10,7 @@ export interface TodayAttendanceClass {
   start_time: string;
   duration_minutes: number;
   max_participants?: number;
+  days_of_week?: string[]; // Added to support week view filtering
   trainer: {
     full_name: string;
   } | null;
@@ -35,15 +36,31 @@ const getDayOfWeekInSpanish = (date: Date): string => {
   return days[date.getDay()];
 };
 
-// Hook for admins/trainers to see all today's classes with attendance confirmations
-export const useTodayAttendance = () => {
+// Hook for admins/trainers to see classes in a date range with attendance confirmations
+// If no startDate/endDate provided, defaults to today
+export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  const todayDayName = getDayOfWeekInSpanish(new Date());
+
+  // Use provided dates or default to today
+  const queryStartDate = startDate || today;
+  const queryEndDate = endDate || today;
+
+  // Get all days in the range
+  const daysInRange: string[] = [];
+  const start = new Date(queryStartDate);
+  const end = new Date(queryEndDate);
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    daysInRange.push(getDayOfWeekInSpanish(d));
+  }
+
+  // Remove duplicates
+  const uniqueDays = Array.from(new Set(daysInRange));
 
   const query = useQuery({
-    queryKey: ['today-attendance', profile?.id, today],
+    queryKey: ['today-attendance', profile?.id, queryStartDate, queryEndDate],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
@@ -52,12 +69,12 @@ export const useTodayAttendance = () => {
         profileEmail: profile.email,
         profileRole: profile.role,
         profileClubId: profile.club_id,
-        today,
-        todayDayName,
-        todayDate: new Date(today)
+        queryStartDate,
+        queryEndDate,
+        daysInRange: uniqueDays
       });
 
-      // Get all programmed classes for today in the user's club(s)
+      // Get all programmed classes that have any day of the week in the range
       let query = supabase
         .from('programmed_classes')
         .select(`
@@ -90,9 +107,8 @@ export const useTodayAttendance = () => {
           )
         `)
         .eq('is_active', true)
-        .contains('days_of_week', [todayDayName])
-        .lte('start_date', today)
-        .gte('end_date', today);
+        .lte('start_date', queryEndDate)
+        .gte('end_date', queryStartDate);
 
       // If trainer, filter by classes assigned to them (regardless of club)
       if (profile.role === 'trainer') {
@@ -108,16 +124,16 @@ export const useTodayAttendance = () => {
 
       const { data, error } = await query;
 
-      console.log('📊 Today attendance data:', {
+      console.log('📊 Week attendance data:', {
         data,
         error,
         query: {
-          todayDayName,
-          today,
+          uniqueDays,
+          queryStartDate,
+          queryEndDate,
           filters: {
-            days_of_week_contains: todayDayName,
-            start_date_lte: today,
-            end_date_gte: today
+            start_date_lte: queryEndDate,
+            end_date_gte: queryStartDate
           }
         }
       });
@@ -154,10 +170,9 @@ export const useTodayAttendance = () => {
         .from('programmed_classes')
         .select('id, name, days_of_week, start_date, end_date, club_id, max_participants')
         .eq('is_active', true)
-        .eq('club_id', profile.club_id || '')
-        .contains('days_of_week', [todayDayName]);
+        .eq('club_id', profile.club_id || '');
 
-      console.log('🔍 DEBUG - ALL classes for', todayDayName, ':', {
+      console.log('🔍 DEBUG - ALL classes in date range:', {
         allClasses,
         allError,
         count: allClasses?.length || 0
@@ -176,8 +191,8 @@ export const useTodayAttendance = () => {
         allActiveClasses,
         activeError,
         count: allActiveClasses?.length || 0,
-        todayIs: todayDayName,
-        todayDate: today
+        queryStartDate,
+        queryEndDate
       });
 
       // Log each class individually for better visibility
@@ -191,7 +206,7 @@ export const useTodayAttendance = () => {
           created_at: cls.created_at,
           max_participants: cls.max_participants,
           has_max_participants: 'max_participants' in cls,
-          matchesToday: cls.days_of_week?.includes(todayDayName)
+          matchesRange: cls.days_of_week?.some((day: string) => uniqueDays.includes(day))
         });
       });
 
@@ -216,14 +231,20 @@ export const useTodayAttendance = () => {
         throw error;
       }
 
-      // Filter and format the data
-      const todayClasses = (data || []).map((classData: any) => ({
+      // Filter and format the data - only include classes that have days matching the date range
+      const filteredClasses = (data || []).filter((classData: any) => {
+        const classDays = classData.days_of_week || [];
+        return classDays.some((day: string) => uniqueDays.includes(day));
+      });
+
+      const weekClasses = filteredClasses.map((classData: any) => ({
         id: classData.id,
         name: classData.name,
         start_time: classData.start_time,
         duration_minutes: classData.duration_minutes,
         max_participants: classData.max_participants,
         trainer: classData.trainer,
+        days_of_week: classData.days_of_week, // Include days for filtering in component
         participants: (classData.participants || [])
           .filter((p: any) => p.status === 'active')
           .map((p: any) => ({
@@ -239,8 +260,8 @@ export const useTodayAttendance = () => {
           }))
       })) as TodayAttendanceClass[];
 
-      console.log('✅ Final today classes with attendance:', todayClasses);
-      return todayClasses;
+      console.log('✅ Final week classes with attendance:', weekClasses);
+      return weekClasses;
     },
     enabled: !!profile?.id,
     // Auto-refetch every 30 seconds as fallback

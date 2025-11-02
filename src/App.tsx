@@ -38,7 +38,7 @@ import CompleteProfile from "@/pages/CompleteProfile";
 import AuthCallback from "@/pages/AuthCallback";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
-import TodayAttendancePage from "@/pages/TodayAttendancePage";
+import WeekAttendancePage from "@/pages/WeekAttendancePage";
 import WaitlistJoinPage from "@/pages/WaitlistJoinPage";
 import GetIdsPage from "@/pages/GetIdsPage";
 import CreateScheduledClassPage from "@/pages/CreateScheduledClassPage";
@@ -208,7 +208,7 @@ function App() {
                     <Route path="/scheduled-classes" element={<ScheduledClassesPage />} />
                     <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
                     <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
-                    <Route path="/today-attendance" element={<TodayAttendancePage />} />
+                    <Route path="/today-attendance" element={<WeekAttendancePage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
@@ -235,7 +235,7 @@ function App() {
                      } />
                      <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
                      <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
-                     {isAdmin && <Route path="/today-attendance" element={<TodayAttendancePage />} />}
+                     {isAdmin && <Route path="/today-attendance" element={<WeekAttendancePage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>

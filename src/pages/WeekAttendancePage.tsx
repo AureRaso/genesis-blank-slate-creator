@@ -1,0 +1,947 @@
+import { useState, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant } from "@/hooks/useTodayAttendance";
+import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
+import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "date-fns";
+import { es } from "date-fns/locale";
+import WaitlistManagement from "@/components/WaitlistManagement";
+import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import OpenClassesTab from "@/components/OpenClassesTab";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// Get day of week in Spanish format used in database
+const getDayOfWeekInSpanish = (date: Date): string => {
+  const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+  return days[date.getDay()];
+};
+
+const WeekAttendancePage = () => {
+  const { profile } = useAuth();
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 })); // Monday
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Calculate week range
+  const weekStart = currentWeekStart;
+  const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 }); // Sunday
+
+  // Format dates for API
+  const startDateStr = format(weekStart, 'yyyy-MM-dd');
+  const endDateStr = format(weekEnd, 'yyyy-MM-dd');
+
+  // Fetch classes for the entire week
+  const { data: classes, isLoading, error, isFetching } = useTodayAttendance(startDateStr, endDateStr);
+  const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
+  const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(profile?.club_id || undefined);
+  const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
+  const [substituteDialog, setSubstituteDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+    selectedDate: string;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+    selectedDate: '',
+  });
+  const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
+    open: boolean;
+    classData: any | null;
+    notificationType?: 'absence' | 'free_spot';
+  }>({
+    open: false,
+    classData: null,
+    notificationType: 'absence',
+  });
+
+  // Solo administradores pueden notificar por WhatsApp
+  const isAdmin = profile?.role === 'admin';
+
+  // Estados para diálogos de confirmación
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'attendance' | 'absence' | 'clear' | 'remove';
+    participantId: string;
+    participantName: string;
+    scheduledDate?: string;
+  }>({
+    open: false,
+    type: 'attendance',
+    participantId: '',
+    participantName: '',
+  });
+
+  // Hooks para acciones del profesor
+  const markAttendance = useTrainerMarkAttendance();
+  const markAbsence = useTrainerMarkAbsence();
+  const clearStatus = useTrainerClearStatus();
+  const removeParticipant = useRemoveParticipant();
+
+  // Navigation functions
+  const goToPreviousWeek = () => {
+    setCurrentWeekStart(prev => subWeeks(prev, 1));
+    setSelectedDate(null); // Reset selected date when changing weeks
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeekStart(prev => addWeeks(prev, 1));
+    setSelectedDate(null); // Reset selected date when changing weeks
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+    setSelectedDate(null);
+  };
+
+  const isCurrentWeek = isSameWeek(currentWeekStart, new Date(), { weekStartsOn: 1 });
+
+  // Generate days of the week (Monday to Sunday)
+  const weekDays = useMemo(() => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(weekStart);
+      day.setDate(day.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  }, [weekStart]);
+
+  // Filter classes by selected date
+  const filteredClasses = useMemo(() => {
+    if (!selectedDate || !classes) return classes || [];
+
+    const selectedDayName = getDayOfWeekInSpanish(new Date(selectedDate));
+    return classes.filter(cls => cls.days_of_week?.includes(selectedDayName));
+  }, [classes, selectedDate]);
+
+  // Handlers con confirmación
+  const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'attendance',
+      participantId,
+      participantName,
+      scheduledDate,
+    });
+  };
+
+  const handleConfirmAbsence = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'absence',
+      participantId,
+      participantName,
+    });
+  };
+
+  const handleConfirmClear = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'clear',
+      participantId,
+      participantName,
+    });
+  };
+
+  const handleConfirmRemove = (participantId: string, participantName: string) => {
+    setConfirmDialog({
+      open: true,
+      type: 'remove',
+      participantId,
+      participantName,
+    });
+  };
+
+  const executeAction = () => {
+    if (confirmDialog.type === 'attendance' && confirmDialog.scheduledDate) {
+      markAttendance.mutate({
+        participantId: confirmDialog.participantId,
+        scheduledDate: confirmDialog.scheduledDate,
+      });
+    } else if (confirmDialog.type === 'absence') {
+      markAbsence.mutate({
+        participantId: confirmDialog.participantId,
+        reason: 'Marcado por profesor',
+      });
+    } else if (confirmDialog.type === 'clear') {
+      clearStatus.mutate(confirmDialog.participantId);
+    } else if (confirmDialog.type === 'remove') {
+      removeParticipant.mutate(confirmDialog.participantId);
+    }
+    setConfirmDialog({ ...confirmDialog, open: false });
+  };
+
+  const handleNotifyWhatsApp = (classData: any, dateForNotification: string) => {
+    console.log('🔔 handleNotifyWhatsApp called');
+    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
+    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
+    console.log('📊 whatsappGroup:', whatsappGroup);
+
+    // Si hay múltiples grupos, mostrar diálogo de selección
+    if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
+      setWhatsappGroupDialog({
+        open: true,
+        classData: { ...classData, notificationDate: dateForNotification },
+        notificationType: 'absence',
+      });
+      return;
+    }
+
+    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
+
+    // Si solo hay un grupo, enviarlo directamente
+    if (!whatsappGroup?.group_chat_id) {
+      console.error("No WhatsApp group configured");
+      return;
+    }
+
+    sendNotificationToGroup(whatsappGroup.group_chat_id, classData, dateForNotification);
+  };
+
+  const handleNotifyFreeSpot = (classData: any, dateForNotification: string) => {
+    console.log('📢 handleNotifyFreeSpot called');
+    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
+    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
+    console.log('📊 whatsappGroup:', whatsappGroup);
+
+    // Si hay múltiples grupos, mostrar diálogo de selección
+    if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
+      setWhatsappGroupDialog({
+        open: true,
+        classData: { ...classData, notificationDate: dateForNotification },
+        notificationType: 'free_spot',
+      });
+      return;
+    }
+
+    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
+
+    // Si solo hay un grupo, enviarlo directamente
+    if (!whatsappGroup?.group_chat_id) {
+      console.error("No WhatsApp group configured");
+      return;
+    }
+
+    sendFreeSpotNotification(whatsappGroup.group_chat_id, classData, dateForNotification);
+  };
+
+  const sendNotificationToGroup = (groupChatId: string, classData: any, dateForNotification: string) => {
+    const absentCount = classData.participants.filter((p: any) => p.absence_confirmed).length;
+    const substituteCount = classData.participants.filter((p: any) => p.is_substitute).length;
+    const availableSlots = absentCount - substituteCount;
+
+    // Generate waitlist URL
+    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${dateForNotification}`;
+
+    sendWhatsApp({
+      groupChatId: groupChatId,
+      className: classData.name,
+      classDate: dateForNotification,
+      classTime: classData.start_time,
+      trainerName: classData.trainer?.full_name || 'Profesor',
+      waitlistUrl,
+      availableSlots: availableSlots,
+      classId: classData.id
+    });
+
+    // Cerrar el diálogo si estaba abierto
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
+  };
+
+  const sendFreeSpotNotification = (groupChatId: string, classData: any, dateForNotification: string) => {
+    // Calculate total available slots
+    const maxParticipants = classData.max_participants || 8;
+    const validParticipants = classData.participants.filter((p: any) => p.student_enrollment);
+    const enrolledCount = validParticipants.length;
+    const totalAvailableSlots = maxParticipants - enrolledCount;
+
+    // Generate waitlist URL
+    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${dateForNotification}`;
+
+    const params = {
+      groupChatId: groupChatId,
+      className: classData.name,
+      classDate: dateForNotification,
+      classTime: classData.start_time,
+      trainerName: classData.trainer?.full_name || 'Profesor',
+      waitlistUrl,
+      availableSlots: totalAvailableSlots,
+      classId: classData.id,
+      notificationType: 'free_spot' as const
+    };
+
+    console.log('📤 Sending free spot notification with params:', params);
+
+    sendWhatsApp(params);
+
+    // Cerrar el diálogo si estaba abierto
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
+  };
+
+  const toggleWaitlist = (classId: string) => {
+    setExpandedWaitlist(expandedWaitlist === classId ? null : classId);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando asistencia de la semana...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error</CardTitle>
+            <CardDescription>No se pudo cargar la asistencia</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      {/* Header with Week Navigation */}
+      <div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <span>Gestión de Clases</span>
+            </h1>
+            {/* Live indicator */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
+              isFetching
+                ? 'bg-blue-50 text-blue-700'
+                : 'bg-green-50 text-green-700'
+            }`}>
+              <Wifi className={`h-3 w-3 sm:h-4 sm:w-4 ${isFetching ? 'animate-pulse' : ''}`} />
+              <span className="text-xs font-medium">
+                {isFetching ? 'Actualizando...' : 'En vivo'}
+              </span>
+            </div>
+          </div>
+
+          {/* Week Navigation */}
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousWeek}
+              className="flex-shrink-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Anterior</span>
+            </Button>
+
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <p className="text-sm font-medium capitalize">
+                {format(weekStart, "d 'de' MMMM", { locale: es })} - {format(weekEnd, "d 'de' MMMM yyyy", { locale: es })}
+              </p>
+              {!isCurrentWeek && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={goToCurrentWeek}
+                  className="text-xs h-6"
+                >
+                  Ir a esta semana
+                </Button>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextWeek}
+              className="flex-shrink-0"
+            >
+              <span className="hidden sm:inline mr-1">Siguiente</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Day Selector */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {weekDays.map((day) => {
+              const dateStr = format(day, 'yyyy-MM-dd');
+              const dayName = format(day, 'EEE', { locale: es });
+              const dayNumber = format(day, 'd');
+              const isSelected = selectedDate === dateStr;
+              const isToday = format(new Date(), 'yyyy-MM-dd') === dateStr;
+
+              // Count classes for this day
+              const dayNameSpanish = getDayOfWeekInSpanish(day);
+              const classCount = classes?.filter(cls => cls.days_of_week?.includes(dayNameSpanish)).length || 0;
+
+              return (
+                <Button
+                  key={dateStr}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                  className={`flex flex-col items-center p-2 h-auto ${
+                    isToday ? 'ring-2 ring-playtomic-orange' : ''
+                  } ${isSelected ? 'bg-playtomic-orange hover:bg-playtomic-orange-dark' : ''}`}
+                >
+                  <span className="text-xs capitalize">{dayName}</span>
+                  <span className="text-lg font-bold">{dayNumber}</span>
+                  {classCount > 0 && (
+                    <Badge variant="secondary" className="mt-1 h-4 px-1 text-[10px]">
+                      {classCount}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {selectedDate && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-900">
+                Mostrando clases para <strong>{format(new Date(selectedDate), "EEEE, d 'de' MMMM", { locale: es })}</strong>
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="attendance" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="attendance" className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Asistencia</span>
+          </TabsTrigger>
+          <TabsTrigger value="open-classes" className="flex items-center gap-2">
+            <LockOpen className="h-4 w-4" />
+            <span>Clases Abiertas</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="attendance" className="space-y-4 sm:space-y-6 mt-0">
+          {/* WhatsApp Group Warning - Solo para administradores */}
+          {isAdmin && !loadingWhatsAppGroup && !whatsappGroup && (
+            <Alert variant="destructive" className="text-xs sm:text-sm">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+              <AlertDescription className="text-xs sm:text-sm">
+                No tienes un grupo de WhatsApp configurado. Las notificaciones de disponibilidad no funcionarán hasta que configures un grupo.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Classes List */}
+          {!filteredClasses || filteredClasses.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {selectedDate ? 'No hay clases este día' : 'No hay clases esta semana'}
+                </h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  {selectedDate
+                    ? 'No hay clases programadas para el día seleccionado'
+                    : 'No hay clases programadas para esta semana en tu club'}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredClasses.map((classData) => {
+                const validParticipants = classData.participants.filter(p => p.student_enrollment);
+                const confirmedCount = validParticipants.filter(
+                  p => p.attendance_confirmed_for_date
+                ).length;
+                const totalCount = validParticipants.length;
+                const confirmationRate = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
+
+                // Get the notification date - use selected date or today
+                const notificationDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
+
+                return (
+                  <Card key={`${classData.id}-${notificationDate}`}>
+                    <CardHeader className="p-3 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
+                          <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{classData.start_time} ({classData.duration_minutes} min)</span>
+                            </span>
+                            {classData.trainer && (
+                              <span className="truncate">Profesor: {classData.trainer.full_name}</span>
+                            )}
+                          </CardDescription>
+                        </div>
+                        <Badge
+                          variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
+                          className="text-xs flex-shrink-0 self-start"
+                        >
+                          {confirmedCount}/{totalCount}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 sm:p-6">
+                      {validParticipants.length === 0 ? (
+                        <p className="text-xs sm:text-sm text-muted-foreground italic">
+                          No hay alumnos inscritos en esta clase
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-slate-700">Lista de Alumnos</h4>
+                            <Badge variant="outline" className="text-xs font-medium">
+                              {totalCount} {totalCount === 1 ? 'alumno' : 'alumnos'}
+                            </Badge>
+                          </div>
+                          <div className="grid gap-3">
+                            {validParticipants.map((participant) => {
+                              const isConfirmed = !!participant.attendance_confirmed_for_date;
+                              const isAbsent = !!participant.absence_confirmed;
+                              const isPending = !isConfirmed && !isAbsent;
+                              const isSubstitute = !!participant.is_substitute;
+
+                              return (
+                                <div
+                                  key={participant.id}
+                                  className={`group relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                    isConfirmed
+                                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm hover:shadow-md'
+                                      : isAbsent
+                                      ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300 shadow-sm hover:shadow-md'
+                                      : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
+                                  }`}
+                                >
+                                  {/* Indicator Bar */}
+                                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                                    isConfirmed ? 'bg-green-500' : isAbsent ? 'bg-red-500' : 'bg-slate-300'
+                                  }`} />
+
+                                  <div className="p-4 pl-5">
+                                    {/* Header Row: Info + Actions */}
+                                    <div className="flex items-start justify-between gap-3">
+                                      {/* Student Info */}
+                                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        {/* Status Icon */}
+                                        <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                                          isConfirmed
+                                            ? 'bg-green-100 text-green-600'
+                                            : isAbsent
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-slate-100 text-slate-400'
+                                        }`}>
+                                          {isConfirmed ? (
+                                            <CheckCircle2 className="h-5 w-5" />
+                                          ) : isAbsent ? (
+                                            <XCircle className="h-5 w-5" />
+                                          ) : (
+                                            <Clock className="h-5 w-5" />
+                                          )}
+                                        </div>
+
+                                        {/* Name and Email */}
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2 mb-0.5">
+                                            <p className="font-semibold text-sm text-slate-900 truncate">
+                                              {participant.student_enrollment!.full_name}
+                                            </p>
+                                            {participant.is_substitute && (
+                                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                                Sustituto
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-slate-500 truncate">
+                                            {participant.student_enrollment!.email}
+                                          </p>
+
+                                          {/* Timestamp */}
+                                          {(participant.attendance_confirmed_at || participant.absence_confirmed_at) && (
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <Clock className="h-3 w-3 text-slate-400" />
+                                              <p className="text-xs text-slate-400">
+                                                {participant.attendance_confirmed_at
+                                                  ? format(new Date(participant.attendance_confirmed_at), 'HH:mm')
+                                                  : format(new Date(participant.absence_confirmed_at!), 'HH:mm')
+                                                }
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Action Buttons */}
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        {/* Presente Button */}
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleConfirmAttendance(
+                                            participant.id,
+                                            participant.student_enrollment!.full_name,
+                                            notificationDate
+                                          )}
+                                          disabled={markAttendance.isPending || isConfirmed}
+                                          className={`h-9 px-3 gap-1.5 font-medium transition-all ${
+                                            isConfirmed
+                                              ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                                              : 'bg-white border-2 border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
+                                          }`}
+                                        >
+                                          <CheckCircle2 className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Presente</span>
+                                        </Button>
+
+                                        {/* Ausente Button */}
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleConfirmAbsence(
+                                            participant.id,
+                                            participant.student_enrollment!.full_name
+                                          )}
+                                          disabled={markAbsence.isPending || isAbsent}
+                                          className={`h-9 px-3 gap-1.5 font-medium transition-all ${
+                                            isAbsent
+                                              ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
+                                              : 'bg-white border-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300'
+                                          }`}
+                                        >
+                                          <XCircle className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Ausente</span>
+                                        </Button>
+
+                                        {/* Reset Button */}
+                                        {(isConfirmed || isAbsent) && !participant.is_substitute && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleConfirmClear(
+                                              participant.id,
+                                              participant.student_enrollment!.full_name
+                                            )}
+                                            disabled={clearStatus.isPending}
+                                            className="h-9 w-9 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                            title="Restablecer"
+                                          >
+                                            <RotateCcw className="h-4 w-4" />
+                                          </Button>
+                                        )}
+
+                                        {/* Delete Button - Solo para sustitutos */}
+                                        {participant.is_substitute && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleConfirmRemove(
+                                              participant.id,
+                                              participant.student_enrollment!.full_name
+                                            )}
+                                            disabled={removeParticipant.isPending}
+                                            className="h-9 w-9 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                            title="Eliminar sustituto"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Absence Reason */}
+                                    {isAbsent && participant.absence_reason && (
+                                      <div className="mt-3 pt-3 border-t border-red-200/50">
+                                        <div className="flex items-start gap-2">
+                                          <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                                          <div>
+                                            <p className="text-xs font-medium text-red-900 mb-0.5">Motivo de ausencia</p>
+                                            <p className="text-xs text-red-700">{participant.absence_reason}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Substitute Search and WhatsApp Notification */}
+                      {(() => {
+                        const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
+                        const substituteCount = validParticipants.filter(p => p.is_substitute).length;
+                        const slotsByAbsence = absentCount - substituteCount;
+
+                        // Calculate available slots by capacity
+                        const maxParticipants = classData.max_participants || 8;
+                        const enrolledCount = validParticipants.length;
+                        const slotsByCapacity = maxParticipants - enrolledCount;
+
+                        // Total available slots is the maximum of both
+                        const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
+
+                        return totalAvailableSlots > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              {/* Badge de plazas disponibles */}
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                                  {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                                </Badge>
+                              </div>
+
+                              {/* Botones en columna para mobile, fila para desktop */}
+                              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                                {/* Botón buscar sustituto - Para todos (admin y trainer) */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSubstituteDialog({
+                                    open: true,
+                                    classId: classData.id,
+                                    className: classData.name,
+                                    selectedDate: notificationDate,
+                                  })}
+                                  className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                >
+                                  <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                  Añadir sustituto
+                                </Button>
+
+                                {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
+                                {isAdmin && (
+                                  <>
+                                    {/* Mostrar "Notificar ausencia" solo si hay ausencias sin cubrir */}
+                                    {slotsByAbsence > 0 && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleNotifyWhatsApp(classData, notificationDate)}
+                                        disabled={isSendingWhatsApp || !whatsappGroup}
+                                        className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                        title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
+                                      >
+                                        <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                        Notificar ausencia
+                                      </Button>
+                                    )}
+
+                                    {/* Botón "Comunicar hueco libre": Solo si hay plazas por CAPACIDAD, no por ausencias */}
+                                    {slotsByCapacity > 0 && (
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleNotifyFreeSpot(classData, notificationDate)}
+                                        disabled={isSendingWhatsApp || !whatsappGroup}
+                                        className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                        title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Comunicar hueco libre al grupo"}
+                                      >
+                                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                        Comunicar hueco libre
+                                      </Button>
+                                    )}
+
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => toggleWaitlist(classData.id)}
+                                      className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+                                    >
+                                      {expandedWaitlist === classData.id ? (
+                                        <>
+                                          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                          Ocultar
+                                        </>
+                                      ) : (
+                                        <>
+                                          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                          Ver lista de espera
+                                        </>
+                                      )}
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Waitlist Management Panel - Solo para administradores */}
+                            {isAdmin && expandedWaitlist === classData.id && (
+                              <WaitlistManagement
+                                classId={classData.id}
+                                classDate={notificationDate}
+                                className={classData.name}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {/* WhatsApp Group Selection Dialog */}
+          <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Seleccionar grupo de WhatsApp</DialogTitle>
+                <DialogDescription>
+                  Elige el grupo al que deseas enviar la notificación
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-4">
+                {loadingAllGroups ? (
+                  <div className="text-center py-8 text-slate-500">Cargando grupos...</div>
+                ) : allWhatsAppGroups && allWhatsAppGroups.length > 0 ? (
+                  allWhatsAppGroups.map((group) => (
+                    <Button
+                      key={group.id}
+                      variant="outline"
+                      className="w-full justify-center text-center h-auto py-3 px-4"
+                      onClick={() => {
+                        // Decidir qué función llamar según el tipo de notificación
+                        const dateForNotification = whatsappGroupDialog.classData?.notificationDate || format(new Date(), 'yyyy-MM-dd');
+                        if (whatsappGroupDialog.notificationType === 'free_spot') {
+                          sendFreeSpotNotification(group.group_chat_id, whatsappGroupDialog.classData, dateForNotification);
+                        } else {
+                          sendNotificationToGroup(group.group_chat_id, whatsappGroupDialog.classData, dateForNotification);
+                        }
+                      }}
+                      disabled={isSendingWhatsApp}
+                    >
+                      <span className="font-semibold">{group.group_name}</span>
+                    </Button>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-500">No hay grupos disponibles</div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Substitute Search Dialog */}
+          <Dialog open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Buscar Sustituto</DialogTitle>
+                <DialogDescription>
+                  Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
+                </DialogDescription>
+              </DialogHeader>
+              {profile?.club_id && (
+                <SubstituteStudentSearch
+                  classId={substituteDialog.classId}
+                  clubId={profile.club_id}
+                  onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', selectedDate: '' })}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Confirmation Dialog */}
+          <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {confirmDialog.type === 'attendance' && '¿Marcar como presente?'}
+                  {confirmDialog.type === 'absence' && '¿Marcar como ausente?'}
+                  {confirmDialog.type === 'clear' && '¿Restablecer estado?'}
+                  {confirmDialog.type === 'remove' && '¿Eliminar alumno de la clase?'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {confirmDialog.type === 'attendance' && (
+                    <>
+                      Vas a confirmar la asistencia de <strong>{confirmDialog.participantName}</strong> para esta clase.
+                      <br /><br />
+                      El alumno verá este cambio reflejado inmediatamente en su dashboard.
+                    </>
+                  )}
+                  {confirmDialog.type === 'absence' && (
+                    <>
+                      Vas a marcar a <strong>{confirmDialog.participantName}</strong> como ausente.
+                      <br /><br />
+                      Esta acción se reflejará en el dashboard del alumno y en las estadísticas de asistencia.
+                    </>
+                  )}
+                  {confirmDialog.type === 'clear' && (
+                    <>
+                      Vas a restablecer el estado de <strong>{confirmDialog.participantName}</strong> a pendiente.
+                      <br /><br />
+                      Esto eliminará la confirmación de asistencia o ausencia actual.
+                    </>
+                  )}
+                  {confirmDialog.type === 'remove' && (
+                    <>
+                      Vas a eliminar a <strong>{confirmDialog.participantName}</strong> de esta clase.
+                      <br /><br />
+                      Esta acción es permanente y liberará la plaza para otros alumnos.
+                    </>
+                  )}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={executeAction}
+                  className={
+                    confirmDialog.type === 'attendance'
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : confirmDialog.type === 'absence' || confirmDialog.type === 'remove'
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : ''
+                  }
+                >
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </TabsContent>
+
+        {/* Tab de Clases Abiertas */}
+        <TabsContent value="open-classes" className="mt-0">
+          <OpenClassesTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default WeekAttendancePage;
