@@ -189,6 +189,7 @@ export default function ScheduledClassForm({
       level_to: 10.0,
       selected_days: initialData?.selected_days || [],
       monthly_price: 0,
+      is_open: false,
       start_time: initialData?.start_time || "",
       start_date: initialData?.start_date || new Date(),
       end_date: initialData?.end_date || new Date(Date.now() + (90 * 24 * 60 * 60 * 1000))
