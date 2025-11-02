@@ -127,6 +127,14 @@ const ProductSection = () => {
                                 className="w-full h-auto object-cover"
                               />
                             </div>
+                          ) : role.id === "profesor" ? (
+                            <div className="rounded-xl overflow-hidden border-2 border-playtomic-orange/20 shadow-lg">
+                              <img
+                                src="/992shots_so.png"
+                                alt="Vista de Profesor - Clases Programadas de PadeLock"
+                                className="w-full h-auto object-cover"
+                              />
+                            </div>
                           ) : (
                             <div className="bg-gradient-to-br from-playtomic-orange/20 to-playtomic-orange/5 rounded-xl p-8 aspect-[4/3] flex items-center justify-center border-2 border-playtomic-orange/20">
                               <div className="text-center">
