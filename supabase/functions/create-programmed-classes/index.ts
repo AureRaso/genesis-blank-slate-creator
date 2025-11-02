@@ -22,6 +22,7 @@ interface CreateClassData {
   court_number: number;
   monthly_price: number;
   max_participants: number;
+  is_open?: boolean;
   group_id?: string;
   selected_students?: string[];
 }
@@ -80,6 +81,7 @@ serve(async (req) => {
         court_number: classData.court_number,
         monthly_price: classData.monthly_price || 0,
         max_participants: classData.max_participants || 8,
+        is_open: classData.is_open ?? false,
         group_id: classData.group_id,
         created_by: user.id
       }])

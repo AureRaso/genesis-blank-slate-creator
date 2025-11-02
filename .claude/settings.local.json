@@ -15,7 +15,10 @@
       "Bash(npm install:*)",
       "Bash(npx playwright install:*)",
       "Bash(npm run screenshots:desktop:*)",
-      "Bash(node test-reminder.js)"
+      "Bash(node test-reminder.js)",
+      "Bash(git reflog:*)",
+      "Bash(git gc:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

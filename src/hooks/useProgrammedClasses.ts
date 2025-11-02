@@ -53,6 +53,7 @@ export interface CreateProgrammedClassData {
   trainer_profile_id: string;
   club_id: string;
   court_number?: number;
+  is_open?: boolean;
   group_id?: string;
   selected_students?: string[];
   max_participants?: number;
