@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { X, Plus, Lock } from "lucide-react";
 import { useUpdateScheduledClass } from "@/hooks/useScheduledClasses";
+import { useClassParticipants } from "@/hooks/useProgrammedClasses";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -45,7 +47,8 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
   const { toast } = useToast();
   const { t } = useTranslation();
   const updateClassMutation = useUpdateScheduledClass();
-  
+  const { data: participants } = useClassParticipants(cls.id);
+
   const [formData, setFormData] = useState({
     name: cls.name,
     level_from: cls.level_from || undefined,
@@ -55,12 +58,19 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
     start_time: cls.start_time,
     days_of_week: cls.days_of_week,
     start_date: cls.start_date,
-    end_date: cls.end_date
+    end_date: cls.end_date,
+    is_open: cls.is_open ?? false
   });
 
   const [levelType, setLevelType] = useState<'numeric' | 'custom'>(
     cls.custom_level ? 'custom' : 'numeric'
   );
+
+  // Calcular plazas disponibles
+  const activeParticipants = participants?.filter((p: any) => p.status === 'active').length || 0;
+  const maxParticipants = cls.max_participants || 0;
+  const availableSpots = maxParticipants - activeParticipants;
+  const hasSpots = availableSpots > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +80,8 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
         ...formData,
         level_from: levelType === 'numeric' ? formData.level_from : undefined,
         level_to: levelType === 'numeric' ? formData.level_to : undefined,
-        custom_level: levelType === 'custom' ? formData.custom_level : undefined
+        custom_level: levelType === 'custom' ? formData.custom_level : undefined,
+        is_open: formData.is_open
       };
 
       await updateClassMutation.mutateAsync({
@@ -265,6 +276,49 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
                   onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
                   required
                 />
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t">
+              <Label className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-primary" />
+                Clase Abierta para Reservas
+              </Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">
+                      {formData.is_open
+                        ? "✓ Los jugadores pueden ver y reservar esta clase en 'Clases Disponibles'"
+                        : "✗ Esta clase no aparecerá en 'Clases Disponibles' para los jugadores"}
+                    </p>
+                    {!hasSpots && (
+                      <p className="text-sm text-orange-600 font-medium mt-2">
+                        ⚠️ No hay plazas disponibles ({activeParticipants}/{maxParticipants} ocupadas)
+                      </p>
+                    )}
+                    {hasSpots && formData.is_open && (
+                      <p className="text-sm text-green-600 font-medium mt-2">
+                        {availableSpots} plaza{availableSpots !== 1 ? 's' : ''} disponible{availableSpots !== 1 ? 's' : ''} para nuevos jugadores
+                      </p>
+                    )}
+                  </div>
+                  <Switch
+                    checked={formData.is_open}
+                    onCheckedChange={(checked) => {
+                      if (checked && !hasSpots) {
+                        toast({
+                          title: "No se puede abrir la clase",
+                          description: "No hay plazas disponibles. La clase está completa.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setFormData(prev => ({ ...prev, is_open: checked }));
+                    }}
+                    disabled={!hasSpots && !formData.is_open}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap, Search } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap, Search, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -58,6 +59,7 @@ const formSchema = z.object({
   club_id: z.string().min(1, "Club is required"),
   objective: z.string().optional(),
   court_number: z.number().min(1).nullable().optional(),
+  is_open: z.boolean().default(false),
   // Optional trainer assignment for admins
   assigned_trainer_id: z.string().optional(),
   // Precio mensual
@@ -337,7 +339,8 @@ export default function ScheduledClassForm({
         // Only include the appropriate field based on selection type
         group_id: data.selection_type === "group" ? data.group_id : undefined,
         selected_students: data.selection_type === "individual" ? data.selected_students : [],
-        monthly_price: data.monthly_price
+        monthly_price: data.monthly_price,
+        is_open: data.is_open
       };
 
       console.log("📤 Enviando datos:", submitData);
@@ -1053,6 +1056,64 @@ export default function ScheduledClassForm({
                     </CardContent>
                   </Card>
                 )} />
+
+                {/* Clase Abierta/Cerrada */}
+                <FormField control={form.control} name="is_open" render={({
+                  field
+                }) => {
+                  const maxParticipants = form.watch("max_participants");
+                  const selectedStudents = form.watch("selected_students");
+                  const availableSpots = maxParticipants - selectedStudents.length;
+                  const hasSpots = availableSpots > 0;
+
+                  return (
+                    <Card className="border-primary/20">
+                      <CardContent className="pt-6">
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5 flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Lock className="h-5 w-5 text-primary" />
+                                <FormLabel className="text-base font-semibold">
+                                  Clase Abierta para Reservas
+                                </FormLabel>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {field.value
+                                  ? "✓ Los jugadores pueden ver y reservar esta clase en 'Clases Disponibles'"
+                                  : "✗ Esta clase no aparecerá en 'Clases Disponibles' para los jugadores"}
+                              </p>
+                              {!hasSpots && (
+                                <p className="text-sm text-orange-600 font-medium mt-2">
+                                  ⚠️ No hay plazas disponibles ({selectedStudents.length}/{maxParticipants} ocupadas)
+                                </p>
+                              )}
+                              {hasSpots && field.value && (
+                                <p className="text-sm text-green-600 font-medium mt-2">
+                                  {availableSpots} plaza{availableSpots !== 1 ? 's' : ''} disponible{availableSpots !== 1 ? 's' : ''}
+                                </p>
+                              )}
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={(checked) => {
+                                  if (checked && !hasSpots) {
+                                    // No permitir abrir si no hay plazas
+                                    return;
+                                  }
+                                  field.onChange(checked);
+                                }}
+                                disabled={!hasSpots && !field.value}
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      </CardContent>
+                    </Card>
+                  );
+                }} />
               </div>}
 
             {/* Navigation buttons */}

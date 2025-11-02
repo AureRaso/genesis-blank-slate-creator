@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import PlayerLeagueDetails from "./PlayerLeagueDetails";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
-import { TodayClassesConfirmation } from "./TodayClassesConfirmation";
+import { PlayerClassesTabs } from "./PlayerClassesTabs";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -119,8 +119,8 @@ const PlayerDashboard = () => {
         )}
       </div>
 
-      {/* Confirmación de Clases de Hoy - Destacado */}
-      <TodayClassesConfirmation selectedChildId={isGuardian ? selectedChildId : undefined} />
+      {/* Tabs: Próximas Clases y Clases Disponibles */}
+      <PlayerClassesTabs selectedChildId={isGuardian ? selectedChildId : undefined} />
 
       {/* Modal de confirmación de inscripción */}
       <LeagueRegistrationModal

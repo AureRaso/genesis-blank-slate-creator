@@ -127,24 +127,24 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
 
   const getClassesForDayAndTime = (day: Date, timeSlot: string) => {
     const dayName = format(day, 'EEEE', { locale: getDateFnsLocale() }).toLowerCase();
-    
+
     const matchingClasses = classes.filter(cls => {
       const classDays = cls.days_of_week.map(d => {
         const normalized = d.toLowerCase().trim();
         // Normalize to database format (without accents)
         return DAY_MAPPING[normalized] || normalized;
       });
-      
+
       const classTime = cls.start_time.slice(0, 5);
       // Map the current day name to Spanish for comparison
       const normalizedDayName = DAY_MAPPING[dayName] || dayName;
-      
+
       const dayMatches = classDays.includes(normalizedDayName);
       const timeMatches = classTime === timeSlot;
-      
+
       return dayMatches && timeMatches;
     });
-    
+
     return matchingClasses;
   };
 
@@ -302,8 +302,10 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
             
             {weekDays.map((day) => {
               const { displayClass, allClasses, hasMultiple } = getDisplayClassesForSlot(day, timeSlot);
-              const hasContinuationClasses = classes.some(cls => isClassContinuation(day, timeSlot, cls));
-              
+
+              // Solo considerar como continuación si NO hay clases que empiecen en este slot
+              const hasContinuationClasses = allClasses.length === 0 && classes.some(cls => isClassContinuation(day, timeSlot, cls));
+
               const handleDragOver = (e: React.DragEvent) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -316,7 +318,11 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                   onClassDrop(classId, day, timeSlot);
                 }
               };
-              
+
+              // Detectar todas las clases que empiezan en este slot y calcular superposiciones
+              const overlappingGroups = allClasses.length > 0 ? detectOverlappingClasses(day, allClasses) : [];
+              const uniqueOverlappingClasses = overlappingGroups.length > 0 ? overlappingGroups[0] : [];
+
               return (
                 <div
                   key={`${day.toISOString()}-${timeSlot}`}
@@ -334,40 +340,32 @@ export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onC
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
-                  {displayClass && !hasContinuationClasses && (
-                    <div
-                      className="absolute top-0 p-0.5 md:p-1 w-full overflow-hidden"
-                      style={{
-                        height: `${getClassHeight(displayClass.duration_minutes)}px`,
-                        maxHeight: `${getClassHeight(displayClass.duration_minutes)}px`,
-                        zIndex: 10
-                      }}
-                    >
-                      {hasMultiple ? (
-                        <MultiEventDropdown
-                          allEvents={allClasses}
-                          onEventClick={(event) => {
-                            // Each event will handle its own modal through ClassCard
-                          }}
-                          onEventDragStart={(e, eventId) => {
-                            e.dataTransfer.setData('text/plain', eventId);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                        >
-                          <ClassCard
-                            class={displayClass}
-                            showAsIndicator={true}
-                            eventCount={allClasses.length}
-                          />
-                        </MultiEventDropdown>
-                      ) : (
-                        <ClassCard
-                          class={displayClass}
-                          showAsIndicator={false}
-                          eventCount={1}
-                        />
-                      )}
-                    </div>
+                  {allClasses.length > 0 && (
+                    <>
+                      {allClasses.map((classItem) => {
+                        const layout = calculateColumnLayout(classItem, uniqueOverlappingClasses);
+
+                        return (
+                          <div
+                            key={classItem.id}
+                            className="absolute top-0 p-0.5 md:p-1 overflow-hidden"
+                            style={{
+                              height: `${getClassHeight(classItem.duration_minutes)}px`,
+                              maxHeight: `${getClassHeight(classItem.duration_minutes)}px`,
+                              width: layout.width,
+                              left: layout.left,
+                              zIndex: 10
+                            }}
+                          >
+                            <ClassCard
+                              class={classItem}
+                              showAsIndicator={false}
+                              eventCount={1}
+                            />
+                          </div>
+                        );
+                      })}
+                    </>
                   )}
                 </div>
               );

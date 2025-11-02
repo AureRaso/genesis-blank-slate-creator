@@ -174,7 +174,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
               <Calendar className="h-6 w-6 text-white" />
             </div>
-            Próximas clases
+            Mis clases
           </h2>
         </div>
         <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl text-center">

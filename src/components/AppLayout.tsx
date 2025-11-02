@@ -43,7 +43,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       case "/dashboard/clubs":
         return { title: "Clubs", path: "/dashboard/clubs" };
       case "/dashboard/classes":
-        return { title: "Clases", path: "/dashboard/classes" };
+        return { title: "Clases Disponibles", path: "/dashboard/classes" };
       case "/dashboard/leagues":
         return { title: "Ligas", path: "/dashboard/leagues" };
       case "/dashboard/matches":

@@ -69,18 +69,25 @@ export const useWhatsAppGroup = (clubId?: string, trainerId?: string) => {
 /**
  * Hook to get ALL active WhatsApp groups for admins
  * Used when admin needs to select which group to notify
+ * @param clubId - Optional club ID to filter groups by club
  */
-export const useAllWhatsAppGroups = () => {
+export const useAllWhatsAppGroups = (clubId?: string) => {
   return useQuery({
-    queryKey: ["all-whatsapp-groups"],
+    queryKey: ["all-whatsapp-groups", clubId],
     queryFn: async () => {
-      console.log('📱 Fetching all WhatsApp groups...');
+      console.log('📱 Fetching WhatsApp groups for club:', clubId || 'all clubs');
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("whatsapp_groups")
         .select("*")
-        .eq("is_active", true)
-        .order("group_name", { ascending: true });
+        .eq("is_active", true);
+
+      // Filter by club_id if provided
+      if (clubId) {
+        query = query.eq("club_id", clubId);
+      }
+
+      const { data, error } = await query.order("group_name", { ascending: true });
 
       if (error) {
         console.error('❌ Error fetching groups:', error);
@@ -92,6 +99,7 @@ export const useAllWhatsAppGroups = () => {
 
       return data as WhatsAppGroupData[];
     },
+    enabled: !!clubId, // Only fetch if clubId is provided
   });
 };
 
