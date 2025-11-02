@@ -122,7 +122,7 @@ const ProductSection = () => {
                           {role.id === "academia" ? (
                             <div className="rounded-xl overflow-hidden border-2 border-playtomic-orange/20 shadow-lg">
                               <img
-                                src="/137shots_so.png"
+                                src="/public/173shots_so.png"
                                 alt="Vista de Academia - Dashboard de PadeLock"
                                 className="w-full h-auto object-cover"
                               />
