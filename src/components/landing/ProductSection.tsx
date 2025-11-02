@@ -116,20 +116,30 @@ const ProductSection = () => {
                           </ul>
                         </div>
 
-                        {/* Right Column - Screenshot Placeholder & Benefits */}
+                        {/* Right Column - Screenshot & Benefits */}
                         <div className="space-y-6">
-                          {/* Screenshot Placeholder */}
-                          <div className="bg-gradient-to-br from-playtomic-orange/20 to-playtomic-orange/5 rounded-xl p-8 aspect-[4/3] flex items-center justify-center border-2 border-playtomic-orange/20">
-                            <div className="text-center">
-                              <Icon className="h-16 w-16 text-playtomic-orange mx-auto mb-4" />
-                              <p className="text-gray-600 font-medium">
-                                Vista de {role.title}
-                              </p>
-                              <p className="text-sm text-gray-500 mt-2">
-                                Interfaz intuitiva y fácil de usar
-                              </p>
+                          {/* Screenshot */}
+                          {role.id === "academia" ? (
+                            <div className="rounded-xl overflow-hidden border-2 border-playtomic-orange/20 shadow-lg">
+                              <img
+                                src="/137shots_so.png"
+                                alt="Vista de Academia - Dashboard de PadeLock"
+                                className="w-full h-auto object-cover"
+                              />
                             </div>
-                          </div>
+                          ) : (
+                            <div className="bg-gradient-to-br from-playtomic-orange/20 to-playtomic-orange/5 rounded-xl p-8 aspect-[4/3] flex items-center justify-center border-2 border-playtomic-orange/20">
+                              <div className="text-center">
+                                <Icon className="h-16 w-16 text-playtomic-orange mx-auto mb-4" />
+                                <p className="text-gray-600 font-medium">
+                                  Vista de {role.title}
+                                </p>
+                                <p className="text-sm text-gray-500 mt-2">
+                                  Interfaz intuitiva y fácil de usar
+                                </p>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Benefits Card */}
                           <div className="bg-playtomic-orange/10 rounded-xl p-6 border-2 border-playtomic-orange/20">
