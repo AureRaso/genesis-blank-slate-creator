@@ -63,7 +63,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // 2. Check if class date/time hasn't passed and is within 5h window
+      // 2. Check if class date/time hasn't passed and waitlist is still open
       console.log('🔍 [WAITLIST] Step 3: Checking time window');
       const [hours, minutes] = classData.start_time.split(':');
       const classDateTime = new Date(classDate);
@@ -74,7 +74,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
 
       console.log('🔍 [WAITLIST] Now:', now);
       console.log('🔍 [WAITLIST] Class time:', classDateTime);
-      console.log('🔍 [WAITLIST] Five hours before:', fiveHoursBefore);
+      console.log('🔍 [WAITLIST] Five hours before (cutoff):', fiveHoursBefore);
 
       if (now > classDateTime) {
         console.log('❌ [WAITLIST] Class already started');
@@ -85,14 +85,16 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      if (now < fiveHoursBefore) {
-        console.log('❌ [WAITLIST] Too early to join');
+      if (now >= fiveHoursBefore) {
+        console.log('❌ [WAITLIST] Too late - within 5h window');
         return {
           canJoin: false,
-          reason: 'too_early',
-          message: 'Solo puedes unirte a la lista de espera 5 horas antes de la clase'
+          reason: 'too_late',
+          message: 'La lista de espera se cierra 5 horas antes de la clase'
         };
       }
+
+      console.log('✅ [WAITLIST] Time window OK - can join');
 
       // 3. Get user's enrollment for this club
       console.log('🔍 [WAITLIST] Step 4: Checking enrollment');
