@@ -63,38 +63,31 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // 2. Check if class date/time hasn't passed and waitlist is still open
+      // 2. Check if waitlist is still open (closes 3 hours before class)
       console.log('🔍 [WAITLIST] Step 3: Checking time window');
       const [hours, minutes] = classData.start_time.split(':');
       const classDateTime = new Date(classDate);
       classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
 
       const now = new Date();
-      const fiveHoursBefore = subHours(classDateTime, 5);
+      const threeHoursBefore = subHours(classDateTime, 3);
 
       console.log('🔍 [WAITLIST] Now:', now);
       console.log('🔍 [WAITLIST] Class time:', classDateTime);
-      console.log('🔍 [WAITLIST] Five hours before (cutoff):', fiveHoursBefore);
+      console.log('🔍 [WAITLIST] Three hours before (cutoff):', threeHoursBefore);
 
-      if (now > classDateTime) {
-        console.log('❌ [WAITLIST] Class already started');
-        return {
-          canJoin: false,
-          reason: 'class_started',
-          message: 'La clase ya ha comenzado'
-        };
-      }
-
-      if (now >= fiveHoursBefore) {
-        console.log('❌ [WAITLIST] Too late - within 5h window');
+      // Check if we're past the cutoff time (3 hours before class)
+      if (now >= threeHoursBefore) {
+        console.log('❌ [WAITLIST] Too late - waitlist closed');
         return {
           canJoin: false,
           reason: 'too_late',
-          message: 'La lista de espera se cierra 5 horas antes de la clase'
+          message: 'La lista de espera se cierra 3 horas antes de la clase'
         };
       }
 
-      console.log('✅ [WAITLIST] Time window OK - can join');
+      // If we're here, we're before the 3-hour cutoff, so it's OK to join
+      console.log('✅ [WAITLIST] Time window OK - can join (before 3h cutoff)');
 
       // 3. Get user's enrollment for this club
       console.log('🔍 [WAITLIST] Step 4: Checking enrollment');

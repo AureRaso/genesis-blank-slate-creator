@@ -138,7 +138,7 @@ const WaitlistJoinPage = () => {
               {/* Time limit info */}
               <div className="text-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 inline mr-1" />
-                La lista de espera se cierra 5 horas antes de la clase
+                La lista de espera se cierra 3 horas antes de la clase
               </div>
 
               {/* Action Button */}
