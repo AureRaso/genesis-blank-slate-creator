@@ -12,7 +12,7 @@ interface AuthContextType {
   authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, clubId?: string, level?: number, role?: 'player' | 'guardian') => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, phone: string, clubId?: string, level?: number, role?: 'player' | 'guardian') => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   retryAuth: () => void;
   isAdmin: boolean;
@@ -222,10 +222,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, clubId?: string, level?: number, role: 'player' | 'guardian' = 'player') => {
+  const signUp = async (email: string, password: string, fullName: string, phone: string, clubId?: string, level?: number, role: 'player' | 'guardian' = 'player') => {
     console.log('🔍 DEBUG - AuthContext signUp called with:', {
       email,
       fullName,
+      phone,
       clubId,
       level,
       levelType: typeof level,
@@ -236,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const userData = {
       full_name: fullName,
+      phone: phone,
       club_id: clubId,
       level: level,
       role: role

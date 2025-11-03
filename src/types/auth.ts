@@ -3,6 +3,7 @@ export interface Profile {
   id: string;
   email: string;
   full_name: string;
+  phone?: string;
   role: 'admin' | 'player' | 'trainer';
   level?: number;
   club_id?: string;

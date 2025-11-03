@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ export const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [level, setLevel] = useState("");
   const [clubCode, setClubCode] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
@@ -225,6 +226,7 @@ export const AuthPage = () => {
     console.log('AuthPage - handleSignUp called with:', {
       email,
       fullName,
+      phone,
       level,
       selectedClubId,
       passwordLength: password.length
@@ -236,7 +238,7 @@ export const AuthPage = () => {
     setClubError("");
 
     // Validaciones
-    if (!email || !confirmEmail || !password || !confirmPassword || !fullName) {
+    if (!email || !confirmEmail || !password || !confirmPassword || !fullName || !phone) {
       toast({
         title: "Error",
         description: "Todos los campos son obligatorios",
@@ -309,6 +311,7 @@ export const AuthPage = () => {
     console.log('🔍 DEBUG - About to call signUp with:', {
       email,
       fullName,
+      phone,
       selectedClubId,
       numLevel,
       numLevelType: typeof numLevel,
@@ -317,7 +320,7 @@ export const AuthPage = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName, selectedClubId, numLevel, userType);
+      const { error } = await signUp(email, password, fullName, phone, selectedClubId, numLevel, userType);
       console.log('🔍 DEBUG - signUp completed with error:', error);
       if (error) {
         toast({
@@ -628,6 +631,23 @@ export const AuthPage = () => {
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 placeholder="Juan Pérez García"
+                className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
+                required
+              />
+            </div>
+
+            {/* Teléfono */}
+            <div className="space-y-3">
+              <Label htmlFor="signup-phone" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Teléfono *
+              </Label>
+              <Input
+                id="signup-phone"
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="+34 600 00 00 00"
                 className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
                 required
               />

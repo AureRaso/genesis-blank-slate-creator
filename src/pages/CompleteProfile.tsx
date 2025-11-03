@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Target, CheckCircle2 } from "lucide-react";
+import { Target, CheckCircle2, Phone } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const CompleteProfile = () => {
   const [level, setLevel] = useState("");
+  const [phone, setPhone] = useState("");
   const [clubCode, setClubCode] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
   const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
@@ -67,10 +68,10 @@ export const CompleteProfile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('🔧 CompleteProfile - Form submitted:', { level, selectedClubId });
+    console.log('🔧 CompleteProfile - Form submitted:', { level, phone, selectedClubId });
 
     // Validations
-    if (!level || !selectedClubId) {
+    if (!level || !phone || !selectedClubId) {
       console.log('🔧 CompleteProfile - Validation failed: missing fields');
       if (!selectedClubId) {
         setClubError("Debes ingresar un código de club válido");
@@ -101,15 +102,17 @@ export const CompleteProfile = () => {
       console.log('🔧 CompleteProfile - Updating profile with:', {
         club_id: selectedClubId,
         level: numLevel,
+        phone: phone,
         user_id: user!.id
       });
 
-      // Update the profile with club_id and level
+      // Update the profile with club_id, level, and phone
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           club_id: selectedClubId,
           level: numLevel,
+          phone: phone,
           updated_at: new Date().toISOString()
         })
         .eq('id', user!.id);
@@ -317,6 +320,28 @@ export const CompleteProfile = () => {
                     <p className="text-sm text-slate-600">{user?.email}</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-semibold text-slate-700">
+                  Teléfono *
+                </Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="+34 600 00 00 00"
+                    className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Introduce tu número de teléfono de contacto
+                </p>
               </div>
 
               {/* Nivel de juego */}
