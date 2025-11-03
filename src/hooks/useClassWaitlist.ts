@@ -428,7 +428,7 @@ export const useMyWaitlistRequests = () => {
           name,
           start_time,
           duration_minutes,
-          trainer:profiles!programmed_classes_trainer_id_fkey(full_name)
+          trainer:profiles(full_name)
         `)
         .in('id', classIds);
 
