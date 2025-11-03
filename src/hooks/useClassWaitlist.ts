@@ -400,32 +400,58 @@ export const useMyWaitlistRequests = () => {
       const enrollmentIds = enrollments.map(e => e.id);
 
       // Get all waitlist entries for this user
-      const { data, error } = await supabase
+      const { data: waitlistData, error: waitlistError } = await supabase
         .from('class_waitlist')
-        .select(`
-          id,
-          class_id,
-          class_date,
-          status,
-          requested_at,
-          accepted_at,
-          rejected_at,
-          programmed_class:programmed_classes!class_id(
-            id,
-            name,
-            start_time,
-            duration_minutes,
-            trainer:profiles!trainer_id(
-              full_name
-            )
-          )
-        `)
+        .select('*')
         .in('student_enrollment_id', enrollmentIds)
         .in('status', ['pending', 'accepted', 'rejected'])
         .order('requested_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (waitlistError) {
+        console.error('❌ Error fetching waitlist requests:', waitlistError);
+        throw waitlistError;
+      }
+
+      if (!waitlistData || waitlistData.length === 0) {
+        console.log('✅ No waitlist requests found');
+        return [];
+      }
+
+      console.log('📋 Raw waitlist data:', waitlistData);
+
+      // Get class details for all waitlist entries
+      const classIds = waitlistData.map(w => w.class_id);
+      const { data: classesData, error: classesError } = await supabase
+        .from('programmed_classes')
+        .select(`
+          id,
+          name,
+          start_time,
+          duration_minutes,
+          trainer:profiles!programmed_classes_trainer_id_fkey(full_name)
+        `)
+        .in('id', classIds);
+
+      if (classesError) {
+        console.error('❌ Error fetching class details:', classesError);
+        // Return waitlist data without class details
+        return waitlistData.map(item => ({
+          ...item,
+          programmed_class: null
+        }));
+      }
+
+      // Combine waitlist data with class details
+      const transformedData = waitlistData.map(item => {
+        const classData = classesData?.find(c => c.id === item.class_id);
+        return {
+          ...item,
+          programmed_class: classData || null
+        };
+      });
+
+      console.log('✅ Waitlist requests with class details:', transformedData);
+      return transformedData;
     },
     enabled: !!profile?.id && !!profile?.email,
   });
