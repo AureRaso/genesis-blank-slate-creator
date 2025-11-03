@@ -374,3 +374,59 @@ export const useRejectFromWaitlist = () => {
     },
   });
 };
+
+// Hook to get user's own waitlist requests (for players)
+export const useMyWaitlistRequests = () => {
+  const { profile } = useAuth();
+
+  return useQuery({
+    queryKey: ['my-waitlist-requests', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id || !profile?.email) {
+        return [];
+      }
+
+      // Get user's enrollment
+      const { data: enrollments } = await supabase
+        .from('student_enrollments')
+        .select('id')
+        .eq('email', profile.email)
+        .eq('status', 'active');
+
+      if (!enrollments || enrollments.length === 0) {
+        return [];
+      }
+
+      const enrollmentIds = enrollments.map(e => e.id);
+
+      // Get all waitlist entries for this user
+      const { data, error } = await supabase
+        .from('class_waitlist')
+        .select(`
+          id,
+          class_id,
+          class_date,
+          status,
+          requested_at,
+          accepted_at,
+          rejected_at,
+          programmed_class:programmed_classes!class_id(
+            id,
+            name,
+            start_time,
+            duration_minutes,
+            trainer:profiles!trainer_id(
+              full_name
+            )
+          )
+        `)
+        .in('student_enrollment_id', enrollmentIds)
+        .in('status', ['pending', 'accepted', 'rejected'])
+        .order('requested_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!profile?.id && !!profile?.email,
+  });
+};

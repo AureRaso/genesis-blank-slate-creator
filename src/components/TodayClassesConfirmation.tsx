@@ -3,10 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus } from "lucide-react";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
 import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { ClassWaitlist } from "@/types/waitlist";
 
 interface TodayClassesConfirmationProps {
   selectedChildId?: string;
@@ -15,6 +19,7 @@ interface TodayClassesConfirmationProps {
 export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfirmationProps) => {
   const { isGuardian } = useAuth();
   const { data: allClasses = [], isLoading } = useTodayClassAttendance();
+  const { data: waitlistRequests = [], isLoading: loadingWaitlist } = useMyWaitlistRequests();
 
   // Filter classes based on selected child
   const todayClasses = useMemo(() => {
@@ -198,8 +203,131 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const confirmedCount = todayClasses.filter(c => c.attendance_confirmed_for_date).length;
   const pendingCount = todayClasses.length - confirmedCount;
 
+  const formatWaitlistDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return format(date, "EEEE, d 'de' MMMM", { locale: es });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return (
+          <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+            <Clock className="h-3 w-3 mr-1" />
+            Pendiente
+          </Badge>
+        );
+      case 'accepted':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-300">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Aceptado
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-300">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rechazado
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Waitlist Notifications Section */}
+      {waitlistRequests.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+              <Bell className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800">Solicitudes de Lista de Espera</h3>
+          </div>
+
+          <div className="space-y-2">
+            {waitlistRequests.map((request: ClassWaitlist) => {
+              const isPending = request.status === 'pending';
+              const isAccepted = request.status === 'accepted';
+              const isRejected = request.status === 'rejected';
+
+              return (
+                <Card
+                  key={request.id}
+                  className={`
+                    border-0 shadow-md rounded-xl transition-all duration-300
+                    ${isPending
+                      ? 'bg-gradient-to-br from-amber-50 to-yellow-50/30 border-l-4 border-l-amber-400'
+                      : isAccepted
+                        ? 'bg-gradient-to-br from-green-50 to-emerald-50/30 border-l-4 border-l-green-400'
+                        : 'bg-gradient-to-br from-red-50 to-rose-50/30 border-l-4 border-l-red-400'
+                    }
+                  `}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusBadge(request.status)}
+                        </div>
+                        <h4 className="font-semibold text-slate-800 mb-1 truncate">
+                          {request.programmed_class?.name || 'Clase'}
+                        </h4>
+                        <div className="space-y-1 text-xs sm:text-sm text-slate-600">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="capitalize">{formatWaitlistDate(request.class_date)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{formatTime(request.programmed_class?.start_time || '')}</span>
+                          </div>
+                          {request.programmed_class?.trainer?.full_name && (
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{request.programmed_class.trainer.full_name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status messages */}
+                    {isPending && (
+                      <div className="mt-3 pt-3 border-t border-amber-200">
+                        <p className="text-xs text-amber-800">
+                          <AlertCircle className="h-3.5 w-3.5 inline mr-1" />
+                          Tu solicitud está siendo revisada por el profesor
+                        </p>
+                      </div>
+                    )}
+                    {isAccepted && (
+                      <div className="mt-3 pt-3 border-t border-green-200">
+                        <p className="text-xs text-green-800 font-medium">
+                          <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />
+                          Has sido aceptado en esta clase
+                        </p>
+                      </div>
+                    )}
+                    {isRejected && (
+                      <div className="mt-3 pt-3 border-t border-red-200">
+                        <p className="text-xs text-red-800">
+                          <XCircle className="h-3.5 w-3.5 inline mr-1" />
+                          Lo sentimos, no hay plazas disponibles en esta clase
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Header - Responsive: stacked on mobile, inline on desktop */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
         <div className="flex-1">

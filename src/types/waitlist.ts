@@ -27,7 +27,10 @@ export interface ClassWaitlist {
     name: string;
     start_time: string;
     duration_minutes: number;
-    max_participants: number;
+    max_participants?: number;
+    trainer?: {
+      full_name: string;
+    };
   };
 }
 
