@@ -42,8 +42,8 @@ const WaitlistJoinPage = () => {
 
   if (checkingEligibility) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
+      <div className="flex items-center justify-center min-h-screen w-full">
+        <div className="text-center mx-auto">
           <Loader2 className="h-8 w-8 animate-spin text-playtomic-orange mx-auto mb-4" />
           <p className="text-muted-foreground">Verificando disponibilidad...</p>
         </div>
@@ -54,8 +54,8 @@ const WaitlistJoinPage = () => {
   // Show success screen with countdown when successfully joined
   if (isSuccess) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 to-white">
-        <Card className="w-full max-w-md border-green-300">
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 to-white w-full">
+        <Card className="w-full max-w-md border-green-300 mx-auto">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />
             <h3 className="text-2xl font-bold text-green-900 mb-2">¡Te has unido!</h3>
@@ -76,8 +76,8 @@ const WaitlistJoinPage = () => {
 
   if (!classId || !date) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md border-destructive">
+      <div className="flex items-center justify-center min-h-screen p-4 w-full">
+        <Card className="w-full max-w-md border-destructive mx-auto">
           <CardHeader>
             <CardTitle className="text-destructive">Enlace inválido</CardTitle>
             <CardDescription>El enlace que has seguido no es válido</CardDescription>
@@ -120,8 +120,8 @@ const WaitlistJoinPage = () => {
     }
 
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className={`w-full max-w-md ${colorClass}`}>
+      <div className="flex items-center justify-center min-h-screen p-4 w-full">
+        <Card className={`w-full max-w-md ${colorClass} mx-auto`}>
           <CardContent className="flex flex-col items-center justify-center py-12">
             {icon}
             <h3 className="text-lg font-semibold mb-2 mt-4">{title}</h3>
@@ -138,8 +138,8 @@ const WaitlistJoinPage = () => {
   const classData = canJoinData?.classData;
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-blue-50 to-white">
-      <Card className="w-full max-w-2xl border-blue-200">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-blue-50 to-white w-full">
+      <Card className="w-full max-w-2xl border-blue-200 mx-auto">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-blue-100 rounded-full">
