@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +18,14 @@ import {
   Edit,
   Check,
   X,
-  ArrowUpDown
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { toast } from "@/hooks/use-toast";
+
+const ITEMS_PER_PAGE = 25;
 
 const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,6 +34,7 @@ const AdminStudentsList = () => {
   const [sortOrder, setSortOrder] = useState<string>("arrival"); // "arrival" or "alphabetical"
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
   const updateStudentMutation = useUpdateStudentEnrollment();
@@ -48,6 +53,11 @@ const AdminStudentsList = () => {
     error: error?.message,
     firstFewStudents: students.slice(0, 3).map(s => ({ id: s.id, name: s.full_name, club_id: s.club_id }))
   });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, periodFilter, sortOrder]);
 
   const filteredAndSortedStudents = students
     .filter((student) => {
@@ -70,6 +80,12 @@ const AdminStudentsList = () => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
     });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedStudents.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedStudents = filteredAndSortedStudents.slice(startIndex, endIndex);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -278,8 +294,9 @@ const AdminStudentsList = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredAndSortedStudents.map((student) => (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {paginatedStudents.map((student) => (
               <div key={student.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -383,8 +400,41 @@ const AdminStudentsList = () => {
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1} - {Math.min(endIndex, filteredAndSortedStudents.length)} de {filteredAndSortedStudents.length} alumnos
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  <div className="text-sm font-medium">
+                    Página {currentPage} de {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Siguiente
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
     </div>
   );
