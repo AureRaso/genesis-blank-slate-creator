@@ -183,7 +183,7 @@ const AppSidebar = () => {
         icon: Calendar
       },
       {
-        title: "Asistencia Hoy",
+        title: "Asistencia Semanal",
         url: "/dashboard/today-attendance",
         icon: ClipboardCheck
       },

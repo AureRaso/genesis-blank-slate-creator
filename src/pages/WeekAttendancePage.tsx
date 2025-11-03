@@ -139,6 +139,28 @@ const WeekAttendancePage = () => {
     return classes.filter(cls => cls.days_of_week?.includes(selectedDayName));
   }, [classes, selectedDate]);
 
+  // Calculate statistics for the filtered classes
+  const statistics = useMemo(() => {
+    const classesToCount = filteredClasses || [];
+    const totalClasses = classesToCount.length;
+    const totalParticipants = classesToCount.reduce((acc, c) => acc + c.participants.length, 0);
+    const confirmedParticipants = classesToCount.reduce(
+      (acc, c) => acc + c.participants.filter(p => p.attendance_confirmed_for_date).length,
+      0
+    );
+    const absentParticipants = classesToCount.reduce(
+      (acc, c) => acc + c.participants.filter(p => p.absence_confirmed).length,
+      0
+    );
+
+    return {
+      totalClasses,
+      totalParticipants,
+      confirmedParticipants,
+      absentParticipants,
+    };
+  }, [filteredClasses]);
+
   // Handlers con confirmación
   const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
     setConfirmDialog({
@@ -343,7 +365,7 @@ const WeekAttendancePage = () => {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <span>Gestión de Clases</span>
+              <span>Gestión de asistencia</span>
             </h1>
             {/* Live indicator */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
@@ -440,6 +462,69 @@ const WeekAttendancePage = () => {
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Statistics Cards */}
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">
+                  {selectedDate ? 'Clases del día' : 'Clases semana'}
+                </CardTitle>
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{statistics.totalClasses}</div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {statistics.totalClasses === 1 ? 'Clase programada' : 'Clases programadas'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Alumnos</CardTitle>
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{statistics.totalParticipants}</div>
+                <p className="text-xs text-muted-foreground truncate">Alumnos esperados</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Asistirán</CardTitle>
+                <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">
+                  {statistics.confirmedParticipants}
+                </div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {statistics.totalParticipants > 0
+                    ? `${Math.round((statistics.confirmedParticipants / statistics.totalParticipants) * 100)}% confirmado`
+                    : 'Sin confirmaciones'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">No Asistirán</CardTitle>
+                <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
+                  {statistics.absentParticipants}
+                </div>
+                <p className="text-xs text-muted-foreground truncate">
+                  {statistics.totalParticipants > 0
+                    ? `${Math.round((statistics.absentParticipants / statistics.totalParticipants) * 100)}% ausente`
+                    : 'Sin ausencias'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
