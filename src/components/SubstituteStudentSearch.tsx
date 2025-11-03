@@ -74,6 +74,7 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
         is_substitute: true
       });
 
+      // 1. Añadir el sustituto
       const { data, error } = await supabase
         .from('class_participants')
         .insert({
@@ -92,6 +93,29 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
       }
 
       console.log('✅ Sustituto añadido:', data);
+
+      // 2. Rechazar todas las solicitudes de waitlist pendientes para esta clase y fecha
+      console.log('🔄 Rechazando solicitudes de waitlist pendientes para class_id:', classId, 'date:', today);
+
+      const { data: rejectedRequests, error: rejectError } = await supabase
+        .from('class_waitlist')
+        .update({
+          status: 'rejected',
+          rejected_by: profile?.id,
+          rejected_at: new Date().toISOString()
+        })
+        .eq('class_id', classId)
+        .eq('class_date', today)
+        .eq('status', 'pending')
+        .select();
+
+      if (rejectError) {
+        console.error('⚠️ Error al rechazar solicitudes de waitlist:', rejectError);
+        // No lanzamos error porque el sustituto ya se añadió exitosamente
+      } else {
+        console.log('✅ Solicitudes de waitlist rechazadas:', rejectedRequests?.length || 0);
+      }
+
       return data;
     },
     onSuccess: (data) => {
@@ -99,11 +123,14 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
       // Invalidar con la misma key que usa useTodayAttendance
       queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
       queryClient.invalidateQueries({ queryKey: ['class-participants', classId] });
+      // Invalidar waitlist queries para actualizar notificaciones de jugadores
+      queryClient.invalidateQueries({ queryKey: ['my-waitlist-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['class-waitlist'] });
       console.log('✅ Queries invalidadas');
 
       toast({
         title: "Sustituto añadido y confirmado",
-        description: "El alumno ha sido añadido a la clase y su asistencia ha sido confirmada",
+        description: "El alumno ha sido añadido a la clase. Las solicitudes pendientes de lista de espera han sido rechazadas automáticamente.",
       });
       setSearchTerm("");
       onSuccess?.();
