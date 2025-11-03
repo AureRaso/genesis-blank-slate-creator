@@ -453,39 +453,46 @@ export const useMyWaitlistRequests = () => {
           };
         })
         .filter(item => {
-          // Keep pending requests (not yet resolved)
-          if (item.status === 'pending') {
-            return true;
-          }
-
-          // For accepted/rejected, only show if less than 1 hour has passed since class end
-          if (!item.programmed_class?.start_time || !item.programmed_class?.duration_minutes) {
+          // Check if we have class details
+          if (!item.programmed_class?.start_time) {
             // If we don't have class details, keep it to be safe
             return true;
           }
 
-          // Calculate class end time: class_date + start_time + duration + 1 hour
-          const classDate = new Date(item.class_date + 'T00:00:00');
+          // Calculate class start time + 1 hour
+          const classStartDate = new Date(item.class_date + 'T00:00:00');
           const [hours, minutes] = item.programmed_class.start_time.split(':').map(Number);
 
-          classDate.setHours(hours, minutes, 0, 0);
+          classStartDate.setHours(hours, minutes, 0, 0);
 
-          // Add class duration
-          classDate.setMinutes(classDate.getMinutes() + item.programmed_class.duration_minutes);
+          // Add 1 hour to class start time
+          classStartDate.setHours(classStartDate.getHours() + 1);
 
-          // Add 1 hour buffer
-          classDate.setHours(classDate.getHours() + 1);
+          // For pending: hide after class start + 1 hour
+          // For accepted/rejected: hide after class end + 1 hour
+          let cutoffTime = classStartDate;
 
-          // Keep if current time is before class end + 1 hour
-          const shouldKeep = now < classDate;
+          if (item.status === 'accepted' || item.status === 'rejected') {
+            // For accepted/rejected, use class end time + 1 hour
+            if (item.programmed_class?.duration_minutes) {
+              cutoffTime = new Date(item.class_date + 'T00:00:00');
+              cutoffTime.setHours(hours, minutes, 0, 0);
+              cutoffTime.setMinutes(cutoffTime.getMinutes() + item.programmed_class.duration_minutes);
+              cutoffTime.setHours(cutoffTime.getHours() + 1);
+            }
+          }
+
+          // Keep if current time is before cutoff
+          const shouldKeep = now < cutoffTime;
 
           console.log('🕐 Filtering waitlist request:', {
             class: item.programmed_class.name,
             status: item.status,
             class_date: item.class_date,
             start_time: item.programmed_class.start_time,
-            duration: item.programmed_class.duration_minutes,
-            class_end_plus_1h: classDate.toISOString(),
+            duration: item.programmed_class?.duration_minutes,
+            cutoff_type: item.status === 'pending' ? 'start + 1h' : 'end + 1h',
+            cutoff_time: cutoffTime.toISOString(),
             now: now.toISOString(),
             shouldKeep
           });
