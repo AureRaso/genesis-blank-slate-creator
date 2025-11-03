@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useCanJoinWaitlist, useJoinWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,31 @@ const WaitlistJoinPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { data: canJoinData, isLoading: checkingEligibility } = useCanJoinWaitlist(classId || '', date || '');
-  const { mutate: joinWaitlist, isPending: isJoining } = useJoinWaitlist();
+  const { mutate: joinWaitlist, isPending: isJoining, isSuccess } = useJoinWaitlist();
+  const [countdown, setCountdown] = useState(3);
 
   // Don't redirect to auth - let users see the waitlist info first
   // Authentication will be required when they click "Join Waitlist"
+
+  // Redirect to dashboard after 3 seconds when successfully joined waitlist
+  useEffect(() => {
+    if (isSuccess) {
+      // Start countdown
+      const countdownInterval = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+
+      // Navigate after 3 seconds
+      const timer = setTimeout(() => {
+        navigate('/');
+      }, 3000);
+
+      return () => {
+        clearTimeout(timer);
+        clearInterval(countdownInterval);
+      };
+    }
+  }, [isSuccess, navigate]);
 
   if (checkingEligibility) {
     return (
@@ -25,6 +47,29 @@ const WaitlistJoinPage = () => {
           <Loader2 className="h-8 w-8 animate-spin text-playtomic-orange mx-auto mb-4" />
           <p className="text-muted-foreground">Verificando disponibilidad...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show success screen with countdown when successfully joined
+  if (isSuccess) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 to-white">
+        <Card className="w-full max-w-md border-green-300">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />
+            <h3 className="text-2xl font-bold text-green-900 mb-2">¡Te has unido!</h3>
+            <p className="text-center text-muted-foreground mb-4">
+              Has sido añadido a la lista de espera correctamente.
+              <br />
+              El profesor revisará tu solicitud pronto.
+            </p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Redirigiendo al dashboard en {countdown}s...</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
