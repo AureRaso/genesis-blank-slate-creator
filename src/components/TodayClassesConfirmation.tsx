@@ -172,6 +172,40 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     );
   }
 
+  // Helper functions for waitlist section
+  const formatWaitlistDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return format(date, "EEEE, d 'de' MMMM", { locale: es });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return (
+          <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+            <Clock className="h-3 w-3 mr-1" />
+            Pendiente
+          </Badge>
+        );
+      case 'accepted':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-300">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Aceptado
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-300">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rechazado
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   // Render waitlist section helper
   const renderWaitlistSection = () => {
     if (waitlistRequests.length === 0) return null;
@@ -300,39 +334,6 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
   const confirmedCount = todayClasses.filter(c => c.attendance_confirmed_for_date).length;
   const pendingCount = todayClasses.length - confirmedCount;
-
-  const formatWaitlistDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
-    return format(date, "EEEE, d 'de' MMMM", { locale: es });
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-            <Clock className="h-3 w-3 mr-1" />
-            Pendiente
-          </Badge>
-        );
-      case 'accepted':
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-300">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Aceptado
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge className="bg-red-100 text-red-800 border-red-300">
-            <XCircle className="h-3 w-3 mr-1" />
-            Rechazado
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
