@@ -441,16 +441,59 @@ export const useMyWaitlistRequests = () => {
         }));
       }
 
-      // Combine waitlist data with class details
-      const transformedData = waitlistData.map(item => {
-        const classData = classesData?.find(c => c.id === item.class_id);
-        return {
-          ...item,
-          programmed_class: classData || null
-        };
-      });
+      // Combine waitlist data with class details and filter by time
+      const now = new Date();
 
-      console.log('✅ Waitlist requests with class details:', transformedData);
+      const transformedData = waitlistData
+        .map(item => {
+          const classData = classesData?.find(c => c.id === item.class_id);
+          return {
+            ...item,
+            programmed_class: classData || null
+          };
+        })
+        .filter(item => {
+          // Keep pending requests (not yet resolved)
+          if (item.status === 'pending') {
+            return true;
+          }
+
+          // For accepted/rejected, only show if less than 1 hour has passed since class end
+          if (!item.programmed_class?.start_time || !item.programmed_class?.duration_minutes) {
+            // If we don't have class details, keep it to be safe
+            return true;
+          }
+
+          // Calculate class end time: class_date + start_time + duration + 1 hour
+          const classDate = new Date(item.class_date + 'T00:00:00');
+          const [hours, minutes] = item.programmed_class.start_time.split(':').map(Number);
+
+          classDate.setHours(hours, minutes, 0, 0);
+
+          // Add class duration
+          classDate.setMinutes(classDate.getMinutes() + item.programmed_class.duration_minutes);
+
+          // Add 1 hour buffer
+          classDate.setHours(classDate.getHours() + 1);
+
+          // Keep if current time is before class end + 1 hour
+          const shouldKeep = now < classDate;
+
+          console.log('🕐 Filtering waitlist request:', {
+            class: item.programmed_class.name,
+            status: item.status,
+            class_date: item.class_date,
+            start_time: item.programmed_class.start_time,
+            duration: item.programmed_class.duration_minutes,
+            class_end_plus_1h: classDate.toISOString(),
+            now: now.toISOString(),
+            shouldKeep
+          });
+
+          return shouldKeep;
+        });
+
+      console.log('✅ Waitlist requests with class details (filtered):', transformedData);
       return transformedData;
     },
     enabled: !!profile?.id && !!profile?.email,
