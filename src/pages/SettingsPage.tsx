@@ -336,12 +336,13 @@ const SettingsPage = () => {
         <div className="mb-4 sm:mb-6 md:mb-8">
 
         <Tabs defaultValue="general" className="space-y-3 sm:space-y-4 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          {/* Payments tab hidden for now - to be implemented in the future */}
+          {/* <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
             <TabsTrigger value="payments" className="text-xs sm:text-sm">Pagos</TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
-          <TabsContent value="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
+          {/* <TabsContent value="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
             {!club ? (
               <Card>
                 <CardHeader className="p-3 sm:p-6">
@@ -503,7 +504,7 @@ const SettingsPage = () => {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="general" className="space-y-3 sm:space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
