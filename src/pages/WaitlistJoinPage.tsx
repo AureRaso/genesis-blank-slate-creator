@@ -1,4 +1,4 @@
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCanJoinWaitlist, useJoinWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,15 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const WaitlistJoinPage = () => {
   const { classId, date } = useParams<{ classId: string; date: string }>();
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { data: canJoinData, isLoading: checkingEligibility } = useCanJoinWaitlist(classId || '', date || '');
   const { mutate: joinWaitlist, isPending: isJoining } = useJoinWaitlist();
 
-  // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    return <Navigate to="/auth" state={{ from: `/waitlist/${classId}/${date}` }} replace />;
-  }
+  // Don't redirect to auth - let users see the waitlist info first
+  // Authentication will be required when they click "Join Waitlist"
 
-  if (authLoading || checkingEligibility) {
+  if (checkingEligibility) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -144,27 +143,47 @@ const WaitlistJoinPage = () => {
 
               {/* Action Button */}
               <div className="flex flex-col gap-3">
-                <Button
-                  size="lg"
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={handleJoinWaitlist}
-                  disabled={isJoining}
-                >
-                  {isJoining ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Uniéndose...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Unirme a la Lista de Espera
-                    </>
-                  )}
-                </Button>
+                {authLoading ? (
+                  <Button size="lg" className="w-full" disabled>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Cargando...
+                  </Button>
+                ) : !user ? (
+                  // Not authenticated - show login button
+                  <Button
+                    size="lg"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    onClick={() => navigate('/auth', { state: { from: `/waitlist/${classId}/${date}` } })}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Iniciar sesión para unirme
+                  </Button>
+                ) : (
+                  // Authenticated - show join button
+                  <Button
+                    size="lg"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    onClick={handleJoinWaitlist}
+                    disabled={isJoining}
+                  >
+                    {isJoining ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uniéndose...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Unirme a la Lista de Espera
+                      </>
+                    )}
+                  </Button>
+                )}
 
                 <p className="text-xs text-center text-muted-foreground">
-                  Al hacer clic aceptas que tu solicitud sea revisada por el profesor
+                  {user
+                    ? 'Al hacer clic aceptas que tu solicitud sea revisada por el profesor'
+                    : 'Necesitas iniciar sesión para unirte a la lista de espera'}
                 </p>
               </div>
             </div>
