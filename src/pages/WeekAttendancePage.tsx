@@ -42,7 +42,8 @@ const getDayOfWeekInSpanish = (date: Date): string => {
 const WeekAttendancePage = () => {
   const { profile } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 })); // Monday
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // Por defecto, seleccionar el día actual
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => format(new Date(), 'yyyy-MM-dd'));
 
   // Calculate week range
   const weekStart = currentWeekStart;
@@ -115,7 +116,7 @@ const WeekAttendancePage = () => {
 
   const goToCurrentWeek = () => {
     setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-    setSelectedDate(null);
+    setSelectedDate(format(new Date(), 'yyyy-MM-dd')); // Seleccionar día actual
   };
 
   const isCurrentWeek = isSameWeek(currentWeekStart, new Date(), { weekStartsOn: 1 });
@@ -365,7 +366,7 @@ const WeekAttendancePage = () => {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <span>Gestión de asistencia</span>
+              <span>Asistencia</span>
             </h1>
             {/* Live indicator */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
@@ -454,11 +455,18 @@ const WeekAttendancePage = () => {
             })}
           </div>
 
-          {selectedDate && (
+          {selectedDate ? (
             <Alert className="bg-blue-50 border-blue-200">
               <Calendar className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-900">
                 Mostrando clases para <strong>{format(new Date(selectedDate), "EEEE, d 'de' MMMM", { locale: es })}</strong>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="bg-purple-50 border-purple-200">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              <AlertDescription className="text-purple-900">
+                Mostrando <strong>todas las clases de la semana</strong>
               </AlertDescription>
             </Alert>
           )}
