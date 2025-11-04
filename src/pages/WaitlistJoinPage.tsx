@@ -107,10 +107,13 @@ const WaitlistJoinPage = () => {
     let colorClass = "border-yellow-300";
     let bgClass = "bg-yellow-50";
 
-    if (canJoinData.reason === 'class_started' || canJoinData.reason === 'class_not_found') {
+    if (canJoinData.reason === 'class_started' || canJoinData.reason === 'class_not_found' || canJoinData.reason === 'class_ended') {
       icon = <XCircle className="h-12 w-12 text-destructive" />;
       colorClass = "border-destructive";
       bgClass = "bg-red-50";
+      if (canJoinData.reason === 'class_ended') {
+        title = "Clase finalizada";
+      }
     } else if (canJoinData.reason === 'class_full') {
       icon = <XCircle className="h-12 w-12 text-orange-600" />;
       title = "Plaza cubierta";

@@ -140,6 +140,40 @@ const WeekAttendancePage = () => {
     return classes.filter(cls => cls.days_of_week?.includes(selectedDayName));
   }, [classes, selectedDate]);
 
+  // Sort classes: upcoming/current first, past classes last
+  const sortedClasses = useMemo(() => {
+    if (!filteredClasses || filteredClasses.length === 0) return filteredClasses;
+
+    const now = new Date();
+    const currentDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
+
+    return [...filteredClasses].sort((a, b) => {
+      // Parse class times
+      const [aHours, aMinutes] = a.start_time.split(':').map(Number);
+      const [bHours, bMinutes] = b.start_time.split(':').map(Number);
+
+      // Create Date objects for class end times
+      const aEndTime = new Date(currentDate);
+      aEndTime.setHours(aHours, aMinutes + (a.duration_minutes || 60), 0, 0);
+
+      const bEndTime = new Date(currentDate);
+      bEndTime.setHours(bHours, bMinutes + (b.duration_minutes || 60), 0, 0);
+
+      // Check if classes have ended
+      const aHasEnded = now > aEndTime;
+      const bHasEnded = now > bEndTime;
+
+      // If one has ended and the other hasn't, prioritize the one that hasn't ended
+      if (aHasEnded && !bHasEnded) return 1;  // a goes to bottom
+      if (!aHasEnded && bHasEnded) return -1; // b goes to bottom
+
+      // If both have the same status (both ended or both not ended), sort by start time
+      const aTime = aHours * 60 + aMinutes;
+      const bTime = bHours * 60 + bMinutes;
+      return aTime - bTime;
+    });
+  }, [filteredClasses, selectedDate]);
+
   // Calculate statistics for the filtered classes
   const statistics = useMemo(() => {
     const classesToCount = filteredClasses || [];
@@ -554,7 +588,7 @@ const WeekAttendancePage = () => {
           )}
 
           {/* Classes List */}
-          {!filteredClasses || filteredClasses.length === 0 ? (
+          {!sortedClasses || sortedClasses.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
@@ -570,7 +604,7 @@ const WeekAttendancePage = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredClasses.map((classData) => {
+              {sortedClasses.map((classData) => {
                 const validParticipants = classData.participants.filter(p => p.student_enrollment);
                 const confirmedCount = validParticipants.filter(
                   p => p.attendance_confirmed_for_date
@@ -581,12 +615,26 @@ const WeekAttendancePage = () => {
                 // Get the notification date - use selected date or today
                 const notificationDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
 
+                // Check if class has ended
+                const now = new Date();
+                const [classHours, classMinutes] = classData.start_time.split(':').map(Number);
+                const classEndTime = new Date(notificationDate);
+                classEndTime.setHours(classHours, classMinutes + (classData.duration_minutes || 60), 0, 0);
+                const hasEnded = now > classEndTime;
+
                 return (
-                  <Card key={`${classData.id}-${notificationDate}`}>
+                  <Card key={`${classData.id}-${notificationDate}`} className={hasEnded ? 'opacity-60 border-gray-300' : ''}>
                     <CardHeader className="p-3 sm:p-6">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div className="space-y-1 min-w-0">
-                          <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
+                            {hasEnded && (
+                              <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 border-gray-300">
+                                Finalizada
+                              </Badge>
+                            )}
+                          </div>
                           <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3 flex-shrink-0" />
@@ -825,7 +873,7 @@ const WeekAttendancePage = () => {
                                   className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
                                 >
                                   <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                  Añadir sustituto
+                                  Sustituto
                                 </Button>
 
                                 {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
@@ -873,7 +921,7 @@ const WeekAttendancePage = () => {
                                       ) : (
                                         <>
                                           <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                          Ver lista de espera
+                                          Lista de espera
                                         </>
                                       )}
                                     </Button>

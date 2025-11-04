@@ -63,7 +63,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // 2. Check if waitlist is still open (closes 3 hours before class)
+      // 2. Check if class has already passed or waitlist is closed
       console.log('🔍 [WAITLIST] Step 3: Checking time window');
       const [hours, minutes] = classData.start_time.split(':');
       const classDateTime = new Date(classDate);
@@ -72,9 +72,24 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       const now = new Date();
       const threeHoursBefore = subHours(classDateTime, 3);
 
+      // Calculate class end time
+      const classEndTime = new Date(classDateTime);
+      classEndTime.setMinutes(classEndTime.getMinutes() + (classData.duration_minutes || 60));
+
       console.log('🔍 [WAITLIST] Now:', now);
-      console.log('🔍 [WAITLIST] Class time:', classDateTime);
+      console.log('🔍 [WAITLIST] Class start time:', classDateTime);
+      console.log('🔍 [WAITLIST] Class end time:', classEndTime);
       console.log('🔍 [WAITLIST] Three hours before (cutoff):', threeHoursBefore);
+
+      // Check if class has already ended
+      if (now >= classEndTime) {
+        console.log('❌ [WAITLIST] Class has already ended');
+        return {
+          canJoin: false,
+          reason: 'class_ended',
+          message: 'Esta clase ya ha finalizado'
+        };
+      }
 
       // Check if we're past the cutoff time (3 hours before class)
       if (now >= threeHoursBefore) {
