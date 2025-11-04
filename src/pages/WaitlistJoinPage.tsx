@@ -105,22 +105,31 @@ const WaitlistJoinPage = () => {
     let icon = <AlertTriangle className="h-12 w-12 text-yellow-600" />;
     let title = "No disponible";
     let colorClass = "border-yellow-300";
+    let bgClass = "bg-yellow-50";
 
     if (canJoinData.reason === 'class_started' || canJoinData.reason === 'class_not_found') {
       icon = <XCircle className="h-12 w-12 text-destructive" />;
       colorClass = "border-destructive";
+      bgClass = "bg-red-50";
+    } else if (canJoinData.reason === 'class_full') {
+      icon = <XCircle className="h-12 w-12 text-orange-600" />;
+      title = "Plaza cubierta";
+      colorClass = "border-orange-300";
+      bgClass = "bg-orange-50";
     } else if (canJoinData.reason === 'already_in_waitlist' || canJoinData.reason === 'already_accepted') {
       icon = <CheckCircle2 className="h-12 w-12 text-green-600" />;
       title = "Ya estás en lista";
       colorClass = "border-green-300";
+      bgClass = "bg-green-50";
     } else if (canJoinData.reason === 'already_enrolled') {
       icon = <CheckCircle2 className="h-12 w-12 text-green-600" />;
       title = "Ya inscrito";
       colorClass = "border-green-300";
+      bgClass = "bg-green-50";
     }
 
     return (
-      <div className="flex items-center justify-center min-h-screen p-4 w-full">
+      <div className={`flex items-center justify-center min-h-screen p-4 w-full ${bgClass}`}>
         <Card className={`w-full max-w-md ${colorClass} mx-auto`}>
           <CardContent className="flex flex-col items-center justify-center py-12">
             {icon}

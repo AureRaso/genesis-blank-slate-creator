@@ -178,6 +178,31 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         }
       }
 
+      // 6. Check if class is full (no available spots)
+      console.log('🔍 [WAITLIST] Step 6: Checking available spots');
+      const { count: participantCount } = await supabase
+        .from('class_participants')
+        .select('id', { count: 'exact', head: true })
+        .eq('class_id', classId)
+        .eq('status', 'active');
+
+      const maxParticipants = classData.max_participants || 8;
+      const currentParticipants = participantCount || 0;
+      const availableSpots = maxParticipants - currentParticipants;
+
+      console.log('🔍 [WAITLIST] Max participants:', maxParticipants);
+      console.log('🔍 [WAITLIST] Current participants:', currentParticipants);
+      console.log('🔍 [WAITLIST] Available spots:', availableSpots);
+
+      if (availableSpots <= 0) {
+        console.log('❌ [WAITLIST] Class is full - no spots available');
+        return {
+          canJoin: false,
+          reason: 'class_full',
+          message: 'Lo sentimos, esta plaza ya ha sido cubierta. La clase está completa en este momento.'
+        };
+      }
+
       return {
         canJoin: true,
         reason: 'can_join',

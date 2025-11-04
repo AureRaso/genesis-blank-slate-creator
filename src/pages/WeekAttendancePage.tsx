@@ -455,14 +455,7 @@ const WeekAttendancePage = () => {
             })}
           </div>
 
-          {selectedDate ? (
-            <Alert className="bg-blue-50 border-blue-200">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-900">
-                Mostrando clases para <strong>{format(new Date(selectedDate), "EEEE, d 'de' MMMM", { locale: es })}</strong>
-              </AlertDescription>
-            </Alert>
-          ) : (
+          {!selectedDate && (
             <Alert className="bg-purple-50 border-purple-200">
               <Calendar className="h-4 w-4 text-purple-600" />
               <AlertDescription className="text-purple-900">
