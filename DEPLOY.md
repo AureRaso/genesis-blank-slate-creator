@@ -1,9 +1,14 @@
-# 🚀 Deploy Instructions for Namecheap
+# 🚀 Deploy Instructions for Lovable
+
+## ⚠️ IMPORTANTE: Esta aplicación se deploya desde Lovable
+
+La aplicación **NO se deploya manualmente** desde este repositorio.
+El deploy se hace automáticamente desde la plataforma **Lovable**.
 
 ## Archivos de configuración añadidos:
 
-### 1. `public/.htaccess`
-Este archivo configura el servidor Apache de Namecheap para:
+### 1. `vercel.json`
+Este archivo configura los headers de cache para Vercel/Lovable:
 - ❌ **NO cachear** el `index.html` (siempre descarga la última versión)
 - ✅ **SI cachear** archivos JS/CSS/imágenes con hash (por 1 año)
 - ✅ Comprimir archivos con GZIP
@@ -14,50 +19,35 @@ Configurado para añadir hashes a todos los archivos build:
 - `index-abc123.js` (el hash cambia cuando cambia el código)
 - `main-def456.css` (el hash cambia cuando cambian los estilos)
 
+### 3. `public/.htaccess`
+**IGNORAR** - Este archivo solo se usa si deployaras manualmente a Apache.
+Como usas Lovable, este archivo no hace nada.
+
 ## 📋 Proceso de Deploy
 
-### Paso 1: Build del proyecto
+### Paso 1: Hacer commit de tus cambios
 ```bash
-npm run build
+git add .
+git commit -m "Tu mensaje"
+git push origin main
 ```
 
-Esto genera la carpeta `dist/` con todos los archivos optimizados.
+### Paso 2: Publicar desde Lovable
 
-### Paso 2: Subir archivos a Namecheap
-
-**Opción A - FTP (Recomendada):**
-1. Conecta por FTP a tu hosting de Namecheap
-   - Host: `ftp.padelock.com` (o el que te hayan dado)
-   - Usuario: tu usuario de cpanel
-   - Contraseña: tu contraseña de cpanel
-
-2. Navega a la carpeta `public_html/` o `www/`
-
-3. **IMPORTANTE:** Borra TODOS los archivos antiguos primero
-
-4. Sube TODO el contenido de la carpeta `dist/`:
-   - `index.html`
-   - `.htaccess` ← IMPORTANTE
-   - carpeta `assets/`
-   - todos los demás archivos
-
-**Opción B - cPanel File Manager:**
-1. Entra en el cPanel de Namecheap
-2. Ve a "File Manager"
-3. Navega a `public_html/`
-4. Borra todos los archivos antiguos
-5. Sube el contenido de `dist/`
+1. Ve a tu proyecto en **Lovable** (https://lovable.dev)
+2. Haz clic en **"Publish"** o **"Deploy"**
+3. Lovable automáticamente:
+   - Hace build del proyecto
+   - Sube los archivos a Vercel/su infraestructura
+   - Aplica la configuración de `vercel.json`
+   - Publica en `https://padelock.com`
 
 ### Paso 3: Verificar que funciona
 
-1. Abre Chrome en modo incógnito
-2. Ve a `https://padelock.com`
-3. Abre DevTools (F12) → pestaña "Network"
-4. Busca el archivo `index.html`
-5. Verifica que tenga el header:
-   ```
-   Cache-Control: no-cache, no-store, must-revalidate
-   ```
+1. Espera 1-2 minutos para que Lovable complete el deploy
+2. Abre Chrome en **modo incógnito**
+3. Ve a `https://padelock.com`
+4. Verifica que ves los últimos cambios
 
 ## ⚠️ Problemas comunes y soluciones
 
@@ -72,43 +62,42 @@ Esto genera la carpeta `dist/` con todos los archivos optimizados.
    - Mac: `Cmd + Shift + R`
 3. O que borren la cache del navegador
 
-### Problema: El `.htaccess` no funciona
+### Problema: Lovable no está deployando
 
-**Causa:** Apache `mod_headers` no está activado
+**Causa:** Puede haber un error en el build
 
 **Solución:**
-1. Contacta con soporte de Namecheap
-2. Pídeles que activen el módulo `mod_headers`
-3. También verifica que `mod_rewrite` esté activo
+1. Revisa los logs en Lovable
+2. Verifica que `npm run build` funcione localmente
+3. Contacta con soporte de Lovable si el problema persiste
 
 ### Problema: Error 404 en rutas de React Router
 
-**Causa:** El `.htaccess` no se subió o no está en la carpeta correcta
+**Causa:** El `vercel.json` no se aplicó correctamente
 
 **Solución:**
-1. El `.htaccess` DEBE estar en la carpeta raíz (`public_html/`)
-2. DEBE estar al mismo nivel que `index.html`
-3. DEBE llamarse exactamente `.htaccess` (con el punto delante)
+1. Verifica que `vercel.json` esté en la raíz del proyecto
+2. Haz un nuevo deploy desde Lovable
+3. El archivo debería estar al mismo nivel que `package.json`
 
 ## 🎯 Checklist de Deploy
 
-- [ ] Ejecutar `npm run build`
-- [ ] Verificar que `dist/` contiene `.htaccess`
-- [ ] Borrar todos los archivos antiguos del servidor
-- [ ] Subir TODO el contenido de `dist/`
-- [ ] Verificar que `.htaccess` se subió correctamente
-- [ ] Probar en modo incógnito
-- [ ] Verificar headers de cache en DevTools
-- [ ] Notificar a los usuarios para que limpien cache (solo la primera vez)
+- [ ] Hacer commit de cambios (`git push origin main`)
+- [ ] Ir a Lovable y hacer clic en "Publish"
+- [ ] Esperar 1-2 minutos a que termine el deploy
+- [ ] Verificar en modo incógnito que funciona
+- [ ] Verificar headers de cache en DevTools (Network tab)
+- [ ] Notificar a los usuarios para que limpien cache (solo la primera vez después de aplicar esta configuración)
 
-## 📞 Contacto Namecheap Support
+## 📞 Contacto Lovable Support
 
-Si tienes problemas con el `.htaccess`:
-- Chat: https://www.namecheap.com/support/live-chat/
-- Ticket: https://www.namecheap.com/support/contact/
+Si tienes problemas con el deploy:
+- Soporte de Lovable: https://lovable.dev/support
+- Discord de Lovable (si tienen)
+- Email de soporte
 
-Pídeles específicamente:
-> "Necesito activar mod_headers y mod_rewrite en mi hosting Apache para que funcione el archivo .htaccess"
+Menciona que necesitas ayuda con:
+> "Headers de cache en vercel.json para evitar que los usuarios vean versiones antiguas de la app"
 
 ---
 
