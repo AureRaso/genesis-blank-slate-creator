@@ -670,7 +670,7 @@ const WeekAttendancePage = () => {
                                           )}
                                         </div>
 
-                                        {/* Name and Email */}
+                                        {/* Name */}
                                         <div className="min-w-0 flex-1">
                                           <div className="flex items-center gap-2 mb-0.5">
                                             <p className="font-semibold text-sm text-slate-900 truncate">
@@ -682,9 +682,6 @@ const WeekAttendancePage = () => {
                                               </Badge>
                                             )}
                                           </div>
-                                          <p className="text-xs text-slate-500 truncate">
-                                            {participant.student_enrollment!.email}
-                                          </p>
 
                                           {/* Timestamp */}
                                           {(participant.attendance_confirmed_at || participant.absence_confirmed_at) && (
