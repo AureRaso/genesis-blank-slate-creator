@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Loader2 } from "lucide-react";
+import { Search, UserPlus, Loader2, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface SubstituteStudentSearchProps {
@@ -16,6 +16,7 @@ interface SubstituteStudentSearchProps {
 
 const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStudentSearchProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const today = new Date().toISOString().split('T')[0];
@@ -133,6 +134,7 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
         description: "El alumno ha sido añadido a la clase. Las solicitudes pendientes de lista de espera han sido rechazadas automáticamente.",
       });
       setSearchTerm("");
+      setSelectedStudentId(null);
       onSuccess?.();
     },
     onError: (error: any) => {
@@ -159,21 +161,21 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
   }) || [];
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full">
       {/* Search Input */}
-      <div className="relative">
+      <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           type="text"
-          placeholder="Buscar por nombre o email..."
+          placeholder="Buscar por nombre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
         />
       </div>
 
-      {/* Results */}
-      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+      {/* Results - Scrollable */}
+      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
         {loadingStudents ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -185,42 +187,61 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
               : "Escribe para buscar alumnos disponibles"}
           </div>
         ) : (
-          filteredStudents.map((student) => (
-            <div
-              key={student.id}
-              className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm text-slate-900 truncate">
-                  {student.full_name}
-                </p>
-                <p className="text-xs text-slate-500 truncate">
-                  {student.email}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-xs">
-                    Nivel {student.level}
-                  </Badge>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => addSubstitute.mutate(student.id)}
-                disabled={addSubstitute.isPending}
-                className="ml-3 flex-shrink-0"
+          filteredStudents.map((student) => {
+            const isSelected = selectedStudentId === student.id;
+            return (
+              <div
+                key={student.id}
+                onClick={() => setSelectedStudentId(student.id)}
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                  isSelected
+                    ? 'bg-primary/10 border-2 border-primary'
+                    : 'bg-white border border-slate-200 hover:border-slate-300'
+                }`}
               >
-                {addSubstitute.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4 mr-1" />
-                    Añadir
-                  </>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm text-slate-900 truncate">
+                    {student.full_name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-xs">
+                      Nivel {student.level}
+                    </Badge>
+                  </div>
+                </div>
+                {isSelected && (
+                  <div className="ml-3 flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
+      </div>
+
+      {/* Fixed Bottom Button */}
+      <div className="sticky bottom-0 bg-white border-t pt-4">
+        <Button
+          size="lg"
+          onClick={() => selectedStudentId && addSubstitute.mutate(selectedStudentId)}
+          disabled={!selectedStudentId || addSubstitute.isPending}
+          className="w-full"
+        >
+          {addSubstitute.isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Añadiendo...
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Añadir sustituto
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
