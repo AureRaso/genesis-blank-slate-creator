@@ -30,22 +30,25 @@ export default function CreateScheduledClassPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center gap-3 md:gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleClose}
-              className="hover:bg-muted"
+              className="hover:bg-muted flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Crear clase programada</h1>
+                <h1 className="text-lg md:text-2xl font-bold truncate">Crear clase programada</h1>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs md:text-sm text-muted-foreground hidden md:block">
                 Configura una nueva clase recurrente y visualiza cómo quedará en tiempo real
+              </p>
+              <p className="text-xs text-muted-foreground md:hidden">
+                Configura una nueva clase
               </p>
             </div>
           </div>

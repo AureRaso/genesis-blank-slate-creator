@@ -6,7 +6,7 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X } from "lucide-react";
+import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
@@ -14,10 +14,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClassesWithAbsences } from "@/hooks/useClassesWithAbsences";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
-import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
+import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
+import { usePendingWaitlistRequests, useApproveWaitlistRequest, useRejectWaitlistRequest } from "@/hooks/usePendingWaitlistRequests";
 import { format } from "date-fns";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { UserMinusIcon } from "@/components/icons/UserMinusIcon";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +27,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -36,16 +45,39 @@ const Index = () => {
     open: boolean;
     classId: string;
     className: string;
+    classTime: string;
+    classDate: string;
   }>({
     open: false,
     classId: '',
-    className: ''
+    className: '',
+    classTime: '',
+    classDate: ''
   });
+  const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
+    open: boolean;
+    classData: {
+      id: string;
+      name: string;
+      start_time: string;
+      participants: Array<{ absence_confirmed: boolean; is_substitute: boolean }>;
+    } | null;
+  }>({
+    open: false,
+    classData: null
+  });
+  const [notificationSentClasses, setNotificationSentClasses] = useState<Set<string>>(new Set());
 
   // Fetch classes with absences
   const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
+  const { data: allWhatsAppGroups } = useAllWhatsAppGroups(profile?.club_id);
+
+  // Fetch pending waitlist requests
+  const { data: waitlistRequests } = usePendingWaitlistRequests(profile?.club_id);
+  const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
+  const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
 
   console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
 
@@ -345,6 +377,23 @@ const Index = () => {
   // Dashboard de administrador
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-4 sm:p-6 border border-primary/20">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-primary/10 rounded-full">
+            <Home className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10172a]">
+              ¡Hola, {profile?.full_name?.split(' ')[0] || 'Admin'}! 👋
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Bienvenido a tu panel de administración
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Section - Hidden on mobile */}
       <div className="hidden md:block">
         <DashboardStats />
@@ -557,31 +606,78 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Mobile Classes with Absences Section - Only visible on mobile */}
+      {/* Mobile Unified Notifications Panel - Only visible on mobile */}
       <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
-            Clases con ausencias
+            Notificaciones de hoy
           </h3>
         </div>
         <div className="space-y-3">
-          {classesWithAbsences && classesWithAbsences.length > 0 ? (
-            classesWithAbsences.map((classData) => {
-              const isExpanded = expandedClass === classData.id;
-              const absentStudents = classData.participants.filter(p => p.absence_confirmed);
-              const presentStudents = classData.participants.filter(p => !p.absence_confirmed && !p.is_substitute);
-              const substituteStudents = classData.participants.filter(p => p.is_substitute);
+          {(() => {
+            // Combinar ausencias y solicitudes de lista de espera en un solo array
+            const notifications: Array<{
+              type: 'absence' | 'waitlist';
+              timestamp: string;
+              data: any;
+            }> = [];
 
+            // Agregar clases con ausencias
+            if (classesWithAbsences && classesWithAbsences.length > 0) {
+              classesWithAbsences.forEach((classData) => {
+                const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
+                if (absentStudents.length > 0) {
+                  // Usar la hora de la clase como timestamp
+                  const classDateTime = `${format(new Date(), 'yyyy-MM-dd')}T${classData.start_time}`;
+                  notifications.push({
+                    type: 'absence',
+                    timestamp: classDateTime,
+                    data: classData
+                  });
+                }
+              });
+            }
+
+            // Agregar solicitudes de lista de espera
+            if (waitlistRequests && waitlistRequests.length > 0) {
+              waitlistRequests.forEach((request) => {
+                notifications.push({
+                  type: 'waitlist',
+                  timestamp: request.joined_at,
+                  data: request
+                });
+              });
+            }
+
+            // Ordenar por timestamp (más reciente primero)
+            notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            if (notifications.length === 0) {
               return (
-                <div
-                  key={classData.id}
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">No hay notificaciones pendientes</p>
+                </div>
+              );
+            }
+
+            return notifications.map((notification, index) => {
+              if (notification.type === 'absence') {
+                const classData = notification.data;
+                const isExpanded = expandedClass === classData.id;
+                const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
+                const presentStudents = classData.participants.filter((p: any) => !p.absence_confirmed && !p.is_substitute);
+                const substituteStudents = classData.participants.filter((p: any) => p.is_substitute);
+
+                return (
+                  <div
+                    key={`absence-${classData.id}`}
                   className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
                 >
                   {/* Class Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className="p-2 rounded-lg bg-orange-100 flex-shrink-0">
-                        <GraduationCap className="h-4 w-4 text-orange-600" />
+                      <div className="flex-shrink-0">
+                        <UserMinusIcon className="h-8 w-8 text-red-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-[#10172a]">
@@ -590,14 +686,6 @@ const Index = () => {
                         <p className="text-xs text-gray-600 mt-1">
                           {classData.start_time.substring(0, 5)} · {classData.trainer?.full_name}
                         </p>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs bg-red-50 border-red-200 text-red-700">
-                            {classData.absenceCount} {classData.absenceCount === 1 ? 'ausencia' : 'ausencias'}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {classData.totalParticipants} alumnos
-                          </Badge>
-                        </div>
                       </div>
                     </div>
                     <Button
@@ -668,11 +756,16 @@ const Index = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setSubstituteDialog({
-                        open: true,
-                        classId: classData.id,
-                        className: classData.name
-                      })}
+                      onClick={() => {
+                        const today = format(new Date(), 'yyyy-MM-dd');
+                        setSubstituteDialog({
+                          open: true,
+                          classId: classData.id,
+                          className: classData.name,
+                          classTime: classData.start_time.substring(0, 5),
+                          classDate: today
+                        });
+                      }}
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
@@ -681,11 +774,25 @@ const Index = () => {
                     <Button
                       size="sm"
                       onClick={() => {
+                        console.log('📱 WhatsApp groups available:', allWhatsAppGroups?.length);
+
+                        // Si hay más de un grupo, mostrar diálogo de selección
+                        if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+                          console.log('📋 Mostrando diálogo de selección de grupo');
+                          setWhatsappGroupDialog({
+                            open: true,
+                            classData: classData
+                          });
+                          return;
+                        }
+
+                        // Si solo hay un grupo o ninguno, usar el grupo actual
                         if (!whatsappGroup?.group_chat_id) {
                           alert('No hay grupo de WhatsApp configurado');
                           return;
                         }
 
+                        console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
                         const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
                         const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
@@ -703,8 +810,11 @@ const Index = () => {
                           classId: classData.id,
                           notificationType: 'absence'
                         });
+
+                        // Marcar la clase como notificada
+                        setNotificationSentClasses(prev => new Set(prev).add(classData.id));
                       }}
-                      disabled={isSendingWhatsApp || !whatsappGroup}
+                      disabled={isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                       <WhatsAppIcon className="h-3 w-3 mr-1" />
@@ -713,18 +823,66 @@ const Index = () => {
                   </div>
                 </div>
               );
-            })
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">No hay clases con ausencias hoy</p>
-            </div>
-          )}
+              } else if (notification.type === 'waitlist') {
+                // Waitlist request card
+                const request = notification.data;
+                return (
+                  <div
+                    key={`waitlist-${request.id}`}
+                    className="flex items-center justify-between p-4 rounded-lg bg-white border border-gray-200"
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
+                        <Bell className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#10172a]">
+                          {request.user_profile.full_name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0 border-green-200 hover:bg-green-50"
+                        onClick={() => approveRequest({
+                          waitlistId: request.id,
+                          classId: request.class_id,
+                          userId: request.user_id
+                        })}
+                        disabled={isApproving || isRejecting}
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0 border-red-200 hover:bg-red-50"
+                        onClick={() => rejectRequest({ waitlistId: request.id })}
+                        disabled={isApproving || isRejecting}
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            });
+          })()}
         </div>
       </div>
 
       {/* Substitute Search Sheet (Bottom Sheet for Mobile) */}
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
-        <SheetContent side="bottom" className="h-[90vh]">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-[30px]">
           <SheetHeader>
             <SheetTitle>Buscar Sustituto</SheetTitle>
             <SheetDescription>
@@ -736,12 +894,78 @@ const Index = () => {
               <SubstituteStudentSearch
                 classId={substituteDialog.classId}
                 clubId={profile.club_id}
-                onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
+                className={substituteDialog.className}
+                classTime={substituteDialog.classTime}
+                classDate={substituteDialog.classDate}
+                onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', classTime: '', classDate: '' })}
               />
             )}
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* WhatsApp Group Selection Dialog */}
+      <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seleccionar Grupo de WhatsApp</DialogTitle>
+            <DialogDescription>
+              Elige el grupo al que quieres enviar la notificación de ausencia para la clase <strong>{whatsappGroupDialog.classData?.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 mt-4">
+            {allWhatsAppGroups && allWhatsAppGroups.length > 0 ? (
+              allWhatsAppGroups.map((group) => (
+                <Button
+                  key={group.id}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto py-3"
+                  onClick={() => {
+                    if (!whatsappGroupDialog.classData) return;
+
+                    const today = format(new Date(), 'yyyy-MM-dd');
+                    const waitlistUrl = `${window.location.origin}/waitlist/${whatsappGroupDialog.classData.id}/${today}`;
+                    const absentCount = whatsappGroupDialog.classData.participants.filter(p => p.absence_confirmed).length;
+                    const substituteCount = whatsappGroupDialog.classData.participants.filter(p => p.is_substitute).length;
+                    const availableSlots = absentCount - substituteCount;
+
+                    console.log('📤 Enviando notificación al grupo:', group.group_name);
+
+                    sendWhatsApp({
+                      groupChatId: group.group_chat_id,
+                      className: whatsappGroupDialog.classData.name,
+                      classDate: today,
+                      classTime: whatsappGroupDialog.classData.start_time,
+                      trainerName: 'Profesor',
+                      waitlistUrl,
+                      availableSlots,
+                      classId: whatsappGroupDialog.classData.id,
+                      notificationType: 'absence'
+                    });
+
+                    // Marcar la clase como notificada
+                    setNotificationSentClasses(prev => new Set(prev).add(whatsappGroupDialog.classData.id));
+
+                    // Cerrar el diálogo
+                    setWhatsappGroupDialog({ open: false, classData: null });
+                  }}
+                >
+                  <div>
+                    <div className="font-semibold">{group.group_name}</div>
+                    {group.trainer_profile_id && (
+                      <div className="text-xs text-muted-foreground mt-1">Grupo del profesor</div>
+                    )}
+                  </div>
+                </Button>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay grupos de WhatsApp configurados
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

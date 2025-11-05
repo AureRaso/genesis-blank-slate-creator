@@ -419,7 +419,28 @@ export default function ScheduledClassForm({
   const formContent = (
     <>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        {/* Mobile layout - Vertical stacking */}
+        <div className="flex flex-col gap-4 md:hidden">
+          {/* Step indicator */}
+          <div className="flex items-center justify-center gap-1">
+            {[1, 2, 3].map(step => <div key={step} className="flex items-center">
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium", step === currentStep ? "bg-primary text-primary-foreground" : step < currentStep ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground")}>
+                  {step}
+                </div>
+                {step < 3 && <div className="w-8 h-px bg-border mx-2" />}
+              </div>)}
+          </div>
+
+          {/* Step title below */}
+          <div className="text-lg font-semibold text-center">
+            {currentStep === 1 && t('classes.basicInfoAndRecurrence')}
+            {currentStep === 2 && t('classes.groupAndStudents')}
+            {currentStep === 3 && t('classes.finalConfiguration')}
+          </div>
+        </div>
+
+        {/* Desktop layout - Horizontal */}
+        <div className="hidden md:flex items-center justify-between">
           {/* Step indicator */}
           <div className="flex items-center gap-1">
             {[1, 2, 3].map(step => <div key={step} className="flex items-center">
@@ -658,10 +679,20 @@ export default function ScheduledClassForm({
                 {/* Modified Days Selection */}
                 <FormField control={form.control} name="selected_days" render={() => <FormItem>
                       <FormLabel>{t('classes.daysOfWeek')}</FormLabel>
-                      <div className="flex justify-between gap-3">
+                      {/* Mobile: Grid 2 columns */}
+                      <div className="grid grid-cols-2 gap-3 md:hidden">
                         {DAYS_OF_WEEK.map(day => <div key={day.value} className="flex items-center space-x-2">
                             <Checkbox id={`day-${day.value}`} checked={watchedValues.selected_days?.includes(day.value)} onCheckedChange={checked => handleDaySelection(day.value, checked as boolean)} />
-                            <label htmlFor={`day-${day.value}`} className="text-sm font-medium cursor-pointer whitespace-nowrap">
+                            <label htmlFor={`day-${day.value}`} className="text-sm font-medium cursor-pointer">
+                              {day.label}
+                            </label>
+                          </div>)}
+                      </div>
+                      {/* Desktop: Single row */}
+                      <div className="hidden md:flex justify-between gap-3">
+                        {DAYS_OF_WEEK.map(day => <div key={day.value} className="flex items-center space-x-2">
+                            <Checkbox id={`day-${day.value}-desktop`} checked={watchedValues.selected_days?.includes(day.value)} onCheckedChange={checked => handleDaySelection(day.value, checked as boolean)} />
+                            <label htmlFor={`day-${day.value}-desktop`} className="text-sm font-medium cursor-pointer whitespace-nowrap">
                               {day.label}
                             </label>
                           </div>)}

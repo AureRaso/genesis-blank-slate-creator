@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +6,7 @@ import { useHasPromotions } from "@/hooks/usePromotions";
 
 const MobileTabBar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isPlayer, isTrainer, isGuardian, isAdmin, profile } = useAuth();
 
   // Check if club has promotions
@@ -49,7 +50,10 @@ const MobileTabBar = () => {
     },
     {
       name: "Clases",
-      path: "/dashboard/scheduled-classes",
+      action: () => {
+        // Navegar directamente a la página de crear clase
+        navigate("/dashboard/scheduled-classes/new");
+      },
       icon: Calendar,
     },
     {
@@ -68,7 +72,10 @@ const MobileTabBar = () => {
     },
     {
       name: "Crear Clase",
-      path: "/dashboard/scheduled-classes",
+      action: () => {
+        // Navegar directamente a la página de crear clase
+        navigate("/dashboard/scheduled-classes/new");
+      },
       icon: Plus,
     },
     {
@@ -81,46 +88,81 @@ const MobileTabBar = () => {
   // Guardians use the same tabs as players
   const tabs = isAdmin ? adminTabs : isTrainer ? trainerTabs : playerTabs;
 
-  // Dynamic grid columns based on number of tabs
-  const getGridCols = () => {
-    const count = tabs.length;
-    if (count === 2) return "grid-cols-2";
-    if (count === 3) return "grid-cols-3";
-    if (count === 4) return "grid-cols-4";
-    return "grid-cols-5"; // For 5 or more tabs
-  };
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
-      <div className={cn(
-        "grid h-16",
-        getGridCols()
-      )}>
-        {tabs.map((tab) => {
-          const isActive = location.pathname === tab.path;
-          const Icon = tab.icon;
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden w-full overflow-hidden">
+      <div className="relative bg-primary shadow-2xl">
+        {/* Decorative notch on the right side */}
+        <div className="absolute -top-2 right-8 w-16 h-8 bg-primary rounded-b-full" />
 
-          return (
-            <Link
-              key={tab.path}
-              to={tab.path}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-all duration-200",
-                isActive
-                  ? "text-primary"
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              <Icon
+        <div className="flex items-center justify-around h-20 px-4">
+          {tabs.map((tab: any, index) => {
+            const isActive = tab.path ? location.pathname === tab.path : false;
+            const Icon = tab.icon;
+
+            const content = (
+              <>
+                {/* Active background circle */}
+                <div className="relative flex items-center justify-center w-12 h-12">
+                  {isActive && (
+                    <div className="absolute inset-0 bg-white/20 rounded-full transition-all duration-300" />
+                  )}
+
+                  {/* Icon */}
+                  <Icon
+                    className={cn(
+                      "relative z-10 transition-all duration-300 ease-out",
+                      isActive
+                        ? "h-6 w-6 text-white drop-shadow-lg"
+                        : "h-5 w-5 text-white/60"
+                    )}
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                </div>
+
+                {/* Label */}
+                <span
+                  className={cn(
+                    "text-[10px] font-medium transition-all duration-300 mt-0.5",
+                    isActive
+                      ? "text-white"
+                      : "text-white/60"
+                  )}
+                >
+                  {tab.name}
+                </span>
+              </>
+            );
+
+            // Si tiene action, usar button; si tiene path, usar Link
+            if (tab.action) {
+              return (
+                <button
+                  key={index}
+                  onClick={tab.action}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center transition-all duration-300 ease-out",
+                    "active:scale-95"
+                  )}
+                >
+                  {content}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={tab.path}
+                to={tab.path}
                 className={cn(
-                  "h-5 w-5 transition-transform duration-200",
-                  isActive && "scale-110"
+                  "relative flex flex-col items-center justify-center transition-all duration-300 ease-out",
+                  "active:scale-95"
                 )}
-              />
-              <span className="text-xs font-medium">{tab.name}</span>
-            </Link>
-          );
-        })}
+              >
+                {content}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
