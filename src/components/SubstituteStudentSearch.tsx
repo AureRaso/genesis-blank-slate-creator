@@ -11,10 +11,13 @@ import { toast } from "@/hooks/use-toast";
 interface SubstituteStudentSearchProps {
   classId: string;
   clubId: string;
+  className?: string;
+  classTime?: string;
+  classDate?: string;
   onSuccess?: () => void;
 }
 
-const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStudentSearchProps) => {
+const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classDate, onSuccess }: SubstituteStudentSearchProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -223,7 +226,7 @@ const SubstituteStudentSearch = ({ classId, clubId, onSuccess }: SubstituteStude
       </div>
 
       {/* Fixed Bottom Button */}
-      <div className="sticky bottom-0 bg-white border-t pt-4">
+      <div className="sticky bottom-0 bg-white border-t pt-4 pb-4">
         <Button
           size="lg"
           onClick={() => selectedStudentId && addSubstitute.mutate(selectedStudentId)}
