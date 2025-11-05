@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag } from "lucide-react";
+import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
 
 const MobileTabBar = () => {
   const location = useLocation();
-  const { isPlayer, isTrainer, isGuardian, profile } = useAuth();
+  const { isPlayer, isTrainer, isGuardian, isAdmin, profile } = useAuth();
 
   // Check if club has promotions
   const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
@@ -59,8 +59,27 @@ const MobileTabBar = () => {
     },
   ];
 
+  // Tabs for admins
+  const adminTabs = [
+    {
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: Home,
+    },
+    {
+      name: "Crear Clase",
+      path: "/dashboard/scheduled-classes",
+      icon: Plus,
+    },
+    {
+      name: "Asistencia",
+      path: "/dashboard/today-attendance",
+      icon: ClipboardCheck,
+    },
+  ];
+
   // Guardians use the same tabs as players
-  const tabs = isTrainer ? trainerTabs : playerTabs;
+  const tabs = isAdmin ? adminTabs : isTrainer ? trainerTabs : playerTabs;
 
   // Dynamic grid columns based on number of tabs
   const getGridCols = () => {

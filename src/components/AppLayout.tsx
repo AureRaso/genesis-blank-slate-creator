@@ -30,6 +30,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isPlayer = authContext?.isPlayer || false;
   const isTrainer = authContext?.isTrainer || false;
   const isGuardian = authContext?.isGuardian || false;
+  const isAdmin = authContext?.isAdmin || false;
   const { profile, signOut } = useAuth();
 
   const getBreadcrumbInfo = () => {
@@ -69,8 +70,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const breadcrumbInfo = getBreadcrumbInfo();
 
-  // Layout for players, trainers, and guardians - Mobile-first with tab bar
-  if (isPlayer || isTrainer || isGuardian) {
+  // Layout for players, trainers, guardians, and admins - Mobile-first with tab bar
+  if (isPlayer || isTrainer || isGuardian || isAdmin) {
     return (
       <>
         <div className="flex min-h-screen w-full flex-col">
@@ -157,36 +158,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     );
   }
 
-  // Layout for admins - Original layout
+  // Fallback layout (should not be reached)
   return (
-    <div className="flex min-h-screen w-full">
-      <AppSidebar />
-      <SidebarInset className="flex flex-col flex-1 min-h-screen">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link to="/dashboard">
-                      PadeLock
-                    </Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{breadcrumbInfo.title}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {children}
-        </div>
-      </SidebarInset>
+    <div className="flex min-h-screen w-full items-center justify-center">
+      <p>Error: Role no reconocido</p>
     </div>
   );
 };
