@@ -39,14 +39,16 @@ const TrainerStudentsList = ({
 
   const { data: students = [], isLoading } = useStudentEnrollments();
 
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
-    
-    return matchesSearch && matchesStatus && matchesPeriod;
-  });
+  const filteredStudents = students
+    .filter((student) => {
+      const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+      const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
+
+      return matchesSearch && matchesStatus && matchesPeriod;
+    })
+    .sort((a, b) => a.full_name.localeCompare(b.full_name)); // Orden alfabético
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -174,118 +176,108 @@ const TrainerStudentsList = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          {filteredStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-lg transition-all duration-300 group">
-              <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm sm:text-base md:text-lg flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-                      <span className="truncate">{student.full_name}</span>
-                    </CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">
-                      <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                        <span>Nivel {student.level}</span>
-                        <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {filteredStudents.map((student) => (
+                <div
+                  key={student.id}
+                  className="p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Nombre y estado */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h3 className="font-semibold text-base truncate">
+                          {student.full_name}
+                        </h3>
+                        <Badge variant="outline" className="flex-shrink-0">
+                          Nivel {student.level}
+                        </Badge>
+                        <Badge variant={getStatusBadgeVariant(student.status)} className="flex-shrink-0">
                           {getStatusLabel(student.status)}
                         </Badge>
                       </div>
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center flex-shrink-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => onAssignToClass(student)}
-                      className="bg-gradient-to-r from-primary to-primary/80 text-xs h-7 sm:h-8 px-2 sm:px-3"
-                    >
-                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                      <span className="hidden sm:inline">Asignar</span>
-                    </Button>
+
+                      {/* Información en una sola línea en desktop, columnas en mobile */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{student.email}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{student.phone}</span>
+                        </div>
+
+                        {student.enrollment_period && (
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{getPeriodLabel(student.enrollment_period)}</span>
+                          </div>
+                        )}
+
+                        {student.first_payment && (
+                          <div className="flex items-center gap-1.5">
+                            <Euro className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{student.first_payment}€</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Información adicional si existe */}
+                      {student.course && (
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {student.course}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botones de acción */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => onAssignToClass(student)}
+                        className="h-8 px-3"
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Asignar</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewStudent(student)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditStudent(student)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteStudent(student.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
-
-              <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
-                <div className="grid grid-cols-1 gap-1 sm:gap-2 text-xs sm:text-sm">
-                  <div className="flex items-center text-muted-foreground">
-                    <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{student.email}</span>
-                  </div>
-
-                  <div className="flex items-center text-muted-foreground">
-                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{student.phone}</span>
-                  </div>
-
-                  {student.enrollment_period && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                      <span>{getPeriodLabel(student.enrollment_period)}</span>
-                    </div>
-                  )}
-
-                  {student.weekly_days && student.weekly_days.length > 0 && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">{student.weekly_days.join(", ")}</span>
-                    </div>
-                  )}
-
-                  {student.first_payment && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Euro className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                      <span>{student.first_payment}€</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 border-t">
-                  <div className="flex gap-1 flex-wrap">
-                    {student.course && (
-                      <Badge variant="outline" className="text-xs">
-                        {student.course}
-                      </Badge>
-                    )}
-                    {student.club_name && (
-                      <Badge variant="secondary" className="text-xs truncate max-w-[150px]">
-                        {student.club_name}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-0 sm:gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onViewStudent(student)}
-                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                    >
-                      <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditStudent(student)}
-                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                    >
-                      <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteStudent(student.id)}
-                      className="text-red-600 hover:text-red-700 h-7 w-7 sm:h-8 sm:w-8 p-0"
-                    >
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

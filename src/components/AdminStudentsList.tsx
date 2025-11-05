@@ -31,7 +31,7 @@ const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
-  const [sortOrder, setSortOrder] = useState<string>("arrival"); // "arrival" or "alphabetical"
+  const [sortOrder, setSortOrder] = useState<string>("alphabetical"); // "arrival" or "alphabetical"
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -295,113 +295,124 @@ const AdminStudentsList = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {paginatedStudents.map((student) => (
-              <div key={student.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-lg">{student.full_name}</h4>
-                    <div className="flex items-center space-x-2 mt-1">
-                      {editingStudentId === student.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            min="1"
-                            max="10"
-                            step="1"
-                            value={editingLevel}
-                            onChange={(e) => handleLevelChange(e.target.value)}
-                            className="w-20 h-8"
-                            placeholder="1-10"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveLevel(student.id)}
-                            disabled={updateStudentMutation.isPending}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleCancelEdit}
-                            disabled={updateStudentMutation.isPending}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {paginatedStudents.map((student) => (
+                    <div
+                      key={student.id}
+                      className="p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        {/* Nombre, nivel y estado */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="font-semibold text-base truncate">
+                              {student.full_name}
+                            </h3>
+
+                            {/* Nivel editable */}
+                            {editingStudentId === student.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  step="1"
+                                  value={editingLevel}
+                                  onChange={(e) => handleLevelChange(e.target.value)}
+                                  className="w-20 h-8"
+                                  placeholder="1-10"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveLevel(student.id)}
+                                  disabled={updateStudentMutation.isPending}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEdit}
+                                  disabled={updateStudentMutation.isPending}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  Nivel {student.level}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingStudentId(student.id);
+                                      setEditingLevel(student.level.toString());
+                                    }}
+                                    className="h-5 w-5 p-0 hover:bg-transparent"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </Badge>
+                              </div>
+                            )}
+
+                            <Badge variant={getStatusBadgeVariant(student.status)} className="flex-shrink-0">
+                              {getStatusLabel(student.status)}
+                            </Badge>
+                          </div>
+
+                          {/* Información en una sola línea en desktop, columnas en mobile */}
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{student.email}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{student.club_name}</span>
+                            </div>
+
+                            {student.enrollment_period && (
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>{getPeriodLabel(student.enrollment_period)}</span>
+                              </div>
+                            )}
+
+                            {student.first_payment && (
+                              <div className="flex items-center gap-1.5">
+                                <Euro className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>{student.first_payment}€</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Información adicional si existe */}
+                          {(student.course || student.observations) && (
+                            <div className="mt-2 flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
+                              {student.course && (
+                                <Badge variant="outline" className="text-xs">
+                                  {student.course}
+                                </Badge>
+                              )}
+                              {student.observations && (
+                                <span className="line-clamp-1">{student.observations}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Nivel {student.level}</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingStudentId(student.id);
-                              setEditingLevel(student.level.toString());
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      <Badge variant={getStatusBadgeVariant(student.status)}>
-                        {getStatusLabel(student.status)}
-                      </Badge>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center text-muted-foreground">
-                    <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{student.email}</span>
-                  </div>
-
-                  <div className="flex items-center text-muted-foreground">
-                    <Building2 className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{student.club_name}</span>
-                  </div>
-
-                  {student.enrollment_period && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>{getPeriodLabel(student.enrollment_period)}</span>
-                    </div>
-                  )}
-
-                  {student.weekly_days && student.weekly_days.length > 0 && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>{student.weekly_days.join(", ")}</span>
-                    </div>
-                  )}
-
-                  {student.first_payment && (
-                    <div className="flex items-center text-muted-foreground">
-                      <Euro className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>{student.first_payment}€</span>
-                    </div>
-                  )}
-                </div>
-
-                {student.course && (
-                  <div className="pt-3 border-t mt-3">
-                    <Badge variant="outline" className="text-xs">
-                      {student.course}
-                    </Badge>
-                  </div>
-                )}
-
-                {student.observations && (
-                  <div className="pt-2 mt-2">
-                    <p className="text-sm text-muted-foreground">{student.observations}</p>
-                  </div>
-                )}
-              </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
