@@ -178,66 +178,89 @@ const TrainerStudentsList = ({
       ) : (
         <Card>
           <CardContent className="p-0">
+            {/* Table Header - Desktop only */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+              <div className="col-span-4">Alumno</div>
+              <div className="col-span-4">Contacto</div>
+              <div className="col-span-2">Matrícula</div>
+              <div className="col-span-2 text-right">Acciones</div>
+            </div>
+
+            {/* Table Body */}
             <div className="divide-y">
-              {filteredStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className="p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    {/* Nombre y estado */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="font-semibold text-base truncate">
+              {filteredStudents.map((student) => {
+                const initials = student.full_name
+                  .split(' ')
+                  .map(n => n[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase();
+
+                return (
+                  <div
+                    key={student.id}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                  >
+                    {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
+                    <div className="col-span-1 md:col-span-4 flex items-start gap-3">
+                      {/* Avatar con iniciales */}
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
+                        {initials}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base truncate mb-1">
                           {student.full_name}
                         </h3>
-                        <Badge variant="outline" className="flex-shrink-0">
-                          Nivel {student.level}
-                        </Badge>
-                        <Badge variant={getStatusBadgeVariant(student.status)} className="flex-shrink-0">
-                          {getStatusLabel(student.status)}
-                        </Badge>
-                      </div>
 
-                      {/* Información en una sola línea en desktop, columnas en mobile */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground flex-wrap">
-                        <div className="flex items-center gap-1.5">
-                          <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="truncate">{student.email}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            Nivel {student.level}
+                          </Badge>
+
+                          <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
+                            {getStatusLabel(student.status)}
+                          </Badge>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span>{student.phone}</span>
-                        </div>
-
-                        {student.enrollment_period && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span>{getPeriodLabel(student.enrollment_period)}</span>
-                          </div>
-                        )}
-
-                        {student.first_payment && (
-                          <div className="flex items-center gap-1.5">
-                            <Euro className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span>{student.first_payment}€</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Información adicional si existe */}
-                      {student.course && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="text-xs">
+                        {student.course && (
+                          <Badge variant="outline" className="text-xs mt-1.5">
                             {student.course}
                           </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Columna 2: Contacto */}
+                    <div className="col-span-1 md:col-span-4 flex flex-col gap-1.5 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">{student.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>{student.phone}</span>
+                      </div>
+                    </div>
+
+                    {/* Columna 3: Info de Matrícula */}
+                    <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 text-sm">
+                      {student.enrollment_period && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{getPeriodLabel(student.enrollment_period)}</span>
+                        </div>
+                      )}
+                      {student.first_payment && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Euro className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="font-medium text-foreground">{student.first_payment}€</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Botones de acción */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Columna 4: Acciones */}
+                    <div className="col-span-1 md:col-span-2 flex items-center justify-start md:justify-end gap-1 mt-2 md:mt-0">
                       <Button
                         variant="default"
                         size="sm"
@@ -273,8 +296,8 @@ const TrainerStudentsList = ({
                       </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

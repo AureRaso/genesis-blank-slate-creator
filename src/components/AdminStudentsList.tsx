@@ -297,119 +297,158 @@ const AdminStudentsList = () => {
           <>
             <Card>
               <CardContent className="p-0">
+                {/* Table Header - Desktop only */}
+                <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+                  <div className="col-span-3">Alumno</div>
+                  <div className="col-span-3">Contacto</div>
+                  <div className="col-span-2">Club</div>
+                  <div className="col-span-2">Matrícula</div>
+                  <div className="col-span-2 text-right">Acciones</div>
+                </div>
+
+                {/* Table Body */}
                 <div className="divide-y">
-                  {paginatedStudents.map((student) => (
-                    <div
-                      key={student.id}
-                      className="p-4 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        {/* Nombre, nivel y estado */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <h3 className="font-semibold text-base truncate">
+                  {paginatedStudents.map((student) => {
+                    const initials = student.full_name
+                      .split(' ')
+                      .map(n => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase();
+
+                    return (
+                      <div
+                        key={student.id}
+                        className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                      >
+                        {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
+                        <div className="col-span-1 md:col-span-3 flex items-start gap-3">
+                          {/* Avatar con iniciales */}
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
+                            {initials}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-base truncate mb-1">
                               {student.full_name}
                             </h3>
 
-                            {/* Nivel editable */}
-                            {editingStudentId === student.id ? (
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max="10"
-                                  step="1"
-                                  value={editingLevel}
-                                  onChange={(e) => handleLevelChange(e.target.value)}
-                                  className="w-20 h-8"
-                                  placeholder="1-10"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleSaveLevel(student.id)}
-                                  disabled={updateStudentMutation.isPending}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={handleCancelEdit}
-                                  disabled={updateStudentMutation.isPending}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                  Nivel {student.level}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Nivel editable */}
+                              {editingStudentId === student.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    step="1"
+                                    value={editingLevel}
+                                    onChange={(e) => handleLevelChange(e.target.value)}
+                                    className="w-16 h-7 text-xs"
+                                    placeholder="1-10"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveLevel(student.id)}
+                                    disabled={updateStudentMutation.isPending}
+                                    className="h-7 w-7 p-0"
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </Button>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => {
-                                      setEditingStudentId(student.id);
-                                      setEditingLevel(student.level.toString());
-                                    }}
-                                    className="h-5 w-5 p-0 hover:bg-transparent"
+                                    onClick={handleCancelEdit}
+                                    disabled={updateStudentMutation.isPending}
+                                    className="h-7 w-7 p-0"
                                   >
-                                    <Edit className="h-3 w-3" />
+                                    <X className="h-3 w-3" />
                                   </Button>
-                                </Badge>
-                              </div>
-                            )}
-
-                            <Badge variant={getStatusBadgeVariant(student.status)} className="flex-shrink-0">
-                              {getStatusLabel(student.status)}
-                            </Badge>
-                          </div>
-
-                          {/* Información en una sola línea en desktop, columnas en mobile */}
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground flex-wrap">
-                            <div className="flex items-center gap-1.5">
-                              <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate">{student.email}</span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5">
-                              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate">{student.club_name}</span>
-                            </div>
-
-                            {student.enrollment_period && (
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span>{getPeriodLabel(student.enrollment_period)}</span>
-                              </div>
-                            )}
-
-                            {student.first_payment && (
-                              <div className="flex items-center gap-1.5">
-                                <Euro className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span>{student.first_payment}€</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Información adicional si existe */}
-                          {(student.course || student.observations) && (
-                            <div className="mt-2 flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
-                              {student.course && (
-                                <Badge variant="outline" className="text-xs">
-                                  {student.course}
+                                </div>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => {
+                                  setEditingStudentId(student.id);
+                                  setEditingLevel(student.level.toString());
+                                }}>
+                                  Nivel {student.level}
+                                  <Edit className="h-2.5 w-2.5" />
                                 </Badge>
                               )}
-                              {student.observations && (
-                                <span className="line-clamp-1">{student.observations}</span>
-                              )}
+
+                              <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
+                                {getStatusLabel(student.status)}
+                              </Badge>
+                            </div>
+
+                            {student.course && (
+                              <Badge variant="outline" className="text-xs mt-1.5">
+                                {student.course}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Columna 2: Contacto */}
+                        <div className="col-span-1 md:col-span-3 flex flex-col gap-1.5 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate">{student.email}</span>
+                          </div>
+                          {student.phone && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <CreditCard className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{student.phone || 'N/A'}</span>
                             </div>
                           )}
                         </div>
+
+                        {/* Columna 3: Club */}
+                        <div className="col-span-1 md:col-span-2 flex items-start md:items-center">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate">{student.club_name}</span>
+                          </div>
+                        </div>
+
+                        {/* Columna 4: Info de Matrícula */}
+                        <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 text-sm">
+                          {student.enrollment_period && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>{getPeriodLabel(student.enrollment_period)}</span>
+                            </div>
+                          )}
+                          {student.first_payment && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Euro className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="font-medium text-foreground">{student.first_payment}€</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Columna 5: Observaciones (si existen) - Mobile only */}
+                        {student.observations && (
+                          <div className="col-span-1 md:hidden text-xs text-muted-foreground italic">
+                            {student.observations}
+                          </div>
+                        )}
+
+                        {/* Columna 6: Acciones - Ahora visible */}
+                        <div className="col-span-1 md:col-span-2 flex items-center justify-start md:justify-end gap-1 mt-2 md:mt-0">
+                          {student.observations && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs hidden md:inline-flex"
+                              title={student.observations}
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
