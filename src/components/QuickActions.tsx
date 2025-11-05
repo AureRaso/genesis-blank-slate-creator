@@ -4,7 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
-const QuickActions = () => {
+interface QuickActionsProps {
+  showTitle?: boolean;
+  hideScheduleClass?: boolean;
+}
+
+const QuickActions = ({ showTitle = true, hideScheduleClass = false }: QuickActionsProps) => {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const { leagues: leaguesEnabled } = useFeatureFlags();
@@ -57,15 +62,22 @@ const QuickActions = () => {
     }
   ];
 
-  const actions = isAdmin ? adminActions : playerActions;
+  let actions = isAdmin ? adminActions : playerActions;
+
+  // Filter out "Programar Clases" if hideScheduleClass is true
+  if (hideScheduleClass) {
+    actions = actions.filter(action => action.title !== "Programar Clases");
+  }
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-3 sm:mb-4">
-        <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-          Acciones Rápidas
-        </h3>
-      </div>
+      {showTitle && (
+        <div className="mb-3 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
+            Acciones Rápidas
+          </h3>
+        </div>
+      )}
       <div className="flex-1">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {actions.map((action, index) => {

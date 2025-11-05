@@ -6,18 +6,24 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useClubPendingEnrollmentRequests, useAcceptEnrollmentRequest, useRejectEnrollmentRequest } from "@/hooks/useEnrollmentRequests";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
   const { t } = useTranslation();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const [showAllActivities, setShowAllActivities] = useState(false);
+
+  // Fetch pending enrollment requests
+  const { data: pendingRequests } = useClubPendingEnrollmentRequests(profile?.club_id);
+  const acceptRequest = useAcceptEnrollmentRequest();
+  const rejectRequest = useRejectEnrollmentRequest();
 
   console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
 
@@ -317,18 +323,23 @@ const Index = () => {
   // Dashboard de administrador
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-      {/* Stats Section */}
-      <div>
+      {/* Stats Section - Hidden on mobile */}
+      <div className="hidden md:block">
         <DashboardStats />
       </div>
 
-      {/* Quick Actions - Full width */}
-      <div>
+      {/* Quick Actions - Full width on desktop */}
+      <div className="hidden md:block">
         <QuickActions />
       </div>
 
-      {/* Activity Backlog Section - Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Mobile Quick Actions - Only visible on mobile, no title, no "Programar Clases" */}
+      <div className="md:hidden">
+        <QuickActions showTitle={false} hideScheduleClass={true} />
+      </div>
+
+      {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Actividad Reciente */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
@@ -521,6 +532,72 @@ const Index = () => {
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Enrollment Requests Section - Only visible on mobile */}
+      <div className="md:hidden">
+        <div className="mb-3">
+          <h3 className="text-base font-bold text-[#10172a]">
+            Solicitudes de Lista de Espera
+          </h3>
+        </div>
+        <div className="space-y-3">
+          {pendingRequests && pendingRequests.length > 0 ? (
+            pendingRequests.map((request) => (
+              <div
+                key={request.id}
+                className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#10172a]">
+                      {request.student_profile?.full_name}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {request.programmed_class?.name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {getTimeAgo(request.requested_at)}
+                    </p>
+                    {request.notes && (
+                      <p className="text-xs text-gray-500 mt-1 italic">
+                        "{request.notes}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => acceptRequest.mutate(request.id)}
+                    disabled={acceptRequest.isPending}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Aceptar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => rejectRequest.mutate({ requestId: request.id })}
+                    disabled={rejectRequest.isPending}
+                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Rechazar
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No hay solicitudes pendientes</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

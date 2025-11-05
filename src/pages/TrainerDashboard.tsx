@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
@@ -8,11 +8,17 @@ import { useTodayAttendance } from "@/hooks/useTodayAttendance";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClubPendingEnrollmentRequests, useAcceptEnrollmentRequest, useRejectEnrollmentRequest } from "@/hooks/useEnrollmentRequests";
 
 const TrainerDashboard = () => {
   const navigate = useNavigate();
   const [showAllActivities, setShowAllActivities] = useState(false);
   const { profile } = useAuth();
+
+  // Fetch pending enrollment requests
+  const { data: pendingRequests } = useClubPendingEnrollmentRequests(profile?.club_id);
+  const acceptRequest = useAcceptEnrollmentRequest();
+  const rejectRequest = useRejectEnrollmentRequest();
 
   const {
     data: trainerProfile,
@@ -317,10 +323,28 @@ const TrainerDashboard = () => {
     }
   ];
 
+  // Filter quick actions for mobile (remove "Programar Clases")
+  const mobileQuickActions = quickActions.filter(action => action.title !== "Programar Clases");
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now.getTime() - past.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    return past.toLocaleDateString();
+  };
+
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-      {/* Welcome message - Only visible on mobile */}
-      <div className="md:hidden mb-2">
+      {/* Welcome message - Hidden on mobile */}
+      <div className="hidden md:block mb-2">
         <h1 className="text-xl font-bold text-[#10172a]">
           Hola, {profile?.full_name?.split(' ')[0] || 'Entrenador'}
         </h1>
@@ -329,8 +353,8 @@ const TrainerDashboard = () => {
         </p>
       </div>
 
-      {/* Top 3 Stats Section - Full Width */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      {/* Top 3 Stats Section - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {topStats.map((stat, index) => {
           const Icon = stat.icon;
           const isOrange = stat.color === 'text-primary';
@@ -361,8 +385,8 @@ const TrainerDashboard = () => {
         })}
       </div>
 
-      {/* Quick Actions - Full width */}
-      <div>
+      {/* Quick Actions - Full width on desktop */}
+      <div className="hidden md:block">
         <div className="mb-3 sm:mb-4">
           <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
             Acciones Rápidas
@@ -398,8 +422,40 @@ const TrainerDashboard = () => {
         </div>
       </div>
 
-      {/* Activity Backlog Section - Two columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Mobile Quick Actions - Only visible on mobile, no title, no "Programar Clases" */}
+      <div className="md:hidden">
+        <div className="flex-1">
+          <div className="grid grid-cols-2 gap-3">
+            {mobileQuickActions.map((action, index) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={action.action}
+                  className="group relative rounded-xl bg-white hover:bg-primary/5 p-3 sm:p-4 lg:p-5 border border-gray-200 hover:border-primary/40 transition-all duration-300 sm:hover:scale-[1.02] sm:hover:shadow-lg text-left"
+                >
+                  {/* Decorative background element */}
+                  <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors duration-300" />
+
+                  <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 h-full">
+                    <div className="p-2 sm:p-2.5 lg:p-3 rounded-xl bg-primary/10 flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base text-[#10172a] group-hover:text-primary transition-colors leading-tight">
+                        {action.title}
+                      </h3>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Actividad Reciente */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
@@ -528,6 +584,72 @@ const TrainerDashboard = () => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Enrollment Requests Section - Only visible on mobile */}
+      <div className="md:hidden">
+        <div className="mb-3">
+          <h3 className="text-base font-bold text-[#10172a]">
+            Solicitudes de Lista de Espera
+          </h3>
+        </div>
+        <div className="space-y-3">
+          {pendingRequests && pendingRequests.length > 0 ? (
+            pendingRequests.map((request) => (
+              <div
+                key={request.id}
+                className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#10172a]">
+                      {request.student_profile?.full_name}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {request.programmed_class?.name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {getTimeAgo(request.requested_at)}
+                    </p>
+                    {request.notes && (
+                      <p className="text-xs text-gray-500 mt-1 italic">
+                        "{request.notes}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => acceptRequest.mutate(request.id)}
+                    disabled={acceptRequest.isPending}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    Aceptar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => rejectRequest.mutate({ requestId: request.id })}
+                    disabled={rejectRequest.isPending}
+                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Rechazar
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No hay solicitudes pendientes</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
