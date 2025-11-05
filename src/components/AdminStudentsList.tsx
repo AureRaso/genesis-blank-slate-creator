@@ -11,7 +11,7 @@ import {
   Calendar,
   Clock,
   Euro,
-  CreditCard,
+  Phone,
   CheckCircle,
   AlertTriangle,
   Building2,
@@ -373,10 +373,6 @@ const AdminStudentsList = () => {
                                   <Edit className="h-2.5 w-2.5" />
                                 </Badge>
                               )}
-
-                              <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
-                                {getStatusLabel(student.status)}
-                              </Badge>
                             </div>
 
                             {student.course && (
@@ -395,7 +391,7 @@ const AdminStudentsList = () => {
                           </div>
                           {student.phone && (
                             <div className="flex items-center gap-2 text-muted-foreground">
-                              <CreditCard className="h-3.5 w-3.5 flex-shrink-0" />
+                              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
                               <span>{student.phone || 'N/A'}</span>
                             </div>
                           )}

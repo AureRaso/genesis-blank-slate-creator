@@ -216,10 +216,6 @@ const TrainerStudentsList = ({
                           <Badge variant="secondary" className="text-xs">
                             Nivel {student.level}
                           </Badge>
-
-                          <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
-                            {getStatusLabel(student.status)}
-                          </Badge>
                         </div>
 
                         {student.course && (
