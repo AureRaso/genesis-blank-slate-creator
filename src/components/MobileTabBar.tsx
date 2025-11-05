@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus } from "lucide-react";
+import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
@@ -20,12 +20,17 @@ const MobileTabBar = () => {
       icon: Home,
     },
     {
-      name: "Mis Pagos",
+      name: "Pagos",
       path: "/dashboard/my-classes",
       icon: CreditCard,
     },
+    {
+      name: "Historial",
+      path: "/dashboard/historial",
+      icon: History,
+    },
     ...(isGuardian ? [{
-      name: "Mis Hijos",
+      name: "Perfiles",
       path: "/dashboard/my-children",
       icon: Users,
     }] : []),
