@@ -570,15 +570,13 @@ const TrainerDashboard = () => {
           </div>
         </div>
 
-      </div>
-
-      {/* Unified Notifications Panel */}
-      <div>
-        <div className="mb-3">
-          <h3 className="text-base font-bold text-[#10172a]">
-            Notificaciones de hoy
-          </h3>
-        </div>
+        {/* Unified Notifications Panel */}
+        <div>
+          <div className="mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
+              Notificaciones de hoy
+            </h3>
+          </div>
         <div className="space-y-3">
           {(() => {
             // Combinar ausencias y solicitudes de lista de espera en un solo array
@@ -802,6 +800,294 @@ const TrainerDashboard = () => {
                 return (
                   <div
                     key={`waitlist-${request.id}`}
+                    className={`flex items-center justify-between p-4 rounded-lg bg-white border ${borderClass} transition-all duration-300`}
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
+                        <Bell className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#10172a]">
+                          {request.user_profile.full_name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0 border-green-200 hover:bg-green-50"
+                        onClick={() => {
+                          setProcessedRequests(prev => new Map(prev).set(request.id, 'approved'));
+                          approveRequest({
+                            waitlistId: request.id,
+                            classId: request.class_id,
+                            userId: request.user_id
+                          });
+                        }}
+                        disabled={isApproving || isRejecting}
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0 border-red-200 hover:bg-red-50"
+                        onClick={() => {
+                          setProcessedRequests(prev => new Map(prev).set(request.id, 'rejected'));
+                          rejectRequest({ waitlistId: request.id });
+                        }}
+                        disabled={isApproving || isRejecting}
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            });
+          })()}
+        </div>
+        </div>
+      </div>
+
+      {/* Mobile Notifications Panel - Only visible on mobile */}
+      <div className="md:hidden">
+        <div className="mb-3">
+          <h3 className="text-base font-bold text-[#10172a]">
+            Notificaciones de hoy
+          </h3>
+        </div>
+        <div className="space-y-3">
+          {(() => {
+            // Combinar ausencias y solicitudes de lista de espera en un solo array
+            const notifications: Array<{
+              type: 'absence' | 'waitlist';
+              timestamp: string;
+              data: any;
+            }> = [];
+
+            // Agregar clases con ausencias
+            if (classesWithAbsences && classesWithAbsences.length > 0) {
+              classesWithAbsences.forEach((classData) => {
+                const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
+                if (absentStudents.length > 0) {
+                  // Usar la hora de la clase como timestamp
+                  const classDateTime = `${format(new Date(), 'yyyy-MM-dd')}T${classData.start_time}`;
+                  notifications.push({
+                    type: 'absence',
+                    timestamp: classDateTime,
+                    data: classData
+                  });
+                }
+              });
+            }
+
+            // Agregar solicitudes de lista de espera
+            if (filteredWaitlistRequests && filteredWaitlistRequests.length > 0) {
+              filteredWaitlistRequests.forEach((request) => {
+                notifications.push({
+                  type: 'waitlist',
+                  timestamp: request.joined_at,
+                  data: request
+                });
+              });
+            }
+
+            // Ordenar por timestamp (más reciente primero)
+            notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            if (notifications.length === 0) {
+              return (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">No hay notificaciones pendientes</p>
+                </div>
+              );
+            }
+
+            return notifications.map((notification, index) => {
+              if (notification.type === 'absence') {
+                const classData = notification.data;
+                const isExpanded = expandedClass === classData.id;
+                const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
+                const presentStudents = classData.participants.filter((p: any) => !p.absence_confirmed && !p.is_substitute);
+                const substituteStudents = classData.participants.filter((p: any) => p.is_substitute);
+
+                return (
+                  <div
+                    key={`absence-mobile-${classData.id}`}
+                  className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+                >
+                  {/* Class Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="flex-shrink-0">
+                        <UserMinusIcon className="h-8 w-8 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#10172a]">
+                          {classData.name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {classData.start_time.substring(0, 5)} · {classData.trainer?.full_name}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setExpandedClass(isExpanded ? null : classData.id)}
+                      className="ml-2"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Expanded Student List */}
+                  {isExpanded && (
+                    <div className="space-y-2 pt-2 border-t">
+                      {/* Absent Students */}
+                      {absentStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                          {absentStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                              {participant.absence_locked && (
+                                <Badge variant="outline" className="text-[10px] bg-gray-100">
+                                  Bloqueada
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Present Students */}
+                      {presentStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                          {presentStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Substitute Students */}
+                      {substituteStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                          {substituteStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const today = format(new Date(), 'yyyy-MM-dd');
+                        setSubstituteDialog({
+                          open: true,
+                          classId: classData.id,
+                          className: classData.name,
+                          classTime: classData.start_time.substring(0, 5),
+                          classDate: today
+                        });
+                      }}
+                      className="flex-1"
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Añadir sustituto
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        console.log('📱 WhatsApp groups available:', allWhatsAppGroups?.length);
+
+                        // Si hay más de un grupo, mostrar diálogo de selección
+                        if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
+                          console.log('📋 Mostrando diálogo de selección de grupo');
+                          setWhatsappGroupDialog({
+                            open: true,
+                            classData: classData
+                          });
+                          return;
+                        }
+
+                        // Si solo hay un grupo o ninguno, usar el grupo actual
+                        if (!whatsappGroup?.group_chat_id) {
+                          alert('No hay grupo de WhatsApp configurado');
+                          return;
+                        }
+
+                        console.log('📤 Enviando directamente al grupo único');
+                        const today = format(new Date(), 'yyyy-MM-dd');
+                        const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+                        const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
+                        const substituteCount = classData.participants.filter(p => p.is_substitute).length;
+                        const availableSlots = absentCount - substituteCount;
+
+                        sendWhatsApp({
+                          groupChatId: whatsappGroup.group_chat_id,
+                          className: classData.name,
+                          classDate: today,
+                          classTime: classData.start_time,
+                          trainerName: classData.trainer?.full_name || 'Profesor',
+                          waitlistUrl,
+                          availableSlots,
+                          classId: classData.id,
+                          notificationType: 'absence'
+                        });
+
+                        // Marcar la clase como notificada
+                        setNotificationSentClasses(prev => new Set(prev).add(classData.id));
+                      }}
+                      disabled={isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <WhatsAppIcon className="h-3 w-3 mr-1" />
+                      WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              );
+              } else if (notification.type === 'waitlist') {
+                // Waitlist request card
+                const request = notification.data;
+                const requestStatus = processedRequests.get(request.id);
+                const borderClass = requestStatus === 'approved'
+                  ? 'border-green-500 border-2'
+                  : requestStatus === 'rejected'
+                  ? 'border-red-500 border-2'
+                  : 'border-gray-200';
+
+                return (
+                  <div
+                    key={`waitlist-mobile-${request.id}`}
                     className={`flex items-center justify-between p-4 rounded-lg bg-white border ${borderClass} transition-all duration-300`}
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-0">
