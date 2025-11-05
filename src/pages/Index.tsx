@@ -19,12 +19,12 @@ import { format } from "date-fns";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -722,24 +722,26 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Substitute Search Dialog */}
-      <Dialog open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Buscar Sustituto</DialogTitle>
-            <DialogDescription>
+      {/* Substitute Search Sheet (Bottom Sheet for Mobile) */}
+      <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
+        <SheetContent side="bottom" className="h-[90vh]">
+          <SheetHeader>
+            <SheetTitle>Buscar Sustituto</SheetTitle>
+            <SheetDescription>
               Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          {profile?.club_id && (
-            <SubstituteStudentSearch
-              classId={substituteDialog.classId}
-              clubId={profile.club_id}
-              onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto h-[calc(90vh-100px)]">
+            {profile?.club_id && (
+              <SubstituteStudentSearch
+                classId={substituteDialog.classId}
+                clubId={profile.club_id}
+                onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
