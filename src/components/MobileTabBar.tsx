@@ -95,10 +95,7 @@ const MobileTabBar = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden w-full overflow-hidden">
-      <div className="relative bg-primary shadow-2xl">
-        {/* Decorative notch on the right side */}
-        <div className="absolute -top-2 right-8 w-16 h-8 bg-primary rounded-b-full" />
-
+      <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-t border-primary/20 backdrop-blur-sm shadow-lg">
         <div className="flex items-center justify-around h-20 px-4">
           {tabs.map((tab: any, index) => {
             // Check if tab is active
@@ -116,7 +113,7 @@ const MobileTabBar = () => {
                 {/* Active background circle */}
                 <div className="relative flex items-center justify-center w-12 h-12">
                   {isActive && (
-                    <div className="absolute inset-0 bg-white/20 rounded-full transition-all duration-300" />
+                    <div className="absolute inset-0 bg-primary/10 rounded-full transition-all duration-300" />
                   )}
 
                   {/* Icon */}
@@ -124,8 +121,8 @@ const MobileTabBar = () => {
                     className={cn(
                       "relative z-10 transition-all duration-300 ease-out",
                       isActive
-                        ? "h-6 w-6 text-white drop-shadow-lg"
-                        : "h-5 w-5 text-white/60"
+                        ? "h-6 w-6 text-primary drop-shadow-sm"
+                        : "h-5 w-5 text-primary/60"
                     )}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
@@ -136,8 +133,8 @@ const MobileTabBar = () => {
                   className={cn(
                     "text-[10px] font-medium transition-all duration-300 mt-0.5",
                     isActive
-                      ? "text-white"
-                      : "text-white/60"
+                      ? "text-primary"
+                      : "text-primary/60"
                   )}
                 >
                   {tab.name}
