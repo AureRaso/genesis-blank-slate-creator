@@ -632,21 +632,37 @@ const TrainerDashboard = () => {
                 const presentStudents = classData.participants.filter((p: any) => !p.absence_confirmed && !p.is_substitute);
                 const substituteStudents = classData.participants.filter((p: any) => p.is_substitute);
 
+                // Verificar si han pasado 20 minutos desde el inicio de la clase
+                const classStartTime = classData.start_time;
+                const [hours, minutes] = classStartTime.split(':').map(Number);
+                const classStartDate = new Date();
+                classStartDate.setHours(hours, minutes, 0, 0);
+                const twentyMinutesAfterStart = new Date(classStartDate.getTime() + 20 * 60 * 1000);
+                const now = new Date();
+                const isLocked = now >= twentyMinutesAfterStart;
+
                 return (
                   <div
                     key={`absence-${classData.id}`}
-                  className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+                  className={`flex flex-col gap-3 p-4 rounded-lg border ${isLocked ? 'bg-gray-50 border-gray-300 opacity-75' : 'bg-white border-gray-200'}`}
                 >
                   {/* Class Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="flex-shrink-0">
-                        <UserMinusIcon className="h-8 w-8 text-red-600" />
+                        <UserMinusIcon className={`h-8 w-8 ${isLocked ? 'text-gray-400' : 'text-red-600'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">
-                          {classData.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-[#10172a]">
+                            {classData.name}
+                          </p>
+                          {isLocked && (
+                            <Badge variant="outline" className="text-[10px] bg-gray-200 text-gray-700 border-gray-300">
+                              Bloqueada
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-600 mt-1">
                           {classData.start_time.substring(0, 5)} · {classData.trainer?.full_name}
                         </p>
@@ -730,6 +746,7 @@ const TrainerDashboard = () => {
                           classDate: today
                         });
                       }}
+                      disabled={isLocked}
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
@@ -778,7 +795,7 @@ const TrainerDashboard = () => {
                         // Marcar la clase como notificada
                         setNotificationSentClasses(prev => new Set(prev).add(classData.id));
                       }}
-                      disabled={isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
+                      disabled={isLocked || isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                       <WhatsAppIcon className="h-3 w-3 mr-1" />
@@ -920,21 +937,37 @@ const TrainerDashboard = () => {
                 const presentStudents = classData.participants.filter((p: any) => !p.absence_confirmed && !p.is_substitute);
                 const substituteStudents = classData.participants.filter((p: any) => p.is_substitute);
 
+                // Verificar si han pasado 20 minutos desde el inicio de la clase
+                const classStartTime = classData.start_time;
+                const [hours, minutes] = classStartTime.split(':').map(Number);
+                const classStartDate = new Date();
+                classStartDate.setHours(hours, minutes, 0, 0);
+                const twentyMinutesAfterStart = new Date(classStartDate.getTime() + 20 * 60 * 1000);
+                const now = new Date();
+                const isLocked = now >= twentyMinutesAfterStart;
+
                 return (
                   <div
                     key={`absence-mobile-${classData.id}`}
-                  className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+                  className={`flex flex-col gap-3 p-4 rounded-lg border ${isLocked ? 'bg-gray-50 border-gray-300 opacity-75' : 'bg-white border-gray-200'}`}
                 >
                   {/* Class Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <div className="flex-shrink-0">
-                        <UserMinusIcon className="h-8 w-8 text-red-600" />
+                        <UserMinusIcon className={`h-8 w-8 ${isLocked ? 'text-gray-400' : 'text-red-600'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">
-                          {classData.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-[#10172a]">
+                            {classData.name}
+                          </p>
+                          {isLocked && (
+                            <Badge variant="outline" className="text-[10px] bg-gray-200 text-gray-700 border-gray-300">
+                              Bloqueada
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-600 mt-1">
                           {classData.start_time.substring(0, 5)} · {classData.trainer?.full_name}
                         </p>
@@ -1018,6 +1051,7 @@ const TrainerDashboard = () => {
                           classDate: today
                         });
                       }}
+                      disabled={isLocked}
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
@@ -1066,7 +1100,7 @@ const TrainerDashboard = () => {
                         // Marcar la clase como notificada
                         setNotificationSentClasses(prev => new Set(prev).add(classData.id));
                       }}
-                      disabled={isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
+                      disabled={isLocked || isSendingWhatsApp || !whatsappGroup || notificationSentClasses.has(classData.id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                       <WhatsAppIcon className="h-3 w-3 mr-1" />
