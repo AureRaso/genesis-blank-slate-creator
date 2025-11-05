@@ -882,14 +882,14 @@ const Index = () => {
 
       {/* Substitute Search Sheet (Bottom Sheet for Mobile) */}
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-[30px]">
+        <SheetContent side="bottom" className="max-h-[80vh] h-auto rounded-t-[30px]">
           <SheetHeader>
             <SheetTitle>Buscar Sustituto</SheetTitle>
             <SheetDescription>
               Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-4 overflow-y-auto h-[calc(90vh-100px)]">
+          <div className="mt-4 overflow-y-auto max-h-[calc(80vh-120px)]">
             {profile?.club_id && (
               <SubstituteStudentSearch
                 classId={substituteDialog.classId}
