@@ -58,6 +58,7 @@ import MyChildrenPage from "@/pages/MyChildrenPage";
 import ClearCachePage from "@/pages/ClearCachePage";
 import PromotionsPage from "@/pages/PromotionsPage";
 import TestReminderPage from "@/pages/TestReminderPage";
+import HistorialPage from "@/pages/HistorialPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -220,6 +221,7 @@ function App() {
                     <Route path="/dashboard" element={<Index />} />
                     <Route path="/my-classes" element={<StudentClassesPage />} />
                     <Route path="/my-children" element={<MyChildrenPage />} />
+                    <Route path="/historial" element={<HistorialPage />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
                     {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
