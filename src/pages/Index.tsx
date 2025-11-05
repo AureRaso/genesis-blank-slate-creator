@@ -67,6 +67,7 @@ const Index = () => {
     classData: null
   });
   const [notificationSentClasses, setNotificationSentClasses] = useState<Set<string>>(new Set());
+  const [processedRequests, setProcessedRequests] = useState<Map<string, 'approved' | 'rejected'>>(new Map());
 
   // Fetch classes with absences
   const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
@@ -78,6 +79,19 @@ const Index = () => {
   const { data: waitlistRequests } = usePendingWaitlistRequests(profile?.club_id);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
+
+  // Filtrar solicitudes que no deben mostrarse (más de 1h después del inicio de clase)
+  const filteredWaitlistRequests = waitlistRequests?.filter((request) => {
+    const classStartTime = request.programmed_class.start_time;
+    const [hours, minutes] = classStartTime.split(':').map(Number);
+    const classStartDate = new Date();
+    classStartDate.setHours(hours, minutes, 0, 0);
+
+    const oneHourAfterStart = new Date(classStartDate.getTime() + 60 * 60 * 1000);
+    const now = new Date();
+
+    return now < oneHourAfterStart;
+  });
 
   console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
 
@@ -490,124 +504,10 @@ const Index = () => {
             )}
           </div>
         </div>
-
-        {/* Resumen Semanal / Próximas Clases */}
-        <div>
-          <div className="mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              {profile?.role === 'admin' ? 'Resumen Semanal' : 'Próximas Clases'}
-            </h3>
-          </div>
-          <div className="space-y-2 sm:space-y-3">
-            {profile?.role === 'admin' ? (
-              <>
-                {weeklySummary ? (
-                  <>
-                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Nuevos Jugadores</p>
-                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.newPlayers} jugadores esta semana</p>
-                        <div className="flex items-center gap-1 mt-0.5 sm:mt-1">
-                          {weeklySummary.playersTrend >= 0 ? (
-                            <>
-                              <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
-                              <p className="text-xs text-green-600">+{weeklySummary.playersTrend}% vs semana anterior</p>
-                            </>
-                          ) : (
-                            <>
-                              <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
-                              <p className="text-xs text-red-600">{weeklySummary.playersTrend}% vs semana anterior</p>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clases Creadas</p>
-                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.newClasses} clases esta semana</p>
-                        <div className="flex items-center gap-1 mt-0.5 sm:mt-1">
-                          {weeklySummary.classesTrend >= 0 ? (
-                            <>
-                              <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
-                              <p className="text-xs text-green-600">+{weeklySummary.classesTrend}% vs semana anterior</p>
-                            </>
-                          ) : (
-                            <>
-                              <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
-                              <p className="text-xs text-red-600">{weeklySummary.classesTrend}% vs semana anterior</p>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                        <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-[#10172a]">Tasa de Asistencia</p>
-                        <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">{weeklySummary.attendanceRate}% de asistencia esta semana</p>
-                        <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">
-                          {weeklySummary.attendanceRate >= 80 ? 'Excelente participación' :
-                           weeklySummary.attendanceRate >= 60 ? 'Buena participación' :
-                           'Mejorar comunicación con alumnos'}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <p className="text-xs sm:text-sm">Cargando estadísticas semanales...</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase nivel avanzado</p>
-                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Hoy a las 18:00 - Pista 2</p>
-                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">6/8 alumnos confirmados</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase nivel intermedio</p>
-                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Mañana a las 10:00 - Pista 1</p>
-                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">8/8 alumnos confirmados</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase principiantes</p>
-                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Mañana a las 16:00 - Pista 3</p>
-                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">4/8 alumnos confirmados</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Mobile Unified Notifications Panel - Only visible on mobile */}
-      <div className="md:hidden">
+      {/* Unified Notifications Panel */}
+      <div>
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
             Notificaciones de hoy
@@ -639,8 +539,8 @@ const Index = () => {
             }
 
             // Agregar solicitudes de lista de espera
-            if (waitlistRequests && waitlistRequests.length > 0) {
-              waitlistRequests.forEach((request) => {
+            if (filteredWaitlistRequests && filteredWaitlistRequests.length > 0) {
+              filteredWaitlistRequests.forEach((request) => {
                 notifications.push({
                   type: 'waitlist',
                   timestamp: request.joined_at,
@@ -826,10 +726,17 @@ const Index = () => {
               } else if (notification.type === 'waitlist') {
                 // Waitlist request card
                 const request = notification.data;
+                const requestStatus = processedRequests.get(request.id);
+                const borderClass = requestStatus === 'approved'
+                  ? 'border-green-500 border-2'
+                  : requestStatus === 'rejected'
+                  ? 'border-red-500 border-2'
+                  : 'border-gray-200';
+
                 return (
                   <div
                     key={`waitlist-${request.id}`}
-                    className="flex items-center justify-between p-4 rounded-lg bg-white border border-gray-200"
+                    className={`flex items-center justify-between p-4 rounded-lg bg-white border ${borderClass} transition-all duration-300`}
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
@@ -852,11 +759,14 @@ const Index = () => {
                         size="sm"
                         variant="outline"
                         className="h-8 w-8 p-0 border-green-200 hover:bg-green-50"
-                        onClick={() => approveRequest({
-                          waitlistId: request.id,
-                          classId: request.class_id,
-                          userId: request.user_id
-                        })}
+                        onClick={() => {
+                          setProcessedRequests(prev => new Map(prev).set(request.id, 'approved'));
+                          approveRequest({
+                            waitlistId: request.id,
+                            classId: request.class_id,
+                            userId: request.user_id
+                          });
+                        }}
                         disabled={isApproving || isRejecting}
                       >
                         <Check className="h-4 w-4 text-green-600" />
@@ -865,7 +775,10 @@ const Index = () => {
                         size="sm"
                         variant="outline"
                         className="h-8 w-8 p-0 border-red-200 hover:bg-red-50"
-                        onClick={() => rejectRequest({ waitlistId: request.id })}
+                        onClick={() => {
+                          setProcessedRequests(prev => new Map(prev).set(request.id, 'rejected'));
+                          rejectRequest({ waitlistId: request.id });
+                        }}
                         disabled={isApproving || isRejecting}
                       >
                         <X className="h-4 w-4 text-red-600" />
