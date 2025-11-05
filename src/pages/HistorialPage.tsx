@@ -35,7 +35,7 @@ const HistorialPage = () => {
         .select(`
           id,
           class_date,
-          programmed_class:programmed_classes (
+          programmed_classes!class_participants_programmed_class_id_fkey (
             id,
             name,
             start_time,
@@ -108,7 +108,7 @@ const HistorialPage = () => {
       ) : (
         <div className="space-y-3">
           {currentClasses.map((classItem: any) => {
-            const classData = classItem.programmed_class;
+            const classData = classItem.programmed_classes;
             const classDate = new Date(classItem.class_date);
 
             return (
