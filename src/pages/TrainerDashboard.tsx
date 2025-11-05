@@ -1,24 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp, Check, X } from "lucide-react";
+import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp, Check, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useTodayAttendance } from "@/hooks/useTodayAttendance";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClubPendingEnrollmentRequests, useAcceptEnrollmentRequest, useRejectEnrollmentRequest } from "@/hooks/useEnrollmentRequests";
+import { useClassesWithAbsences } from "@/hooks/useClassesWithAbsences";
+import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
+import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
+import { format } from "date-fns";
 
 const TrainerDashboard = () => {
   const navigate = useNavigate();
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [expandedClass, setExpandedClass] = useState<string | null>(null);
   const { profile } = useAuth();
 
-  // Fetch pending enrollment requests
-  const { data: pendingRequests } = useClubPendingEnrollmentRequests(profile?.club_id);
-  const acceptRequest = useAcceptEnrollmentRequest();
-  const rejectRequest = useRejectEnrollmentRequest();
+  // Fetch classes with absences
+  const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
+  const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
+  const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
 
   const {
     data: trainerProfile,
@@ -572,67 +577,151 @@ const TrainerDashboard = () => {
         </div>
       </div>
 
-      {/* Mobile Enrollment Requests Section - Only visible on mobile */}
+      {/* Mobile Classes with Absences Section - Only visible on mobile */}
       <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
-            Solicitudes de Lista de Espera
+            Clases con ausencias
           </h3>
         </div>
         <div className="space-y-3">
-          {pendingRequests && pendingRequests.length > 0 ? (
-            pendingRequests.map((request) => (
-              <div
-                key={request.id}
-                className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                    <UserPlus className="h-4 w-4 text-primary" />
+          {classesWithAbsences && classesWithAbsences.length > 0 ? (
+            classesWithAbsences.map((classData) => {
+              const isExpanded = expandedClass === classData.id;
+              const absentStudents = classData.participants.filter(p => p.absence_confirmed);
+              const presentStudents = classData.participants.filter(p => !p.absence_confirmed && !p.is_substitute);
+              const substituteStudents = classData.participants.filter(p => p.is_substitute);
+
+              return (
+                <div
+                  key={classData.id}
+                  className="flex flex-col gap-3 p-4 rounded-lg bg-white border border-gray-200"
+                >
+                  {/* Class Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="p-2 rounded-lg bg-orange-100 flex-shrink-0">
+                        <GraduationCap className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#10172a]">
+                          {classData.name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {classData.start_time.substring(0, 5)} · {classData.trainer?.full_name}
+                        </p>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs bg-red-50 border-red-200 text-red-700">
+                            {classData.absenceCount} {classData.absenceCount === 1 ? 'ausencia' : 'ausencias'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {classData.totalParticipants} alumnos
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setExpandedClass(isExpanded ? null : classData.id)}
+                      className="ml-2"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#10172a]">
-                      {request.student_profile?.full_name}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {request.programmed_class?.name}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {getTimeAgo(request.requested_at)}
-                    </p>
-                    {request.notes && (
-                      <p className="text-xs text-gray-500 mt-1 italic">
-                        "{request.notes}"
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
+
+                  {/* Expanded Student List */}
+                  {isExpanded && (
+                    <div className="space-y-2 pt-2 border-t">
+                      {/* Absent Students */}
+                      {absentStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                          {absentStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                              {participant.absence_locked && (
+                                <Badge variant="outline" className="text-[10px] bg-gray-100">
+                                  Bloqueada
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Present Students */}
+                      {presentStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                          {presentStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Substitute Students */}
+                      {substituteStudents.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                          {substituteStudents.map((participant) => (
+                            <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
+                              <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
+                              <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Send Notification Button */}
                   <Button
                     size="sm"
-                    onClick={() => acceptRequest.mutate(request.id)}
-                    disabled={acceptRequest.isPending}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => {
+                      if (!whatsappGroup?.group_chat_id) {
+                        alert('No hay grupo de WhatsApp configurado');
+                        return;
+                      }
+
+                      const today = format(new Date(), 'yyyy-MM-dd');
+                      const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+                      const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
+                      const substituteCount = classData.participants.filter(p => p.is_substitute).length;
+                      const availableSlots = absentCount - substituteCount;
+
+                      sendWhatsApp({
+                        groupChatId: whatsappGroup.group_chat_id,
+                        className: classData.name,
+                        classDate: today,
+                        classTime: classData.start_time,
+                        trainerName: classData.trainer?.full_name || 'Profesor',
+                        waitlistUrl,
+                        availableSlots,
+                        classId: classData.id,
+                        notificationType: 'absence'
+                      });
+                    }}
+                    disabled={isSendingWhatsApp || !whatsappGroup}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <Check className="h-3 w-3 mr-1" />
-                    Aceptar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => rejectRequest.mutate({ requestId: request.id })}
-                    disabled={rejectRequest.isPending}
-                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Rechazar
+                    <Send className="h-3 w-3 mr-2" />
+                    Enviar Notificación WhatsApp
                   </Button>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">No hay solicitudes pendientes</p>
+              <p className="text-sm">No hay clases con ausencias hoy</p>
             </div>
           )}
         </div>
