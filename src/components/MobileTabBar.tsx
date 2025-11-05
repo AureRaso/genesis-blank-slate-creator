@@ -96,7 +96,14 @@ const MobileTabBar = () => {
 
         <div className="flex items-center justify-around h-20 px-4">
           {tabs.map((tab: any, index) => {
-            const isActive = tab.path ? location.pathname === tab.path : false;
+            // Check if tab is active
+            let isActive = false;
+            if (tab.path) {
+              isActive = location.pathname === tab.path;
+            } else if (tab.action) {
+              // For action-based tabs, check if we're on the create class page
+              isActive = location.pathname === "/dashboard/scheduled-classes/new";
+            }
             const Icon = tab.icon;
 
             const content = (
