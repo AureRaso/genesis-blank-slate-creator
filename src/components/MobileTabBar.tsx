@@ -96,7 +96,7 @@ const MobileTabBar = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden w-full overflow-hidden">
       <div className="relative shadow-lg" style={{ backgroundColor: '#121726' }}>
-        <div className="flex items-center justify-around h-20 px-4">
+        <div className="flex items-center justify-around h-24 px-4">
           {tabs.map((tab: any, index) => {
             // Check if tab is active
             let isActive = false;
