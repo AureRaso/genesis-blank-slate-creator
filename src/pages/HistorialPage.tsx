@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 5;
@@ -52,21 +52,33 @@ const HistorialPage = () => {
         .from("class_participants")
         .select(`
           id,
-          class_date,
           programmed_class:programmed_classes (
             id,
             name,
+            start_date,
+            end_date,
             start_time,
-            end_time,
-            location
+            duration_minutes
           )
         `)
-        .in("student_enrollment_id", enrollmentIds)
-        .lt("class_date", today)
-        .order("class_date", { ascending: false });
+        .in("student_enrollment_id", enrollmentIds);
 
       if (error) throw error;
-      return data || [];
+
+      // Filter only past classes (end_date < today)
+      const pastClasses = (data || []).filter((item: any) => {
+        const endDate = item.programmed_class?.end_date;
+        return endDate && endDate < today;
+      });
+
+      // Sort by end_date descending (most recent first)
+      pastClasses.sort((a: any, b: any) => {
+        const dateA = a.programmed_class?.end_date || '';
+        const dateB = b.programmed_class?.end_date || '';
+        return dateB.localeCompare(dateA);
+      });
+
+      return pastClasses;
     },
     enabled: !!user?.id,
   });
@@ -103,7 +115,7 @@ const HistorialPage = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#10172a]">
-              Historial de Clases
+              Historial
             </h1>
             <p className="text-sm text-gray-600 mt-1">
               Todas tus clases anteriores
@@ -127,7 +139,18 @@ const HistorialPage = () => {
         <div className="space-y-3">
           {currentClasses.map((classItem: any) => {
             const classData = classItem.programmed_class;
-            const classDate = new Date(classItem.class_date);
+            if (!classData) return null;
+
+            const startDate = new Date(classData.start_date);
+            const endDate = new Date(classData.end_date);
+            const startTime = classData.start_time?.substring(0, 5) || '';
+            const durationMinutes = classData.duration_minutes || 60;
+
+            // Calculate end time from start time and duration
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const endTimeDate = new Date();
+            endTimeDate.setHours(hours, minutes + durationMinutes);
+            const endTime = endTimeDate.toTimeString().substring(0, 5);
 
             return (
               <div
@@ -144,28 +167,21 @@ const HistorialPage = () => {
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
                         <span>
-                          {format(classDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+                          {format(startDate, "d 'de' MMMM", { locale: es })} - {format(endDate, "d 'de' MMMM 'de' yyyy", { locale: es })}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                         <span>
-                          {classData.start_time.substring(0, 5)} - {classData.end_time.substring(0, 5)}
+                          {startTime} - {endTime}
                         </span>
                       </div>
-
-                      {classData.location && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                          <span>{classData.location}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   <div className="ml-3">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500" title="Completada"></div>
                   </div>
                 </div>
               </div>
