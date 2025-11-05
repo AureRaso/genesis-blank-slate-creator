@@ -6,7 +6,7 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Send } from "lucide-react";
+import { AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
@@ -16,6 +16,15 @@ import { useClassesWithAbsences } from "@/hooks/useClassesWithAbsences";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup } from "@/hooks/useWhatsAppGroup";
 import { format } from "date-fns";
+import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -23,6 +32,15 @@ const Index = () => {
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
+  const [substituteDialog, setSubstituteDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+  }>({
+    open: false,
+    classId: '',
+    className: ''
+  });
 
   // Fetch classes with absences
   const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
@@ -645,39 +663,54 @@ const Index = () => {
                     </div>
                   )}
 
-                  {/* Send Notification Button */}
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (!whatsappGroup?.group_chat_id) {
-                        alert('No hay grupo de WhatsApp configurado');
-                        return;
-                      }
-
-                      const today = format(new Date(), 'yyyy-MM-dd');
-                      const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
-                      const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
-                      const substituteCount = classData.participants.filter(p => p.is_substitute).length;
-                      const availableSlots = absentCount - substituteCount;
-
-                      sendWhatsApp({
-                        groupChatId: whatsappGroup.group_chat_id,
-                        className: classData.name,
-                        classDate: today,
-                        classTime: classData.start_time,
-                        trainerName: classData.trainer?.full_name || 'Profesor',
-                        waitlistUrl,
-                        availableSlots,
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSubstituteDialog({
+                        open: true,
                         classId: classData.id,
-                        notificationType: 'absence'
-                      });
-                    }}
-                    disabled={isSendingWhatsApp || !whatsappGroup}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Send className="h-3 w-3 mr-2" />
-                    Enviar Notificación WhatsApp
-                  </Button>
+                        className: classData.name
+                      })}
+                      className="flex-1"
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Añadir sustituto
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!whatsappGroup?.group_chat_id) {
+                          alert('No hay grupo de WhatsApp configurado');
+                          return;
+                        }
+
+                        const today = format(new Date(), 'yyyy-MM-dd');
+                        const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+                        const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
+                        const substituteCount = classData.participants.filter(p => p.is_substitute).length;
+                        const availableSlots = absentCount - substituteCount;
+
+                        sendWhatsApp({
+                          groupChatId: whatsappGroup.group_chat_id,
+                          className: classData.name,
+                          classDate: today,
+                          classTime: classData.start_time,
+                          trainerName: classData.trainer?.full_name || 'Profesor',
+                          waitlistUrl,
+                          availableSlots,
+                          classId: classData.id,
+                          notificationType: 'absence'
+                        });
+                      }}
+                      disabled={isSendingWhatsApp || !whatsappGroup}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <WhatsAppIcon className="h-3 w-3 mr-1" />
+                      WhatsApp
+                    </Button>
+                  </div>
                 </div>
               );
             })
@@ -688,6 +721,25 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      {/* Substitute Search Dialog */}
+      <Dialog open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Buscar Sustituto</DialogTitle>
+            <DialogDescription>
+              Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          {profile?.club_id && (
+            <SubstituteStudentSearch
+              classId={substituteDialog.classId}
+              clubId={profile.club_id}
+              onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
