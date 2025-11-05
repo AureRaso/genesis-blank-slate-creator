@@ -30,12 +30,30 @@ const HistorialPage = () => {
 
       const today = format(new Date(), 'yyyy-MM-dd');
 
+      // Step 1: Get student enrollment IDs for this user
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from('student_enrollments')
+        .select('id')
+        .or(`student_profile_id.eq.${user.id},email.eq.${user.email}`);
+
+      if (enrollmentError) {
+        console.error('Error fetching enrollments:', enrollmentError);
+        throw enrollmentError;
+      }
+
+      if (!enrollments || enrollments.length === 0) {
+        return [];
+      }
+
+      const enrollmentIds = enrollments.map(e => e.id);
+
+      // Step 2: Get class participants using enrollment IDs
       const { data, error } = await supabase
         .from("class_participants")
         .select(`
           id,
           class_date,
-          programmed_classes!class_participants_programmed_class_id_fkey (
+          programmed_class:programmed_classes (
             id,
             name,
             start_time,
@@ -43,7 +61,7 @@ const HistorialPage = () => {
             location
           )
         `)
-        .eq("user_id", user.id)
+        .in("student_enrollment_id", enrollmentIds)
         .lt("class_date", today)
         .order("class_date", { ascending: false });
 
@@ -108,7 +126,7 @@ const HistorialPage = () => {
       ) : (
         <div className="space-y-3">
           {currentClasses.map((classItem: any) => {
-            const classData = classItem.programmed_classes;
+            const classData = classItem.programmed_class;
             const classDate = new Date(classItem.class_date);
 
             return (
