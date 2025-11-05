@@ -179,11 +179,10 @@ const TrainerStudentsList = ({
         <Card>
           <CardContent className="p-0">
             {/* Table Header - Desktop only */}
-            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+            <div className="hidden md:grid md:grid-cols-10 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
               <div className="col-span-4">Alumno</div>
               <div className="col-span-4">Contacto</div>
               <div className="col-span-2">Matrícula</div>
-              <div className="col-span-2 text-right">Acciones</div>
             </div>
 
             {/* Table Body */}
@@ -199,7 +198,7 @@ const TrainerStudentsList = ({
                 return (
                   <div
                     key={student.id}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                    className="grid grid-cols-1 md:grid-cols-10 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                   >
                     {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
                     <div className="col-span-1 md:col-span-4 flex items-start gap-3">
@@ -259,42 +258,6 @@ const TrainerStudentsList = ({
                       )}
                     </div>
 
-                    {/* Columna 4: Acciones */}
-                    <div className="col-span-1 md:col-span-2 flex items-center justify-start md:justify-end gap-1 mt-2 md:mt-0">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => onAssignToClass(student)}
-                        className="h-8 px-3"
-                      >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Asignar</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewStudent(student)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEditStudent(student)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeleteStudent(student.id)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 );
               })}

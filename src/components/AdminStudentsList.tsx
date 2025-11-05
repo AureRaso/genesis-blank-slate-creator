@@ -298,12 +298,11 @@ const AdminStudentsList = () => {
             <Card>
               <CardContent className="p-0">
                 {/* Table Header - Desktop only */}
-                <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+                <div className="hidden md:grid md:grid-cols-10 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
                   <div className="col-span-3">Alumno</div>
                   <div className="col-span-3">Contacto</div>
                   <div className="col-span-2">Club</div>
                   <div className="col-span-2">Matrícula</div>
-                  <div className="col-span-2 text-right">Acciones</div>
                 </div>
 
                 {/* Table Body */}
@@ -319,7 +318,7 @@ const AdminStudentsList = () => {
                     return (
                       <div
                         key={student.id}
-                        className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                        className="grid grid-cols-1 md:grid-cols-10 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                       >
                         {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
                         <div className="col-span-1 md:col-span-3 flex items-start gap-3">
@@ -426,26 +425,13 @@ const AdminStudentsList = () => {
                           )}
                         </div>
 
-                        {/* Columna 5: Observaciones (si existen) - Mobile only */}
+                        {/* Observaciones (si existen) - Mobile only */}
                         {student.observations && (
-                          <div className="col-span-1 md:hidden text-xs text-muted-foreground italic">
+                          <div className="col-span-1 text-xs text-muted-foreground italic border-t pt-2 mt-2 md:hidden">
+                            <AlertTriangle className="h-3 w-3 inline mr-1 text-amber-600" />
                             {student.observations}
                           </div>
                         )}
-
-                        {/* Columna 6: Acciones - Ahora visible */}
-                        <div className="col-span-1 md:col-span-2 flex items-center justify-start md:justify-end gap-1 mt-2 md:mt-0">
-                          {student.observations && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-xs hidden md:inline-flex"
-                              title={student.observations}
-                            >
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                            </Button>
-                          )}
-                        </div>
                       </div>
                     );
                   })}
