@@ -699,10 +699,10 @@ const WeekAttendancePage = () => {
                               variant="destructive"
                               size="sm"
                               onClick={() => handleCancelClass(classData.id, classData.name, notificationDate)}
-                              className="h-8 px-3 gap-1.5 text-xs sm:bg-destructive sm:hover:bg-destructive/90 bg-transparent hover:bg-red-50 border-2 border-red-500 text-red-500 sm:text-destructive-foreground sm:border-0"
+                              className="h-8 px-3 gap-1.5 text-xs sm:bg-destructive sm:hover:bg-destructive/90 bg-transparent hover:bg-gray-100 border-0 text-gray-800 sm:text-destructive-foreground p-0 sm:px-3"
                               title="Cancelar clase"
                             >
-                              <X className="h-4 w-4 sm:hidden" />
+                              <X className="h-5 w-5 sm:hidden" />
                               <Ban className="h-3.5 w-3.5 hidden sm:inline" />
                               <span className="hidden sm:inline">Cancelar</span>
                             </Button>
