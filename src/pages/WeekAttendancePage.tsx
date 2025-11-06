@@ -698,7 +698,7 @@ const WeekAttendancePage = () => {
                               </Badge>
                             )}
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1">
                             <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3 flex-shrink-0" />
