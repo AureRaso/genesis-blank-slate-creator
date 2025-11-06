@@ -2,11 +2,12 @@ name: WhatsApp Daily Reports
 
 on:
   schedule:
+    # TEST: Triggering at 20:27 Madrid time (19:27 UTC in winter)
+    - cron: '27 19 * * *'
     # Morning report at 10:00 AM (UTC+1 for Madrid, so 09:00 UTC in winter, 08:00 UTC in summer)
-    # Using 09:00 UTC for Spain winter time
-    - cron: '0 9 * * *'
+    # - cron: '0 9 * * *'
     # Afternoon report at 13:00 (1:00 PM) (12:00 UTC in winter, 11:00 UTC in summer)
-    - cron: '0 12 * * *'
+    # - cron: '0 12 * * *'
 
   # Allow manual trigger for testing
   workflow_dispatch:
