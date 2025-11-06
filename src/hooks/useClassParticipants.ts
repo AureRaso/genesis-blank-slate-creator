@@ -359,26 +359,26 @@ export const useBulkRemoveFromRecurringClass = () => {
 
       console.log(`📝 Found ${enrollments.length} enrollments to remove`);
 
-      // Step 3: Mark all enrollments as inactive (soft delete) - one by one to avoid RLS issues
+      // Step 3: Delete all enrollments (hard delete) - one by one to avoid RLS issues
       let successCount = 0;
       const errors = [];
 
       for (const enrollment of enrollments) {
-        const { error: updateError } = await supabase
+        const { error: deleteError } = await supabase
           .from('class_participants')
-          .update({ status: 'inactive' })
+          .delete()
           .eq('id', enrollment.id);
 
-        if (updateError) {
-          console.error(`❌ Error updating participant ${enrollment.id}:`, updateError);
-          errors.push(updateError);
+        if (deleteError) {
+          console.error(`❌ Error deleting participant ${enrollment.id}:`, deleteError);
+          errors.push(deleteError);
         } else {
           successCount++;
         }
       }
 
       if (errors.length > 0) {
-        throw new Error(`Failed to update ${errors.length} out of ${enrollments.length} enrollments`);
+        throw new Error(`Failed to delete ${errors.length} out of ${enrollments.length} enrollments`);
       }
 
       console.log(`✅ Successfully removed student from ${successCount} classes`);
