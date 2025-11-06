@@ -60,6 +60,7 @@ import PromotionsPage from "@/pages/PromotionsPage";
 import TestReminderPage from "@/pages/TestReminderPage";
 import HistorialPage from "@/pages/HistorialPage";
 import LopiviReportPage from "@/pages/LopiviReportPage";
+import WhatsAppReportsConfigPage from "@/pages/WhatsAppReportsConfigPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -186,6 +187,7 @@ function App() {
           <Route path="users" element={<OwnerUsersPage />} />
           <Route path="system" element={<OwnerSystemPage />} />
           <Route path="settings" element={<OwnerSettingsPage />} />
+          <Route path="whatsapp-reports" element={<WhatsAppReportsConfigPage />} />
         </Route>
 
         {/* ============================================ */}

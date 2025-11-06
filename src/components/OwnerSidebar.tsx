@@ -11,7 +11,8 @@ import {
   Users,
   Settings,
   BarChart3,
-  Shield
+  Shield,
+  MessageSquare
 } from "lucide-react";
 import {
   Sidebar,
@@ -88,6 +89,19 @@ const OwnerSidebar = () => {
                 <Link to="/owner/metrics">
                   <BarChart3 className="h-4 w-4" />
                   <span>Métricas</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Reportes WhatsApp */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === "/owner/whatsapp-reports"}
+              >
+                <Link to="/owner/whatsapp-reports">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Reportes WhatsApp</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

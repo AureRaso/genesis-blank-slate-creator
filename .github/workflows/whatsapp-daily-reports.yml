@@ -1,0 +1,52 @@
+name: WhatsApp Daily Reports
+
+on:
+  schedule:
+    # Morning report at 10:00 AM (UTC+1 for Madrid, so 09:00 UTC in winter, 08:00 UTC in summer)
+    # Using 09:00 UTC for Spain winter time
+    - cron: '0 9 * * *'
+    # Afternoon report at 13:00 (1:00 PM) (12:00 UTC in winter, 11:00 UTC in summer)
+    - cron: '0 12 * * *'
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      reportType:
+        description: 'Report type (morning or afternoon)'
+        required: true
+        default: 'morning'
+        type: choice
+        options:
+          - morning
+          - afternoon
+
+jobs:
+  trigger-reports:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine report type
+        id: report-type
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.reportType }}" >> $GITHUB_OUTPUT
+          else
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" = "09" ] || [ "$HOUR" = "08" ]; then
+              echo "type=morning" >> $GITHUB_OUTPUT
+            else
+              echo "type=afternoon" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Trigger WhatsApp Reports
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -d '{"reportType": "${{ steps.report-type.outputs.type }}", "cronSecret": "${{ secrets.CRON_SECRET }}"}' \
+            ${{ secrets.SUPABASE_URL }}/functions/v1/trigger-scheduled-reports
+
+      - name: Report result
+        run: |
+          echo "Triggered ${{ steps.report-type.outputs.type }} report successfully"

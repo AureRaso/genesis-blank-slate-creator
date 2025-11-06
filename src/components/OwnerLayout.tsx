@@ -40,6 +40,8 @@ export const OwnerLayout = ({ children }: OwnerLayoutProps) => {
         return { title: "Sistema", path: "/owner/system" };
       case "/owner/settings":
         return { title: "Configuración", path: "/owner/settings" };
+      case "/owner/whatsapp-reports":
+        return { title: "Reportes WhatsApp", path: "/owner/whatsapp-reports" };
       default:
         return { title: "Dashboard", path: "/owner" };
     }
