@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { LopiviReportDialog } from "@/components/LopiviReportDialog";
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -60,6 +61,7 @@ const SettingsPage = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showFinalDeleteDialog, setShowFinalDeleteDialog] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
+  const [showLopiviDialog, setShowLopiviDialog] = useState(false);
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0
@@ -267,7 +269,7 @@ const SettingsPage = () => {
               <DropdownMenuSeparator />
 
               {userClub && (
-                <DropdownMenuItem onClick={() => navigate(`/lopivi-report?clubId=${userClub.id}`)}>
+                <DropdownMenuItem onClick={() => setShowLopiviDialog(true)}>
                   <Shield className="mr-2 h-4 w-4 text-blue-600" />
                   <span>Reportar Incidente LOPIVI</span>
                 </DropdownMenuItem>
@@ -492,6 +494,16 @@ const SettingsPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* LOPIVI Report Dialog */}
+        {userClub && (
+          <LopiviReportDialog
+            open={showLopiviDialog}
+            onOpenChange={setShowLopiviDialog}
+            clubId={userClub.id}
+            clubName={userClub.name}
+          />
+        )}
       </div>
     );
   }
@@ -521,7 +533,7 @@ const SettingsPage = () => {
             <DropdownMenuSeparator />
 
             {clubs && clubs.length > 0 && (
-              <DropdownMenuItem onClick={() => navigate(`/lopivi-report?clubId=${clubs[0].id}`)}>
+              <DropdownMenuItem onClick={() => setShowLopiviDialog(true)}>
                 <Shield className="mr-2 h-4 w-4 text-blue-600" />
                 <span>Reportar Incidente LOPIVI</span>
               </DropdownMenuItem>
@@ -884,6 +896,16 @@ const SettingsPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* LOPIVI Report Dialog */}
+        {clubs && clubs.length > 0 && (
+          <LopiviReportDialog
+            open={showLopiviDialog}
+            onOpenChange={setShowLopiviDialog}
+            clubId={clubs[0].id}
+            clubName={clubs[0].name}
+          />
+        )}
         </div>
       </div>
     </div>

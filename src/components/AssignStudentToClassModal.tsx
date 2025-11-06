@@ -95,37 +95,37 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
             Asignar Alumno a Clase
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Selecciona una clase para asignar a {student?.full_name}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Student Info */}
           {student && (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{student.full_name}</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-base sm:text-lg">{student.full_name}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Nivel {student.level} • {student.email} • {student.phone}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  <Badge variant="outline" className="text-xs">
                     {student.enrollment_period}
                   </Badge>
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     {student.weekly_days.join(", ")}
                   </Badge>
                   {student.course && (
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs">
                       {student.course}
                     </Badge>
                   )}
@@ -135,29 +135,29 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
           )}
 
           {/* Class Selection */}
-          <div className="space-y-3">
-            <Label htmlFor="class-select">Seleccionar Clase</Label>
+          <div className="space-y-2 sm:space-y-3">
+            <Label htmlFor="class-select" className="text-sm">Seleccionar Clase</Label>
             <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 sm:h-10">
                 <SelectValue placeholder="Elige una clase disponible" />
               </SelectTrigger>
               <SelectContent>
                 {availableClasses.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">
                     <AlertCircle className="h-4 w-4 mx-auto mb-2" />
-                    No hay clases disponibles
+                    <p className="text-xs sm:text-sm">No hay clases disponibles</p>
                   </div>
                 ) : (
                   availableClasses.map((cls) => {
                     const participantCount = cls.participants?.length || 0;
                     const maxParticipants = 8; // Default value
-                    
+
                     return (
                       <SelectItem key={cls.id} value={cls.id}>
                         <div className="flex items-center justify-between w-full">
-                          <span>{cls.name}</span>
+                          <span className="text-sm">{cls.name}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {participantCount}/{maxParticipants} alumnos
+                            {participantCount}/{maxParticipants}
                           </span>
                         </div>
                       </SelectItem>
@@ -171,28 +171,28 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
           {/* Selected Class Details */}
           {selectedClass && (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{selectedClass.name}</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-base sm:text-lg">{selectedClass.name}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Detalles de la clase seleccionada
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <CardContent className="space-y-2 sm:space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedClass.days_of_week.join(", ")}</span>
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{selectedClass.days_of_week.join(", ")}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedClass.start_time} ({selectedClass.duration_minutes} min)</span>
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{selectedClass.start_time} ({selectedClass.duration_minutes} min)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                     <span>{selectedClass.participants?.length || 0}/8 alumnos</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Euro className="h-4 w-4 text-muted-foreground" />
+                    <Euro className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                     <span>Precio por definir</span>
                   </div>
                 </div>
@@ -207,12 +207,12 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
 
           {/* Payment Information */}
           {selectedClass && (
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Información de Pago</Label>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="discount1">Descuento 1 (€)</Label>
+            <div className="space-y-3 sm:space-y-4">
+              <Label className="text-sm sm:text-base font-medium">Información de Pago</Label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="discount1" className="text-xs sm:text-sm">Descuento 1 (€)</Label>
                   <Input
                     id="discount1"
                     type="number"
@@ -221,10 +221,11 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
                     value={discount1}
                     onChange={(e) => setDiscount1(e.target.value)}
                     placeholder="0.00"
+                    className="h-9 sm:h-10"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discount2">Descuento 2 (€)</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="discount2" className="text-xs sm:text-sm">Descuento 2 (€)</Label>
                   <Input
                     id="discount2"
                     type="number"
@@ -233,13 +234,14 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
                     value={discount2}
                     onChange={(e) => setDiscount2(e.target.value)}
                     placeholder="0.00"
+                    className="h-9 sm:h-10"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="payment-amount">Cantidad Pagada (€)</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="payment-amount" className="text-xs sm:text-sm">Cantidad Pagada (€)</Label>
                   <Input
                     id="payment-amount"
                     type="number"
@@ -248,12 +250,13 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     placeholder="0.00"
+                    className="h-9 sm:h-10"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="payment-method">Método de Pago</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="payment-method" className="text-xs sm:text-sm">Método de Pago</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 sm:h-10">
                       <SelectValue placeholder="Seleccionar método" />
                     </SelectTrigger>
                     <SelectContent>
@@ -266,28 +269,29 @@ export const AssignStudentToClassModal = ({ student, isOpen, onClose }: AssignSt
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="payment-notes">Notas de Pago (opcional)</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="payment-notes" className="text-xs sm:text-sm">Notas de Pago (opcional)</Label>
                 <Textarea
                   id="payment-notes"
                   value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)}
                   placeholder="Observaciones sobre el pago..."
                   rows={2}
+                  className="text-sm resize-none"
                 />
               </div>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
+            <Button variant="outline" onClick={onClose} className="h-9 sm:h-10 text-sm">
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleAssign}
               disabled={!selectedClassId || createParticipant.isPending}
-              className="bg-gradient-to-r from-primary to-primary/80"
+              className="bg-gradient-to-r from-primary to-primary/80 h-9 sm:h-10 text-sm"
             >
               {createParticipant.isPending ? "Asignando..." : "Asignar a Clase"}
             </Button>

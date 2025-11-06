@@ -107,7 +107,7 @@ const BulkEnrollStudentSearch = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
@@ -115,13 +115,13 @@ const BulkEnrollStudentSearch = ({
           placeholder="Buscar alumno por nombre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-9 sm:h-10 text-sm"
         />
       </div>
 
-      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+      <div className="space-y-2 max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
         {filteredStudents.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">
             {searchTerm ? 'No se encontraron alumnos' : 'No hay alumnos disponibles'}
           </p>
         ) : (
@@ -132,38 +132,27 @@ const BulkEnrollStudentSearch = ({
             return (
               <div
                 key={student.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                className="flex items-center justify-between gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
               >
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{student.full_name}</p>
-                  {student.email && (
-                    <p className="text-xs text-muted-foreground">{student.email}</p>
-                  )}
-                </div>
+                <p className="font-medium text-sm flex-1 min-w-0 truncate">{student.full_name}</p>
 
                 {isEnrolled ? (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
                     <Check className="h-3 w-3 mr-1" />
-                    Ya inscrito
+                    Inscrito
                   </Badge>
                 ) : (
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="default"
                     onClick={() => handleAddStudent(student.id)}
                     disabled={isProcessing || bulkEnrollMutation.isPending}
-                    className="ml-2"
+                    className="h-9 w-9 bg-primary hover:bg-primary/90 flex-shrink-0"
                   >
                     {isProcessing ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Añadiendo...
-                      </>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Añadir
-                      </>
+                      <UserPlus className="h-4 w-4" />
                     )}
                   </Button>
                 )}
@@ -173,7 +162,7 @@ const BulkEnrollStudentSearch = ({
         )}
       </div>
 
-      <div className="pt-4 border-t">
+      <div className="pt-3 sm:pt-4 border-t">
         <p className="text-xs text-muted-foreground">
           <strong>Nota:</strong> El alumno será añadido a TODAS las clases de la serie recurrente "{className}".
         </p>

@@ -1099,10 +1099,10 @@ const WeekAttendancePage = () => {
 
           {/* Bulk Enroll Student Dialog */}
           <Dialog open={bulkEnrollDialog.open} onOpenChange={(open) => setBulkEnrollDialog({ ...bulkEnrollDialog, open })}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
-                <DialogTitle>Añadir Alumno a la Serie Recurrente</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-base sm:text-lg">Añadir Alumno a la Serie Recurrente</DialogTitle>
+                <DialogDescription className="text-sm">
                   Busca y añade un alumno a TODAS las clases de la serie <strong>{bulkEnrollDialog.className}</strong>
                 </DialogDescription>
               </DialogHeader>
