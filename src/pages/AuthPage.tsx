@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone, Shield } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
+import { LopiviModal } from "@/components/LopiviModal";
+import { LOPIVI_SHORT_TEXT } from "@/constants/lopiviProtocol";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -36,6 +38,11 @@ export const AuthPage = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [clubError, setClubError] = useState("");
+
+  // Estados para LOPIVI
+  const [lopiviAccepted, setLopiviAccepted] = useState(false);
+  const [showLopiviModal, setShowLopiviModal] = useState(false);
+
   const {
     signIn,
     signInWithGoogle,
@@ -257,6 +264,16 @@ export const AuthPage = () => {
       return;
     }
 
+    // LOPIVI es obligatorio para guardians
+    if (userType === 'guardian' && !lopiviAccepted) {
+      toast({
+        title: "Error",
+        description: "Debes aceptar el Protocolo LOPIVI para continuar",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (email !== confirmEmail) {
       setEmailError("Los emails no coinciden");
       toast({
@@ -320,7 +337,7 @@ export const AuthPage = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, fullName, phone, selectedClubId, numLevel, userType);
+      const { error, data } = await signUp(email, password, fullName, phone, selectedClubId, numLevel, userType);
       console.log('🔍 DEBUG - signUp completed with error:', error);
       if (error) {
         toast({
@@ -329,6 +346,30 @@ export const AuthPage = () => {
           variant: "destructive"
         });
       } else {
+        // Si es guardian, guardar consentimiento LOPIVI
+        if (userType === 'guardian' && lopiviAccepted && data?.user) {
+          try {
+            const { error: lopiviError } = await supabase
+              .from('lopivi_consents')
+              .insert({
+                user_id: data.user.id,
+                consent_given: true,
+                ip_address: window.location.hostname,
+                user_agent: navigator.userAgent,
+                document_version: 'v1.0'
+              });
+
+            if (lopiviError) {
+              console.error('Error saving LOPIVI consent:', lopiviError);
+              // No bloqueamos el registro si falla el guardado del consentimiento
+            } else {
+              console.log('✅ LOPIVI consent saved successfully');
+            }
+          } catch (lopiviError) {
+            console.error('Error saving LOPIVI consent:', lopiviError);
+          }
+        }
+
         toast({
           title: "¡Registro exitoso!",
           description: "Cuenta creada correctamente, redirigiendo..."
@@ -846,6 +887,33 @@ export const AuthPage = () => {
                   </a>
                 </label>
               </div>
+
+              {/* Checkbox LOPIVI - Solo para guardians */}
+              {userType === 'guardian' && (
+                <div className="flex items-start space-x-3 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="lopivi"
+                    checked={lopiviAccepted}
+                    onChange={(e) => setLopiviAccepted(e.target.checked)}
+                    required
+                    className="mt-1 w-4 h-4 text-blue-600 bg-white border-blue-300 rounded focus:ring-blue-600 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="lopivi" className="text-sm text-slate-700 leading-tight flex items-start gap-2">
+                      <Shield className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span>{LOPIVI_SHORT_TEXT}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowLopiviModal(true)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium underline mt-2 inline-block"
+                    >
+                      Ver documento completo del Protocolo LOPIVI
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button
@@ -872,6 +940,12 @@ export const AuthPage = () => {
   </Card>
 </div>
       </div>
+
+      {/* Modal LOPIVI */}
+      <LopiviModal
+        open={showLopiviModal}
+        onOpenChange={setShowLopiviModal}
+      />
     </div>
   );
 };
