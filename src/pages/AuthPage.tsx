@@ -8,12 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone, Shield } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
 import { LopiviModal } from "@/components/LopiviModal";
-import { LOPIVI_SHORT_TEXT } from "@/constants/lopiviProtocol";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -890,28 +889,25 @@ export const AuthPage = () => {
 
               {/* Checkbox LOPIVI - Solo para guardians */}
               {userType === 'guardian' && (
-                <div className="flex items-start space-x-3 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                <div className="flex items-start space-x-3">
                   <input
                     type="checkbox"
                     id="lopivi"
                     checked={lopiviAccepted}
                     onChange={(e) => setLopiviAccepted(e.target.checked)}
                     required
-                    className="mt-1 w-4 h-4 text-blue-600 bg-white border-blue-300 rounded focus:ring-blue-600 focus:ring-2"
+                    className="mt-1 w-4 h-4 text-playtomic-orange bg-white border-slate-300 rounded focus:ring-playtomic-orange focus:ring-2"
                   />
-                  <div className="flex-1">
-                    <label htmlFor="lopivi" className="text-sm text-slate-700 leading-tight flex items-start gap-2">
-                      <Shield className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <span>{LOPIVI_SHORT_TEXT}</span>
-                    </label>
+                  <label htmlFor="lopivi" className="text-sm text-slate-700 leading-tight">
+                    He leído y acepto el{' '}
                     <button
                       type="button"
                       onClick={() => setShowLopiviModal(true)}
-                      className="text-xs text-blue-600 hover:text-blue-800 font-medium underline mt-2 inline-block"
+                      className="text-playtomic-orange hover:text-orange-600 font-medium underline"
                     >
-                      Ver documento completo del Protocolo LOPIVI
+                      Protocolo de Protección a la Infancia y Adolescencia (LOPIVI)
                     </button>
-                  </div>
+                  </label>
                 </div>
               )}
             </div>
