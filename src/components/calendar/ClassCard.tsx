@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useCreateClassPayment } from "@/hooks/useClassPayment";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 import { useDeleteScheduledClass } from "@/hooks/useScheduledClasses";
-import { useClassParticipants, useDeleteClassParticipant } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useDeleteClassParticipant, useBulkRemoveFromRecurringClass } from "@/hooks/useClassParticipants";
 import { useStudentClassParticipations } from "@/hooks/useStudentClasses";
 
 interface ClassCardProps {
@@ -327,6 +327,7 @@ function AdminClassDetailsModal({
   } = useAuth();
   const deleteClassMutation = useDeleteScheduledClass();
   const deleteParticipantMutation = useDeleteClassParticipant();
+  const bulkRemoveMutation = useBulkRemoveFromRecurringClass();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showManageStudents, setShowManageStudents] = useState(false);
   const [participantToDelete, setParticipantToDelete] = useState<string | null>(null);
@@ -377,7 +378,16 @@ function AdminClassDetailsModal({
 
   const confirmRemoveParticipant = () => {
     if (participantToDelete) {
-      deleteParticipantMutation.mutate(participantToDelete);
+      // Find the participant to get their student_enrollment_id
+      const participant = participants.find(p => p.id === participantToDelete);
+      if (participant) {
+        bulkRemoveMutation.mutate({
+          student_enrollment_id: participant.student_enrollment_id,
+          club_id: cls.club_id,
+          class_name: cls.name,
+          class_start_time: cls.start_time
+        });
+      }
       setParticipantToDelete(null);
     }
   };
@@ -593,15 +603,16 @@ function AdminClassDetailsModal({
       <AlertDialog open={participantToDelete !== null} onOpenChange={(open) => !open && setParticipantToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar alumno de la clase?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar alumno de toda la serie recurrente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará al alumno de esta clase. El alumno dejará de ver la clase en su dashboard y no podrá confirmar asistencia.
+              Esta acción eliminará al alumno de TODAS las clases de la serie recurrente "{cls.name}".
+              El alumno dejará de ver estas clases en su dashboard y no podrá confirmar asistencia.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRemoveParticipant} disabled={deleteParticipantMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteParticipantMutation.isPending ? "Eliminando..." : "Sí, eliminar"}
+            <AlertDialogAction onClick={confirmRemoveParticipant} disabled={bulkRemoveMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {bulkRemoveMutation.isPending ? "Eliminando..." : "Sí, eliminar de toda la serie"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
