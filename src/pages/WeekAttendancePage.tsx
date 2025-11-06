@@ -670,9 +670,9 @@ const WeekAttendancePage = () => {
                 return (
                   <Card key={`${classData.id}-${notificationDate}`} className={hasEnded ? 'opacity-60 border-gray-300' : isCancelled ? 'opacity-60 border-red-300' : ''}>
                     <CardHeader className="p-3 sm:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
                             {isCancelled && (
                               <Badge variant="destructive" className="text-xs">CANCELADA</Badge>
@@ -693,10 +693,10 @@ const WeekAttendancePage = () => {
                             )}
                           </CardDescription>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Badge
                             variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
-                            className="text-xs self-end sm:self-start"
+                            className="text-xs"
                           >
                             {confirmedCount}/{totalCount}
                           </Badge>
