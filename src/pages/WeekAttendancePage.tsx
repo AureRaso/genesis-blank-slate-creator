@@ -710,7 +710,7 @@ const WeekAttendancePage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 px-2 gap-1.5 text-xs"
+                                className="h-7 px-2 gap-1.5 text-xs w-[30%] max-w-[120px]"
                                 onClick={() => {
                                   setBulkEnrollDialog({
                                     open: true,
