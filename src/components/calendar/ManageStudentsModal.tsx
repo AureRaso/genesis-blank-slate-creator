@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Search, UserPlus, UserMinus, Mail, User, Loader2, CreditCard, Banknote, CheckCircle } from "lucide-react";
 import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useClassParticipants, useUpdateClassParticipant, useCreateClassParticipant } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useUpdateClassParticipant, useCreateClassParticipant, useBulkEnrollToRecurringClass } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -54,6 +54,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const updateMutation = useUpdateClassParticipant();
   const createMutation = useCreateClassParticipant();
+  const bulkEnrollMutation = useBulkEnrollToRecurringClass();
 
   // Filter students by search term and exclude current participants
   const availableStudents = allStudents?.filter(student => 
@@ -135,15 +136,16 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     }
 
     try {
-      // Add students to class
+      // Add students to ALL classes in the recurring series
       for (const studentId of studentsToAdd) {
         const paymentInfo = paymentData[studentId] || {};
-        await createMutation.mutateAsync({
-          class_id: cls.id,
+        await bulkEnrollMutation.mutateAsync({
           student_enrollment_id: studentId,
-          status: 'active',
-          payment_method: paymentInfo.paymentMethod || '',
+          club_id: cls.club_id,
+          class_name: cls.name,
+          class_start_time: cls.start_time,
           payment_status: paymentInfo.paymentStatus || 'pending',
+          payment_method: paymentInfo.paymentMethod || '',
           payment_notes: paymentInfo.paymentNotes || ''
         });
       }
@@ -158,14 +160,14 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
 
       toast({
         title: "Cambios guardados",
-        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s)` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s)` : ''} correctamente.`
+        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s) a toda la serie recurrente` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s)` : ''} correctamente.`
       });
-      
+
       // Reset selections
       setSelectedStudents(new Set());
       setSelectedParticipants(new Set());
       setPaymentData({});
-      
+
       // Close modal after successful update
       setTimeout(() => {
         onClose();
@@ -181,7 +183,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   };
 
   const isLoading = studentsLoading || participantsLoading;
-  const isSaving = updateMutation.isPending || createMutation.isPending;
+  const isSaving = updateMutation.isPending || createMutation.isPending || bulkEnrollMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -189,3 +189,116 @@ export const useDeleteClassParticipant = () => {
     },
   });
 };
+
+export interface BulkEnrollmentData {
+  student_enrollment_id: string;
+  club_id: string;
+  class_name: string;
+  class_start_time: string;
+  payment_status?: string;
+  payment_method?: string;
+  payment_notes?: string;
+}
+
+// Hook to add a student to ALL recurring instances of a programmed class
+export const useBulkEnrollToRecurringClass = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (enrollmentData: BulkEnrollmentData) => {
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) throw new Error("No authenticated user");
+
+      console.log('🔵 Starting bulk enrollment:', enrollmentData);
+
+      // Step 1: Find all classes in the recurring series
+      const { data: matchingClasses, error: classesError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, start_time, club_id')
+        .eq('club_id', enrollmentData.club_id)
+        .eq('name', enrollmentData.class_name)
+        .eq('start_time', enrollmentData.class_start_time);
+
+      if (classesError) {
+        console.error('❌ Error fetching matching classes:', classesError);
+        throw classesError;
+      }
+
+      if (!matchingClasses || matchingClasses.length === 0) {
+        throw new Error('No se encontraron clases en la serie recurrente');
+      }
+
+      console.log(`✅ Found ${matchingClasses.length} classes in recurring series`);
+
+      // Step 2: Check which classes the student is NOT already enrolled in
+      const classIds = matchingClasses.map(c => c.id);
+      const { data: existingEnrollments, error: enrollmentError } = await supabase
+        .from('class_participants')
+        .select('class_id')
+        .eq('student_enrollment_id', enrollmentData.student_enrollment_id)
+        .in('class_id', classIds);
+
+      if (enrollmentError) {
+        console.error('❌ Error checking existing enrollments:', enrollmentError);
+        throw enrollmentError;
+      }
+
+      const existingClassIds = new Set(existingEnrollments?.map(e => e.class_id) || []);
+      const classesToEnroll = matchingClasses.filter(c => !existingClassIds.has(c.id));
+
+      console.log(`📝 Student already enrolled in ${existingClassIds.size} classes`);
+      console.log(`➕ Will enroll in ${classesToEnroll.length} new classes`);
+
+      if (classesToEnroll.length === 0) {
+        throw new Error('El alumno ya está inscrito en todas las clases de esta serie');
+      }
+
+      // Step 3: Bulk insert the student into all classes
+      const participantsToInsert = classesToEnroll.map(cls => ({
+        class_id: cls.id,
+        student_enrollment_id: enrollmentData.student_enrollment_id,
+        status: 'active',
+        payment_status: enrollmentData.payment_status || 'pending',
+        payment_method: enrollmentData.payment_method || '',
+        payment_notes: enrollmentData.payment_notes || '',
+        payment_verified: false,
+        amount_paid: 0,
+        total_amount_due: 0,
+      }));
+
+      const { data: insertedData, error: insertError } = await supabase
+        .from('class_participants')
+        .insert(participantsToInsert)
+        .select();
+
+      if (insertError) {
+        console.error('❌ Error inserting participants:', insertError);
+        throw insertError;
+      }
+
+      console.log(`✅ Successfully enrolled student in ${insertedData?.length || 0} classes`);
+
+      return {
+        enrolled: insertedData?.length || 0,
+        total: matchingClasses.length,
+        skipped: existingClassIds.size
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["class-participants"] });
+      queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      toast({
+        title: "Alumno añadido a la serie",
+        description: `El alumno ha sido inscrito en ${data.enrolled} clase(s) de la serie recurrente.${data.skipped > 0 ? ` Ya estaba inscrito en ${data.skipped} clase(s).` : ''}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo inscribir al alumno en la serie de clases",
+        variant: "destructive",
+      });
+    },
+  });
+};
