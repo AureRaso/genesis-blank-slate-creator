@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -766,6 +766,37 @@ const SettingsPage = () => {
                 {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
               </Button>
             </div>
+
+            {/* LOPIVI Report Section - Only for guardians */}
+            {(isGuardian || isPlayer) && clubs && clubs.length > 0 && (
+              <div className="pt-6 border-t border-blue-200 mt-6">
+                <Card className="border-blue-200 bg-blue-50/50">
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-blue-700">
+                      <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
+                      Protección a la Infancia (LOPIVI)
+                    </CardTitle>
+                    <CardDescription className="text-sm text-blue-600">
+                      Reporta cualquier incidente relacionado con la protección de menores en las actividades deportivas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6 pt-0">
+                    <p className="text-sm text-slate-600 mb-4">
+                      Si has presenciado o conoces alguna situación que pueda comprometer la seguridad o bienestar de un menor,
+                      puedes reportarlo de forma confidencial a través de nuestro formulario LOPIVI.
+                    </p>
+                    <Button
+                      onClick={() => navigate(`/lopivi-report?clubId=${clubs[0].id}`)}
+                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                      size="default"
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      Reportar Incidente LOPIVI
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Delete Account Section */}
             <div className="pt-6 border-t border-red-200 mt-6">

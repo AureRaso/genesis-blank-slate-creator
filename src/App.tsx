@@ -59,6 +59,7 @@ import ClearCachePage from "@/pages/ClearCachePage";
 import PromotionsPage from "@/pages/PromotionsPage";
 import TestReminderPage from "@/pages/TestReminderPage";
 import HistorialPage from "@/pages/HistorialPage";
+import LopiviReportPage from "@/pages/LopiviReportPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -166,6 +167,11 @@ function App() {
               <Route path="/waitlist/:classId/:date" element={<WaitlistJoinPage />} />
               <Route path="/get-ids" element={<GetIdsPage />} />
               <Route path="/test-reminder" element={<TestReminderPage />} />
+              <Route path="/lopivi-report" element={
+                <ProtectedRoute>
+                  <LopiviReportPage />
+                </ProtectedRoute>
+              } />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
 
