@@ -744,7 +744,7 @@ const WeekAttendancePage = () => {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-3 sm:p-6">
+                    <CardContent className="px-3 sm:px-6 pt-2 sm:pt-3 pb-3 sm:pb-6">
                       {validParticipants.length === 0 ? (
                         <p className="text-xs sm:text-sm text-muted-foreground italic">
                           No hay alumnos inscritos en esta clase
