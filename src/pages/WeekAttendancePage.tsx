@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -694,21 +694,16 @@ const WeekAttendancePage = () => {
                           </CardDescription>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge
-                            variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
-                            className="text-xs"
-                          >
-                            {confirmedCount}/{totalCount}
-                          </Badge>
                           {canCancelClass && !isCancelled && !hasEnded && (
                             <Button
                               variant="destructive"
                               size="sm"
                               onClick={() => handleCancelClass(classData.id, classData.name, notificationDate)}
-                              className="h-8 px-3 gap-1.5 text-xs"
+                              className="h-8 px-3 gap-1.5 text-xs sm:bg-destructive sm:hover:bg-destructive/90 bg-transparent hover:bg-red-50 border-2 border-red-500 text-red-500 sm:text-destructive-foreground sm:border-0"
                               title="Cancelar clase"
                             >
-                              <Ban className="h-3.5 w-3.5" />
+                              <X className="h-4 w-4 sm:hidden" />
+                              <Ban className="h-3.5 w-3.5 hidden sm:inline" />
                               <span className="hidden sm:inline">Cancelar</span>
                             </Button>
                           )}
@@ -722,11 +717,11 @@ const WeekAttendancePage = () => {
                         </p>
                       ) : (
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-slate-700">Lista de Alumnos</h4>
-                            <Badge variant="outline" className="text-xs font-medium">
-                              {totalCount} {totalCount === 1 ? 'alumno' : 'alumnos'}
-                            </Badge>
+                          <div className="flex items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold text-slate-700">Lista de alumnos</h4>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {confirmedCount}/{totalCount} confirmados
+                            </span>
                           </div>
                           <div className="grid gap-3">
                             {validParticipants.map((participant) => {
