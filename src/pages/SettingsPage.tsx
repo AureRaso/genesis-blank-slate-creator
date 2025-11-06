@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield, MoreVertical, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 
 // Extended club interface with Stripe properties
@@ -237,13 +245,43 @@ const SettingsPage = () => {
   if (isPlayer || isTrainer || isGuardian) {
     return (
       <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-        <div className="space-y-2">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            Configuración
-          </h1>
-          <p className="text-sm sm:text-base text-gray-500">
-            Administra tu información personal
-          </p>
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+              Configuración
+            </h1>
+            <p className="text-sm sm:text-base text-gray-500">
+              Administra tu información personal
+            </p>
+          </div>
+
+          {/* Dropdown Menu for Special Actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Opciones Especiales</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              {userClub && (
+                <DropdownMenuItem onClick={() => navigate(`/lopivi-report?clubId=${userClub.id}`)}>
+                  <Shield className="mr-2 h-4 w-4 text-blue-600" />
+                  <span>Reportar Incidente LOPIVI</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Eliminar mi cuenta</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -380,64 +418,6 @@ const SettingsPage = () => {
           </Button>
         </div>
 
-        {/* LOPIVI Report Section - Available for users with club */}
-        {userClub && (
-          <div className="pt-6 border-t border-blue-200 mt-6">
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-blue-700">
-                  <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
-                  Protección a la Infancia (LOPIVI)
-                </CardTitle>
-                <CardDescription className="text-sm text-blue-600">
-                  Reporta cualquier incidente relacionado con la protección de menores en las actividades deportivas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
-                <p className="text-sm text-slate-600 mb-4">
-                  Si has presenciado o conoces alguna situación que pueda comprometer la seguridad o bienestar de un menor,
-                  puedes reportarlo de forma confidencial a través de nuestro formulario LOPIVI.
-                </p>
-                <Button
-                  onClick={() => navigate(`/lopivi-report?clubId=${userClub.id}`)}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                  size="default"
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Reportar Incidente LOPIVI
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Delete Account Section */}
-        <div className="pt-6 border-t border-red-200 mt-6">
-          <Card className="border-red-200 bg-red-50/50">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-red-700">
-                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />
-                Zona Peligrosa
-              </CardTitle>
-              <CardDescription className="text-sm text-red-600">
-                Las acciones en esta sección son permanentes y no se pueden deshacer
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <Button
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={loading}
-                variant="destructive"
-                className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
-                size="default"
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Eliminar mi cuenta
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* First Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
@@ -519,13 +499,43 @@ const SettingsPage = () => {
   // Admin view - full configuration
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-      <div className="space-y-2">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-          Configuración
-        </h1>
-        <p className="text-sm sm:text-base text-gray-500">
-          Gestiona la configuración de tu club
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+            Configuración
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500">
+            Gestiona la configuración de tu club
+          </p>
+        </div>
+
+        {/* Dropdown Menu for Special Actions */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Opciones Especiales</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            {clubs && clubs.length > 0 && (
+              <DropdownMenuItem onClick={() => navigate(`/lopivi-report?clubId=${clubs[0].id}`)}>
+                <Shield className="mr-2 h-4 w-4 text-blue-600" />
+                <span>Reportar Incidente LOPIVI</span>
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuItem
+              onClick={() => setShowDeleteDialog(true)}
+              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Eliminar mi cuenta</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="max-w-4xl mx-auto w-full">
@@ -796,64 +806,6 @@ const SettingsPage = () => {
                 <LogOut className="mr-2 h-4 w-4" />
                 {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
               </Button>
-            </div>
-
-            {/* LOPIVI Report Section - Available for all users with club access */}
-            {(clubs && clubs.length > 0) && (
-              <div className="pt-6 border-t border-blue-200 mt-6">
-                <Card className="border-blue-200 bg-blue-50/50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-blue-700">
-                      <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
-                      Protección a la Infancia (LOPIVI)
-                    </CardTitle>
-                    <CardDescription className="text-sm text-blue-600">
-                      Reporta cualquier incidente relacionado con la protección de menores en las actividades deportivas
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6 pt-0">
-                    <p className="text-sm text-slate-600 mb-4">
-                      Si has presenciado o conoces alguna situación que pueda comprometer la seguridad o bienestar de un menor,
-                      puedes reportarlo de forma confidencial a través de nuestro formulario LOPIVI.
-                    </p>
-                    <Button
-                      onClick={() => navigate(`/lopivi-report?clubId=${clubs[0].id}`)}
-                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                      size="default"
-                    >
-                      <Shield className="mr-2 h-4 w-4" />
-                      Reportar Incidente LOPIVI
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Delete Account Section */}
-            <div className="pt-6 border-t border-red-200 mt-6">
-              <Card className="border-red-200 bg-red-50/50">
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-red-700">
-                    <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />
-                    Zona Peligrosa
-                  </CardTitle>
-                  <CardDescription className="text-sm text-red-600">
-                    Las acciones en esta sección son permanentes y no se pueden deshacer
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6 pt-0">
-                  <Button
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={loading}
-                    variant="destructive"
-                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
-                    size="default"
-                  >
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    Eliminar mi cuenta
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
         </Tabs>
