@@ -151,23 +151,17 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
         });
       }
 
-      // Remove participants from ALL classes in the recurring series
+      // Remove participants from class (keep original behavior for batch removal)
       for (const participantId of participantsToRemove) {
-        // Find the participant to get their student_enrollment_id
-        const participant = currentParticipants?.find(p => p.id === participantId);
-        if (participant) {
-          await bulkRemoveMutation.mutateAsync({
-            student_enrollment_id: participant.student_enrollment_id,
-            club_id: cls.club_id,
-            class_name: cls.name,
-            class_start_time: cls.start_time
-          });
-        }
+        await updateMutation.mutateAsync({
+          id: participantId,
+          data: { status: 'inactive' }
+        });
       }
 
       toast({
         title: "Cambios guardados",
-        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s) a toda la serie recurrente` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s) de toda la serie recurrente` : ''} correctamente.`
+        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s) a toda la serie recurrente` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s)` : ''} correctamente.`
       });
 
       // Reset selections
@@ -221,7 +215,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
               ) : (
                 currentParticipants.map((participant) => (
                   <div key={participant.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 flex-1">
                       <Checkbox
                         checked={selectedParticipants.has(participant.id)}
                         onCheckedChange={(checked) => handleParticipantToggle(participant.id, !!checked)}
@@ -232,7 +226,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                           <User className="h-5 w-5" />
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div className="flex-1">
                         <div className="font-medium">{participant.student_enrollment.full_name}</div>
                         <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Mail className="h-3 w-3" />
@@ -258,9 +252,28 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                         </div>
                       </div>
                     </div>
-                    {selectedParticipants.has(participant.id) && (
-                      <UserMinus className="h-4 w-4 text-destructive" />
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        if (window.confirm(`¿Eliminar a ${participant.student_enrollment.full_name} de toda la serie recurrente?`)) {
+                          try {
+                            await bulkRemoveMutation.mutateAsync({
+                              student_enrollment_id: participant.student_enrollment_id,
+                              club_id: cls.club_id,
+                              class_name: cls.name,
+                              class_start_time: cls.start_time
+                            });
+                          } catch (error) {
+                            console.error('Error removing student:', error);
+                          }
+                        }
+                      }}
+                      disabled={isSaving}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))
               )}
