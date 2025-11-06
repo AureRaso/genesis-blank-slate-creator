@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Search, UserPlus, UserMinus, Mail, User, Loader2, CreditCard, Banknote, CheckCircle } from "lucide-react";
 import { useStudentEnrollments, useAdminStudentEnrollments } from "@/hooks/useStudentEnrollments";
-import { useClassParticipants, useUpdateClassParticipant, useCreateClassParticipant, useBulkEnrollToRecurringClass } from "@/hooks/useClassParticipants";
+import { useClassParticipants, useUpdateClassParticipant, useCreateClassParticipant, useBulkEnrollToRecurringClass, useBulkRemoveFromRecurringClass } from "@/hooks/useClassParticipants";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
@@ -55,6 +55,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   const updateMutation = useUpdateClassParticipant();
   const createMutation = useCreateClassParticipant();
   const bulkEnrollMutation = useBulkEnrollToRecurringClass();
+  const bulkRemoveMutation = useBulkRemoveFromRecurringClass();
 
   // Filter students by search term and exclude current participants
   const availableStudents = allStudents?.filter(student => 
@@ -150,17 +151,23 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
         });
       }
 
-      // Remove participants from class
+      // Remove participants from ALL classes in the recurring series
       for (const participantId of participantsToRemove) {
-        await updateMutation.mutateAsync({
-          id: participantId,
-          data: { status: 'inactive' }
-        });
+        // Find the participant to get their student_enrollment_id
+        const participant = currentParticipants?.find(p => p.id === participantId);
+        if (participant) {
+          await bulkRemoveMutation.mutateAsync({
+            student_enrollment_id: participant.student_enrollment_id,
+            club_id: cls.club_id,
+            class_name: cls.name,
+            class_start_time: cls.start_time
+          });
+        }
       }
 
       toast({
         title: "Cambios guardados",
-        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s) a toda la serie recurrente` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s)` : ''} correctamente.`
+        description: `Se han ${studentsToAdd.length > 0 ? `añadido ${studentsToAdd.length} alumno(s) a toda la serie recurrente` : ''}${studentsToAdd.length > 0 && participantsToRemove.length > 0 ? ' y ' : ''}${participantsToRemove.length > 0 ? `eliminado ${participantsToRemove.length} alumno(s) de toda la serie recurrente` : ''} correctamente.`
       });
 
       // Reset selections
@@ -183,7 +190,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   };
 
   const isLoading = studentsLoading || participantsLoading;
-  const isSaving = updateMutation.isPending || createMutation.isPending || bulkEnrollMutation.isPending;
+  const isSaving = updateMutation.isPending || createMutation.isPending || bulkEnrollMutation.isPending || bulkRemoveMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

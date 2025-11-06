@@ -302,3 +302,97 @@ export const useBulkEnrollToRecurringClass = () => {
     },
   });
 };
+
+export interface BulkRemovalData {
+  student_enrollment_id: string;
+  club_id: string;
+  class_name: string;
+  class_start_time: string;
+}
+
+// Hook to remove a student from ALL recurring instances of a programmed class
+export const useBulkRemoveFromRecurringClass = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (removalData: BulkRemovalData) => {
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) throw new Error("No authenticated user");
+
+      console.log('🔵 Starting bulk removal:', removalData);
+
+      // Step 1: Find all classes in the recurring series
+      const { data: matchingClasses, error: classesError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, start_time, club_id')
+        .eq('club_id', removalData.club_id)
+        .eq('name', removalData.class_name)
+        .eq('start_time', removalData.class_start_time);
+
+      if (classesError) {
+        console.error('❌ Error fetching matching classes:', classesError);
+        throw classesError;
+      }
+
+      if (!matchingClasses || matchingClasses.length === 0) {
+        throw new Error('No se encontraron clases en la serie recurrente');
+      }
+
+      console.log(`✅ Found ${matchingClasses.length} classes in recurring series`);
+
+      // Step 2: Find all enrollments for this student in these classes
+      const classIds = matchingClasses.map(c => c.id);
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from('class_participants')
+        .select('id, class_id')
+        .eq('student_enrollment_id', removalData.student_enrollment_id)
+        .in('class_id', classIds);
+
+      if (enrollmentError) {
+        console.error('❌ Error fetching enrollments:', enrollmentError);
+        throw enrollmentError;
+      }
+
+      if (!enrollments || enrollments.length === 0) {
+        throw new Error('El alumno no está inscrito en ninguna clase de esta serie');
+      }
+
+      console.log(`📝 Found ${enrollments.length} enrollments to remove`);
+
+      // Step 3: Mark all enrollments as inactive (soft delete)
+      const participantIds = enrollments.map(e => e.id);
+      const { error: updateError } = await supabase
+        .from('class_participants')
+        .update({ status: 'inactive' })
+        .in('id', participantIds);
+
+      if (updateError) {
+        console.error('❌ Error updating participants:', updateError);
+        throw updateError;
+      }
+
+      console.log(`✅ Successfully removed student from ${enrollments.length} classes`);
+
+      return {
+        removed: enrollments.length,
+        total: matchingClasses.length
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["class-participants"] });
+      queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      toast({
+        title: "Alumno eliminado de la serie",
+        description: `El alumno ha sido eliminado de ${data.removed} clase(s) de la serie recurrente.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar al alumno de la serie de clases",
+        variant: "destructive",
+      });
+    },
+  });
+};
