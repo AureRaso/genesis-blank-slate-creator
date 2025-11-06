@@ -288,6 +288,7 @@ export const useBulkEnrollToRecurringClass = () => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
       toast({
         title: "Alumno añadido a la serie",
         description: `El alumno ha sido inscrito en ${data.enrolled} clase(s) de la serie recurrente.${data.skipped > 0 ? ` Ya estaba inscrito en ${data.skipped} clase(s).` : ''}`,
