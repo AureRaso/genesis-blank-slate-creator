@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,17 @@ import { Label } from '@/components/ui/label';
 import { PasswordChangeSection } from '@/components/PasswordChangeSection';
 import { canChangePassword, getAuthProviderMessage } from '@/utils/authProviders';
 import { useNavigate } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -38,6 +49,9 @@ const SettingsPage = () => {
     phone: profile?.phone || '',
     level: profile?.level || '',
   });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showFinalDeleteDialog, setShowFinalDeleteDialog] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0
@@ -167,6 +181,55 @@ const SettingsPage = () => {
       toast.error('Error al cerrar sesión');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInitialDeleteConfirm = () => {
+    setShowDeleteDialog(false);
+    setShowFinalDeleteDialog(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteReason.trim().length < 20) {
+      toast.error('El motivo debe tener al menos 20 caracteres');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Log the deletion reason
+      const { error: logError } = await supabase
+        .from('account_deletion_logs')
+        .insert({
+          user_id: user?.id,
+          email: user?.email,
+          reason: deleteReason.trim(),
+        });
+
+      if (logError) {
+        console.error('Error logging deletion reason:', logError);
+        // Continue with deletion even if logging fails
+      }
+
+      // Delete the user account
+      const { error: deleteError } = await supabase.functions.invoke('delete-user-account', {
+        body: { userId: user?.id }
+      });
+
+      if (deleteError) throw deleteError;
+
+      toast.success('Tu cuenta ha sido eliminada correctamente');
+
+      // Sign out after deletion
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Error al eliminar la cuenta. Por favor, contacta al soporte.');
+    } finally {
+      setLoading(false);
+      setShowFinalDeleteDialog(false);
+      setDeleteReason('');
     }
   };
 
@@ -316,6 +379,108 @@ const SettingsPage = () => {
             {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
           </Button>
         </div>
+
+        {/* Delete Account Section */}
+        <div className="pt-6 border-t border-red-200 mt-6">
+          <Card className="border-red-200 bg-red-50/50">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-red-700">
+                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />
+                Zona Peligrosa
+              </CardTitle>
+              <CardDescription className="text-sm text-red-600">
+                Las acciones en esta sección son permanentes y no se pueden deshacer
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <Button
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={loading}
+                variant="destructive"
+                className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
+                size="default"
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Eliminar mi cuenta
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* First Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                ¿Estás seguro?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>Estás a punto de eliminar tu cuenta de forma permanente.</p>
+                <p className="font-semibold">Esta acción:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Eliminará toda tu información personal</li>
+                  <li>Cancelará todas tus inscripciones a clases</li>
+                  <li>Eliminará tu historial de asistencia</li>
+                  <li>No se puede revertir</li>
+                </ul>
+                <p className="font-semibold text-red-600">¿Realmente deseas continuar?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No, cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleInitialDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Sí, continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Final Confirmation Dialog with Reason */}
+        <AlertDialog open={showFinalDeleteDialog} onOpenChange={setShowFinalDeleteDialog}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Confirmación Final
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-4">
+                <p className="font-semibold">Esta es tu última oportunidad para cancelar.</p>
+                <div className="space-y-2">
+                  <Label htmlFor="delete-reason" className="text-sm font-medium">
+                    Por favor, cuéntanos por qué eliminas tu cuenta (mínimo 20 caracteres):
+                  </Label>
+                  <Textarea
+                    id="delete-reason"
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder="Ej: No uso la aplicación con frecuencia..."
+                    className="min-h-[100px] resize-none"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {deleteReason.length}/20 caracteres mínimos
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteReason('')}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={loading || deleteReason.trim().length < 20}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar mi cuenta definitivamente'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -601,8 +766,110 @@ const SettingsPage = () => {
                 {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
               </Button>
             </div>
+
+            {/* Delete Account Section */}
+            <div className="pt-6 border-t border-red-200 mt-6">
+              <Card className="border-red-200 bg-red-50/50">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-red-700">
+                    <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />
+                    Zona Peligrosa
+                  </CardTitle>
+                  <CardDescription className="text-sm text-red-600">
+                    Las acciones en esta sección son permanentes y no se pueden deshacer
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <Button
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={loading}
+                    variant="destructive"
+                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
+                    size="default"
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Eliminar mi cuenta
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
+
+        {/* First Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                ¿Estás seguro?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>Estás a punto de eliminar tu cuenta de forma permanente.</p>
+                <p className="font-semibold">Esta acción:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Eliminará toda tu información personal</li>
+                  <li>Cancelará todas tus inscripciones a clases</li>
+                  <li>Eliminará tu historial de asistencia</li>
+                  <li>No se puede revertir</li>
+                </ul>
+                <p className="font-semibold text-red-600">¿Realmente deseas continuar?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No, cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleInitialDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Sí, continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Final Confirmation Dialog with Reason */}
+        <AlertDialog open={showFinalDeleteDialog} onOpenChange={setShowFinalDeleteDialog}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Confirmación Final
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-4">
+                <p className="font-semibold">Esta es tu última oportunidad para cancelar.</p>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-delete-reason" className="text-sm font-medium">
+                    Por favor, cuéntanos por qué eliminas tu cuenta (mínimo 20 caracteres):
+                  </Label>
+                  <Textarea
+                    id="admin-delete-reason"
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder="Ej: No uso la aplicación con frecuencia..."
+                    className="min-h-[100px] resize-none"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {deleteReason.length}/20 caracteres mínimos
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteReason('')}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={loading || deleteReason.trim().length < 20}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {loading ? 'Eliminando...' : 'Eliminar mi cuenta definitivamente'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         </div>
       </div>
     </div>
