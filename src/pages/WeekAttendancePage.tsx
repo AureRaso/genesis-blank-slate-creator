@@ -698,19 +698,21 @@ const WeekAttendancePage = () => {
                               </Badge>
                             )}
                           </div>
-                          <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">{classData.start_time} ({classData.duration_minutes} min)</span>
-                            </span>
-                            {classData.trainer && (
-                              <span className="truncate">Profesor: {classData.trainer.full_name}</span>
-                            )}
+                          <div className="space-y-2">
+                            <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{classData.start_time} ({classData.duration_minutes} min)</span>
+                              </span>
+                              {classData.trainer && (
+                                <span className="truncate">Profesor: {classData.trainer.full_name}</span>
+                              )}
+                            </CardDescription>
                             {canCancelClass && !isCancelled && !hasEnded && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 px-2 gap-1.5 text-xs w-[30%] max-w-[120px]"
+                                className="h-7 px-2 gap-1.5 text-xs w-[30%] max-w-[120px] hover:bg-gray-100 hover:text-gray-900"
                                 onClick={() => {
                                   setBulkEnrollDialog({
                                     open: true,
@@ -725,7 +727,7 @@ const WeekAttendancePage = () => {
                                 <span>Añadir alumno</span>
                               </Button>
                             )}
-                          </CardDescription>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {canCancelClass && !isCancelled && !hasEnded && (
