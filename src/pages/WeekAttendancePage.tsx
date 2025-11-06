@@ -696,15 +696,13 @@ const WeekAttendancePage = () => {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {canCancelClass && !isCancelled && !hasEnded && (
                             <Button
-                              variant="destructive"
+                              variant="ghost"
                               size="sm"
                               onClick={() => handleCancelClass(classData.id, classData.name, notificationDate)}
-                              className="h-8 px-3 gap-1.5 text-xs sm:bg-destructive sm:hover:bg-destructive/90 bg-transparent hover:bg-gray-100 border-0 text-gray-800 sm:text-destructive-foreground p-0 sm:px-3"
+                              className="h-8 bg-transparent hover:bg-gray-100 border-0 text-gray-800 p-0 px-2 -mx-2 rounded-md"
                               title="Cancelar clase"
                             >
-                              <X className="h-5 w-5 sm:hidden" />
-                              <Ban className="h-3.5 w-3.5 hidden sm:inline" />
-                              <span className="hidden sm:inline">Cancelar</span>
+                              <X className="h-5 w-5" />
                             </Button>
                           )}
                         </div>
@@ -1128,11 +1126,11 @@ const WeekAttendancePage = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Cancelar clase?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Vas a cancelar la clase <strong>{cancelClassDialog.className}</strong> para el día seleccionado.
+                  Vas a cancelar la clase <strong>{cancelClassDialog.className}</strong> para la fecha seleccionada.
                   <br /><br />
-                  Esta acción marcará la clase como cancelada sin eliminarla del sistema. La clase seguirá visible en el panel pero marcada como "CANCELADA".
-                  <br /><br />
-                  Esta cancelación solo afecta a la fecha seleccionada, no a la serie recurrente completa.
+                  La clase seguirá visible, pero aparecerá como "CANCELADA".
+                  <br />
+                  La cancelación solo afecta a esa fecha concreta.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
