@@ -899,14 +899,11 @@ export const AuthPage = () => {
                     className="mt-1 w-4 h-4 text-playtomic-orange bg-white border-slate-300 rounded focus:ring-playtomic-orange focus:ring-2"
                   />
                   <label htmlFor="lopivi" className="text-sm text-slate-700 leading-tight">
-                    He leído y acepto el{' '}
-                    <button
+                    He leído y acepto el <button
                       type="button"
                       onClick={() => setShowLopiviModal(true)}
                       className="text-playtomic-orange hover:text-orange-600 font-medium underline"
-                    >
-                      Protocolo de Protección a la Infancia y Adolescencia (LOPIVI)
-                    </button>
+                    >Protocolo de Protección a la Infancia y Adolescencia (LOPIVI)</button>
                   </label>
                 </div>
               )}
