@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateClub, useUpdateClub } from "@/hooks/useClubs";
 import { Club, CreateClubData, COURT_TYPES } from "@/types/clubs";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft, Building2, Shield } from "lucide-react";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { Separator } from "@/components/ui/separator";
 
 interface ClubFormProps {
   club?: Club;
@@ -38,6 +39,9 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
       court_count: 1,
       court_types: [],
       description: "",
+      lopivi_delegate_name: "",
+      lopivi_delegate_email: "",
+      lopivi_delegate_phone: "",
     },
   });
 
@@ -58,6 +62,9 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
       setValue("court_count", club.court_count);
       setValue("court_types", club.court_types);
       setValue("description", club.description || "");
+      setValue("lopivi_delegate_name", club.lopivi_delegate_name || "");
+      setValue("lopivi_delegate_email", club.lopivi_delegate_email || "");
+      setValue("lopivi_delegate_phone", club.lopivi_delegate_phone || "");
     }
   }, [isEditing, club, setValue]);
 
@@ -207,6 +214,60 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
             <p className="text-sm text-muted-foreground">
               {watch("description")?.length || 0}/200 caracteres
             </p>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Sección Delegado de Protección LOPIVI */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-blue-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800">Delegado de Protección LOPIVI</h3>
+                <p className="text-sm text-slate-500">
+                  Persona responsable del cumplimiento de la Ley de Protección a la Infancia y Adolescencia
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lopivi_delegate_name">Nombre del Delegado (Opcional)</Label>
+              <Input
+                id="lopivi_delegate_name"
+                {...register("lopivi_delegate_name")}
+                placeholder="Nombre completo del delegado"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lopivi_delegate_email">Email del Delegado (Opcional)</Label>
+              <Input
+                id="lopivi_delegate_email"
+                type="email"
+                {...register("lopivi_delegate_email", {
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Email inválido"
+                  }
+                })}
+                placeholder="delegado@ejemplo.com"
+              />
+              {errors.lopivi_delegate_email && (
+                <p className="text-sm text-destructive">{errors.lopivi_delegate_email.message}</p>
+              )}
+              <p className="text-xs text-slate-500">
+                Se enviará notificación a este email cuando se reciba un reporte LOPIVI
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lopivi_delegate_phone">Teléfono del Delegado (Opcional)</Label>
+              <Input
+                id="lopivi_delegate_phone"
+                {...register("lopivi_delegate_phone")}
+                placeholder="+34 666 123 456"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

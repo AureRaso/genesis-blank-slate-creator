@@ -10,6 +10,10 @@ export interface Club {
   created_by_profile_id: string;
   created_at: string;
   updated_at: string;
+  lopivi_delegate_name?: string;
+  lopivi_delegate_email?: string;
+  lopivi_delegate_phone?: string;
+  lopivi_delegate_updated_at?: string;
 }
 
 export interface CreateClubData {
@@ -19,6 +23,9 @@ export interface CreateClubData {
   court_count: number;
   court_types: string[];
   description?: string;
+  lopivi_delegate_name?: string;
+  lopivi_delegate_email?: string;
+  lopivi_delegate_phone?: string;
 }
 
 export const COURT_TYPES = [
