@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
+import { useBulkEnrollToRecurringClass } from "@/hooks/useClassParticipants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
+import BulkEnrollStudentSearch from "@/components/BulkEnrollStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import OpenClassesTab from "@/components/OpenClassesTab";
 import {
@@ -69,6 +71,19 @@ const WeekAttendancePage = () => {
     classId: '',
     className: '',
     selectedDate: '',
+  });
+  const [bulkEnrollDialog, setBulkEnrollDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+    classStartTime: string;
+    clubId: string;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+    classStartTime: '',
+    clubId: '',
   });
   const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
     open: boolean;
@@ -691,6 +706,25 @@ const WeekAttendancePage = () => {
                             {classData.trainer && (
                               <span className="truncate">Profesor: {classData.trainer.full_name}</span>
                             )}
+                            {canCancelClass && !isCancelled && !hasEnded && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 gap-1.5 text-xs"
+                                onClick={() => {
+                                  setBulkEnrollDialog({
+                                    open: true,
+                                    classId: classData.id,
+                                    className: classData.name,
+                                    classStartTime: classData.start_time,
+                                    clubId: profile?.club_id || '',
+                                  });
+                                }}
+                              >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                <span>Añadir alumno</span>
+                              </Button>
+                            )}
                           </CardDescription>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1056,6 +1090,27 @@ const WeekAttendancePage = () => {
                   classId={substituteDialog.classId}
                   clubId={profile.club_id}
                   onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', selectedDate: '' })}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Bulk Enroll Student Dialog */}
+          <Dialog open={bulkEnrollDialog.open} onOpenChange={(open) => setBulkEnrollDialog({ ...bulkEnrollDialog, open })}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Añadir Alumno a la Serie Recurrente</DialogTitle>
+                <DialogDescription>
+                  Busca y añade un alumno a TODAS las clases de la serie <strong>{bulkEnrollDialog.className}</strong>
+                </DialogDescription>
+              </DialogHeader>
+              {bulkEnrollDialog.clubId && (
+                <BulkEnrollStudentSearch
+                  classId={bulkEnrollDialog.classId}
+                  clubId={bulkEnrollDialog.clubId}
+                  className={bulkEnrollDialog.className}
+                  classStartTime={bulkEnrollDialog.classStartTime}
+                  onSuccess={() => setBulkEnrollDialog({ open: false, classId: '', className: '', classStartTime: '', clubId: '' })}
                 />
               )}
             </DialogContent>
