@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant } from "@/hooks/useTodayAttendance";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -61,6 +61,8 @@ const TodayAttendancePage = () => {
 
   // Solo administradores pueden notificar por WhatsApp
   const isAdmin = profile?.role === 'admin';
+  const isTrainer = profile?.role === 'trainer';
+  const canCancelClass = isAdmin || isTrainer;
 
   // Estados para diálogos de confirmación
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -81,6 +83,22 @@ const TodayAttendancePage = () => {
   const markAbsence = useTrainerMarkAbsence();
   const clearStatus = useTrainerClearStatus();
   const removeParticipant = useRemoveParticipant();
+  const cancelClass = useCancelClass();
+  const { data: cancelledClasses = [] } = useCancelledClasses();
+
+  // Estado para diálogo de cancelación de clase
+  const [cancelClassDialog, setCancelClassDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+    classDate: string;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+    classDate: '',
+  });
+
 
   // Handlers con confirmación
   const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
@@ -137,6 +155,34 @@ const TodayAttendancePage = () => {
       removeParticipant.mutate(confirmDialog.participantId);
     }
     setConfirmDialog({ ...confirmDialog, open: false });
+  };
+
+  // Handler para cancelar clase
+  const handleCancelClass = (classId: string, className: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    setCancelClassDialog({
+      open: true,
+      classId,
+      className,
+      classDate: today,
+    });
+  };
+
+  // Ejecutar cancelación de clase
+  const executeCancelClass = () => {
+    cancelClass.mutate({
+      classId: cancelClassDialog.classId,
+      cancelledDate: cancelClassDialog.classDate,
+      reason: 'Cancelada por profesor/admin',
+    });
+    setCancelClassDialog({ open: false, classId: '', className: '', classDate: '' });
+  };
+
+  // Verificar si una clase está cancelada en una fecha específica
+  const isClassCancelled = (classId: string, date: string) => {
+    return cancelledClasses.some(
+      (cancelled) => cancelled.programmed_class_id === classId && cancelled.cancelled_date === date
+    );
   };
 
   const handleNotifyWhatsApp = (classData: any) => {
@@ -428,13 +474,31 @@ const TodayAttendancePage = () => {
             ).length;
             const totalCount = validParticipants.length;
             const confirmationRate = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
+            const today = new Date().toISOString().split('T')[0];
+            const isCancelled = isClassCancelled(classData.id, today);
+
+            console.log('🔍 Rendering class card:', {
+              classId: classData.id,
+              className: classData.name,
+              isCancelled,
+              cancelledClasses: cancelledClasses.length,
+              canCancelClass,
+              isAdmin,
+              isTrainer,
+              profileRole: profile?.role
+            });
 
             return (
-              <Card key={classData.id}>
+              <Card key={classData.id} className={isCancelled ? 'opacity-60 border-red-300' : ''}>
                 <CardHeader className="p-3 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="space-y-1 min-w-0">
-                      <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base sm:text-xl truncate">{classData.name}</CardTitle>
+                        {isCancelled && (
+                          <Badge variant="destructive" className="text-xs">CANCELADA</Badge>
+                        )}
+                      </div>
                       <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3 flex-shrink-0" />
@@ -445,12 +509,29 @@ const TodayAttendancePage = () => {
                         )}
                       </CardDescription>
                     </div>
-                    <Badge
-                      variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
-                      className="text-xs flex-shrink-0 self-start"
-                    >
-                      {confirmedCount}/{totalCount}
-                    </Badge>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                      <Badge
+                        variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
+                        className="text-xs self-end sm:self-start"
+                      >
+                        {confirmedCount}/{totalCount}
+                      </Badge>
+                      {(() => {
+                        console.log('🚨 Button render check:', { canCancelClass, isCancelled, shouldShow: canCancelClass && !isCancelled });
+                        return canCancelClass && !isCancelled && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancelClass(classData.id, classData.name)}
+                            className="h-8 px-3 gap-1.5 text-xs"
+                            title="Cancelar clase de hoy"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Cancelar</span>
+                          </Button>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-3 sm:p-6">
@@ -888,6 +969,31 @@ const TodayAttendancePage = () => {
               }
             >
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Class Dialog */}
+      <AlertDialog open={cancelClassDialog.open} onOpenChange={(open) => setCancelClassDialog({ ...cancelClassDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar clase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a cancelar la clase <strong>{cancelClassDialog.className}</strong> para el día de hoy.
+              <br /><br />
+              Esta acción marcará la clase como cancelada sin eliminarla del sistema. La clase seguirá visible en el panel pero marcada como "CANCELADA".
+              <br /><br />
+              Esta cancelación solo afecta a la clase de hoy, no a la serie recurrente completa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeCancelClass}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Confirmar cancelación
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

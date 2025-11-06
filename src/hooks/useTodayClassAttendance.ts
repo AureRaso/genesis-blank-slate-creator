@@ -12,6 +12,7 @@ export interface TodayClassAttendance {
   absence_reason: string | null;
   absence_confirmed_at: string | null;
   absence_locked: boolean | null; // Si la ausencia está bloqueada por notificación WhatsApp
+  is_cancelled?: boolean; // Si la clase está cancelada para esa fecha específica
   programmed_class: {
     id: string;
     name: string;
@@ -316,6 +317,28 @@ export const useTodayClassAttendance = () => {
         return [];
       }
 
+      // STEP 5: Get cancelled classes
+      console.log('📍 STEP 5: Fetching cancelled classes...');
+      const cancelledDateStart = next10Days[0].dateStr;
+      const cancelledDateEnd = next10Days[next10Days.length - 1].dateStr;
+
+      const { data: cancelledClasses, error: cancelledError } = await supabase
+        .from('cancelled_classes')
+        .select('programmed_class_id, cancelled_date')
+        .gte('cancelled_date', cancelledDateStart)
+        .lte('cancelled_date', cancelledDateEnd);
+
+      console.log('📊 STEP 5 Result:', {
+        cancelledClasses,
+        cancelledError,
+        dateRange: `${cancelledDateStart} to ${cancelledDateEnd}`
+      });
+
+      // Create a Set for quick lookup of cancelled classes
+      const cancelledSet = new Set(
+        cancelledClasses?.map(c => `${c.programmed_class_id}-${c.cancelled_date}`) || []
+      );
+
       // Filter classes that are scheduled in the next 10 days
       const upcomingClasses: any[] = [];
 
@@ -354,11 +377,20 @@ export const useTodayClassAttendance = () => {
           // Check if this day of week is in the class schedule
           if (programmedClass.days_of_week?.includes(dayName)) {
             console.log('✅ Class scheduled for', dateStr);
+            // Check if this specific class on this date is cancelled
+            const isCancelled = cancelledSet.has(`${programmedClass.id}-${dateStr}`);
+            console.log('🔍 DEBUG - Checking if cancelled:', {
+              classId: programmedClass.id,
+              date: dateStr,
+              key: `${programmedClass.id}-${dateStr}`,
+              isCancelled
+            });
             // Add the class with the specific date information
             upcomingClasses.push({
               ...participation,
               scheduled_date: dateStr,
-              day_name: dayName
+              day_name: dayName,
+              is_cancelled: isCancelled
             });
           }
         });

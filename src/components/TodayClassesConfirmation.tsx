@@ -374,17 +374,20 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
           const scheduledDate = classItem.scheduled_date;
           const isConfirmedForThisDate = classItem.attendance_confirmed_for_date === scheduledDate;
           const isAbsent = !!classItem.absence_confirmed;
+          const isCancelled = !!classItem.is_cancelled;
 
           return (
             <Card
               key={`${classItem.id}-${scheduledDate}`}
               className={`
                 border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
-                ${isConfirmedForThisDate 
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-100/30 border-l-4 border-l-green-400' 
-                  : isAbsent
-                    ? 'bg-gradient-to-br from-red-50 to-rose-100/30 border-l-4 border-l-red-400'
-                    : 'bg-gradient-to-br from-slate-50 to-white border-l-4 border-l-primary'
+                ${isCancelled
+                  ? 'bg-gradient-to-br from-gray-50 to-slate-100/30 border-l-4 border-l-gray-400 opacity-75'
+                  : isConfirmedForThisDate
+                    ? 'bg-gradient-to-br from-green-50 to-emerald-100/30 border-l-4 border-l-green-400'
+                    : isAbsent
+                      ? 'bg-gradient-to-br from-red-50 to-rose-100/30 border-l-4 border-l-red-400'
+                      : 'bg-gradient-to-br from-slate-50 to-white border-l-4 border-l-primary'
                 }
               `}
             >
@@ -408,10 +411,17 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
                 {/* Class Details - Responsive */}
                 <div className="space-y-2 sm:space-y-3">
-                  {/* Class Name */}
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight line-clamp-2">
-                    {classItem.programmed_class.name}
-                  </h3>
+                  {/* Class Name with Cancelled Badge */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight line-clamp-2">
+                      {classItem.programmed_class.name}
+                    </h3>
+                    {isCancelled && (
+                      <Badge variant="destructive" className="text-xs">
+                        CANCELADA
+                      </Badge>
+                    )}
+                  </div>
 
                   {/* Trainer Info */}
                   <div className="flex items-center gap-2 text-slate-600">
@@ -428,65 +438,74 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mt-4 sm:mt-6 pt-4 border-t border-slate-200/60">
                   {/* Action Buttons Group */}
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {/* Attendance Button */}
-                      {!isAbsent && (
+                    {isCancelled ? (
+                      <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border border-gray-200">
+                        <AlertCircle className="h-4 w-4 text-gray-600" />
+                        <span className="text-sm text-gray-700 font-medium">
+                          Esta clase ha sido cancelada por el club
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Attendance Button */}
+                        {!isAbsent && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
+                            disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
+                            className={`
+                              px-3 py-1 h-8
+                              ${isConfirmedForThisDate
+                                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 hover:border-green-400'
+                                : 'border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-300'
+                              }
+                            `}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                            Voy
+                          </Button>
+                        )}
+
+                        {/* Absence Button */}
+                        {!isConfirmedForThisDate && !isAbsent && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenAbsenceDialog(classItem.id)}
+                            disabled={confirmAbsence.isPending}
+                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1" />
+                            No voy
+                          </Button>
+                        )}
+
+                        {/* Cancel Absence Button */}
+                        {isAbsent && !classItem.absence_locked && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelAbsence(classItem.id)}
+                            disabled={cancelAbsence.isPending}
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
+                          >
+                            Cancelar ausencia
+                          </Button>
+                        )}
+
+                        {/* Add to Google Calendar Button - Visible on mobile */}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
-                          disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                          className={`
-                            px-3 py-1 h-8
-                            ${isConfirmedForThisDate
-                              ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 hover:border-green-400'
-                              : 'border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-300'
-                            }
-                          `}
+                          onClick={() => addToGoogleCalendar(classItem)}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 px-3 py-1 h-8 md:hidden"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                          Voy
+                          <CalendarPlus className="h-3.5 w-3.5 mr-1" />
+                          Agregar
                         </Button>
-                      )}
-
-                      {/* Absence Button */}
-                      {!isConfirmedForThisDate && !isAbsent && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenAbsenceDialog(classItem.id)}
-                          disabled={confirmAbsence.isPending}
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
-                        >
-                          <XCircle className="h-3.5 w-3.5 mr-1" />
-                          No voy
-                        </Button>
-                      )}
-
-                      {/* Cancel Absence Button */}
-                      {isAbsent && !classItem.absence_locked && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCancelAbsence(classItem.id)}
-                          disabled={cancelAbsence.isPending}
-                          className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
-                        >
-                          Cancelar ausencia
-                        </Button>
-                      )}
-
-                      {/* Add to Google Calendar Button - Visible on mobile */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addToGoogleCalendar(classItem)}
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 px-3 py-1 h-8 md:hidden"
-                      >
-                        <CalendarPlus className="h-3.5 w-3.5 mr-1" />
-                        Agregar
-                      </Button>
-                    </div>
+                      </div>
+                    )}
 
                     {/* Locked Absence Warning */}
                     {isAbsent && classItem.absence_locked && (

@@ -105,7 +105,7 @@ const PlayerDashboard = () => {
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    <span>Todos mis hijos</span>
+                    <span>Todos mis perfiles</span>
                   </div>
                 </SelectItem>
                 {children.map((child) => (

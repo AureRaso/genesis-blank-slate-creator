@@ -457,3 +457,72 @@ export const useRemoveParticipant = () => {
     },
   });
 };
+
+// Hook para cancelar una clase específica en una fecha (sin afectar la recurrencia)
+export const useCancelClass = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+
+  return useMutation({
+    mutationFn: async ({ classId, cancelledDate, reason }: { classId: string; cancelledDate: string; reason?: string }) => {
+      console.log('🚫 Cancelling class:', { classId, cancelledDate, reason });
+
+      if (!profile?.id) throw new Error('Usuario no autenticado');
+
+      const { data, error } = await supabase
+        .from('cancelled_classes')
+        .insert({
+          programmed_class_id: classId,
+          cancelled_date: cancelledDate,
+          cancelled_by: profile.id,
+          cancellation_reason: reason,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      console.log('✅ Class cancelled:', data);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['cancelled-classes'] });
+      toast.success('✓ Clase cancelada correctamente');
+    },
+    onError: (error: any) => {
+      console.error('Error cancelling class:', error);
+      if (error.code === '23505') {
+        toast.error('Esta clase ya está cancelada para esta fecha');
+      } else {
+        toast.error('Error al cancelar la clase');
+      }
+    },
+  });
+};
+
+// Hook para obtener clases canceladas
+export const useCancelledClasses = (startDate?: string, endDate?: string) => {
+  const { profile } = useAuth();
+  const today = new Date().toISOString().split('T')[0];
+  const queryStartDate = startDate || today;
+  const queryEndDate = endDate || today;
+
+  return useQuery({
+    queryKey: ['cancelled-classes', profile?.id, queryStartDate, queryEndDate],
+    queryFn: async () => {
+      if (!profile?.id) throw new Error('Usuario no autenticado');
+
+      const { data, error } = await supabase
+        .from('cancelled_classes')
+        .select('*')
+        .gte('cancelled_date', queryStartDate)
+        .lte('cancelled_date', queryEndDate);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!profile?.id,
+  });
+};
