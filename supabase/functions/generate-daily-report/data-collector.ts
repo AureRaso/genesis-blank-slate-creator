@@ -3,7 +3,7 @@ import { DailyReportData, ClassWithGaps, WaitlistEntry } from './types.ts';
 
 /**
  * Collect all data needed for the daily report
- * Simplified version - no trainer filtering, just club-wide report
+ * Uses the SAME logic as TodayAttendancePage (useTodayAttendance hook)
  */
 export async function collectReportData(
   supabase: SupabaseClient,
@@ -15,31 +15,89 @@ export async function collectReportData(
   // Get club info
   const { data: club } = await supabase
     .from('clubs')
-    .select('name, created_by_profile_id')
+    .select('name')
     .eq('id', clubId)
     .single();
 
-  // Get club owner name
-  let trainerName = 'Equipo';
-  if (club?.created_by_profile_id) {
-    const { data: owner } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', club.created_by_profile_id)
-      .single();
-    if (owner) trainerName = owner.full_name;
+  const trainerName = 'Entrenador'; // Generic name for reports
+
+  // Get day of week in Spanish (same as useTodayAttendance)
+  const getDayOfWeekInSpanish = (date: Date): string => {
+    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    return days[date.getDay()];
+  };
+
+  const todayDate = new Date(today + 'T00:00:00');
+  const dayOfWeek = getDayOfWeekInSpanish(todayDate);
+
+  console.log(`📅 Collecting report data for club ${clubId} on ${today} (${dayOfWeek})`);
+
+  // Get all programmed classes for today (SAME query as useTodayAttendance)
+  const { data: classes, error } = await supabase
+    .from('programmed_classes')
+    .select(`
+      id,
+      name,
+      start_time,
+      duration_minutes,
+      days_of_week,
+      start_date,
+      end_date,
+      max_participants,
+      trainer:profiles!trainer_profile_id(full_name),
+      participants:class_participants(
+        id,
+        status,
+        attendance_confirmed_for_date,
+        attendance_confirmed_at,
+        absence_confirmed,
+        absence_reason,
+        absence_confirmed_at,
+        is_substitute,
+        student_enrollment:student_enrollments(full_name, email)
+      )
+    `)
+    .eq('club_id', clubId)
+    .eq('is_active', true)
+    .lte('start_date', today)
+    .gte('end_date', today)
+    .order('start_time', { ascending: true });
+
+  if (error) {
+    console.error('❌ Error fetching classes:', error);
+    throw error;
   }
 
-  // Collect all data in parallel
-  const [
-    classesWithGaps,
-    waitlist,
-    responseMetrics
-  ] = await Promise.all([
-    getClassesWithGaps(supabase, clubId, today),
+  console.log(`📊 Found ${classes?.length || 0} total classes`);
+
+  // Filter classes for today's day of week (SAME logic as useTodayAttendance)
+  const todayClasses = (classes || []).filter((classData: any) => {
+    const classDays = classData.days_of_week || [];
+    return classDays.includes(dayOfWeek);
+  });
+
+  console.log(`📊 Filtered to ${todayClasses.length} classes for ${dayOfWeek}`);
+
+  // Collect all data
+  const [classesWithGaps, waitlist, responseMetrics] = await Promise.all([
+    getClassesWithGaps(todayClasses, today),
     getWaitlist(supabase, clubId),
-    getResponseMetrics(supabase, clubId, today)
+    getResponseMetrics(todayClasses, today)
   ]);
+
+  // Calculate additional metrics
+  const pendingParticipants = responseMetrics.total_students - responseMetrics.total_responses;
+
+  // Count full classes (classes at 100% capacity)
+  const fullClasses = todayClasses.filter((classData: any) => {
+    const validParticipants = (classData.participants || [])
+      .filter((p: any) => p.status === 'active' && p.student_enrollment);
+    const confirmedCount = validParticipants.filter(
+      (p: any) => p.attendance_confirmed_for_date === today
+    ).length;
+    const maxParticipants = classData.max_participants || 8;
+    return confirmedCount >= maxParticipants;
+  }).length;
 
   const reportData: DailyReportData = {
     club_id: clubId,
@@ -47,6 +105,14 @@ export async function collectReportData(
     report_date: today,
     report_type: reportType,
     trainer_name: trainerName,
+    // Statistics (SAME as TodayAttendancePage cards)
+    total_classes: todayClasses.length,
+    total_participants: responseMetrics.total_students,
+    confirmed_participants: responseMetrics.confirmed_participants,
+    absent_participants: responseMetrics.absent_participants,
+    pending_participants: pendingParticipants,
+    full_classes: fullClasses,
+    total_waitlist: waitlist.length,
     response_rate: responseMetrics.response_rate,
     total_students_notified: responseMetrics.total_students,
     total_responses: responseMetrics.total_responses,
@@ -55,98 +121,88 @@ export async function collectReportData(
     urgent_actions: [] // Will be generated later
   };
 
+  console.log('✅ Report data collected:', {
+    total_classes: todayClasses.length,
+    total_participants: responseMetrics.total_students,
+    confirmed: responseMetrics.confirmed_participants,
+    absent: responseMetrics.absent_participants,
+    pending: pendingParticipants,
+    full_classes: fullClasses,
+    waitlist_count: waitlist.length,
+    classes_with_gaps: classesWithGaps.length,
+    response_rate: Math.round(responseMetrics.response_rate) + '%'
+  });
+
   return reportData;
 }
 
 /**
  * Get classes with available spots (gaps)
- * Using class_participants table for enrollment tracking
+ * SAME logic as TodayAttendancePage
  */
-async function getClassesWithGaps(
-  supabase: SupabaseClient,
-  clubId: string,
+function getClassesWithGaps(
+  classes: any[],
   date: string
-): Promise<ClassWithGaps[]> {
-  // Get day of week from date
-  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  const dateObj = new Date(date + 'T00:00:00');
-  const dayOfWeek = dayNames[dateObj.getDay()];
-
-  // Get recurring classes for this club and day
-  const { data: classes, error } = await supabase
-    .from('programmed_classes')
-    .select(`
-      id,
-      name,
-      start_time,
-      max_participants,
-      days_of_week,
-      trainer:profiles!programmed_classes_trainer_id_fkey(full_name)
-    `)
-    .eq('club_id', clubId)
-    .eq('is_active', true)
-    .contains('days_of_week', [dayOfWeek]);
-
-  if (error) {
-    console.error('Error fetching classes:', error);
-    return [];
-  }
-
-  if (!classes) return [];
-
-  // Process classes to find those with gaps
+): ClassWithGaps[] {
   const classesWithGaps: ClassWithGaps[] = [];
 
-  for (const cls of classes) {
-    // Get participants for this class
-    const { data: participants } = await supabase
-      .from('class_participants')
-      .select(`
-        id,
-        status,
-        attendance_confirmed_for_date,
-        absence_confirmed,
-        student_enrollment:student_enrollments(full_name)
-      `)
-      .eq('class_id', cls.id)
-      .eq('status', 'active');
+  for (const classData of classes) {
+    // Filter active participants (SAME as useTodayAttendance)
+    const validParticipants = (classData.participants || [])
+      .filter((p: any) => p.status === 'active' && p.student_enrollment);
 
-    // Count confirmed attendees for today
-    const confirmedToday = participants?.filter(
-      (p: any) => p.attendance_confirmed_for_date === date && !p.absence_confirmed
-    ) || [];
+    // Count confirmed attendees for today (SAME logic as TodayAttendancePage)
+    const confirmedCount = validParticipants.filter(
+      (p: any) => p.attendance_confirmed_for_date === date
+    ).length;
 
-    const currentCount = confirmedToday.length;
-    const maxParticipants = cls.max_participants || 4;
+    // Count absences (SAME logic as TodayAttendancePage)
+    const absentCount = validParticipants.filter(
+      (p: any) => p.absence_confirmed === true
+    ).length;
+
+    const totalCount = validParticipants.length;
+    const maxParticipants = classData.max_participants || 8;
+
+    // Current participants = confirmed for today
+    const currentCount = confirmedCount;
     const gaps = maxParticipants - currentCount;
+
+    console.log(`📊 Class ${classData.name}:`, {
+      totalEnrolled: totalCount,
+      maxParticipants,
+      confirmedToday: confirmedCount,
+      absentToday: absentCount,
+      gaps
+    });
 
     // Only include if there are gaps
     if (gaps > 0) {
-      // Get absences/rejections for this class today
-      const absences = participants?.filter(
-        (p: any) => p.absence_confirmed && p.attendance_confirmed_for_date === date
-      ) || [];
-
-      const rejections = absences.map((p: any) => ({
-        student_name: p.student_enrollment?.full_name || 'Desconocido',
-        reason: undefined
-      }));
+      // Get absences with reasons
+      const absences = validParticipants
+        .filter((p: any) => p.absence_confirmed === true)
+        .map((p: any) => ({
+          student_name: p.student_enrollment?.full_name || 'Desconocido',
+          reason: p.absence_reason || undefined
+        }));
 
       classesWithGaps.push({
-        id: cls.id,
-        name: cls.name,
-        time: cls.start_time,
-        trainer_name: cls.trainer?.full_name || 'Sin asignar',
+        id: classData.id,
+        name: classData.name,
+        time: classData.start_time,
+        trainer_name: classData.trainer?.full_name || 'Sin asignar',
         current_participants: currentCount,
         max_participants: maxParticipants,
         gaps: gaps,
-        rejections: rejections.length > 0 ? rejections : undefined
+        rejections: absences.length > 0 ? absences : undefined
       });
     }
   }
 
   // Sort by time
   classesWithGaps.sort((a, b) => a.time.localeCompare(b.time));
+
+  console.log(`✅ Found ${classesWithGaps.length} classes with gaps`);
 
   return classesWithGaps;
 }
@@ -195,70 +251,59 @@ async function getWaitlist(
 
 /**
  * Calculate response rate metrics
- * Based on class_participants confirmations for today
+ * SAME logic as TodayAttendancePage statistics
  */
-async function getResponseMetrics(
-  supabase: SupabaseClient,
-  clubId: string,
+function getResponseMetrics(
+  classes: any[],
   date: string
-): Promise<{
+): {
   response_rate: number;
   total_students: number;
   total_responses: number;
-}> {
-  // Get day of week from date
-  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  const dateObj = new Date(date + 'T00:00:00');
-  const dayOfWeek = dayNames[dateObj.getDay()];
+  confirmed_participants: number;
+  absent_participants: number;
+} {
+  let totalParticipants = 0;
+  let confirmedParticipants = 0;
+  let absentParticipants = 0;
 
-  // Get classes for today
-  const { data: classes } = await supabase
-    .from('programmed_classes')
-    .select('id')
-    .eq('club_id', clubId)
-    .eq('is_active', true)
-    .contains('days_of_week', [dayOfWeek]);
+  // Calculate totals across all classes (SAME as TodayAttendancePage)
+  for (const classData of classes) {
+    const validParticipants = (classData.participants || [])
+      .filter((p: any) => p.status === 'active' && p.student_enrollment);
 
-  if (!classes || classes.length === 0) {
-    return {
-      response_rate: 0,
-      total_students: 0,
-      total_responses: 0
-    };
+    totalParticipants += validParticipants.length;
+
+    confirmedParticipants += validParticipants.filter(
+      (p: any) => p.attendance_confirmed_for_date === date
+    ).length;
+
+    absentParticipants += validParticipants.filter(
+      (p: any) => p.absence_confirmed === true
+    ).length;
   }
 
-  const classIds = classes.map((c: any) => c.id);
+  // Total responses = confirmed + absent
+  const totalResponses = confirmedParticipants + absentParticipants;
 
-  // Get all active participants for these classes
-  const { data: participants } = await supabase
-    .from('class_participants')
-    .select('attendance_confirmed_for_date, absence_confirmed')
-    .in('class_id', classIds)
-    .eq('status', 'active');
+  // Response rate = (responses / total) * 100
+  const responseRate = totalParticipants > 0
+    ? (totalResponses / totalParticipants) * 100
+    : 0;
 
-  if (!participants || participants.length === 0) {
-    return {
-      response_rate: 0,
-      total_students: 0,
-      total_responses: 0
-    };
-  }
-
-  const totalStudents = participants.length;
-
-  // Count responses (confirmed attendance or absence for today)
-  const responses = participants.filter(
-    (p: any) =>
-      (p.attendance_confirmed_for_date === date) ||
-      (p.absence_confirmed === true)
-  );
-
-  const totalResponses = responses.length;
-  const responseRate = totalStudents > 0 ? (totalResponses / totalStudents) * 100 : 0;
+  console.log('📊 Response metrics:', {
+    totalParticipants,
+    confirmedParticipants,
+    absentParticipants,
+    totalResponses,
+    responseRate: Math.round(responseRate) + '%'
+  });
 
   return {
     response_rate: responseRate,
-    total_students: totalStudents,
-    total_responses: totalResponses
+    total_students: totalParticipants,
+    total_responses: totalResponses,
+    confirmed_participants: confirmedParticipants,
+    absent_participants: absentParticipants
   };
 }

@@ -413,7 +413,7 @@ export default function WhatsAppReportsConfigPage() {
           </CardHeader>
           <CardContent>
             <div className="bg-slate-50 p-4 rounded-lg text-sm font-mono whitespace-pre-wrap border">
-              {`☀️ *¡Buenos días, Entrenador!*
+              {`☀️ *¡Buenos días, entrenador!*
 🎾 *RESUMEN DE LAS 10*
 📅 Lunes, 6 de Enero 2025
 

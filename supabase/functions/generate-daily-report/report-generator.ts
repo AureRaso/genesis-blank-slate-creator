@@ -4,7 +4,19 @@ import { DailyReportData, ClassWithGaps, WaitlistEntry } from './types.ts';
  * Generates a formatted WhatsApp message for daily reports
  */
 export function generateDailyReportMessage(data: DailyReportData): string {
-  const { report_type, trainer_name, report_date, response_rate } = data;
+  const {
+    report_type,
+    trainer_name,
+    report_date,
+    response_rate,
+    total_classes,
+    total_participants,
+    confirmed_participants,
+    absent_participants,
+    pending_participants,
+    full_classes,
+    total_waitlist
+  } = data;
 
   const greeting = report_type === 'morning' ? '☀️' : '🌤️';
   const timeLabel = report_type === 'morning' ? 'DE LAS 10' : 'DE LAS 13';
@@ -12,7 +24,24 @@ export function generateDailyReportMessage(data: DailyReportData): string {
   let message = `${greeting} *¡Buenos días, ${trainer_name}!*\n`;
   message += `🎾 *RESUMEN ${timeLabel}*\n`;
   message += `📅 ${formatDate(report_date)}\n\n`;
-  message += `✅ Tasa de respuesta: ${Math.round(response_rate)}%\n\n`;
+
+  // Statistics (SAME as TodayAttendancePage cards + additional metrics)
+  message += `📊 *ESTADÍSTICAS DEL DÍA*\n`;
+  message += `━━━━━━━━━━━━━━━━━━\n`;
+  message += `🎾 Clases hoy: *${total_classes}*\n`;
+  message += `👥 Total alumnos: *${total_participants}*\n`;
+  message += `✅ Asistirán: *${confirmed_participants}*\n`;
+  message += `❌ No asistirán: *${absent_participants}*\n`;
+  message += `⏳ Pendientes: *${pending_participants}*\n`;
+  message += `📈 Tasa de respuesta: *${Math.round(response_rate)}%*\n`;
+  message += `🏆 Clases completas: *${full_classes}*\n`;
+
+  // Only show waitlist if there are people waiting
+  if (total_waitlist > 0) {
+    message += `⏰ En lista de espera: *${total_waitlist}*\n`;
+  }
+
+  message += `\n`;
 
   // Classes with gaps
   if (data.classes_with_gaps.length > 0) {
@@ -65,18 +94,20 @@ export function generateDailyReportMessage(data: DailyReportData): string {
  */
 function formatClassWithGaps(classInfo: ClassWithGaps): string {
   const emoji = getTimeEmoji(classInfo.time);
-  let text = `${emoji} Clase ${classInfo.time} - ${classInfo.name} - ${classInfo.trainer_name}\n`;
+  let text = `${emoji} *Clase ${classInfo.name} - ${classInfo.time}*\n`;
+  text += `👤 Entrenador: ${classInfo.trainer_name}\n`;
 
-  // Show gaps
-  if (classInfo.gaps > 0) {
-    const plural = classInfo.gaps === 1 ? 'plaza' : 'plazas';
-    text += `   • Huecos: ${classInfo.gaps} ${plural} (${classInfo.current_participants}/${classInfo.max_participants})\n`;
-  }
+  // Show occupation and gaps
+  const huecosText = classInfo.gaps === 1 ? '1 hueco' : `${classInfo.gaps} huecos`;
+  text += `📊 Ocupación: ${classInfo.current_participants}/${classInfo.max_participants} (${huecosText})\n`;
 
   // Show rejections
   if (classInfo.rejections && classInfo.rejections.length > 0) {
-    const names = classInfo.rejections.map(r => r.student_name).join(', ');
-    text += `   • Rechazos: ${names}\n`;
+    text += `\n🚫 Rechazos:\n`;
+    classInfo.rejections.forEach(r => {
+      const reason = r.reason ? ` - ${r.reason}` : '';
+      text += `   • ${r.student_name}${reason}\n`;
+    });
   }
 
   return text;
@@ -87,7 +118,10 @@ function formatClassWithGaps(classInfo: ClassWithGaps): string {
  */
 function formatWaitlistEntry(entry: WaitlistEntry, position: number): string {
   const timeAgo = formatTimeAgo(entry.days_waiting, entry.hours_waiting);
-  return `${position}. ${entry.student_name} (${entry.day_of_week} ${entry.class_time} - ${timeAgo})\n`;
+  let text = `🔹 ${entry.student_name}\n`;
+  text += `   Clase: ${entry.class_name} - ${entry.class_time}\n`;
+  text += `   Esperando: ${timeAgo}\n\n`;
+  return text;
 }
 
 /**
@@ -104,16 +138,19 @@ function getTimeEmoji(time: string): string {
 }
 
 /**
- * Format date to Spanish format
+ * Format date to Spanish format with day of week
  */
 function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  };
-  return date.toLocaleDateString('es-ES', options);
+  const date = new Date(dateString + 'T00:00:00');
+  const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  const dayOfWeek = dayNames[date.getDay()];
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  return `${dayOfWeek}, ${day} de ${month} ${year}`;
 }
 
 /**
@@ -121,12 +158,18 @@ function formatDate(dateString: string): string {
  */
 function formatTimeAgo(days: number, hours: number): string {
   if (days > 0) {
-    return days === 1 ? 'hace 1 día' : `hace ${days} días`;
+    const daysText = days === 1 ? '1 día' : `${days} días`;
+    const hoursInDay = hours % 24;
+    if (hoursInDay > 0) {
+      const hoursText = hoursInDay === 1 ? '1 hora' : `${hoursInDay} horas`;
+      return `${daysText} ${hoursText}`;
+    }
+    return daysText;
   }
   if (hours > 0) {
-    return hours === 1 ? 'hace 1 hora' : `hace ${hours} horas`;
+    return hours === 1 ? '1 hora' : `${hours} horas`;
   }
-  return 'hace menos de 1 hora';
+  return 'menos de 1 hora';
 }
 
 /**

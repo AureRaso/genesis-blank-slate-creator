@@ -105,24 +105,44 @@ serve(async (req) => {
 
     console.log(`Found ${whatsappGroups.length} active WhatsApp groups`);
 
-    // Generate the reminder message
+    // Check if today is Monday (1 = Monday)
     const today = new Date();
-    const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-    const dayName = dayNames[today.getDay()];
-    const formattedDate = today.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const dayOfWeek = today.getDay();
 
-    const message = `👋 ¡Buenos días, equipo!
+    if (dayOfWeek !== 1) {
+      console.log(`⏸️ Skipping reminder - today is not Monday (day: ${dayOfWeek})`);
+      await supabaseClient.from('cron_debug_logs').insert({
+        function_name: 'daily-attendance-reminder',
+        log_level: 'info',
+        message: 'Skipped - not Monday',
+        details: { dayOfWeek }
+      });
 
-Recordad confirmar vuestra asistencia a la clase de hoy desde PadeLock 💪
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Reminders are only sent on Mondays',
+          skipped: true,
+          dayOfWeek: dayOfWeek
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
 
+    console.log(`✅ Monday detected (day: ${dayOfWeek}) - proceeding with reminders`);
+
+    // Generate the weekly reminder message (only sent on Mondays)
+    const message = `👋 ¡Buenas, equipo!
+
+Como cada semana, recordad confirmar vuestra asistencia a las clases desde PadeLock 💪
 👉 https://www.padelock.com/auth
 
-Si tenéis cualquier duda con la aplicación, podéis escribirnos a este número por privado.`;
+Si tenéis cualquier duda con la aplicación, podéis escribirnos por privado a este número.
+
+¡Nos vemos en pista! 🎾🔥`;
 
     // Send message to each group
     const results = [];

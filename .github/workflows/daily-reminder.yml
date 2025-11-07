@@ -1,13 +1,13 @@
-name: Daily Attendance Reminder
+name: Weekly Attendance Reminder
 
-# Se ejecuta automáticamente todos los días a las 8:00 AM UTC (9:00 AM Madrid hora de invierno)
+# Se ejecuta automáticamente todos los LUNES a las 8:00 AM Madrid
 # También puede ejecutarse manualmente desde la pestaña "Actions" en GitHub
 on:
   schedule:
-    # Cron sintaxis: minuto hora día mes día-de-semana
-    # 0 7 * * * = 7:00 AM UTC = 8:00 AM Madrid (horario de invierno UTC+1)
-    # Para horario de verano (UTC+2), cambiar a: 0 6 * * *
-    - cron: '0 7 * * *'
+    # Cron sintaxis: minuto hora día mes día-de-semana (1 = Monday)
+    # 0 7 * * 1 = 7:00 AM UTC on Mondays = 8:00 AM Madrid (horario de invierno UTC+1)
+    # Para horario de verano (UTC+2), cambiar a: 0 6 * * 1
+    - cron: '0 7 * * 1'
 
   # Permite ejecutar manualmente para testing
   workflow_dispatch:
@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send attendance reminder
+      - name: Send weekly attendance reminder
         run: |
-          echo "Sending daily attendance reminder..."
+          echo "Sending weekly attendance reminder (Mondays only)..."
 
           response=$(curl -s -w "\n%{http_code}" -X POST \
             'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/daily-attendance-reminder' \
@@ -34,16 +34,16 @@ jobs:
           echo "Response: $body"
 
           if [ "$http_code" -eq 200 ]; then
-            echo "✅ Daily reminder sent successfully!"
+            echo "✅ Weekly reminder sent successfully!"
           else
-            echo "❌ Failed to send daily reminder"
+            echo "❌ Failed to send weekly reminder"
             exit 1
           fi
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "⚠️ The daily reminder failed to send. Check the logs above for details."
+          echo "⚠️ The weekly reminder failed to send. Check the logs above for details."
           echo "This could be due to:"
           echo "  - SUPABASE_SERVICE_ROLE_KEY secret not configured"
           echo "  - Edge Function not deployed"

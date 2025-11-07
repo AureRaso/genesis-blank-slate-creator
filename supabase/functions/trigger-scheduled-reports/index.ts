@@ -41,6 +41,27 @@ serve(async (req) => {
       );
     }
 
+    // Check if today is a weekday (Monday to Friday)
+    // Using Madrid timezone
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Weekend - don't send reports
+      console.log(`⏸️ Skipping reports - today is weekend (day: ${dayOfWeek})`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Reports are only sent Monday to Friday',
+          skipped: true,
+          dayOfWeek: dayOfWeek
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`✅ Weekday detected (day: ${dayOfWeek}) - proceeding with reports`);
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get all active clubs with WhatsApp report configurations

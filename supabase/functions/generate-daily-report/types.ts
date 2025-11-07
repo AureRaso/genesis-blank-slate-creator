@@ -28,7 +28,14 @@ export interface DailyReportData {
   report_type: 'morning' | 'afternoon';
   trainer_name: string;
 
-  // Metrics
+  // Metrics (SAME as TodayAttendancePage statistics cards)
+  total_classes: number; // Total classes today
+  total_participants: number; // Total students expected
+  confirmed_participants: number; // Students who will attend
+  absent_participants: number; // Students who won't attend
+  pending_participants: number; // Students who haven't responded
+  full_classes: number; // Classes at 100% capacity
+  total_waitlist: number; // Total people in waitlist
   response_rate: number; // Percentage of students who responded
   total_students_notified: number;
   total_responses: number;
