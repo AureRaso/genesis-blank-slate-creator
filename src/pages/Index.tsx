@@ -525,7 +525,11 @@ const Index = () => {
             if (classesWithAbsences && classesWithAbsences.length > 0) {
               classesWithAbsences.forEach((classData) => {
                 const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
-                if (absentStudents.length > 0) {
+                const maxParticipants = classData.max_participants || 8;
+                const confirmedParticipants = classData.participants.filter((p: any) => !p.absence_confirmed);
+
+                // Solo mostrar si hay ausencias Y no están todos los puestos cubiertos
+                if (absentStudents.length > 0 && confirmedParticipants.length < maxParticipants) {
                   // Usar la hora de la clase como timestamp
                   const classDateTime = `${format(new Date(), 'yyyy-MM-dd')}T${classData.start_time}`;
                   notifications.push({
@@ -830,7 +834,11 @@ const Index = () => {
             if (classesWithAbsences && classesWithAbsences.length > 0) {
               classesWithAbsences.forEach((classData) => {
                 const absentStudents = classData.participants.filter((p: any) => p.absence_confirmed);
-                if (absentStudents.length > 0) {
+                const maxParticipants = classData.max_participants || 8;
+                const confirmedParticipants = classData.participants.filter((p: any) => !p.absence_confirmed);
+
+                // Solo mostrar si hay ausencias Y no están todos los puestos cubiertos
+                if (absentStudents.length > 0 && confirmedParticipants.length < maxParticipants) {
                   // Usar la hora de la clase como timestamp
                   const classDateTime = `${format(new Date(), 'yyyy-MM-dd')}T${classData.start_time}`;
                   notifications.push({

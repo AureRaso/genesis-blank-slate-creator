@@ -325,7 +325,36 @@ export const useAcceptFromWaitlist = () => {
     }) => {
       const now = new Date().toISOString();
 
-      // 1. Create class participant with substitute flag and auto-confirmed attendance
+      // 1. Verify class capacity before accepting
+      const { data: classData, error: classError } = await supabase
+        .from('programmed_classes')
+        .select('max_participants')
+        .eq('id', classId)
+        .single();
+
+      if (classError) throw new Error('No se pudo verificar la clase');
+      if (!classData) throw new Error('Clase no encontrada');
+
+      // Count active participants
+      const { count: activeCount, error: countError } = await supabase
+        .from('class_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('class_id', classId)
+        .eq('status', 'active');
+
+      if (countError) throw new Error('Error al verificar participantes activos');
+
+      const maxParticipants = classData.max_participants || 8;
+      const currentParticipants = activeCount || 0;
+
+      console.log('🔍 [ACCEPT_WAITLIST] Max participants:', maxParticipants);
+      console.log('🔍 [ACCEPT_WAITLIST] Current participants:', currentParticipants);
+
+      if (currentParticipants >= maxParticipants) {
+        throw new Error('La clase ya está completa. No hay plazas disponibles.');
+      }
+
+      // 2. Create class participant with substitute flag and auto-confirmed attendance
       const { error: participantError } = await supabase
         .from('class_participants')
         .insert({
@@ -340,7 +369,7 @@ export const useAcceptFromWaitlist = () => {
 
       if (participantError) throw participantError;
 
-      // 2. Update waitlist entry as accepted
+      // 3. Update waitlist entry as accepted
       const { error: waitlistError } = await supabase
         .from('class_waitlist')
         .update({
@@ -352,7 +381,7 @@ export const useAcceptFromWaitlist = () => {
 
       if (waitlistError) throw waitlistError;
 
-      // 3. Expire other pending entries for this class/date
+      // 4. Expire other pending entries for this class/date
       const { error: expireError } = await supabase
         .from('class_waitlist')
         .update({ status: 'expired' })

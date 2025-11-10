@@ -668,8 +668,8 @@ const WeekAttendancePage = () => {
                 const confirmedCount = validParticipants.filter(
                   p => p.attendance_confirmed_for_date
                 ).length;
-                const totalCount = validParticipants.length;
-                const confirmationRate = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
+                const maxParticipants = classData.max_participants || 8;
+                const confirmationRate = maxParticipants > 0 ? (confirmedCount / maxParticipants) * 100 : 0;
 
                 // Get the notification date - use selected date or today
                 const notificationDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
@@ -754,7 +754,7 @@ const WeekAttendancePage = () => {
                           <div className="flex items-center justify-between gap-2">
                             <h4 className="text-sm font-semibold text-slate-700">Lista de alumnos</h4>
                             <span className="text-xs font-medium text-muted-foreground">
-                              {confirmedCount}/{totalCount} confirmados
+                              {confirmedCount}/{maxParticipants} confirmados
                             </span>
                           </div>
                           <div className="grid gap-3">

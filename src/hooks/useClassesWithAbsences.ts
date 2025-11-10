@@ -144,7 +144,7 @@ export const useClassesWithAbsences = (clubId?: string) => {
             trainer: classData.trainer,
             participants: classParticipants,
             absenceCount,
-            totalParticipants: classParticipants.length
+            totalParticipants: classData.max_participants || 8
           };
         })
         .filter(c => c.absenceCount > 0); // Only classes with at least one absence

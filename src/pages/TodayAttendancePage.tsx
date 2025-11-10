@@ -472,8 +472,8 @@ const TodayAttendancePage = () => {
             const confirmedCount = validParticipants.filter(
               p => p.attendance_confirmed_for_date
             ).length;
-            const totalCount = validParticipants.length;
-            const confirmationRate = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
+            const maxParticipants = classData.max_participants || 8;
+            const confirmationRate = maxParticipants > 0 ? (confirmedCount / maxParticipants) * 100 : 0;
             const today = new Date().toISOString().split('T')[0];
             const isCancelled = isClassCancelled(classData.id, today);
 
@@ -514,7 +514,7 @@ const TodayAttendancePage = () => {
                         variant={confirmationRate === 100 ? "default" : confirmationRate >= 50 ? "secondary" : "destructive"}
                         className="text-xs self-end sm:self-start"
                       >
-                        {confirmedCount}/{totalCount}
+                        {confirmedCount}/{maxParticipants}
                       </Badge>
                       {(() => {
                         console.log('🚨 Button render check:', { canCancelClass, isCancelled, shouldShow: canCancelClass && !isCancelled });
