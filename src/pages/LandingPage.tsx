@@ -6,6 +6,7 @@ import ProductSection from "@/components/landing/ProductSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import TeamSection from "@/components/landing/TeamSection";
 import { ContactSection } from "@/components/landing/ContactSection";
+import { Footer } from "@/components/landing/Footer";
 
 const LandingPage = () => {
   return (
@@ -18,6 +19,7 @@ const LandingPage = () => {
       <ComparisonSection />
       <TeamSection />
       <ContactSection />
+      <Footer />
     </div>
   );
 };
