@@ -20,8 +20,9 @@ export function generateDailyReportMessage(data: DailyReportData): string {
 
   const greeting = report_type === 'morning' ? '☀️' : '🌤️';
   const timeLabel = report_type === 'morning' ? 'DE LAS 10' : 'DE LAS 13';
+  const greetingText = report_type === 'morning' ? 'Buenos días' : 'Buenas tardes';
 
-  let message = `${greeting} *¡Buenos días, ${trainer_name}!*\n`;
+  let message = `${greeting} *¡${greetingText}, ${trainer_name}!*\n`;
   message += `🎾 *RESUMEN ${timeLabel}*\n`;
   message += `📅 ${formatDate(report_date)}\n\n`;
 
@@ -44,12 +45,21 @@ export function generateDailyReportMessage(data: DailyReportData): string {
   message += `\n`;
 
   // Classes with gaps
-  if (data.classes_with_gaps.length > 0) {
+  // For afternoon reports, filter out classes that have already started (before 13:00)
+  let classesWithGapsToShow = data.classes_with_gaps;
+  if (report_type === 'afternoon') {
+    classesWithGapsToShow = data.classes_with_gaps.filter((classInfo) => {
+      const classHour = parseInt(classInfo.time.split(':')[0]);
+      return classHour >= 13; // Only show classes at 13:00 or later
+    });
+  }
+
+  if (classesWithGapsToShow.length > 0) {
     message += `━━━━━━━━━━━━━━━━━━\n`;
     message += `🔴 *CLASES CON HUECOS*\n`;
     message += `━━━━━━━━━━━━━━━━━━\n\n`;
 
-    data.classes_with_gaps.forEach((classInfo) => {
+    classesWithGapsToShow.forEach((classInfo) => {
       message += formatClassWithGaps(classInfo);
       message += `\n`;
     });
@@ -83,9 +93,6 @@ export function generateDailyReportMessage(data: DailyReportData): string {
   }
 
   // Footer
-  message += `\n━━━━━━━━━━━━━━━━━━\n`;
-  message += `🤖 _Reporte automático generado a las ${getCurrentTime()}_`;
-
   return message;
 }
 
@@ -95,7 +102,7 @@ export function generateDailyReportMessage(data: DailyReportData): string {
 function formatClassWithGaps(classInfo: ClassWithGaps): string {
   const emoji = getTimeEmoji(classInfo.time);
   let text = `${emoji} *Clase ${classInfo.name} - ${classInfo.time}*\n`;
-  text += `👤 Entrenador: ${classInfo.trainer_name}\n`;
+  text += `👤 entrenador: ${classInfo.trainer_name}\n`;
 
   // Show occupation and gaps
   const huecosText = classInfo.gaps === 1 ? '1 hueco' : `${classInfo.gaps} huecos`;
