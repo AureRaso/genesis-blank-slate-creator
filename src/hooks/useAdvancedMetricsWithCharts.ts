@@ -196,7 +196,7 @@ export const useAdvancedMetricsWithCharts = (monthsRange: number = 6) => {
       };
     },
     retry: false,
-    refetchInterval: 120000, // Refrescar cada 2 minutos
+    refetchOnWindowFocus: true, // Refrescar cuando el usuario vuelve a la pestaña
   });
 
   // Métricas de engagement con actividad semanal

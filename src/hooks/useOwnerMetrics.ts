@@ -101,7 +101,7 @@ export const useOwnerMetrics = () => {
         totalRevenue,
       };
     },
-    refetchInterval: 30000, // Refrescar cada 30 segundos
+    refetchOnWindowFocus: true, // Refrescar cuando el usuario vuelve a la pestaña
     retry: false, // No reintentar en caso de error
   });
 

@@ -80,7 +80,7 @@ export const useUsersManagement = () => {
         return [];
       }
     },
-    refetchInterval: 60000, // Refrescar cada minuto
+    refetchOnWindowFocus: true, // Refrescar cuando el usuario vuelve a la pestaña
     retry: false,
   });
 
