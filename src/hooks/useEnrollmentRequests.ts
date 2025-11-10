@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +30,9 @@ export interface EnrollmentRequest {
 
 // Hook para obtener solicitudes de un jugador
 export const useMyEnrollmentRequests = () => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["my-enrollment-requests"],
     queryFn: async () => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -58,12 +61,63 @@ export const useMyEnrollmentRequests = () => {
       if (error) throw error;
       return data as EnrollmentRequest[];
     },
+    refetchOnWindowFocus: true, // Refetch cuando la ventana vuelve a tener foco
   });
+
+  // Set up Realtime subscription
+  const setupRealtimeSubscription = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+
+    console.log('🔌 [EnrollmentRequests] Setting up Realtime subscription for user:', userData.user.id);
+
+    const channel = supabase
+      .channel('enrollment-requests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'class_enrollment_requests',
+          filter: `student_profile_id=eq.${userData.user.id}`
+        },
+        (payload) => {
+          console.log('🔔 [EnrollmentRequests] Realtime change detected:', payload);
+          // Invalidar y refetch automáticamente
+          queryClient.invalidateQueries({ queryKey: ["my-enrollment-requests"] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔌 [EnrollmentRequests] Subscription status:', status);
+      });
+
+    return channel;
+  };
+
+  // Setup and cleanup subscription
+  React.useEffect(() => {
+    let channel: any;
+
+    setupRealtimeSubscription().then((ch) => {
+      channel = ch;
+    });
+
+    return () => {
+      if (channel) {
+        console.log('🔌 [EnrollmentRequests] Cleaning up Realtime subscription');
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [queryClient]);
+
+  return query;
 };
 
 // Hook para obtener solicitudes de una clase específica
 export const useClassEnrollmentRequests = (classId: string) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["class-enrollment-requests", classId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -89,12 +143,48 @@ export const useClassEnrollmentRequests = (classId: string) => {
       return data as EnrollmentRequest[];
     },
     enabled: !!classId,
+    refetchOnWindowFocus: true,
   });
+
+  // Set up Realtime subscription for this specific class
+  React.useEffect(() => {
+    if (!classId) return;
+
+    console.log('🔌 [ClassEnrollmentRequests] Setting up Realtime subscription for class:', classId);
+
+    const channel = supabase
+      .channel(`class-enrollment-requests-${classId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'class_enrollment_requests',
+          filter: `programmed_class_id=eq.${classId}`
+        },
+        (payload) => {
+          console.log('🔔 [ClassEnrollmentRequests] Realtime change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ["class-enrollment-requests", classId] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔌 [ClassEnrollmentRequests] Subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔌 [ClassEnrollmentRequests] Cleaning up Realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [classId, queryClient]);
+
+  return query;
 };
 
 // Hook para obtener todas las solicitudes pendientes del club
 export const useClubPendingEnrollmentRequests = (clubId?: string) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["club-pending-enrollment-requests", clubId],
     queryFn: async () => {
       if (!clubId) return [];
@@ -124,7 +214,44 @@ export const useClubPendingEnrollmentRequests = (clubId?: string) => {
       return data as EnrollmentRequest[];
     },
     enabled: !!clubId,
+    refetchOnWindowFocus: true,
   });
+
+  // Set up Realtime subscription for club enrollment requests
+  React.useEffect(() => {
+    if (!clubId) return;
+
+    console.log('🔌 [ClubEnrollmentRequests] Setting up Realtime subscription for club:', clubId);
+
+    // Note: We can't filter by club_id directly since it's in the programmed_classes table
+    // So we listen to all enrollment request changes and invalidate the query
+    // The query will re-fetch and apply the club filter
+    const channel = supabase
+      .channel(`club-enrollment-requests-${clubId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'class_enrollment_requests'
+        },
+        (payload) => {
+          console.log('🔔 [ClubEnrollmentRequests] Realtime change detected:', payload);
+          // Invalidate to re-fetch with club filter
+          queryClient.invalidateQueries({ queryKey: ["club-pending-enrollment-requests", clubId] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔌 [ClubEnrollmentRequests] Subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔌 [ClubEnrollmentRequests] Cleaning up Realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [clubId, queryClient]);
+
+  return query;
 };
 
 // Hook para crear una solicitud de inscripción
