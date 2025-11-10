@@ -164,9 +164,9 @@ const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classD
   }) || [];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-0">
       {/* Search Input */}
-      <div className="relative mb-4">
+      <div className="relative mb-4 flex-shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           type="text"
@@ -178,7 +178,7 @@ const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classD
       </div>
 
       {/* Results - Scrollable */}
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+      <div className="overflow-y-auto space-y-2 mb-4 max-h-[50vh]">
         {loadingStudents ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -226,7 +226,7 @@ const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classD
       </div>
 
       {/* Fixed Bottom Button */}
-      <div className="sticky bottom-0 bg-white border-t pt-4 pb-4">
+      <div className="flex-shrink-0 bg-white border-t pt-4 -mx-6 px-6 -mb-6 pb-6">
         <Button
           size="lg"
           onClick={() => selectedStudentId && addSubstitute.mutate(selectedStudentId)}
