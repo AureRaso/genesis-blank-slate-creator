@@ -264,9 +264,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
       return weekClasses;
     },
     enabled: !!profile?.id,
-    // Auto-refetch every 30 seconds as fallback
-    refetchInterval: 30000,
-    // Refetch on window focus
+    // Refetch on window focus as fallback (Realtime handles live updates)
     refetchOnWindowFocus: true,
   });
 
@@ -274,9 +272,12 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   useEffect(() => {
     if (!profile?.id) return;
 
-    console.log('🔌 Setting up Realtime subscription for class_participants');
+    console.log('🔌 Setting up Realtime subscription for class_participants table');
+    console.log('🔍 Current user profile:', { id: profile.id, role: profile.role, email: profile.email });
 
     // Subscribe to changes in class_participants table
+    // Note: For this to work, the user must have SELECT permission on class_participants
+    // via RLS policies (Row Level Security)
     const channel = supabase
       .channel('today-attendance-changes')
       .on(
@@ -287,16 +288,30 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           table: 'class_participants',
         },
         (payload) => {
-          console.log('🔔 Realtime update received:', payload);
+          console.log('🔔 Realtime update received (class_participants):', {
+            eventType: payload.eventType,
+            table: payload.table,
+            new: payload.new,
+            old: payload.old,
+          });
 
-          // Invalidate and refetch the query when any change happens
+          // Invalidate and refetch ALL today-attendance queries
           queryClient.invalidateQueries({
-            queryKey: ['today-attendance', profile.id, today]
+            queryKey: ['today-attendance']
           });
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         console.log('🔌 Realtime subscription status:', status);
+        if (err) {
+          console.error('❌ Realtime subscription error:', err);
+        }
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime successfully connected and listening for changes on class_participants');
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime channel error - check RLS policies on class_participants table');
+        }
       });
 
     // Cleanup subscription on unmount
