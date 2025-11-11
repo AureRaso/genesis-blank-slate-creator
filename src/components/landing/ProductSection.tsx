@@ -42,12 +42,12 @@ const ProductSection = () => {
       icon: Calendar,
       description: "Tu academia siempre contigo, en tu móvil",
       features: [
-        "Recibe notificaciones instantáneas de cambios en tus clases",
         "Calendario personal con todas tus clases",
         "Gestiona tus recuperaciones fácilmente",
         "Apúntate a lista de espera cuando hay baja",
         "Comunicación directa con tu profesor",
-        "Consulta tu progreso y nivel"
+        "Disponibilidad de clases abiertas en tiempo real",
+        "Historial de clases"
       ],
       benefits: "Experiencia moderna y profesional que mejora la satisfacción"
     }

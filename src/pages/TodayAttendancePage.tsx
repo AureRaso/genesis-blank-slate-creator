@@ -771,21 +771,6 @@ const TodayAttendancePage = () => {
 
                           {/* Botones en columna para mobile, fila para desktop */}
                           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                            {/* Botón buscar sustituto - Para todos (admin y trainer) */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSubstituteDialog({
-                                open: true,
-                                classId: classData.id,
-                                className: classData.name,
-                              })}
-                              className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                            >
-                              <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                              Añadir sustituto
-                            </Button>
-
                             {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
                             {isAdmin && (
                               <>
