@@ -210,7 +210,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         .select('id', { count: 'exact', head: true })
         .eq('class_id', classId)
         .eq('status', 'active')
-        .or('absence_confirmed.is.null,absence_confirmed.eq.false');
+        .neq('absence_confirmed', true);
 
       const maxParticipants = classData.max_participants || 8;
       const currentParticipants = participantCount || 0;
@@ -353,7 +353,7 @@ export const useAcceptFromWaitlist = () => {
         .select('*', { count: 'exact', head: true })
         .eq('class_id', classId)
         .eq('status', 'active')
-        .or('absence_confirmed.is.null,absence_confirmed.eq.false');
+        .neq('absence_confirmed', true);
 
       if (countError) throw new Error('Error al verificar participantes activos');
 
