@@ -81,7 +81,8 @@ export const useStudentEnrollments = () => {
       let query = supabase.from("student_enrollments").select(`
         *,
         clubs(name, status)
-      `);
+      `)
+      .neq("status", "inactive"); // Filter out archived students
 
       // If user is a trainer, get all students from their assigned clubs
       if (userProfile.role === 'trainer') {
@@ -94,7 +95,7 @@ export const useStudentEnrollments = () => {
         if (clubsError) throw clubsError;
 
         const clubIds = trainerClubs.map(tc => tc.club_id);
-        
+
         if (clubIds.length > 0) {
           // Get ALL students from the trainer's assigned clubs, not just those they created
           query = query.in("club_id", clubIds);
@@ -171,7 +172,8 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
           *,
           clubs(name, status)
         `)
-        .in('club_id', clubIds);
+        .in('club_id', clubIds)
+        .neq("status", "inactive"); // Filter out archived students
 
       const { data: students, error: studentsError } = await studentsQuery
         .order('created_at', { ascending: false });

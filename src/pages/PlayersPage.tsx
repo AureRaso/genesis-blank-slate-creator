@@ -56,7 +56,7 @@ const PlayersPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
-              {isAdmin ? 'Alumnos Disponibles' : 'Jugadores'}
+              {isAdmin ? 'Alumnos disponibles' : 'Jugadores'}
             </h1>
           </div>
           {isAdmin && (

@@ -20,10 +20,22 @@ import {
   X,
   ArrowUpDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react";
 import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { useArchiveStudent } from "@/hooks/useArchiveStudent";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -35,9 +47,11 @@ const AdminStudentsList = () => {
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [studentToArchive, setStudentToArchive] = useState<StudentEnrollment | null>(null);
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
   const updateStudentMutation = useUpdateStudentEnrollment();
+  const archiveStudentMutation = useArchiveStudent();
 
   // Function to normalize text (remove accents)
   const normalizeText = (text: string): string => {
@@ -171,7 +185,7 @@ const AdminStudentsList = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Alumnos Disponibles
+            Alumnos disponibles
           </CardTitle>
           <CardDescription>Cargando alumnos...</CardDescription>
         </CardHeader>
@@ -298,11 +312,12 @@ const AdminStudentsList = () => {
             <Card>
               <CardContent className="p-0">
                 {/* Table Header - Desktop only */}
-                <div className="hidden md:grid md:grid-cols-10 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+                <div className="hidden md:grid md:grid-cols-11 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
                   <div className="col-span-3">Alumno</div>
                   <div className="col-span-3">Contacto</div>
                   <div className="col-span-2">Club</div>
                   <div className="col-span-2">Matrícula</div>
+                  <div className="col-span-1">Acciones</div>
                 </div>
 
                 {/* Table Body */}
@@ -318,7 +333,7 @@ const AdminStudentsList = () => {
                     return (
                       <div
                         key={student.id}
-                        className="grid grid-cols-1 md:grid-cols-10 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                        className="grid grid-cols-1 md:grid-cols-11 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                       >
                         {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
                         <div className="col-span-1 md:col-span-3 flex items-start gap-3">
@@ -421,6 +436,19 @@ const AdminStudentsList = () => {
                           )}
                         </div>
 
+                        {/* Columna 5: Acciones */}
+                        <div className="col-span-1 md:col-span-1 flex items-center justify-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setStudentToArchive(student)}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            title="Eliminar alumno"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+
                         {/* Observaciones (si existen) - Mobile only */}
                         {student.observations && (
                           <div className="col-span-1 text-xs text-muted-foreground italic border-t pt-2 mt-2 md:hidden">
@@ -468,6 +496,47 @@ const AdminStudentsList = () => {
             )}
           </>
         )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!studentToArchive} onOpenChange={(open) => !open && setStudentToArchive(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              ¿Eliminar alumno del club?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-semibold text-foreground text-base">
+                Estás a punto de eliminar a {studentToArchive?.full_name}
+              </p>
+              <p className="text-muted-foreground">
+                ⚠️ <strong>ADVERTENCIA:</strong> Este jugador será eliminado permanentemente del club y no aparecerá en ninguna lista ni opciones.
+              </p>
+              <p className="text-muted-foreground">
+                Los datos se conservarán en la base de datos por motivos legales y de auditoría, pero el jugador quedará inactivo.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (studentToArchive) {
+                  archiveStudentMutation.mutate({
+                    studentId: studentToArchive.id,
+                    archive: true
+                  });
+                  setStudentToArchive(null);
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar jugador
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

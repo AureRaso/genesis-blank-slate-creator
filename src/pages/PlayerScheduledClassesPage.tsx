@@ -9,21 +9,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClassCalendarView from "@/components/ClassCalendarView";
 import ClassListView from "@/components/ClassListView";
 import ClassFilters from "@/components/ClassFilters";
+import DeletedUserMessage from "@/components/DeletedUserMessage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClubs } from "@/hooks/useActiveClubs";
 import { useClassGroups } from "@/hooks/useClassGroups";
+import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
 import { ClassFiltersProvider, useClassFilters } from "@/contexts/ClassFiltersContext";
 
 function PlayerScheduledClassesContent() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
-  
+
   const { t } = useTranslation();
   const { profile } = useAuth();
   const { data: clubs } = useActiveClubs();
   const { filters, setFilters } = useClassFilters();
-  
+
+  // Check if user has been deleted/deactivated from the club
+  const { data: enrollment, isLoading: loadingEnrollment } = useCurrentUserEnrollment(profile?.id);
+
   const currentClub = profile?.club_id ? clubs?.find(c => c.id === profile.club_id) : clubs?.[0];
   const { data: groups } = useClassGroups(currentClub?.id);
+
+  // Show deleted user message if inactive
+  if (!loadingEnrollment && enrollment && enrollment.status === 'inactive') {
+    return <DeletedUserMessage clubName={enrollment.club_name} />;
+  }
 
   if (!currentClub) {
     return (

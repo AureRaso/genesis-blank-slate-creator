@@ -3,8 +3,10 @@ import { useState } from "react";
 import PlayerLeagueDetails from "./PlayerLeagueDetails";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
 import { PlayerClassesTabs } from "./PlayerClassesTabs";
+import DeletedUserMessage from "./DeletedUserMessage";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
+import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users } from "lucide-react";
 
@@ -14,6 +16,9 @@ const PlayerDashboard = () => {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
   const [selectedChildId, setSelectedChildId] = useState<string>("all");
+
+  // Get current user enrollment status
+  const { data: enrollment, isLoading: loadingEnrollment } = useCurrentUserEnrollment(profile?.id);
 
   // Get children if user is guardian
   const { children, isLoading: loadingChildren } = useGuardianChildren();
@@ -40,6 +45,11 @@ const PlayerDashboard = () => {
   const handleCloseRegistrationModal = () => {
     setRegistrationLeague(null);
   };
+
+  // Check if user has been deleted/deactivated from the club
+  if (!loadingEnrollment && enrollment && enrollment.status === 'inactive') {
+    return <DeletedUserMessage clubName={enrollment.club_name} />;
+  }
 
   if (selectedLeagueId) {
     return (
