@@ -400,10 +400,51 @@ export const useAcceptFromWaitlist = () => {
 
       return { success: true };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['class-waitlist', variables.classId, variables.classDate] });
       queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       toast.success('✓ Alumno agregado a la clase');
+
+      // Send email notification
+      try {
+        // Fetch student data
+        const { data: studentData } = await supabase
+          .from('student_enrollments')
+          .select('full_name, email')
+          .eq('id', variables.studentEnrollmentId)
+          .single();
+
+        // Fetch class data with club info
+        const { data: classData } = await supabase
+          .from('programmed_classes')
+          .select(`
+            name,
+            start_time,
+            clubs:club_id (
+              name
+            )
+          `)
+          .eq('id', variables.classId)
+          .single();
+
+        if (studentData && classData) {
+          await supabase.functions.invoke('send-waitlist-email', {
+            body: {
+              type: 'accepted',
+              studentEmail: studentData.email,
+              studentName: studentData.full_name,
+              className: classData.name,
+              classDate: variables.classDate,
+              classTime: classData.start_time,
+              clubName: (classData.clubs as any)?.name || ''
+            }
+          });
+          console.log('✅ Acceptance email sent to:', studentData.email);
+        }
+      } catch (emailError) {
+        console.error('❌ Error sending acceptance email:', emailError);
+        // Don't show error to user - email is not critical
+      }
     },
     onError: (error: any) => {
       console.error('Error accepting from waitlist:', error);
@@ -421,12 +462,25 @@ export const useRejectFromWaitlist = () => {
     mutationFn: async ({
       waitlistId,
       classId,
-      classDate
+      classDate,
+      studentEnrollmentId
     }: {
       waitlistId: string;
       classId: string;
       classDate: string;
+      studentEnrollmentId?: string;
     }) => {
+      // Get student enrollment ID if not provided
+      let enrollmentId = studentEnrollmentId;
+      if (!enrollmentId) {
+        const { data: waitlistData } = await supabase
+          .from('class_waitlist')
+          .select('student_enrollment_id')
+          .eq('id', waitlistId)
+          .single();
+        enrollmentId = waitlistData?.student_enrollment_id;
+      }
+
       const { error } = await supabase
         .from('class_waitlist')
         .update({
@@ -437,11 +491,54 @@ export const useRejectFromWaitlist = () => {
         .eq('id', waitlistId);
 
       if (error) throw error;
-      return { success: true };
+      return { success: true, enrollmentId };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['class-waitlist', variables.classId, variables.classDate] });
       toast.success('Solicitud rechazada');
+
+      // Send email notification
+      try {
+        if (result.enrollmentId) {
+          // Fetch student data
+          const { data: studentData } = await supabase
+            .from('student_enrollments')
+            .select('full_name, email')
+            .eq('id', result.enrollmentId)
+            .single();
+
+          // Fetch class data with club info
+          const { data: classData } = await supabase
+            .from('programmed_classes')
+            .select(`
+              name,
+              start_time,
+              clubs:club_id (
+                name
+              )
+            `)
+            .eq('id', variables.classId)
+            .single();
+
+          if (studentData && classData) {
+            await supabase.functions.invoke('send-waitlist-email', {
+              body: {
+                type: 'rejected',
+                studentEmail: studentData.email,
+                studentName: studentData.full_name,
+                className: classData.name,
+                classDate: variables.classDate,
+                classTime: classData.start_time,
+                clubName: (classData.clubs as any)?.name || ''
+              }
+            });
+            console.log('✅ Rejection email sent to:', studentData.email);
+          }
+        }
+      } catch (emailError) {
+        console.error('❌ Error sending rejection email:', emailError);
+        // Don't show error to user - email is not critical
+      }
     },
     onError: (error: any) => {
       console.error('Error rejecting from waitlist:', error);

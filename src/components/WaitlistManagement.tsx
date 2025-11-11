@@ -61,7 +61,8 @@ const WaitlistManagement = ({ classId, classDate, className }: WaitlistManagemen
       rejectStudent({
         waitlistId: selectedStudent.id,
         classId,
-        classDate
+        classDate,
+        studentEnrollmentId: selectedStudent.enrollmentId
       }, {
         onSuccess: () => setSelectedStudent(null)
       });
