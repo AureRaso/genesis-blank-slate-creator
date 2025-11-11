@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 export interface TodayClassAttendance {
@@ -37,6 +38,7 @@ const getDayOfWeekInSpanish = (date: Date): string => {
 // Hook para obtener las clases de los próximos 10 días del jugador (o hijos si es guardian)
 export const useTodayClassAttendance = () => {
   const { profile, isGuardian } = useAuth();
+  const queryClient = useQueryClient();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
@@ -51,7 +53,7 @@ export const useTodayClassAttendance = () => {
     };
   });
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['upcoming-class-attendance', profile?.id, todayStr, isGuardian],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
@@ -404,6 +406,53 @@ export const useTodayClassAttendance = () => {
     },
     enabled: !!profile?.id,
   });
+
+  // Setup Realtime subscription for instant updates
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    console.log('🔌 [Player] Setting up Realtime subscription for class_participants');
+
+    // Subscribe to changes in class_participants table
+    const channel = supabase
+      .channel('player-attendance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'class_participants',
+        },
+        (payload) => {
+          console.log('🔔 [Player] Realtime update received:', {
+            eventType: payload.eventType,
+            table: payload.table,
+          });
+
+          // Invalidate and refetch ALL upcoming-class-attendance queries
+          queryClient.invalidateQueries({
+            queryKey: ['upcoming-class-attendance']
+          });
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('🔌 [Player] Realtime subscription status:', status);
+        if (err) {
+          console.error('❌ [Player] Realtime subscription error:', err);
+        }
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ [Player] Realtime successfully connected');
+        }
+      });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🔌 [Player] Cleaning up Realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, queryClient]);
+
+  return query;
 };
 
 // Hook para confirmar asistencia
