@@ -406,16 +406,23 @@ export const useAcceptFromWaitlist = () => {
       toast.success('✓ Alumno agregado a la clase');
 
       // Send email notification
+      console.log('🔔 [EMAIL] Starting email notification process...');
+      console.log('🔔 [EMAIL] Variables:', variables);
       try {
         // Fetch student data
-        const { data: studentData } = await supabase
+        console.log('🔔 [EMAIL] Fetching student data for ID:', variables.studentEnrollmentId);
+        const { data: studentData, error: studentError } = await supabase
           .from('student_enrollments')
           .select('full_name, email')
           .eq('id', variables.studentEnrollmentId)
           .single();
 
+        console.log('🔔 [EMAIL] Student data:', studentData);
+        console.log('🔔 [EMAIL] Student error:', studentError);
+
         // Fetch class data with club info
-        const { data: classData } = await supabase
+        console.log('🔔 [EMAIL] Fetching class data for ID:', variables.classId);
+        const { data: classData, error: classError } = await supabase
           .from('programmed_classes')
           .select(`
             name,
@@ -427,22 +434,40 @@ export const useAcceptFromWaitlist = () => {
           .eq('id', variables.classId)
           .single();
 
+        console.log('🔔 [EMAIL] Class data:', classData);
+        console.log('🔔 [EMAIL] Class error:', classError);
+
         if (studentData && classData) {
-          await supabase.functions.invoke('send-waitlist-email', {
-            body: {
-              type: 'accepted',
-              studentEmail: studentData.email,
-              studentName: studentData.full_name,
-              className: classData.name,
-              classDate: variables.classDate,
-              classTime: classData.start_time,
-              clubName: (classData.clubs as any)?.name || ''
-            }
+          console.log('🔔 [EMAIL] Invoking Edge Function...');
+          const emailPayload = {
+            type: 'accepted',
+            studentEmail: studentData.email,
+            studentName: studentData.full_name,
+            className: classData.name,
+            classDate: variables.classDate,
+            classTime: classData.start_time,
+            clubName: (classData.clubs as any)?.name || ''
+          };
+          console.log('🔔 [EMAIL] Payload:', emailPayload);
+
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('send-waitlist-email', {
+            body: emailPayload
           });
-          console.log('✅ Acceptance email sent to:', studentData.email);
+
+          console.log('🔔 [EMAIL] Function response:', functionData);
+          console.log('🔔 [EMAIL] Function error:', functionError);
+
+          if (functionError) {
+            throw functionError;
+          }
+
+          console.log('✅ [EMAIL] Acceptance email sent successfully to:', studentData.email);
+        } else {
+          console.warn('⚠️ [EMAIL] Missing data - student or class not found');
         }
       } catch (emailError) {
-        console.error('❌ Error sending acceptance email:', emailError);
+        console.error('❌ [EMAIL] Error sending acceptance email:', emailError);
+        console.error('❌ [EMAIL] Error details:', JSON.stringify(emailError, null, 2));
         // Don't show error to user - email is not critical
       }
     },
@@ -498,17 +523,25 @@ export const useRejectFromWaitlist = () => {
       toast.success('Solicitud rechazada');
 
       // Send email notification
+      console.log('🔔 [EMAIL-REJECT] Starting email notification process...');
+      console.log('🔔 [EMAIL-REJECT] Variables:', variables);
+      console.log('🔔 [EMAIL-REJECT] Result:', result);
       try {
         if (result.enrollmentId) {
           // Fetch student data
-          const { data: studentData } = await supabase
+          console.log('🔔 [EMAIL-REJECT] Fetching student data for ID:', result.enrollmentId);
+          const { data: studentData, error: studentError } = await supabase
             .from('student_enrollments')
             .select('full_name, email')
             .eq('id', result.enrollmentId)
             .single();
 
+          console.log('🔔 [EMAIL-REJECT] Student data:', studentData);
+          console.log('🔔 [EMAIL-REJECT] Student error:', studentError);
+
           // Fetch class data with club info
-          const { data: classData } = await supabase
+          console.log('🔔 [EMAIL-REJECT] Fetching class data for ID:', variables.classId);
+          const { data: classData, error: classError } = await supabase
             .from('programmed_classes')
             .select(`
               name,
@@ -520,23 +553,43 @@ export const useRejectFromWaitlist = () => {
             .eq('id', variables.classId)
             .single();
 
+          console.log('🔔 [EMAIL-REJECT] Class data:', classData);
+          console.log('🔔 [EMAIL-REJECT] Class error:', classError);
+
           if (studentData && classData) {
-            await supabase.functions.invoke('send-waitlist-email', {
-              body: {
-                type: 'rejected',
-                studentEmail: studentData.email,
-                studentName: studentData.full_name,
-                className: classData.name,
-                classDate: variables.classDate,
-                classTime: classData.start_time,
-                clubName: (classData.clubs as any)?.name || ''
-              }
+            console.log('🔔 [EMAIL-REJECT] Invoking Edge Function...');
+            const emailPayload = {
+              type: 'rejected',
+              studentEmail: studentData.email,
+              studentName: studentData.full_name,
+              className: classData.name,
+              classDate: variables.classDate,
+              classTime: classData.start_time,
+              clubName: (classData.clubs as any)?.name || ''
+            };
+            console.log('🔔 [EMAIL-REJECT] Payload:', emailPayload);
+
+            const { data: functionData, error: functionError } = await supabase.functions.invoke('send-waitlist-email', {
+              body: emailPayload
             });
-            console.log('✅ Rejection email sent to:', studentData.email);
+
+            console.log('🔔 [EMAIL-REJECT] Function response:', functionData);
+            console.log('🔔 [EMAIL-REJECT] Function error:', functionError);
+
+            if (functionError) {
+              throw functionError;
+            }
+
+            console.log('✅ [EMAIL-REJECT] Rejection email sent successfully to:', studentData.email);
+          } else {
+            console.warn('⚠️ [EMAIL-REJECT] Missing data - student or class not found');
           }
+        } else {
+          console.warn('⚠️ [EMAIL-REJECT] No enrollment ID found');
         }
       } catch (emailError) {
-        console.error('❌ Error sending rejection email:', emailError);
+        console.error('❌ [EMAIL-REJECT] Error sending rejection email:', emailError);
+        console.error('❌ [EMAIL-REJECT] Error details:', JSON.stringify(emailError, null, 2));
         // Don't show error to user - email is not critical
       }
     },
