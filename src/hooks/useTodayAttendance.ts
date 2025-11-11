@@ -64,15 +64,6 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
-      console.log('🔍 DEBUG - useTodayAttendance:', {
-        profileId: profile.id,
-        profileEmail: profile.email,
-        profileRole: profile.role,
-        profileClubId: profile.club_id,
-        queryStartDate,
-        queryEndDate,
-        daysInRange: uniqueDays
-      });
 
       // Get all programmed classes that have any day of the week in the range
       let query = supabase
@@ -125,106 +116,10 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
       const { data, error } = await query;
 
       console.log('📊 Week attendance data:', {
-        data,
+        classCount: data?.length || 0,
         error,
-        query: {
-          uniqueDays,
-          queryStartDate,
-          queryEndDate,
-          filters: {
-            start_date_lte: queryEndDate,
-            end_date_gte: queryStartDate
-          }
-        }
+        dateRange: { queryStartDate, queryEndDate }
       });
-
-      // DEBUG: Log each class with max_participants specifically
-      if (data && data.length > 0) {
-        console.log('🔍 DEBUG - Raw class data from Supabase:');
-        data.forEach((cls: any, idx: number) => {
-          console.log(`  Class ${idx + 1} (${cls.name}):`, {
-            id: cls.id,
-            max_participants: cls.max_participants,
-            has_max_participants: 'max_participants' in cls,
-            all_keys: Object.keys(cls)
-          });
-        });
-      }
-
-      // DEBUG: Direct query to verify max_participants field exists in database
-      const { data: testClass, error: testError } = await supabase
-        .from('programmed_classes')
-        .select('id, name, max_participants')
-        .eq('name', 'Test')
-        .single();
-
-      console.log('🧪 DEBUG - Direct query for Test class:', {
-        testClass,
-        testError,
-        has_max_participants: testClass && 'max_participants' in testClass,
-        max_participants_value: testClass?.max_participants
-      });
-
-      // Debug: Let's also fetch ALL classes without date filters to see what's in the DB
-      const { data: allClasses, error: allError } = await supabase
-        .from('programmed_classes')
-        .select('id, name, days_of_week, start_date, end_date, club_id, max_participants')
-        .eq('is_active', true)
-        .eq('club_id', profile.club_id || '');
-
-      console.log('🔍 DEBUG - ALL classes in date range:', {
-        allClasses,
-        allError,
-        count: allClasses?.length || 0
-      });
-
-      // Debug: Let's fetch ALL active classes without ANY filters
-      const { data: allActiveClasses, error: activeError } = await supabase
-        .from('programmed_classes')
-        .select('id, name, days_of_week, start_date, end_date, club_id, created_at, max_participants')
-        .eq('is_active', true)
-        .eq('club_id', profile.club_id || '')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      console.log('🔍 DEBUG - ALL ACTIVE classes in club (last 10):', {
-        allActiveClasses,
-        activeError,
-        count: allActiveClasses?.length || 0,
-        queryStartDate,
-        queryEndDate
-      });
-
-      // Log each class individually for better visibility
-      allActiveClasses?.forEach((cls, index) => {
-        console.log(`📋 Class ${index + 1}:`, {
-          name: cls.name,
-          days_of_week: cls.days_of_week,
-          days_of_week_stringified: JSON.stringify(cls.days_of_week),
-          start_date: cls.start_date,
-          end_date: cls.end_date,
-          created_at: cls.created_at,
-          max_participants: cls.max_participants,
-          has_max_participants: 'max_participants' in cls,
-          matchesRange: cls.days_of_week?.some((day: string) => uniqueDays.includes(day))
-        });
-      });
-
-      // Debug detallado de los participantes
-      if (data && data.length > 0) {
-        data.forEach(classItem => {
-          console.log('📋 Clase:', classItem.name);
-          classItem.participants?.forEach(p => {
-            console.log('  👤 Participante:', {
-              id: p.id,
-              name: p.student_enrollment?.full_name,
-              is_substitute: p.is_substitute,
-              absence_confirmed: p.absence_confirmed,
-              attendance_confirmed_for_date: p.attendance_confirmed_for_date
-            });
-          });
-        });
-      }
 
       if (error) {
         console.error('❌ Error fetching today attendance:', error);
