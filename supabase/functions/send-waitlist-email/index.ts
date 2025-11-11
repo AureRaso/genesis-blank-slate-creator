@@ -16,15 +16,26 @@ interface SendWaitlistEmailRequest {
 }
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
+const TEST_MODE = Deno.env.get('RESEND_TEST_MODE') === 'true';
+const TEST_EMAIL = 'sefaca24@gmail.com'; // Your verified email for testing
 
 async function sendEmail(request: SendWaitlistEmailRequest): Promise<boolean> {
   try {
-    console.log('Sending email:', { type: request.type, to: request.studentEmail });
+    // In test mode, send to test email but keep original in subject for identification
+    const recipientEmail = TEST_MODE ? TEST_EMAIL : request.studentEmail;
+    const testPrefix = TEST_MODE ? `[TEST for ${request.studentEmail}] ` : '';
+
+    console.log('Sending email:', {
+      type: request.type,
+      originalRecipient: request.studentEmail,
+      actualRecipient: recipientEmail,
+      testMode: TEST_MODE
+    });
 
     const isAccepted = request.type === 'accepted';
-    const subject = isAccepted
+    const subject = testPrefix + (isAccepted
       ? `✅ Plaza confirmada en ${request.className}`
-      : `❌ Solicitud de lista de espera - ${request.className}`;
+      : `❌ Solicitud de lista de espera - ${request.className}`);
 
     // Format date to Spanish
     const dateObj = new Date(request.classDate);
@@ -209,7 +220,7 @@ async function sendEmail(request: SendWaitlistEmailRequest): Promise<boolean> {
       },
       body: JSON.stringify({
         from: 'Padelock <onboarding@resend.dev>',
-        to: [request.studentEmail],
+        to: [recipientEmail],
         subject: subject,
         html: htmlContent,
       }),
