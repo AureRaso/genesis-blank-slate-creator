@@ -196,6 +196,15 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       // 6. Check if class is full (no available spots)
       // Count only active participants who have NOT marked absence
       console.log('🔍 [WAITLIST] Step 6: Checking available spots');
+
+      // First, let's see ALL participants for debugging
+      const { data: allParticipants } = await supabase
+        .from('class_participants')
+        .select('id, status, absence_confirmed')
+        .eq('class_id', classId);
+
+      console.log('🔍 [WAITLIST] DEBUG - All participants:', allParticipants);
+
       const { count: participantCount } = await supabase
         .from('class_participants')
         .select('id', { count: 'exact', head: true })
