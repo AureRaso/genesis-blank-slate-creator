@@ -194,19 +194,21 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       }
 
       // 6. Check if class is full (no available spots)
+      // Count only active participants who have NOT marked absence
       console.log('🔍 [WAITLIST] Step 6: Checking available spots');
       const { count: participantCount } = await supabase
         .from('class_participants')
         .select('id', { count: 'exact', head: true })
         .eq('class_id', classId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .or('absence_confirmed.is.null,absence_confirmed.eq.false');
 
       const maxParticipants = classData.max_participants || 8;
       const currentParticipants = participantCount || 0;
       const availableSpots = maxParticipants - currentParticipants;
 
       console.log('🔍 [WAITLIST] Max participants:', maxParticipants);
-      console.log('🔍 [WAITLIST] Current participants:', currentParticipants);
+      console.log('🔍 [WAITLIST] Current participants (excluding absences):', currentParticipants);
       console.log('🔍 [WAITLIST] Available spots:', availableSpots);
 
       if (availableSpots <= 0) {
@@ -335,12 +337,14 @@ export const useAcceptFromWaitlist = () => {
       if (classError) throw new Error('No se pudo verificar la clase');
       if (!classData) throw new Error('Clase no encontrada');
 
-      // Count active participants
+      // Count active participants who have NOT marked absence
+      // This ensures that people who marked "Ausente" don't count as occupying a spot
       const { count: activeCount, error: countError } = await supabase
         .from('class_participants')
         .select('*', { count: 'exact', head: true })
         .eq('class_id', classId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .or('absence_confirmed.is.null,absence_confirmed.eq.false');
 
       if (countError) throw new Error('Error al verificar participantes activos');
 
@@ -348,7 +352,8 @@ export const useAcceptFromWaitlist = () => {
       const currentParticipants = activeCount || 0;
 
       console.log('🔍 [ACCEPT_WAITLIST] Max participants:', maxParticipants);
-      console.log('🔍 [ACCEPT_WAITLIST] Current participants:', currentParticipants);
+      console.log('🔍 [ACCEPT_WAITLIST] Current participants (excluding absences):', currentParticipants);
+      console.log('🔍 [ACCEPT_WAITLIST] Class date:', classDate);
 
       if (currentParticipants >= maxParticipants) {
         throw new Error('La clase ya está completa. No hay plazas disponibles.');
