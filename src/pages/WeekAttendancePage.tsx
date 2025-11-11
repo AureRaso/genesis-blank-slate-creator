@@ -19,12 +19,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X, UserMinus } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import BulkEnrollStudentSearch from "@/components/BulkEnrollStudentSearch";
+import { RemoveStudentsDialog } from "@/components/RemoveStudentsDialog";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import OpenClassesTab from "@/components/OpenClassesTab";
 import {
@@ -84,6 +85,19 @@ const WeekAttendancePage = () => {
     className: '',
     classStartTime: '',
     clubId: '',
+  });
+  const [removeStudentsDialog, setRemoveStudentsDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+    clubId: string;
+    classStartTime: string;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+    clubId: '',
+    classStartTime: '',
   });
   const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
     open: boolean;
@@ -709,23 +723,42 @@ const WeekAttendancePage = () => {
                               )}
                             </CardDescription>
                             {canCancelClass && !isCancelled && !hasEnded && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-3 gap-1.5 text-xs w-fit sm:w-[30%] sm:max-w-[120px] hover:bg-gray-100 hover:text-gray-900"
-                                onClick={() => {
-                                  setBulkEnrollDialog({
-                                    open: true,
-                                    classId: classData.id,
-                                    className: classData.name,
-                                    classStartTime: classData.start_time,
-                                    clubId: profile?.club_id || '',
-                                  });
-                                }}
-                              >
-                                <UserPlus className="h-3.5 w-3.5" />
-                                <span>Añadir alumno</span>
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-3 gap-1.5 text-xs w-fit hover:bg-gray-100 hover:text-gray-900"
+                                  onClick={() => {
+                                    setBulkEnrollDialog({
+                                      open: true,
+                                      classId: classData.id,
+                                      className: classData.name,
+                                      classStartTime: classData.start_time,
+                                      clubId: profile?.club_id || '',
+                                    });
+                                  }}
+                                >
+                                  <UserPlus className="h-3.5 w-3.5" />
+                                  <span>Añadir alumno</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-3 gap-1.5 text-xs w-fit text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                  onClick={() => {
+                                    setRemoveStudentsDialog({
+                                      open: true,
+                                      classId: classData.id,
+                                      className: classData.name,
+                                      clubId: profile?.club_id || '',
+                                      classStartTime: classData.start_time,
+                                    });
+                                  }}
+                                >
+                                  <UserMinus className="h-3.5 w-3.5" />
+                                  <span>Eliminar alumno</span>
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -1117,6 +1150,22 @@ const WeekAttendancePage = () => {
               )}
             </DialogContent>
           </Dialog>
+
+          {/* Remove Students Dialog */}
+          <RemoveStudentsDialog
+            isOpen={removeStudentsDialog.open}
+            onClose={() => setRemoveStudentsDialog({
+              open: false,
+              classId: '',
+              className: '',
+              clubId: '',
+              classStartTime: ''
+            })}
+            classId={removeStudentsDialog.classId}
+            className={removeStudentsDialog.className}
+            clubId={removeStudentsDialog.clubId}
+            classStartTime={removeStudentsDialog.classStartTime}
+          />
 
           {/* Confirmation Dialog */}
           <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
