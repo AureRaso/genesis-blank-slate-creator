@@ -137,7 +137,7 @@ async function sendEmail(request: SendWaitlistEmailRequest): Promise<boolean> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Padelock <onboarding@resend.dev>',
+        from: 'Padelock <info@padelock.com>',
         to: [recipientEmail],
         subject: subject,
         html: htmlContent,
