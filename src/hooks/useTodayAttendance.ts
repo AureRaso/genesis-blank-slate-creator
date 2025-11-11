@@ -167,12 +167,11 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   useEffect(() => {
     if (!profile?.id) return;
 
-    console.log('🔌 Setting up Realtime subscription for class_participants table');
+    console.log('🔌 Setting up Realtime subscriptions for attendance and classes');
     console.log('🔍 Current user profile:', { id: profile.id, role: profile.role, email: profile.email });
 
-    // Subscribe to changes in class_participants table
-    // Note: For this to work, the user must have SELECT permission on class_participants
-    // via RLS policies (Row Level Security)
+    // Subscribe to changes in BOTH class_participants AND programmed_classes tables
+    // This ensures we catch participant updates AND class cancellations/deletions
     const channel = supabase
       .channel('today-attendance-changes')
       .on(
@@ -183,14 +182,25 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           table: 'class_participants',
         },
         (payload) => {
-          console.log('🔔 Realtime update received (class_participants):', {
-            eventType: payload.eventType,
-            table: payload.table,
-            new: payload.new,
-            old: payload.old,
-          });
+          console.log('🔔 Realtime update (class_participants):', payload.eventType);
 
           // Invalidate and refetch ALL today-attendance queries
+          queryClient.invalidateQueries({
+            queryKey: ['today-attendance']
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'programmed_classes',
+        },
+        (payload) => {
+          console.log('🔔 Realtime update (programmed_classes):', payload.eventType);
+
+          // Invalidate when classes are created, updated, or deleted
           queryClient.invalidateQueries({
             queryKey: ['today-attendance']
           });
@@ -202,10 +212,10 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           console.error('❌ Realtime subscription error:', err);
         }
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime successfully connected and listening for changes on class_participants');
+          console.log('✅ Realtime connected: class_participants + programmed_classes');
         }
         if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Realtime channel error - check RLS policies on class_participants table');
+          console.error('❌ Realtime channel error - check RLS policies');
         }
       });
 
