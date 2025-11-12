@@ -8,13 +8,15 @@ interface WeekDaysFilterProps {
   onDaysChange: (days: string[]) => void;
 }
 
+// IMPORTANT: Values must match the database format (without accents)
+// Labels can have accents for display
 const WEEK_DAYS = [
   { value: "lunes", label: "Lunes" },
   { value: "martes", label: "Martes" },
-  { value: "miércoles", label: "Miércoles" },
+  { value: "miercoles", label: "Miércoles" },  // value without accent
   { value: "jueves", label: "Jueves" },
   { value: "viernes", label: "Viernes" },
-  { value: "sábado", label: "Sábado" },
+  { value: "sabado", label: "Sábado" },  // value without accent
   { value: "domingo", label: "Domingo" }
 ];
 

@@ -31,6 +31,7 @@ export interface TodayAttendanceClass {
 }
 
 // Get day of week in Spanish format used in database
+// IMPORTANT: Use the EXACT format stored in the database (WITHOUT accents to match DB)
 const getDayOfWeekInSpanish = (date: Date): string => {
   const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   return days[date.getDay()];
@@ -51,6 +52,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   const daysInRange: string[] = [];
   const start = new Date(queryStartDate);
   const end = new Date(queryEndDate);
+
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     daysInRange.push(getDayOfWeekInSpanish(d));
@@ -115,21 +117,31 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
 
       const { data, error } = await query;
 
-      console.log('📊 Week attendance data:', {
-        classCount: data?.length || 0,
-        error,
-        dateRange: { queryStartDate, queryEndDate }
-      });
 
       if (error) {
         console.error('❌ Error fetching today attendance:', error);
         throw error;
       }
 
+      // Helper function to normalize day names (remove accents for comparison)
+      const normalizeDayName = (day: string): string => {
+        return day
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, ""); // Remove accents
+      };
+
+      // Normalize uniqueDays for comparison
+      const normalizedUniqueDays = uniqueDays.map(normalizeDayName);
+
       // Filter and format the data - only include classes that have days matching the date range
       const filteredClasses = (data || []).filter((classData: any) => {
         const classDays = classData.days_of_week || [];
-        return classDays.some((day: string) => uniqueDays.includes(day));
+
+        // Check if any class day matches any day in the range (normalize both for comparison)
+        return classDays.some((day: string) =>
+          normalizedUniqueDays.includes(normalizeDayName(day))
+        );
       });
 
       const weekClasses = filteredClasses.map((classData: any) => ({
@@ -155,7 +167,6 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           }))
       })) as TodayAttendanceClass[];
 
-      console.log('✅ Final week classes with attendance:', weekClasses);
       return weekClasses;
     },
     enabled: !!profile?.id,
@@ -166,9 +177,6 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   // Setup Realtime subscription for instant updates
   useEffect(() => {
     if (!profile?.id) return;
-
-    console.log('🔌 Setting up Realtime subscriptions for attendance and classes');
-    console.log('🔍 Current user profile:', { id: profile.id, role: profile.role, email: profile.email });
 
     // Subscribe to changes in BOTH class_participants AND programmed_classes tables
     // This ensures we catch participant updates AND class cancellations/deletions
@@ -181,9 +189,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           schema: 'public',
           table: 'class_participants',
         },
-        (payload) => {
-          console.log('🔔 Realtime update (class_participants):', payload.eventType);
-
+        () => {
           // Invalidate and refetch ALL today-attendance queries
           queryClient.invalidateQueries({
             queryKey: ['today-attendance']
@@ -197,31 +203,17 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           schema: 'public',
           table: 'programmed_classes',
         },
-        (payload) => {
-          console.log('🔔 Realtime update (programmed_classes):', payload.eventType);
-
+        () => {
           // Invalidate when classes are created, updated, or deleted
           queryClient.invalidateQueries({
             queryKey: ['today-attendance']
           });
         }
       )
-      .subscribe((status, err) => {
-        console.log('🔌 Realtime subscription status:', status);
-        if (err) {
-          console.error('❌ Realtime subscription error:', err);
-        }
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime connected: class_participants + programmed_classes');
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Realtime channel error - check RLS policies');
-        }
-      });
+      .subscribe();
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('🔌 Cleaning up Realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [profile?.id, today, queryClient]);
