@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
+import { useClassWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -815,24 +816,12 @@ const TodayAttendancePage = () => {
                                   </Button>
                                 )}
 
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => toggleWaitlist(classData.id)}
-                                  className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                                >
-                                  {expandedWaitlist === classData.id ? (
-                                    <>
-                                      <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                      Ocultar
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                      Ver lista de espera
-                                    </>
-                                  )}
-                                </Button>
+                                <WaitlistButton
+                                  classId={classData.id}
+                                  today={today}
+                                  isExpanded={expandedWaitlist === classData.id}
+                                  onToggle={() => toggleWaitlist(classData.id)}
+                                />
                               </>
                             )}
                           </div>
@@ -1004,6 +993,51 @@ const TodayAttendancePage = () => {
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+// Componente auxiliar para el botón de lista de espera con contador
+const WaitlistButton = ({
+  classId,
+  today,
+  isExpanded,
+  onToggle
+}: {
+  classId: string;
+  today: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) => {
+  const { data: waitlistData } = useClassWaitlist(classId, today);
+  const pendingCount = waitlistData?.filter(w => w.status === 'pending').length || 0;
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={onToggle}
+      className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px] relative"
+    >
+      {isExpanded ? (
+        <>
+          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+          Ocultar
+        </>
+      ) : (
+        <>
+          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+          Ver lista de espera
+          {pendingCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]"
+            >
+              {pendingCount}
+            </Badge>
+          )}
+        </>
+      )}
+    </Button>
   );
 };
 
