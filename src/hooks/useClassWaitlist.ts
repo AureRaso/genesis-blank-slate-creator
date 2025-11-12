@@ -387,7 +387,16 @@ export const useAcceptFromWaitlist = () => {
 
       if (waitlistError) throw waitlistError;
 
-      // 4. Expire other pending entries for this class/date
+      // 4. Get other pending entries before expiring (for email notifications)
+      const { data: otherPendingEntries } = await supabase
+        .from('class_waitlist')
+        .select('id, student_enrollment_id')
+        .eq('class_id', classId)
+        .eq('class_date', classDate)
+        .eq('status', 'pending')
+        .neq('id', waitlistId);
+
+      // 5. Expire other pending entries for this class/date
       const { error: expireError } = await supabase
         .from('class_waitlist')
         .update({ status: 'expired' })
@@ -398,16 +407,17 @@ export const useAcceptFromWaitlist = () => {
 
       if (expireError) console.error('Error expiring other waitlist entries:', expireError);
 
-      return { success: true };
+      return { success: true, expiredEntries: otherPendingEntries || [] };
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['class-waitlist', variables.classId, variables.classDate] });
       queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       toast.success('✓ Alumno agregado a la clase');
 
-      // Send email notification
+      // Send email notification to accepted student
       console.log('🔔 [EMAIL] Starting email notification process...');
       console.log('🔔 [EMAIL] Variables:', variables);
+      console.log('🔔 [EMAIL] Expired entries:', result.expiredEntries);
       try {
         // Fetch student data
         console.log('🔔 [EMAIL] Fetching student data for ID:', variables.studentEnrollmentId);
@@ -469,6 +479,65 @@ export const useAcceptFromWaitlist = () => {
         console.error('❌ [EMAIL] Error sending acceptance email:', emailError);
         console.error('❌ [EMAIL] Error details:', JSON.stringify(emailError, null, 2));
         // Don't show error to user - email is not critical
+      }
+
+      // Send rejection emails to expired waitlist entries
+      if (result.expiredEntries && result.expiredEntries.length > 0) {
+        console.log(`🔔 [EMAIL-EXPIRED] Sending rejection emails to ${result.expiredEntries.length} expired entries`);
+
+        try {
+          // Fetch class data once (we need it for all emails)
+          const { data: classData } = await supabase
+            .from('programmed_classes')
+            .select(`
+              name,
+              start_time,
+              clubs:club_id (
+                name
+              )
+            `)
+            .eq('id', variables.classId)
+            .single();
+
+          if (classData) {
+            // Send email to each expired entry
+            for (const expiredEntry of result.expiredEntries) {
+              try {
+                // Fetch student data
+                const { data: expiredStudentData } = await supabase
+                  .from('student_enrollments')
+                  .select('full_name, email')
+                  .eq('id', expiredEntry.student_enrollment_id)
+                  .single();
+
+                if (expiredStudentData) {
+                  console.log('🔔 [EMAIL-EXPIRED] Sending to:', expiredStudentData.email);
+
+                  await supabase.functions.invoke('send-waitlist-email', {
+                    body: {
+                      type: 'rejected',
+                      studentEmail: expiredStudentData.email,
+                      studentName: expiredStudentData.full_name,
+                      className: classData.name,
+                      classDate: variables.classDate,
+                      classTime: classData.start_time,
+                      clubName: (classData.clubs as any)?.name || ''
+                    }
+                  });
+
+                  console.log('✅ [EMAIL-EXPIRED] Email sent to:', expiredStudentData.email);
+                }
+              } catch (singleEmailError) {
+                console.error('❌ [EMAIL-EXPIRED] Error sending to single recipient:', singleEmailError);
+                // Continue with next email even if one fails
+              }
+            }
+            console.log('✅ [EMAIL-EXPIRED] Finished sending all rejection emails');
+          }
+        } catch (expiredEmailError) {
+          console.error('❌ [EMAIL-EXPIRED] Error in expired email process:', expiredEmailError);
+          // Don't show error to user - email is not critical
+        }
       }
     },
     onError: (error: any) => {
