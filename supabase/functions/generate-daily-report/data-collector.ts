@@ -22,8 +22,9 @@ export async function collectReportData(
   const trainerName = 'Entrenador'; // Generic name for reports
 
   // Get day of week in Spanish (same as useTodayAttendance)
+  // NOTE: Using without accents to match database values (miercoles, sabado)
   const getDayOfWeekInSpanish = (date: Date): string => {
-    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     return days[date.getDay()];
   };
 
