@@ -22,6 +22,7 @@ export interface TodayAttendanceClass {
     };
     attendance_confirmed_for_date: string | null;
     attendance_confirmed_at: string | null;
+    confirmed_by_trainer: boolean | null;
     absence_confirmed: boolean | null;
     absence_reason: string | null;
     absence_confirmed_at: string | null;
@@ -88,6 +89,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
             status,
             attendance_confirmed_for_date,
             attendance_confirmed_at,
+            confirmed_by_trainer,
             absence_confirmed,
             absence_reason,
             absence_confirmed_at,
@@ -159,6 +161,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
             student_enrollment: p.student_enrollment,
             attendance_confirmed_for_date: p.attendance_confirmed_for_date,
             attendance_confirmed_at: p.attendance_confirmed_at,
+            confirmed_by_trainer: p.confirmed_by_trainer,
             absence_confirmed: p.absence_confirmed,
             absence_reason: p.absence_reason,
             absence_confirmed_at: p.absence_confirmed_at,
@@ -236,6 +239,7 @@ export const useTrainerMarkAttendance = () => {
         .update({
           attendance_confirmed_for_date: scheduledDate,
           attendance_confirmed_at: new Date().toISOString(),
+          confirmed_by_trainer: true,
           // Limpiar ausencia si existía
           absence_confirmed: false,
           absence_reason: null,
@@ -247,10 +251,12 @@ export const useTrainerMarkAttendance = () => {
 
       if (error) throw error;
       console.log('✅ Attendance marked by trainer:', data);
+      console.log('🔍 confirmed_by_trainer value:', data?.confirmed_by_trainer);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      // Invalidate all today-attendance queries (including week views with different date ranges)
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
       toast.success('✓ Asistencia confirmada por el profesor');
     },
@@ -290,7 +296,8 @@ export const useTrainerMarkAbsence = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      // Invalidate all today-attendance queries (including week views with different date ranges)
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
       toast.success('✓ Ausencia marcada por el profesor');
     },
@@ -316,6 +323,7 @@ export const useTrainerClearStatus = () => {
         .update({
           attendance_confirmed_for_date: null,
           attendance_confirmed_at: null,
+          confirmed_by_trainer: false,
           absence_confirmed: false,
           absence_reason: null,
           absence_confirmed_at: null,
@@ -329,7 +337,8 @@ export const useTrainerClearStatus = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-attendance', profile?.id, today] });
+      // Invalidate all today-attendance queries (including week views with different date ranges)
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
       toast.success('✓ Estado limpiado');
     },

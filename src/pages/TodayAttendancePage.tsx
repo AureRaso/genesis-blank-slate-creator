@@ -709,7 +709,7 @@ const TodayAttendancePage = () => {
                                 </div>
 
                                 {/* Attendance marked by trainer/admin */}
-                                {isConfirmed && (isAdmin || isTrainer) && participant.attendance_confirmed_at && (
+                                {isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer && (
                                   <div className="mt-3 pt-3 border-t border-green-200/50">
                                     <div className="flex items-start gap-2">
                                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />

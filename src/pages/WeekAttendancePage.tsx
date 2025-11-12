@@ -797,6 +797,13 @@ const WeekAttendancePage = () => {
                               const isPending = !isConfirmed && !isAbsent;
                               const isSubstitute = !!participant.is_substitute;
 
+                              console.log('🎯 Participant render:', {
+                                name: participant.student_enrollment?.full_name,
+                                isConfirmed,
+                                confirmed_by_trainer: participant.confirmed_by_trainer,
+                                shouldShowIndicator: isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer
+                              });
+
                               return (
                                 <div
                                   key={participant.id}
@@ -937,6 +944,19 @@ const WeekAttendancePage = () => {
                                         )}
                                       </div>
                                     </div>
+
+                                    {/* Attendance marked by trainer/admin */}
+                                    {isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer && (
+                                      <div className="mt-3 pt-3 border-t border-green-200/50">
+                                        <div className="flex items-start gap-2">
+                                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+                                          <div>
+                                            <p className="text-xs font-medium text-green-900 mb-0.5">Asistencia confirmada</p>
+                                            <p className="text-xs text-green-700">Marcado como presente por el profesor</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
 
                                     {/* Absence Reason */}
                                     {isAbsent && participant.absence_reason && (

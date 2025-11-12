@@ -9,6 +9,7 @@ export interface TodayClassAttendance {
   class_id: string;
   attendance_confirmed_for_date: string | null;
   attendance_confirmed_at: string | null;
+  confirmed_by_trainer: boolean | null;
   absence_confirmed: boolean | null;
   absence_reason: string | null;
   absence_confirmed_at: string | null;
@@ -185,7 +186,7 @@ export const useTodayClassAttendance = () => {
 
       const { data: participantsBasic, error: errorBasic } = await supabase
         .from('class_participants')
-        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at, absence_confirmed, absence_reason, absence_confirmed_at, absence_locked')
+        .select('id, class_id, student_enrollment_id, status, attendance_confirmed_for_date, attendance_confirmed_at, confirmed_by_trainer, absence_confirmed, absence_reason, absence_confirmed_at, absence_locked')
         .in('student_enrollment_id', enrollmentIds)
         .eq('status', 'active');
 
@@ -283,6 +284,7 @@ export const useTodayClassAttendance = () => {
           class_id: participant.class_id,
           attendance_confirmed_for_date: participant.attendance_confirmed_for_date,
           attendance_confirmed_at: participant.attendance_confirmed_at,
+          confirmed_by_trainer: participant.confirmed_by_trainer,
           absence_confirmed: participant.absence_confirmed,
           absence_reason: participant.absence_reason,
           absence_confirmed_at: participant.absence_confirmed_at,

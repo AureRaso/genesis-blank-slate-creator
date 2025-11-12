@@ -115,12 +115,21 @@ export type Database = {
       }
       class_participants: {
         Row: {
+          absence_confirmed: boolean | null
+          absence_confirmed_at: string | null
+          absence_locked: boolean | null
+          absence_reason: string | null
           amount_paid: number | null
+          attendance_confirmed_at: string | null
+          attendance_confirmed_for_date: string | null
           class_id: string
+          confirmed_by_trainer: boolean | null
           created_at: string
           discount_1: number | null
           discount_2: number | null
           id: string
+          is_substitute: boolean | null
+          joined_from_waitlist_at: string | null
           months_paid: number[] | null
           payment_date: string | null
           payment_method: string | null
@@ -135,12 +144,21 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          absence_confirmed?: boolean | null
+          absence_confirmed_at?: string | null
+          absence_locked?: boolean | null
+          absence_reason?: string | null
           amount_paid?: number | null
+          attendance_confirmed_at?: string | null
+          attendance_confirmed_for_date?: string | null
           class_id: string
+          confirmed_by_trainer?: boolean | null
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          is_substitute?: boolean | null
+          joined_from_waitlist_at?: string | null
           months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
@@ -155,12 +173,21 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          absence_confirmed?: boolean | null
+          absence_confirmed_at?: string | null
+          absence_locked?: boolean | null
+          absence_reason?: string | null
           amount_paid?: number | null
+          attendance_confirmed_at?: string | null
+          attendance_confirmed_for_date?: string | null
           class_id?: string
+          confirmed_by_trainer?: boolean | null
           created_at?: string
           discount_1?: number | null
           discount_2?: number | null
           id?: string
+          is_substitute?: boolean | null
+          joined_from_waitlist_at?: string | null
           months_paid?: number[] | null
           payment_date?: string | null
           payment_method?: string | null
