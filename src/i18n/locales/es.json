@@ -223,5 +223,35 @@
     "min": "min",
     "selectCourt": "Selecciona una pista",
     "court": "Pista"
+  },
+  "landing": {
+    "onboarding": {
+      "title": "Onboarding sin esfuerzo",
+      "subtitle": "El onboarding no requiere tiempo por tu parte. Nosotros nos encargamos del 100% de la configuración inicial y del acompañamiento a tus alumnos.",
+      "step1Title": "Envía tus cuadrantes",
+      "step1Desc": "En el formato que sea: Excel, PDF, imagen, notas, o cualquier archivo. No necesitas preparar nada especial ni organizar datos. Tal como lo tienes ahora, nos sirve.",
+      "step2Title": "Nosotros configuramos todo",
+      "step2Desc": "Importamos tus cuadrantes, organizamos los horarios, preparamos los usuarios, configuramos roles y dejamos todo listo para funcionar. Tú no mueves un dedo.",
+      "step3Title": "Invitamos a tus alumnos",
+      "step3Desc": "Nos encargamos de invitar a todos tus alumnos a la plataforma, los guiamos paso a paso para que entren y les enseñamos cómo funciona la app. Sin complicaciones para ti ni para ellos.",
+      "step4Title": "Tú sigues con tu vida",
+      "step4Desc": "No dediques horas a aprender ni a configurar. Mientras preparamos todo, tú te enfocas en lo que realmente importa: dirigir tu academia y dar clases.",
+      "trialTitle": "14 días de prueba gratuitos",
+      "trialDesc1": "Los 14 días de prueba empiezan solo cuando el 100% de tus alumnos están dentro de la plataforma.",
+      "trialDesc2": "Garantizamos que empieces a probar Padelock en condiciones reales, con toda tu academia funcionando.",
+      "ctaButton": "Comienza tu prueba gratuita"
+    },
+    "features": {
+      "title": "Más que una plataforma de gestión",
+      "subtitle": "Padelock integra seguridad, simplicidad y tecnología de vanguardia para ofrecerte una experiencia completa",
+      "lopiviTitle": "Cumplimos con la LOPIVI",
+      "lopiviDesc": "Padelock está desarrollado conforme a la Ley Orgánica de Protección Integral a la Infancia y la Adolescencia frente a la Violencia (LOPIVI). Esto garantiza que el entorno digital en el que trabajan los menores es seguro, responsable y cumple con toda la normativa vigente.",
+      "simpleTitle": "Sencillo para todos",
+      "simpleDesc": "No hace falta ser experto en tecnología. La interfaz de Padelock está pensada para que cualquier persona pueda usarla sin complicaciones, desde el primer momento. Todo se entiende a la primera: claro, directo y sin pasos innecesarios.",
+      "notificationsTitle": "Notificaciones en tiempo real",
+      "notificationsDesc": "Recibe avisos instantáneos por WhatsApp y correo electrónico para mantenerte siempre informado. Tanto si eres responsable, monitor o familiar, estarás al tanto de cada actualización sin necesidad de entrar en la plataforma.",
+      "webappTitle": "Sin descargas, sin complicaciones",
+      "webappDesc": "Padelock es una WebApp, por lo que no necesitas descargar ni instalar nada. Simplemente accede desde cualquier dispositivo a través de un enlace seguro y disfruta de todas las funcionalidades al instante. Funciona igual de bien en móvil, tablet u ordenador."
+    }
   }
 }

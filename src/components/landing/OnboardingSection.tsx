@@ -1,27 +1,30 @@
 import { Upload, Settings, Users, Coffee, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 const OnboardingSection = () => {
+  const { t } = useTranslation();
+
   const steps = [
     {
       icon: Upload,
-      title: "Envía tus cuadrantes",
-      description: "En el formato que sea: Excel, PDF, imagen, notas, o cualquier archivo. No necesitas preparar nada especial ni organizar datos. Tal como lo tienes ahora, nos sirve."
+      title: t("landing.onboarding.step1Title"),
+      description: t("landing.onboarding.step1Desc")
     },
     {
       icon: Settings,
-      title: "Nosotros configuramos todo",
-      description: "Importamos tus cuadrantes, organizamos los horarios, preparamos los usuarios, configuramos roles y dejamos todo listo para funcionar. Tú no mueves un dedo."
+      title: t("landing.onboarding.step2Title"),
+      description: t("landing.onboarding.step2Desc")
     },
     {
       icon: Users,
-      title: "Invitamos a tus alumnos",
-      description: "Nos encargamos de invitar a todos tus alumnos a la plataforma, los guiamos paso a paso para que entren y les enseñamos cómo funciona la app. Sin complicaciones para ti ni para ellos."
+      title: t("landing.onboarding.step3Title"),
+      description: t("landing.onboarding.step3Desc")
     },
     {
       icon: Coffee,
-      title: "Tú sigues con tu vida",
-      description: "No dediques horas a aprender ni a configurar. Mientras preparamos todo, tú te enfocas en lo que realmente importa: dirigir tu academia y dar clases."
+      title: t("landing.onboarding.step4Title"),
+      description: t("landing.onboarding.step4Desc")
     }
   ];
 
@@ -32,10 +35,10 @@ const OnboardingSection = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-              Onboarding sin esfuerzo
+              {t("landing.onboarding.title")}
             </h2>
             <p className="text-xl text-gray-100 max-w-3xl mx-auto">
-              El onboarding no requiere tiempo por tu parte. Nosotros nos encargamos del 100% de la configuración inicial y del acompañamiento a tus alumnos.
+              {t("landing.onboarding.subtitle")}
             </p>
           </div>
 
@@ -73,13 +76,13 @@ const OnboardingSection = () => {
                 <Gift className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3 text-white">
-                14 días de prueba gratuitos
+                {t("landing.onboarding.trialTitle")}
               </h3>
               <p className="text-lg text-white mb-2 font-medium">
-                Los 14 días de prueba empiezan solo cuando el 100% de tus alumnos están dentro de la plataforma.
+                {t("landing.onboarding.trialDesc1")}
               </p>
               <p className="text-gray-100">
-                Garantizamos que empieces a probar Padelock en condiciones reales, con toda tu academia funcionando.
+                {t("landing.onboarding.trialDesc2")}
               </p>
             </div>
           </div>
@@ -91,7 +94,7 @@ const OnboardingSection = () => {
               className="bg-playtomic-orange hover:bg-playtomic-orange/90 text-white px-8"
               onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Comienza tu prueba gratuita
+              {t("landing.onboarding.ctaButton")}
             </Button>
           </div>
         </div>

@@ -1,14 +1,34 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Globe } from "lucide-react";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const HeroSection = () => {
+  const { language, changeLanguage } = useLanguage();
+
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const toggleLanguage = () => {
+    changeLanguage(language === 'es' ? 'en' : 'es');
+  };
+
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
+      {/* Language Toggle Button */}
+      <div className="absolute top-4 right-4 z-20">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleLanguage}
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+        >
+          <Globe className="w-4 h-4 mr-2" />
+          {language === 'es' ? 'EN' : 'ES'}
+        </Button>
+      </div>
+
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-playtomic-orange/10 rounded-full blur-3xl animate-pulse"></div>

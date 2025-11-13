@@ -1,26 +1,29 @@
 import { Shield, Smartphone, Bell, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const FeaturesHighlightSection = () => {
+  const { t } = useTranslation();
+
   const features = [
     {
       icon: Shield,
-      title: "Cumplimos con la LOPIVI",
-      description: "Padelock está desarrollado conforme a la Ley Orgánica de Protección Integral a la Infancia y la Adolescencia frente a la Violencia (LOPIVI). Esto garantiza que el entorno digital en el que trabajan los menores es seguro, responsable y cumple con toda la normativa vigente."
+      title: t("landing.features.lopiviTitle"),
+      description: t("landing.features.lopiviDesc")
     },
     {
       icon: Smartphone,
-      title: "Sencillo para todos",
-      description: "No hace falta ser experto en tecnología. La interfaz de Padelock está pensada para que cualquier persona pueda usarla sin complicaciones, desde el primer momento. Todo se entiende a la primera: claro, directo y sin pasos innecesarios."
+      title: t("landing.features.simpleTitle"),
+      description: t("landing.features.simpleDesc")
     },
     {
       icon: Bell,
-      title: "Notificaciones en tiempo real",
-      description: "Recibe avisos instantáneos por WhatsApp y correo electrónico para mantenerte siempre informado. Tanto si eres responsable, monitor o familiar, estarás al tanto de cada actualización sin necesidad de entrar en la plataforma."
+      title: t("landing.features.notificationsTitle"),
+      description: t("landing.features.notificationsDesc")
     },
     {
       icon: Globe,
-      title: "Sin descargas, sin complicaciones",
-      description: "Padelock es una WebApp, por lo que no necesitas descargar ni instalar nada. Simplemente accede desde cualquier dispositivo a través de un enlace seguro y disfruta de todas las funcionalidades al instante. Funciona igual de bien en móvil, tablet u ordenador."
+      title: t("landing.features.webappTitle"),
+      description: t("landing.features.webappDesc")
     }
   ];
 
@@ -31,10 +34,10 @@ const FeaturesHighlightSection = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-playtomic-dark">
-              Más que una plataforma de gestión
+              {t("landing.features.title")}
             </h2>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-              Padelock integra seguridad, simplicidad y tecnología de vanguardia para ofrecerte una experiencia completa
+              {t("landing.features.subtitle")}
             </p>
           </div>
 

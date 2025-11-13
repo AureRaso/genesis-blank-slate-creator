@@ -223,5 +223,35 @@
     "min": "min",
     "selectCourt": "Select a court",
     "court": "Court"
+  },
+  "landing": {
+    "onboarding": {
+      "title": "Effortless Onboarding",
+      "subtitle": "Onboarding requires no time from you. We handle 100% of the initial setup and student onboarding.",
+      "step1Title": "Send Your Schedules",
+      "step1Desc": "In any format: Excel, PDF, image, notes, or any file. You don't need to prepare anything special or organize data. Just as you have it now works for us.",
+      "step2Title": "We Configure Everything",
+      "step2Desc": "We import your schedules, organize timetables, prepare users, configure roles, and leave everything ready to work. You don't lift a finger.",
+      "step3Title": "We Invite Your Students",
+      "step3Desc": "We take care of inviting all your students to the platform, guide them step by step to get in, and teach them how the app works. No complications for you or them.",
+      "step4Title": "You Continue With Your Life",
+      "step4Desc": "Don't spend hours learning or configuring. While we prepare everything, you focus on what really matters: running your academy and teaching classes.",
+      "trialTitle": "14-Day Free Trial",
+      "trialDesc1": "The 14-day trial starts only when 100% of your students are on the platform.",
+      "trialDesc2": "We guarantee you'll start testing Padelock under real conditions, with your entire academy running.",
+      "ctaButton": "Start Your Free Trial"
+    },
+    "features": {
+      "title": "More Than a Management Platform",
+      "subtitle": "Padelock integrates security, simplicity, and cutting-edge technology to offer you a complete experience",
+      "lopiviTitle": "LOPIVI Compliant",
+      "lopiviDesc": "Padelock is developed in accordance with the Organic Law on Comprehensive Protection of Children and Adolescents against Violence (LOPIVI). This guarantees that the digital environment in which minors work is safe, responsible, and complies with all current regulations.",
+      "simpleTitle": "Simple for Everyone",
+      "simpleDesc": "No need to be a tech expert. Padelock's interface is designed so anyone can use it without complications, from the first moment. Everything is understood at first glance: clear, direct, and without unnecessary steps.",
+      "notificationsTitle": "Real-Time Notifications",
+      "notificationsDesc": "Receive instant alerts via WhatsApp and email to stay always informed. Whether you're an administrator, coach, or family member, you'll be aware of every update without needing to enter the platform.",
+      "webappTitle": "No Downloads, No Hassle",
+      "webappDesc": "Padelock is a WebApp, so you don't need to download or install anything. Simply access from any device through a secure link and enjoy all the features instantly. Works equally well on mobile, tablet, or computer."
+    }
   }
 }
