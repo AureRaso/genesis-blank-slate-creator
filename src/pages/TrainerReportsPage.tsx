@@ -228,14 +228,15 @@ const TrainerReportsPage = () => {
             Gestión de asistencia y métricas de alumnos
           </p>
         </div>
-        <Button
+        {/* FASE 3: Comentado temporalmente - Botón Ver Scores */}
+        {/* <Button
           onClick={() => navigate("/dashboard/student-scores")}
           className="gap-2 border-playtomic-orange text-playtomic-orange hover:bg-playtomic-orange hover:text-white"
           variant="outline"
         >
           <Award className="h-4 w-4" />
           Ver Scores
-        </Button>
+        </Button> */}
       </div>
 
       {/* Tabs */}
