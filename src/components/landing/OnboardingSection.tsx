@@ -29,7 +29,7 @@ const OnboardingSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-900 via-playtomic-dark to-gray-900 text-white">
+    <section id="onboarding" className="py-20 bg-gradient-to-br from-gray-900 via-playtomic-dark to-gray-900 text-white">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}

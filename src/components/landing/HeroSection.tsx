@@ -1,37 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Globe } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "react-i18next";
 
 const HeroSection = () => {
-  const { language, changeLanguage } = useLanguage();
   const { t } = useTranslation();
 
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const toggleLanguage = () => {
-    const newLang = language === 'es' ? 'en' : 'es';
-    changeLanguage(newLang);
-  };
-
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
-      {/* Language Toggle Button */}
-      <div className="absolute top-4 right-4 z-20">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLanguage}
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
-        >
-          <Globe className="w-4 h-4 mr-2" />
-          {language === 'es' ? 'EN' : 'ES'}
-        </Button>
-      </div>
-
+    <section id="home" className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-playtomic-orange/10 rounded-full blur-3xl animate-pulse"></div>
@@ -84,7 +64,7 @@ const HeroSection = () => {
               size="lg"
               variant="outline"
               className="border-2 px-8 py-6 text-lg"
-              onClick={() => document.getElementById('producto')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('product')?.scrollIntoView({ behavior: 'smooth' })}
             >
               {t("landing.hero.ctaHow")}
             </Button>

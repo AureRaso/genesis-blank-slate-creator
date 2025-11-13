@@ -1,3 +1,4 @@
+import { StickyNavigation } from "@/components/landing/StickyNavigation";
 import HeroSection from "@/components/landing/HeroSection";
 import ProblemSection from "@/components/landing/ProblemSection";
 import SolutionSection from "@/components/landing/SolutionSection";
@@ -13,11 +14,12 @@ import { Footer } from "@/components/landing/Footer";
 const LandingPage = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
+      <StickyNavigation />
       <HeroSection />
-      <OnboardingSection />
       <ProblemSection />
-      <SolutionSection />
-      <WhyNowSection />
+      <OnboardingSection />
+      {/* <SolutionSection /> */}
+      {/* <WhyNowSection /> */}
       <ProductSection />
       <ComparisonSection />
       <FeaturesHighlightSection />

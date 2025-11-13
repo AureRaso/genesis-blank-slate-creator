@@ -121,8 +121,8 @@ export const ContactSection = () => {
           {/* Contact Methods */}
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Phone className="h-6 w-6 text-green-500" />
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Phone className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-semibold mb-2">{t("landing.contact.methods.phone.title")}</h3>
               <a

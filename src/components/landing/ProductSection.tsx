@@ -56,7 +56,7 @@ const ProductSection = () => {
   ];
 
   return (
-    <section id="producto" className="py-20 bg-gradient-to-br from-gray-50 to-white">
+    <section id="product" className="py-20 bg-gradient-to-br from-gray-50 to-white">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}

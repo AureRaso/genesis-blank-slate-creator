@@ -225,6 +225,16 @@
     "court": "Court"
   },
   "landing": {
+    "navigation": {
+      "home": "Home",
+      "onboarding": "Onboarding",
+      "problem": "Problem",
+      "product": "Product",
+      "features": "Features",
+      "team": "Team",
+      "contact": "Contact",
+      "requestDemo": "Request Demo"
+    },
     "onboarding": {
       "title": "Effortless Onboarding",
       "subtitle": "Onboarding requires no time from you. We handle 100% of the initial setup and student onboarding.",

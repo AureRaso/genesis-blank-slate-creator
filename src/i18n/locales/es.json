@@ -225,6 +225,16 @@
     "court": "Pista"
   },
   "landing": {
+    "navigation": {
+      "home": "Inicio",
+      "onboarding": "Onboarding",
+      "problem": "Problema",
+      "product": "Producto",
+      "features": "Características",
+      "team": "Equipo",
+      "contact": "Contacto",
+      "requestDemo": "Solicitar Demo"
+    },
     "onboarding": {
       "title": "Onboarding sin esfuerzo",
       "subtitle": "El onboarding no requiere tiempo por tu parte. Nosotros nos encargamos del 100% de la configuración inicial y del acompañamiento a tus alumnos.",
@@ -435,7 +445,7 @@
         "title": "¡Hablemos por WhatsApp!",
         "description": "Chatea con nosotros directamente y agenda tu demo personalizada. Te respondemos al instante.",
         "button": "Abrir WhatsApp",
-        "availability": "Disponible Lun-Vie, 9:00-18:00"
+        "availability": "Disponible 24h/7d"
       },
       "methods": {
         "phone": {
