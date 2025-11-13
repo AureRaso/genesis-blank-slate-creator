@@ -1,5 +1,4 @@
-import { Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Facebook, ArrowRight, Calendar, Shield, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, Phone, MapPin, Linkedin, Shield, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import padelockLogo from "@/assets/padelock-logo-red.png";
 
@@ -7,16 +6,10 @@ export const Footer = () => {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
   return <footer className="bg-card border-t">
       <div className="container mx-auto px-4">
         {/* Main Footer Content */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10 py-16">
           {/* Brand Column */}
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-4">
@@ -54,20 +47,6 @@ export const Footer = () => {
                 </a>
               </div>
             </div>
-            
-            {/* Newsletter Subscription */}
-            <div className="pt-4">
-              <div className="flex items-center space-x-2 text-sm font-medium mb-3">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>{t("landing.footer.brand.newsletter")}</span>
-              </div>
-              <div className="flex space-x-2">
-                <Input type="email" placeholder={t("landing.footer.brand.newsletterPlaceholder")} className="flex-1 text-sm" />
-                <Button size="sm" className="shrink-0">
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
           </div>
 
           {/* Product Column */}
@@ -102,43 +81,6 @@ export const Footer = () => {
                 <a href="#" className="hover:text-primary transition-colors flex items-center">
                   <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
                   {t("landing.footer.platform.successStories")}
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Resources Column */}
-          <div className="space-y-5">
-            <h4 className="font-semibold text-lg">{t("landing.footer.resources.title")}</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                  {t("landing.footer.resources.helpCenter")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                  {t("landing.footer.resources.blog")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                  {t("landing.footer.resources.tutorials")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                  {t("landing.footer.resources.webinars")}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center">
-                  <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                  {t("landing.footer.resources.apiDocs")}
                 </a>
               </li>
             </ul>
@@ -190,20 +132,8 @@ export const Footer = () => {
               <a href="/terms" className="hover:text-primary transition-colors">{t("landing.footer.bottom.terms")}</a>
               <a href="#" className="hover:text-primary transition-colors">{t("landing.footer.bottom.cookies")}</a>
             </div>
-
-            <Button variant="ghost" size="sm" onClick={scrollToTop} className="text-muted-foreground hover:text-primary">
-              {t("landing.footer.bottom.backToTop")}
-            </Button>
           </div>
         </div>
       </div>
     </footer>;
-};
-
-// Componente Input para el newsletter (añadir al import si es necesario)
-const Input = ({
-  className,
-  ...props
-}) => {
-  return <input className={`flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`} {...props} />;
 };
