@@ -32,10 +32,11 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   };
 
   const changeLanguage = (lang: string) => {
+    console.log('LanguageProvider: changing language to', lang);
     i18n.changeLanguage(lang);
     setLanguage(lang);
     localStorage.setItem('language', lang);
-    
+
     // Update date-fns default locale
     setDefaultOptions({ locale: lang === 'en' ? enUS : es });
   };
@@ -44,6 +45,20 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     // Set initial date-fns locale
     setDefaultOptions({ locale: getDateFnsLocale() });
   }, [language]);
+
+  useEffect(() => {
+    // Sync state with i18n language changes
+    const handleLanguageChange = (lng: string) => {
+      console.log('i18n language changed to:', lng);
+      setLanguage(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
 
   const value = {
     language,
