@@ -11,7 +11,12 @@ export const StickyNavigation = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      // Get the height of the hero section to determine when to show navbar
+      const heroSection = document.getElementById('home');
+      const heroHeight = heroSection ? heroSection.offsetHeight : 800;
+
+      // Show navbar only after scrolling past the hero section
+      setIsScrolled(window.scrollY > heroHeight - 100);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -56,8 +61,8 @@ export const StickyNavigation = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-md"
-          : "bg-white/90 backdrop-blur-sm"
+          ? "bg-white/95 backdrop-blur-md shadow-md translate-y-0"
+          : "bg-white/90 backdrop-blur-sm -translate-y-full"
       }`}
     >
       <div className="container mx-auto px-4">
