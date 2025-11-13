@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe } from "lucide-react";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslation } from "react-i18next";
 
 const HeroSection = () => {
   const { language, changeLanguage } = useLanguage();
+  const { t } = useTranslation();
 
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
@@ -51,22 +53,21 @@ const HeroSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-playtomic-orange/10 border border-playtomic-orange/20 rounded-full mb-8">
             <span className="text-sm font-medium text-playtomic-orange">
-              Diseñado específicamente para academias de pádel
+              {t("landing.hero.badge")}
             </span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-            Ahorra{" "}
-            <span className="text-playtomic-orange">4 horas diarias</span>
+            {t("landing.hero.title1")}{" "}
+            <span className="text-playtomic-orange">{t("landing.hero.title2")}</span>
             <br />
-            gestionando tu academia
+            {t("landing.hero.title3")}
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-slate-300 mb-10 max-w-2xl mx-auto">
-            La primera plataforma diseñada específicamente para academias de pádel.
-            Gestiona profesores, clases y alumnos sin complicaciones.
+            {t("landing.hero.subtitle")}
           </p>
 
           {/* CTAs */}
@@ -76,7 +77,7 @@ const HeroSection = () => {
               className="bg-playtomic-orange hover:bg-playtomic-orange/90 text-white px-8 py-6 text-lg group"
               onClick={scrollToContact}
             >
-              Solicitar Demo Gratuita
+              {t("landing.hero.ctaDemo")}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
             <Button
@@ -85,7 +86,7 @@ const HeroSection = () => {
               className="border-2 px-8 py-6 text-lg"
               onClick={() => document.getElementById('producto')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Ver cómo funciona
+              {t("landing.hero.ctaHow")}
             </Button>
           </div>
 
@@ -97,12 +98,12 @@ const HeroSection = () => {
                 <div className="w-8 h-8 rounded-full bg-playtomic-orange/40 border-2 border-slate-800" />
                 <div className="w-8 h-8 rounded-full bg-playtomic-orange/60 border-2 border-slate-800" />
               </div>
-              <span>Academias activas</span>
+              <span>{t("landing.hero.activeAcademies")}</span>
             </div>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">100% español</span>
+            <span className="hidden sm:inline">{t("landing.hero.spanish100")}</span>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">Soporte incluido</span>
+            <span className="hidden sm:inline">{t("landing.hero.supportIncluded")}</span>
           </div>
         </div>
       </div>

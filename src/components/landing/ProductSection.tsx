@@ -2,54 +2,56 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Users, BarChart3, Calendar } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ProductSection = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("academia");
 
   const roles = [
     {
       id: "academia",
-      title: "Academia",
+      titleKey: "landing.product.academia.title",
       icon: BarChart3,
-      description: "Control total de tu academia desde un solo panel",
-      features: [
-        "Dashboard con métricas en tiempo real de asistencia",
-        "Control completo de pagos y facturación",
-        "Visión global de todos los horarios y profesores",
-        "Gestión automatizada de recuperaciones",
-        "Informes detallados sobre rendimiento de la academia",
-        "Asignación inteligente de alumnos por nivel"
+      descriptionKey: "landing.product.academia.description",
+      featureKeys: [
+        "landing.product.academia.features.0",
+        "landing.product.academia.features.1",
+        "landing.product.academia.features.2",
+        "landing.product.academia.features.3",
+        "landing.product.academia.features.4",
+        "landing.product.academia.features.5"
       ],
-      benefits: "Ahorra 4 horas diarias en tareas administrativas"
+      benefitsKey: "landing.product.academia.benefits"
     },
     {
       id: "profesor",
-      title: "Profesor",
+      titleKey: "landing.product.profesor.title",
       icon: Users,
-      description: "Todo lo que necesitas para gestionar tus clases",
-      features: [
-        "Pasa lista en segundos con un solo clic",
-        "Comunica con alumnos directamente por WhatsApp sin cambiar de app",
-        "Ve tu horario completo de la semana de un vistazo",
-        "Gestiona recuperaciones y lista de espera automáticamente",
-        "Accede a la información de tus alumnos al instante"
+      descriptionKey: "landing.product.profesor.description",
+      featureKeys: [
+        "landing.product.profesor.features.0",
+        "landing.product.profesor.features.1",
+        "landing.product.profesor.features.2",
+        "landing.product.profesor.features.3",
+        "landing.product.profesor.features.4"
       ],
-      benefits: "Reduce el tiempo de gestión de 30 minutos a 2 minutos por clase"
+      benefitsKey: "landing.product.profesor.benefits"
     },
     {
       id: "jugador",
-      title: "Jugador",
+      titleKey: "landing.product.jugador.title",
       icon: Calendar,
-      description: "Tu academia siempre contigo, en tu móvil",
-      features: [
-        "Calendario personal con todas tus clases",
-        "Gestiona tus recuperaciones fácilmente",
-        "Apúntate a lista de espera cuando hay baja",
-        "Comunicación directa con tu profesor",
-        "Disponibilidad de clases abiertas en tiempo real",
-        "Historial de clases"
+      descriptionKey: "landing.product.jugador.description",
+      featureKeys: [
+        "landing.product.jugador.features.0",
+        "landing.product.jugador.features.1",
+        "landing.product.jugador.features.2",
+        "landing.product.jugador.features.3",
+        "landing.product.jugador.features.4",
+        "landing.product.jugador.features.5"
       ],
-      benefits: "Experiencia moderna y profesional que mejora la satisfacción"
+      benefitsKey: "landing.product.jugador.benefits"
     }
   ];
 
@@ -60,10 +62,10 @@ const ProductSection = () => {
           {/* Header */}
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-playtomic-dark mb-4">
-              Diseñado para cada rol
+              {t("landing.product.title")}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Academias, profesores y jugadores tienen experiencias optimizadas para sus necesidades específicas
+              {t("landing.product.subtitle")}
             </p>
           </div>
 
@@ -79,7 +81,7 @@ const ProductSection = () => {
                     className="flex flex-col items-center gap-2 py-4 data-[state=active]:bg-playtomic-orange data-[state=active]:text-white"
                   >
                     <Icon className="h-5 w-5" />
-                    <span className="font-semibold">{role.title}</span>
+                    <span className="font-semibold">{t(role.titleKey)}</span>
                   </TabsTrigger>
                 );
               })}
@@ -100,17 +102,17 @@ const ProductSection = () => {
                             </div>
                             <div>
                               <h3 className="text-2xl font-bold text-playtomic-dark">
-                                {role.title}
+                                {t(role.titleKey)}
                               </h3>
-                              <p className="text-gray-600">{role.description}</p>
+                              <p className="text-gray-600">{t(role.descriptionKey)}</p>
                             </div>
                           </div>
 
                           <ul className="space-y-3 mt-6">
-                            {role.features.map((feature, idx) => (
+                            {role.featureKeys.map((featureKey, idx) => (
                               <li key={idx} className="flex items-start gap-3">
                                 <CheckCircle className="w-5 h-5 text-playtomic-orange flex-shrink-0 mt-0.5" />
-                                <span className="text-gray-700">{feature}</span>
+                                <span className="text-gray-700">{t(featureKey)}</span>
                               </li>
                             ))}
                           </ul>
@@ -148,9 +150,9 @@ const ProductSection = () => {
                           {/* Benefits Card */}
                           <div className="bg-playtomic-orange/10 rounded-xl p-6 border-2 border-playtomic-orange/20">
                             <h4 className="font-bold text-playtomic-dark mb-2">
-                              💡 Beneficio clave
+                              {t("landing.product.benefitsHeading")}
                             </h4>
-                            <p className="text-gray-700">{role.benefits}</p>
+                            <p className="text-gray-700">{t(role.benefitsKey)}</p>
                           </div>
                         </div>
                       </div>

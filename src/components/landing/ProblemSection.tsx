@@ -1,26 +1,29 @@
 import { AlertTriangle, Clock, TrendingDown, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ProblemSection = () => {
+  const { t } = useTranslation();
+
   const problems = [
     {
       icon: Clock,
-      title: "4 horas diarias perdidas",
-      description: "Cuadrar horarios, controlar pagos y actualizar listas manualmente consume tiempo valioso que podrías dedicar a lo que realmente importa."
+      titleKey: "landing.problem.problem1Title",
+      descKey: "landing.problem.problem1Desc"
     },
     {
       icon: TrendingDown,
-      title: "Descontrol total de cuentas",
-      description: "Sin visibilidad clara sobre cuántos alumnos activos hay realmente ni cuánto se está ganando. Todo estimado, nada certero."
+      titleKey: "landing.problem.problem2Title",
+      descKey: "landing.problem.problem2Desc"
     },
     {
       icon: Users,
-      title: "Clases desbalanceadas",
-      description: "Falta de control en la asistencia y gestión de recuperaciones genera clases con números irregulares y experiencia inconsistente."
+      titleKey: "landing.problem.problem3Title",
+      descKey: "landing.problem.problem3Desc"
     },
     {
       icon: AlertTriangle,
-      title: "Experiencia poco profesional",
-      description: "Excel, WhatsApp y papel transmiten una imagen amateur que no refleja la calidad de tu academia ni el nivel de tus entrenadores."
+      titleKey: "landing.problem.problem4Title",
+      descKey: "landing.problem.problem4Desc"
     }
   ];
 
@@ -31,11 +34,10 @@ const ProblemSection = () => {
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-playtomic-dark mb-4">
-              ¿Te suena familiar?
+              {t("landing.problem.title")}
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              El 87% de las academias de pádel gestionan con Excel, WhatsApp y papel.
-              El resultado: caos operativo y oportunidades perdidas.
+              {t("landing.problem.subtitle")}
             </p>
           </div>
 
@@ -54,25 +56,16 @@ const ProblemSection = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-playtomic-dark mb-2">
-                        {problem.title}
+                        {t(problem.titleKey)}
                       </h3>
                       <p className="text-gray-600 leading-relaxed">
-                        {problem.description}
+                        {t(problem.descKey)}
                       </p>
                     </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-
-          {/* Bottom CTA */}
-          <div className="mt-12 text-center">
-            <p className="text-lg text-gray-700 font-medium">
-              <span className="text-playtomic-orange">El Head of Coach</span> es quien más sufre esta situación.
-              <br />
-              Es hora de cambiar eso.
-            </p>
           </div>
         </div>
       </div>

@@ -252,6 +252,73 @@
       "notificationsDesc": "Recibe avisos instantáneos por WhatsApp y correo electrónico para mantenerte siempre informado. Tanto si eres responsable, monitor o familiar, estarás al tanto de cada actualización sin necesidad de entrar en la plataforma.",
       "webappTitle": "Sin descargas, sin complicaciones",
       "webappDesc": "Padelock es una WebApp, por lo que no necesitas descargar ni instalar nada. Simplemente accede desde cualquier dispositivo a través de un enlace seguro y disfruta de todas las funcionalidades al instante. Funciona igual de bien en móvil, tablet u ordenador."
+    },
+    "hero": {
+      "badge": "Diseñado específicamente para academias de pádel",
+      "title1": "Ahorra",
+      "title2": "4 horas diarias",
+      "title3": "gestionando tu academia",
+      "subtitle": "La primera plataforma diseñada específicamente para academias de pádel. Gestiona profesores, clases y alumnos sin complicaciones.",
+      "ctaDemo": "Solicitar Demo Gratuita",
+      "ctaHow": "Ver cómo funciona",
+      "activeAcademies": "Academias activas",
+      "spanish100": "100% español",
+      "supportIncluded": "Soporte incluido"
+    },
+    "problem": {
+      "title": "¿Te suena familiar?",
+      "subtitle": "El 87% de las academias de pádel gestionan con Excel, WhatsApp y papel. El resultado: caos operativo y oportunidades perdidas.",
+      "problem1Title": "4 horas diarias perdidas",
+      "problem1Desc": "Cuadrar horarios, controlar pagos y actualizar listas manualmente consume tiempo valioso que podrías dedicar a lo que realmente importa.",
+      "problem2Title": "Descontrol total de cuentas",
+      "problem2Desc": "Sin visibilidad clara sobre cuántos alumnos activos hay realmente ni cuánto se está ganando. Todo estimado, nada certero.",
+      "problem3Title": "Clases desbalanceadas",
+      "problem3Desc": "Falta de control en la asistencia y gestión de recuperaciones genera clases con números irregulares y experiencia inconsistente.",
+      "problem4Title": "Experiencia poco profesional",
+      "problem4Desc": "Excel, WhatsApp y papel transmiten una imagen amateur que no refleja la calidad de tu academia ni el nivel de tus entrenadores."
+    },
+    "product": {
+      "title": "Diseñado para cada rol",
+      "subtitle": "Academias, profesores y jugadores tienen experiencias optimizadas para sus necesidades específicas",
+      "academia": {
+        "title": "Academia",
+        "description": "Control total de tu academia desde un solo panel",
+        "features": [
+          "Dashboard con métricas en tiempo real de asistencia",
+          "Control completo de pagos y facturación",
+          "Visión global de todos los horarios y profesores",
+          "Gestión automatizada de recuperaciones",
+          "Informes detallados sobre rendimiento de la academia",
+          "Asignación inteligente de alumnos por nivel"
+        ],
+        "benefits": "Ahorra 4 horas diarias en tareas administrativas"
+      },
+      "profesor": {
+        "title": "Profesor",
+        "description": "Todo lo que necesitas para gestionar tus clases",
+        "features": [
+          "Pasa lista en segundos con un solo clic",
+          "Comunica con alumnos directamente por WhatsApp sin cambiar de app",
+          "Ve tu horario completo de la semana de un vistazo",
+          "Gestiona recuperaciones y lista de espera automáticamente",
+          "Accede a la información de tus alumnos al instante"
+        ],
+        "benefits": "Reduce el tiempo de gestión de 30 minutos a 2 minutos por clase"
+      },
+      "jugador": {
+        "title": "Jugador",
+        "description": "Tu academia siempre contigo, en tu móvil",
+        "features": [
+          "Calendario personal con todas tus clases",
+          "Gestiona tus recuperaciones fácilmente",
+          "Apúntate a lista de espera cuando hay baja",
+          "Comunicación directa con tu profesor",
+          "Disponibilidad de clases abiertas en tiempo real",
+          "Historial de clases"
+        ],
+        "benefits": "Experiencia moderna y profesional que mejora la satisfacción"
+      },
+      "benefitsHeading": "💡 Beneficio clave"
     }
   }
 }

@@ -252,6 +252,73 @@
       "notificationsDesc": "Receive instant alerts via WhatsApp and email to stay always informed. Whether you're an administrator, coach, or family member, you'll be aware of every update without needing to enter the platform.",
       "webappTitle": "No Downloads, No Hassle",
       "webappDesc": "Padelock is a WebApp, so you don't need to download or install anything. Simply access from any device through a secure link and enjoy all the features instantly. Works equally well on mobile, tablet, or computer."
+    },
+    "hero": {
+      "badge": "Specifically designed for padel academies",
+      "title1": "Save",
+      "title2": "4 hours daily",
+      "title3": "managing your academy",
+      "subtitle": "The first platform specifically designed for padel academies. Manage coaches, classes, and students without complications.",
+      "ctaDemo": "Request Free Demo",
+      "ctaHow": "See how it works",
+      "activeAcademies": "Active academies",
+      "spanish100": "100% Spanish",
+      "supportIncluded": "Support included"
+    },
+    "problem": {
+      "title": "Sound familiar?",
+      "subtitle": "87% of padel academies manage with Excel, WhatsApp, and paper. The result: operational chaos and lost opportunities.",
+      "problem1Title": "4 hours wasted daily",
+      "problem1Desc": "Coordinating schedules, managing payments, and manually updating lists consumes valuable time that you could dedicate to what really matters.",
+      "problem2Title": "Total lack of control over accounts",
+      "problem2Desc": "No clear visibility on how many active students there really are or how much is being earned. Everything estimated, nothing certain.",
+      "problem3Title": "Unbalanced classes",
+      "problem3Desc": "Lack of control in attendance and makeup management generates classes with irregular numbers and inconsistent experience.",
+      "problem4Title": "Unprofessional experience",
+      "problem4Desc": "Excel, WhatsApp, and paper convey an amateur image that doesn't reflect the quality of your academy or the level of your coaches."
+    },
+    "product": {
+      "title": "Designed for each role",
+      "subtitle": "Academies, coaches, and players have experiences optimized for their specific needs",
+      "academia": {
+        "title": "Academy",
+        "description": "Total control of your academy from a single panel",
+        "features": [
+          "Dashboard with real-time attendance metrics",
+          "Complete payment and billing control",
+          "Global view of all schedules and coaches",
+          "Automated makeup management",
+          "Detailed reports on academy performance",
+          "Intelligent student assignment by level"
+        ],
+        "benefits": "Save 4 hours daily on administrative tasks"
+      },
+      "profesor": {
+        "title": "Coach",
+        "description": "Everything you need to manage your classes",
+        "features": [
+          "Take attendance in seconds with one click",
+          "Communicate with students directly via WhatsApp without changing apps",
+          "See your full week's schedule at a glance",
+          "Manage makeups and waiting list automatically",
+          "Access your students' information instantly"
+        ],
+        "benefits": "Reduce management time from 30 minutes to 2 minutes per class"
+      },
+      "jugador": {
+        "title": "Player",
+        "description": "Your academy always with you, on your phone",
+        "features": [
+          "Personal calendar with all your classes",
+          "Manage your makeups easily",
+          "Join waiting list when there's a cancellation",
+          "Direct communication with your coach",
+          "Real-time availability of open classes",
+          "Class history"
+        ],
+        "benefits": "Modern and professional experience that improves satisfaction"
+      },
+      "benefitsHeading": "💡 Key benefit"
     }
   }
 }
