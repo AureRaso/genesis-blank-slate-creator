@@ -7,23 +7,23 @@ const FeaturesHighlightSection = () => {
   const features = [
     {
       icon: Shield,
-      title: t("landing.features.lopiviTitle"),
-      description: t("landing.features.lopiviDesc")
+      titleKey: "landing.features.lopiviTitle",
+      descKey: "landing.features.lopiviDesc"
     },
     {
       icon: Smartphone,
-      title: t("landing.features.simpleTitle"),
-      description: t("landing.features.simpleDesc")
+      titleKey: "landing.features.simpleTitle",
+      descKey: "landing.features.simpleDesc"
     },
     {
       icon: Bell,
-      title: t("landing.features.notificationsTitle"),
-      description: t("landing.features.notificationsDesc")
+      titleKey: "landing.features.notificationsTitle",
+      descKey: "landing.features.notificationsDesc"
     },
     {
       icon: Globe,
-      title: t("landing.features.webappTitle"),
-      description: t("landing.features.webappDesc")
+      titleKey: "landing.features.webappTitle",
+      descKey: "landing.features.webappDesc"
     }
   ];
 
@@ -56,10 +56,10 @@ const FeaturesHighlightSection = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-3 text-playtomic-dark">
-                        {feature.title}
+                        {t(feature.titleKey)}
                       </h3>
                       <p className="text-gray-700 leading-relaxed">
-                        {feature.description}
+                        {t(feature.descKey)}
                       </p>
                     </div>
                   </div>

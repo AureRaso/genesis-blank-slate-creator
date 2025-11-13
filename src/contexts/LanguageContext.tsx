@@ -32,7 +32,6 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   };
 
   const changeLanguage = (lang: string) => {
-    console.log('LanguageProvider: changing language to', lang);
     i18n.changeLanguage(lang);
     setLanguage(lang);
     localStorage.setItem('language', lang);
@@ -49,7 +48,6 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   useEffect(() => {
     // Sync state with i18n language changes
     const handleLanguageChange = (lng: string) => {
-      console.log('i18n language changed to:', lng);
       setLanguage(lng);
     };
 

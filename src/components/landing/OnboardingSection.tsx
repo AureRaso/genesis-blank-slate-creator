@@ -8,23 +8,23 @@ const OnboardingSection = () => {
   const steps = [
     {
       icon: Upload,
-      title: t("landing.onboarding.step1Title"),
-      description: t("landing.onboarding.step1Desc")
+      titleKey: "landing.onboarding.step1Title",
+      descKey: "landing.onboarding.step1Desc"
     },
     {
       icon: Settings,
-      title: t("landing.onboarding.step2Title"),
-      description: t("landing.onboarding.step2Desc")
+      titleKey: "landing.onboarding.step2Title",
+      descKey: "landing.onboarding.step2Desc"
     },
     {
       icon: Users,
-      title: t("landing.onboarding.step3Title"),
-      description: t("landing.onboarding.step3Desc")
+      titleKey: "landing.onboarding.step3Title",
+      descKey: "landing.onboarding.step3Desc"
     },
     {
       icon: Coffee,
-      title: t("landing.onboarding.step4Title"),
-      description: t("landing.onboarding.step4Desc")
+      titleKey: "landing.onboarding.step4Title",
+      descKey: "landing.onboarding.step4Desc"
     }
   ];
 
@@ -57,10 +57,10 @@ const OnboardingSection = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold mb-3 text-white">
-                        {step.title}
+                        {t(step.titleKey)}
                       </h3>
                       <p className="text-gray-100 leading-relaxed">
-                        {step.description}
+                        {t(step.descKey)}
                       </p>
                     </div>
                   </div>

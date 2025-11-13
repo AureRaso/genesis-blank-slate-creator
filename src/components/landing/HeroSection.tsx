@@ -11,9 +11,7 @@ const HeroSection = () => {
   };
 
   const toggleLanguage = () => {
-    console.log('Current language:', language);
     const newLang = language === 'es' ? 'en' : 'es';
-    console.log('Changing to:', newLang);
     changeLanguage(newLang);
   };
 

@@ -21,7 +21,7 @@ i18n
     resources,
     fallbackLng: 'es',
     lng: 'es', // Force default language to Spanish
-    debug: true, // Enable debug mode
+    debug: false,
     interpolation: {
       escapeValue: false,
     },
