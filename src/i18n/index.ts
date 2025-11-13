@@ -20,7 +20,6 @@ i18n
   .init({
     resources,
     fallbackLng: 'es',
-    lng: 'es', // Force default language to Spanish
     debug: false,
     interpolation: {
       escapeValue: false,
@@ -28,6 +27,7 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'language',
+      caches: ['localStorage'],
     },
     react: {
       useSuspense: false,
