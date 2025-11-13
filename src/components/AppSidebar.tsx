@@ -75,14 +75,15 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
+              {/* Sistema de Scoring - Temporalmente oculto */}
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/trainer-reports"}>
                 <Link to="/dashboard/trainer-reports">
                   <TrendingUp />
                   <span>Reportes y Métricas</span>
                 </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
@@ -195,11 +196,12 @@ const AppSidebar = () => {
         url: "/dashboard/today-attendance",
         icon: ClipboardCheck
       },
-      {
-        title: "Reportes y Métricas",
-        url: "/dashboard/trainer-reports",
-        icon: TrendingUp
-      },
+      // Sistema de Scoring - Temporalmente oculto
+      // {
+      //   title: "Reportes y Métricas",
+      //   url: "/dashboard/trainer-reports",
+      //   icon: TrendingUp
+      // },
       {
         title: "Control de Pagos",
         url: "/dashboard/payment-control",
