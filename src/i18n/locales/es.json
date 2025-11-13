@@ -431,6 +431,12 @@
         "errorTitle": "Error al enviar",
         "errorDesc": "Hubo un problema al enviar tu solicitud. Por favor, intenta de nuevo o escríbenos directamente a infopadelock@gmail.com"
       },
+      "whatsapp": {
+        "title": "¡Hablemos por WhatsApp!",
+        "description": "Chatea con nosotros directamente y agenda tu demo personalizada. Te respondemos al instante.",
+        "button": "Abrir WhatsApp",
+        "availability": "Disponible Lun-Vie, 9:00-18:00"
+      },
       "methods": {
         "phone": {
           "title": "Llámanos",

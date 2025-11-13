@@ -431,6 +431,12 @@
         "errorTitle": "Error sending",
         "errorDesc": "There was a problem sending your request. Please try again or write to us directly at infopadelock@gmail.com"
       },
+      "whatsapp": {
+        "title": "Let's talk on WhatsApp!",
+        "description": "Chat with us directly and schedule your personalized demo. We respond instantly.",
+        "button": "Open WhatsApp",
+        "availability": "Available Mon-Fri, 9:00-18:00"
+      },
       "methods": {
         "phone": {
           "title": "Call us",
