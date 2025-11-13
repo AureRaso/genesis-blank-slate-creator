@@ -57,7 +57,7 @@ export const StickyNavigation = () => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-md"
-          : "bg-transparent"
+          : "bg-white/90 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -82,7 +82,7 @@ export const StickyNavigation = () => {
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleNavClick(e, item.href)}
-                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 {t(item.labelKey)}
               </a>
@@ -95,7 +95,7 @@ export const StickyNavigation = () => {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              className="text-foreground/80 hover:text-primary"
+              className="text-slate-700 hover:text-slate-900 hover:bg-slate-100"
             >
               <Globe className="h-4 w-4 mr-2" />
               {i18n.language === "en" ? "ES" : "EN"}
@@ -120,7 +120,7 @@ export const StickyNavigation = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 text-foreground hover:bg-primary/5 rounded-lg transition-colors"
+            className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -139,7 +139,7 @@ export const StickyNavigation = () => {
                   key={item.href}
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.href)}
-                  className="px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                  className="px-4 py-3 text-sm font-medium text-slate-700 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                 >
                   {t(item.labelKey)}
                 </a>
@@ -149,7 +149,7 @@ export const StickyNavigation = () => {
                   variant="ghost"
                   size="sm"
                   onClick={toggleLanguage}
-                  className="w-full justify-start text-foreground/80 hover:text-primary"
+                  className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                 >
                   <Globe className="h-4 w-4 mr-2" />
                   {i18n.language === "en" ? "Español" : "English"}
