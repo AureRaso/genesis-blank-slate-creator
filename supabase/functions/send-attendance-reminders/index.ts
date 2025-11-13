@@ -195,10 +195,30 @@ serve(async (req) => {
 
     console.log(`🎯 Found ${targetClasses.length} classes starting in ~6 hours`);
 
+    // Filter out cancelled classes
+    const classIds = targetClasses.map(c => c.id);
+    const { data: cancelledData } = await supabase
+      .from('cancelled_classes')
+      .select('class_id')
+      .in('class_id', classIds)
+      .eq('cancelled_date', today);
+
+    const cancelledClassIds = new Set(cancelledData?.map(c => c.class_id) || []);
+
+    const activeTargetClasses = targetClasses.filter(cls => {
+      if (cancelledClassIds.has(cls.id)) {
+        console.log(`⏭️ Skipping cancelled class: ${cls.name} at ${cls.start_time}`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log(`📋 Processing ${activeTargetClasses.length} active classes (${cancelledClassIds.size} cancelled)`);
+
     let totalRemindersSent = 0;
 
     // 2. For each target class, find participants without confirmation
-    for (const classInfo of targetClasses) {
+    for (const classInfo of activeTargetClasses) {
       console.log(`\n📋 Processing class: ${classInfo.name} at ${classInfo.start_time}`);
 
       // Get participants for this class who haven't confirmed attendance
@@ -271,7 +291,8 @@ serve(async (req) => {
       success: true,
       message: `Sent ${totalRemindersSent} attendance reminder emails`,
       remindersSent: totalRemindersSent,
-      classesProcessed: targetClasses.length
+      classesProcessed: activeTargetClasses.length,
+      cancelledClassesSkipped: cancelledClassIds.size
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
