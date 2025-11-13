@@ -45,62 +45,72 @@ const ComparisonSection = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-playtomic-dark mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-playtomic-dark mb-4">
               {t("landing.comparison.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               {t("landing.comparison.subtitle")}
             </p>
           </div>
 
-          {/* Comparison Table */}
-          <Card className="border-2 border-gray-200 overflow-hidden">
-            <CardContent className="p-0">
-              {/* Table Header */}
-              <div className="grid grid-cols-4 bg-gray-50 border-b-2 border-gray-200">
-                <div className="p-4 font-semibold text-gray-700">{t("landing.comparison.functionality")}</div>
-                <div className="p-4 text-center font-semibold text-gray-700 border-l">{t("landing.comparison.excelWhatsapp")}</div>
-                <div className="p-4 text-center font-semibold text-gray-700 border-l">{t("landing.comparison.genericSoftware")}</div>
-                <div className="p-4 text-center font-semibold bg-playtomic-orange/10 text-playtomic-orange border-l-2 border-playtomic-orange/30">
-                  {t("landing.comparison.padelock")}
-                </div>
-              </div>
-
-              {/* Table Body - Grouped by Category */}
-              {Object.entries(groupedFeatures).map(([categoryKey, items], categoryIndex) => (
-                <div key={categoryKey}>
-                  {/* Category Header */}
-                  <div className="bg-gray-100 px-4 py-2 font-semibold text-sm text-gray-600 border-b">
-                    {t(categoryKey)}
+          {/* Comparison Table - Scrollable on mobile */}
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 md:px-0">
+              <Card className="border-2 border-gray-200 overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-4 bg-gray-50 border-b-2 border-gray-200 min-w-[600px]">
+                    <div className="p-2 md:p-4 font-semibold text-xs md:text-sm text-gray-700">{t("landing.comparison.functionality")}</div>
+                    <div className="p-2 md:p-4 text-center font-semibold text-xs md:text-sm text-gray-700 border-l">
+                      <span className="hidden md:inline">{t("landing.comparison.excelWhatsapp")}</span>
+                      <span className="md:hidden">Excel/WA</span>
+                    </div>
+                    <div className="p-2 md:p-4 text-center font-semibold text-xs md:text-sm text-gray-700 border-l">
+                      <span className="hidden md:inline">{t("landing.comparison.genericSoftware")}</span>
+                      <span className="md:hidden">Genérico</span>
+                    </div>
+                    <div className="p-2 md:p-4 text-center font-semibold text-xs md:text-sm bg-playtomic-orange/10 text-playtomic-orange border-l-2 border-playtomic-orange/30">
+                      {t("landing.comparison.padelock")}
+                    </div>
                   </div>
 
-                  {/* Category Rows */}
-                  {items.map((item, index) => (
-                    <div
-                      key={`${categoryKey}-${index}`}
-                      className={`grid grid-cols-4 border-b ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                      }`}
-                    >
-                      <div className="p-4 text-sm text-gray-700">{t(item.featureKey)}</div>
-                      <div className="p-4 border-l flex items-center justify-center">
-                        {renderIcon(item.excel)}
+                  {/* Table Body - Grouped by Category */}
+                  {Object.entries(groupedFeatures).map(([categoryKey, items], categoryIndex) => (
+                    <div key={categoryKey}>
+                      {/* Category Header */}
+                      <div className="bg-gray-100 px-2 md:px-4 py-2 font-semibold text-xs md:text-sm text-gray-600 border-b min-w-[600px]">
+                        {t(categoryKey)}
                       </div>
-                      <div className="p-4 border-l flex items-center justify-center">
-                        {renderIcon(item.generic)}
-                      </div>
-                      <div className="p-4 bg-playtomic-orange/5 border-l-2 border-playtomic-orange/30 flex items-center justify-center">
-                        {renderIcon(item.padelock)}
-                      </div>
+
+                      {/* Category Rows */}
+                      {items.map((item, index) => (
+                        <div
+                          key={`${categoryKey}-${index}`}
+                          className={`grid grid-cols-4 border-b min-w-[600px] ${
+                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                          }`}
+                        >
+                          <div className="p-2 md:p-4 text-xs md:text-sm text-gray-700">{t(item.featureKey)}</div>
+                          <div className="p-2 md:p-4 border-l flex items-center justify-center">
+                            {renderIcon(item.excel)}
+                          </div>
+                          <div className="p-2 md:p-4 border-l flex items-center justify-center">
+                            {renderIcon(item.generic)}
+                          </div>
+                          <div className="p-2 md:p-4 bg-playtomic-orange/5 border-l-2 border-playtomic-orange/30 flex items-center justify-center">
+                            {renderIcon(item.padelock)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-8 mt-8 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mt-8 text-xs md:text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-600" />
               <span>{t("landing.comparison.legend.included")}</span>
@@ -117,11 +127,11 @@ const ComparisonSection = () => {
 
           {/* Bottom CTA */}
           <div className="mt-12 text-center">
-            <div className="inline-block bg-playtomic-orange/10 border-2 border-playtomic-orange/20 rounded-2xl p-8">
-              <p className="text-xl text-playtomic-dark font-medium mb-2">
+            <div className="inline-block bg-playtomic-orange/10 border-2 border-playtomic-orange/20 rounded-2xl p-6 md:p-8">
+              <p className="text-lg md:text-xl text-playtomic-dark font-medium mb-2">
                 {t("landing.comparison.cta.title")}
               </p>
-              <p className="text-gray-600">
+              <p className="text-sm md:text-base text-gray-600">
                 {t("landing.comparison.cta.subtitle")}
               </p>
             </div>
