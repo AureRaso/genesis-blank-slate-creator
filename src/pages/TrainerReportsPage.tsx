@@ -228,20 +228,20 @@ const TrainerReportsPage = () => {
             Gestión de asistencia y métricas de alumnos
           </p>
         </div>
-        {/* FASE 3: Comentado temporalmente - Botón Ver Scores */}
-        {/* <Button
+        {/* FASE 3: Botón Ver Scores */}
+        <Button
           onClick={() => navigate("/dashboard/student-scores")}
           className="gap-2 border-playtomic-orange text-playtomic-orange hover:bg-playtomic-orange hover:text-white"
           variant="outline"
         >
           <Award className="h-4 w-4" />
           Ver Scores
-        </Button> */}
+        </Button>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="attendance" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="attendance" className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4" />
             <span>Pasar lista</span>
@@ -250,8 +250,8 @@ const TrainerReportsPage = () => {
             <TrendingUp className="h-4 w-4" />
             <span>Métricas y scoring</span>
           </TabsTrigger>
-          {/* FASE 4: Comentado temporalmente - Notificaciones y Reportes */}
-          {/* <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
+          {/* FASE 4: Notificaciones y Reportes */}
+          <TabsTrigger value="notifications" className="flex items-center gap-2 relative">
             <Bell className="h-4 w-4" />
             <span>Notificaciones</span>
             {unreadCount > 0 && (
@@ -263,7 +263,7 @@ const TrainerReportsPage = () => {
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span>Reportes</span>
-          </TabsTrigger> */}
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB: Pasar Lista */}
@@ -690,14 +690,14 @@ const TrainerReportsPage = () => {
           )}
         </TabsContent>
 
-        {/* FASE 4: Comentado temporalmente - Tabs de Notificaciones y Reportes */}
-        {/* <TabsContent value="notifications" className="space-y-6">
+        {/* FASE 4: Tabs de Notificaciones y Reportes */}
+        <TabsContent value="notifications" className="space-y-6">
           <NotificationsPanel clubId={profile?.club_id} />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">
           <MonthlyReportCard clubId={profile?.club_id} />
-        </TabsContent> */}
+        </TabsContent>
       </Tabs>
     </div>
   );

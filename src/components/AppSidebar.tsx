@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -75,12 +75,20 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {/* Sistema de Scoring - Temporalmente oculto */}
+              {/* Sistema de Scoring */}
               {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/trainer-reports"}>
                 <Link to="/dashboard/trainer-reports">
                   <TrendingUp />
                   <span>Reportes y Métricas</span>
+                </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/student-scores"}>
+                <Link to="/dashboard/student-scores">
+                  <Award />
+                  <span>Scores de Alumnos</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem> */}
@@ -196,11 +204,16 @@ const AppSidebar = () => {
         url: "/dashboard/today-attendance",
         icon: ClipboardCheck
       },
-      // Sistema de Scoring - Temporalmente oculto
+      // Sistema de Scoring
       // {
       //   title: "Reportes y Métricas",
       //   url: "/dashboard/trainer-reports",
       //   icon: TrendingUp
+      // },
+      // {
+      //   title: "Scores de Alumnos",
+      //   url: "/dashboard/student-scores",
+      //   icon: Award
       // },
       {
         title: "Control de Pagos",

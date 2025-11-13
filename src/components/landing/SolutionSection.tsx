@@ -38,12 +38,6 @@ const SolutionSection = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-playtomic-orange/10 border border-playtomic-orange/20 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-playtomic-orange" />
-              <span className="text-sm font-medium text-playtomic-orange">
-                Nuestro ingrediente secreto
-              </span>
-            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-playtomic-dark mb-4">
               Una plataforma, todo bajo control
             </h2>

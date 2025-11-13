@@ -20,7 +20,19 @@
       "Bash(git gc:*)",
       "Bash(git stash:*)",
       "Bash(git rm:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(node debug-class-participants.js:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(src/integrations/supabase/types.ts)",
+      "Bash(git checkout:*)",
+      "Bash(node test-attendance-reminder.js:*)",
+      "Bash(node test-attendance-reminder-node.js:*)",
+      "Bash(npm run build:*)",
+      "Bash(mkdir:*)",
+      "Bash(node buscar-telefonos-clubes-avanzado.js:*)",
+      "Bash(node test-busqueda.cjs:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
