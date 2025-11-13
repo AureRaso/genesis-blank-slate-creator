@@ -150,7 +150,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-start space-x-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <a href="https://wa.me/34662632906" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                <a href="https://wa.me/34644658069" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                   Contáctanos por WhatsApp
                 </a>
               </div>

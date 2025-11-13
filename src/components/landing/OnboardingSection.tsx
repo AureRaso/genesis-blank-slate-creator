@@ -89,7 +89,7 @@ const OnboardingSection = () => {
             <Button
               size="lg"
               className="bg-playtomic-orange hover:bg-playtomic-orange/90 text-white px-8"
-              onClick={() => document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             >
               Comienza tu prueba gratuita
             </Button>

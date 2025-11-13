@@ -277,7 +277,7 @@ export const ContactSection = () => {
               <Phone className="h-6 w-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Llámanos</h3>
-            <a href="https://wa.me/34662632906" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors">
+            <a href="https://wa.me/34644658069" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors">
               Contáctanos por WhatsApp
             </a>
             <p className="text-sm text-muted-foreground mt-1">Lun-Vie, 9:00-18:00</p>
