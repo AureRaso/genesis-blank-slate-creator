@@ -63,7 +63,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         return { title: "Notificaciones", path: "/dashboard/waitlist-notifications" };
       case "/dashboard/today-attendance":
         return { title: "Asistencia de hoy", path: "/dashboard/today-attendance" };
+      case "/dashboard/trainer-reports":
+        return { title: "Reportes y Métricas", path: "/dashboard/trainer-reports" };
+      case "/dashboard/student-scores":
+        return { title: "Scores de Alumnos", path: "/dashboard/student-scores" };
       default:
+        if (path.match(/^\/dashboard\/students\/[^/]+\/score$/)) {
+          return { title: "Detalle del Score", path: path };
+        }
         return { title: "Dashboard", path: "/dashboard" };
     }
   };

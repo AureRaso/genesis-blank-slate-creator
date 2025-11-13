@@ -61,6 +61,9 @@ import TestReminderPage from "@/pages/TestReminderPage";
 import HistorialPage from "@/pages/HistorialPage";
 import LopiviReportPage from "@/pages/LopiviReportPage";
 import WhatsAppReportsConfigPage from "@/pages/WhatsAppReportsConfigPage";
+import TrainerReportsPage from "@/pages/TrainerReportsPage";
+import StudentScoresPage from "@/pages/StudentScoresPage";
+import StudentScoreDetailPage from "@/pages/StudentScoreDetailPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -218,6 +221,9 @@ function App() {
                     <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
                     <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
                     <Route path="/today-attendance" element={<WeekAttendancePage />} />
+                    <Route path="/trainer-reports" element={<TrainerReportsPage />} />
+                    <Route path="/student-scores" element={<StudentScoresPage />} />
+                    <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
@@ -246,6 +252,9 @@ function App() {
                      <Route path="/scheduled-classes/new" element={<CreateScheduledClassPage />} />
                      <Route path="/scheduled-classes/bulk/new" element={<CreateBulkClassesPage />} />
                      {isAdmin && <Route path="/today-attendance" element={<WeekAttendancePage />} />}
+                     {isAdmin && <Route path="/trainer-reports" element={<TrainerReportsPage />} />}
+                     {isAdmin && <Route path="/student-scores" element={<StudentScoresPage />} />}
+                     {isAdmin && <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>
