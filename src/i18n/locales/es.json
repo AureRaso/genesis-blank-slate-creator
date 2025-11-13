@@ -319,6 +319,174 @@
         "benefits": "Experiencia moderna y profesional que mejora la satisfacción"
       },
       "benefitsHeading": "💡 Beneficio clave"
+    },
+    "comparison": {
+      "title": "¿Por qué Padelock?",
+      "subtitle": "Comparación entre métodos tradicionales, herramientas genéricas y Padelock",
+      "functionality": "Funcionalidad",
+      "excelWhatsapp": "Excel/WhatsApp",
+      "genericSoftware": "Software Genérico",
+      "padelock": "Padelock",
+      "categories": {
+        "classManagement": "Gestión de Clases",
+        "communication": "Comunicación",
+        "recoveries": "Recuperaciones",
+        "administrativeManagement": "Gestión Administrativa",
+        "experience": "Experiencia"
+      },
+      "features": {
+        "digitalAttendance": "Pasar lista digital",
+        "customSchedules": "Horarios personalizados por profesor",
+        "automaticAttendance": "Control de asistencia automático",
+        "integratedWhatsapp": "WhatsApp integrado",
+        "automaticNotifications": "Notificaciones automáticas",
+        "waitlistSystem": "Sistema de lista de espera",
+        "automaticLevelAssignment": "Asignación automática por nivel",
+        "paymentControl": "Control de pagos",
+        "metricsDashboard": "Dashboard con métricas",
+        "multiClubManagement": "Gestión multi-club",
+        "designedForAcademies": "Diseñado para academias",
+        "supportIncluded": "Soporte incluido"
+      },
+      "legend": {
+        "included": "Incluido",
+        "partial": "Parcial",
+        "notAvailable": "No disponible"
+      },
+      "cta": {
+        "title": "Diseñado específicamente para academias de pádel",
+        "subtitle": "No más Excel, WhatsApp o software genérico que no entiende tu negocio"
+      }
+    },
+    "team": {
+      "title": "Nuestro Equipo",
+      "subtitle": "Conoce a los co-fundadores que están revolucionando la gestión de academias de pádel",
+      "members": {
+        "aurelio": {
+          "name": "Aurelio Contreras",
+          "role": "Co-founder & CPO"
+        },
+        "sergio": {
+          "name": "Sergio Falcón",
+          "role": "Co-founder & CTO"
+        }
+      }
+    },
+    "contact": {
+      "badge": "Agenda una demo",
+      "title": "¿Listo para transformar tu academia?",
+      "subtitle": "Solicita una demo personalizada y descubre cómo PadeLock puede optimizar la gestión de tu academia y mejorar la experiencia para todos.",
+      "leftColumn": {
+        "title": "Demo personalizada",
+        "description": "Nuestros especialistas te mostrarán cómo PadeLock se adapta a las necesidades específicas de tu academia de pádel.",
+        "duration": "30 minutos",
+        "durationDesc": "Duración aproximada",
+        "oneOnOne": "1-on-1",
+        "oneOnOneDesc": "Atención personalizada",
+        "followUp": "Seguimiento",
+        "followUpDesc": "Material y soporte post-demo",
+        "includesTitle": "¿Qué incluye la demo?",
+        "includesItems": {
+          "tour": "Tour completo de la plataforma",
+          "config": "Configuración para tu tipo de club",
+          "roi": "Análisis de ROI personalizado",
+          "questions": "Respuesta a todas tus preguntas"
+        }
+      },
+      "form": {
+        "name": "Nombre",
+        "namePlaceholder": "Tu nombre completo",
+        "phone": "Teléfono",
+        "phonePlaceholder": "+34 600 000 000",
+        "email": "Email",
+        "emailPlaceholder": "tu@email.com",
+        "clubName": "Nombre del Club",
+        "clubNamePlaceholder": "Club de Pádel XYZ",
+        "clubSize": "Tamaño del Club",
+        "clubSizePlaceholder": "Selecciona",
+        "clubSizeSmall": "Pequeño (1-4 pistas)",
+        "clubSizeMedium": "Mediano (5-10 pistas)",
+        "clubSizeLarge": "Grande (11+ pistas)",
+        "role": "Tu Rol",
+        "rolePlaceholder": "Selecciona",
+        "roleOwner": "Propietario",
+        "roleManager": "Gerente",
+        "roleCoach": "Entrenador",
+        "roleOther": "Otro",
+        "message": "Mensaje (Opcional)",
+        "messagePlaceholder": "Cuéntanos sobre tu club y qué te gustaría mejorar...",
+        "submitButton": "Solicitar Demo Gratuita",
+        "submitting": "Enviando...",
+        "privacy": "Al enviar este formulario, aceptas nuestra Política de Privacidad y recibir información sobre PadeLock. Puedes darte de baja en cualquier momento."
+      },
+      "success": {
+        "title": "¡Gracias por tu interés!",
+        "description": "Hemos recibido tu solicitud de demo. Nuestro equipo se pondrá en contacto contigo en las próximas 24 horas para programar una demostración personalizada.",
+        "nextSteps": "¿Qué sigue?",
+        "nextStepsDesc": "Te llamaremos o enviaremos un email para coordinar la mejor hora para tu demo personalizada."
+      },
+      "toast": {
+        "successTitle": "¡Solicitud enviada!",
+        "successDesc": "Nos pondremos en contacto contigo en las próximas 24 horas.",
+        "errorTitle": "Error al enviar",
+        "errorDesc": "Hubo un problema al enviar tu solicitud. Por favor, intenta de nuevo o escríbenos directamente a infopadelock@gmail.com"
+      },
+      "methods": {
+        "phone": {
+          "title": "Llámanos",
+          "link": "Contáctanos por WhatsApp",
+          "hours": "Lun-Vie, 9:00-18:00"
+        },
+        "email": {
+          "title": "Escríbenos",
+          "response": "Respuesta en 24h"
+        },
+        "location": {
+          "title": "Visítanos",
+          "city": "Sevilla, España",
+          "appointment": "Cita previa"
+        }
+      }
+    },
+    "footer": {
+      "brand": {
+        "description": "La plataforma todo-en-uno para la gestión digital de academias de pádel. Diseñada para optimizar operaciones y mejorar la experiencia de entrenadores y jugadores.",
+        "founders": "Fundadores",
+        "newsletter": "Suscríbete a nuestra newsletter",
+        "newsletterPlaceholder": "Tu email"
+      },
+      "platform": {
+        "title": "Plataforma",
+        "features": "Características",
+        "howItWorks": "Cómo Funciona",
+        "pricing": "Precios",
+        "freeDemo": "Demo Gratuita",
+        "successStories": "Casos de Éxito"
+      },
+      "resources": {
+        "title": "Recursos",
+        "helpCenter": "Centro de Ayuda",
+        "blog": "Blog",
+        "tutorials": "Tutoriales",
+        "webinars": "Webinars",
+        "apiDocs": "API Docs"
+      },
+      "contact": {
+        "title": "Contacto",
+        "whatsappLink": "Contáctanos por WhatsApp",
+        "location": "Sevilla, España"
+      },
+      "trust": {
+        "dataProtected": "Datos protegidos RGPD",
+        "availability": "Disponibilidad 99.9%"
+      },
+      "bottom": {
+        "rights": "Todos los derechos reservados.",
+        "privacy": "Política de Privacidad",
+        "terms": "Términos de Servicio",
+        "cookies": "Cookies",
+        "backToTop": "Volver arriba"
+      }
     }
   }
 }

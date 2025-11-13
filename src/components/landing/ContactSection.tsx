@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Phone, MapPin, Send, CheckCircle, Calendar, Clock, User, Users, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+
 export const ContactSection = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -51,8 +54,8 @@ export const ContactSection = () => {
       setIsSubmitting(false);
       setIsSubmitted(true);
       toast({
-        title: "¡Solicitud enviada!",
-        description: "Nos pondremos en contacto contigo en las próximas 24 horas."
+        title: t("landing.contact.toast.successTitle"),
+        description: t("landing.contact.toast.successDesc")
       });
 
       // Reset form after 3 seconds
@@ -72,8 +75,8 @@ export const ContactSection = () => {
       console.error("❌ Error al procesar la solicitud:", error);
       setIsSubmitting(false);
       toast({
-        title: "Error al enviar",
-        description: "Hubo un problema al enviar tu solicitud. Por favor, intenta de nuevo o escríbenos directamente a infopadelock@gmail.com",
+        title: t("landing.contact.toast.errorTitle"),
+        description: t("landing.contact.toast.errorDesc"),
         variant: "destructive"
       });
     }
@@ -87,15 +90,14 @@ export const ContactSection = () => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                   <CheckCircle className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-3xl font-bold">¡Gracias por tu interés!</h2>
+                <h2 className="text-3xl font-bold">{t("landing.contact.success.title")}</h2>
                 <p className="text-muted-foreground">
-                  Hemos recibido tu solicitud de demo. Nuestro equipo se pondrá en contacto contigo 
-                  en las próximas 24 horas para programar una demostración personalizada.
+                  {t("landing.contact.success.description")}
                 </p>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong>¿Qué sigue?</strong><br />
-                    Te llamaremos o enviaremos un email para coordinar la mejor hora para tu demo personalizada.
+                    <strong>{t("landing.contact.success.nextSteps")}</strong><br />
+                    {t("landing.contact.success.nextStepsDesc")}
                   </p>
                 </div>
               </CardContent>
@@ -108,19 +110,19 @@ export const ContactSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-6">
-            <Calendar className="h-4 w-4 mr-2" /> Agenda una demo
+            <Calendar className="h-4 w-4 mr-2" /> {t("landing.contact.badge")}
           </div>
-          
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">¿Listo para transformar tu academia?</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">Solicita una demo personalizada y descubre cómo PadeLock puede optimizar la gestión de tu academia y mejorar la experiencia para todos.</p>
+
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6">{t("landing.contact.title")}</h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">{t("landing.contact.subtitle")}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           {/* Left Column - Contact Info */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h3 className="text-2xl font-bold">Demo personalizada</h3>
-              <p className="text-muted-foreground">Nuestros especialistas te mostrarán cómo PadeLock se adapta a las necesidades específicas de tu academia de pádel.</p>
+              <h3 className="text-2xl font-bold">{t("landing.contact.leftColumn.title")}</h3>
+              <p className="text-muted-foreground">{t("landing.contact.leftColumn.description")}</p>
             </div>
 
             <div className="space-y-6">
@@ -129,8 +131,8 @@ export const ContactSection = () => {
                   <Clock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">30 minutos</h3>
-                  <p className="text-muted-foreground">Duración aproximada</p>
+                  <h3 className="font-semibold">{t("landing.contact.leftColumn.duration")}</h3>
+                  <p className="text-muted-foreground">{t("landing.contact.leftColumn.durationDesc")}</p>
                 </div>
               </div>
 
@@ -139,8 +141,8 @@ export const ContactSection = () => {
                   <User className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">1-on-1</h3>
-                  <p className="text-muted-foreground">Atención personalizada</p>
+                  <h3 className="font-semibold">{t("landing.contact.leftColumn.oneOnOne")}</h3>
+                  <p className="text-muted-foreground">{t("landing.contact.leftColumn.oneOnOneDesc")}</p>
                 </div>
               </div>
 
@@ -149,30 +151,30 @@ export const ContactSection = () => {
                   <Send className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Seguimiento</h3>
-                  <p className="text-muted-foreground">Material y soporte post-demo</p>
+                  <h3 className="font-semibold">{t("landing.contact.leftColumn.followUp")}</h3>
+                  <p className="text-muted-foreground">{t("landing.contact.leftColumn.followUpDesc")}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-card rounded-xl p-6 border space-y-4">
-              <h3 className="font-semibold">¿Qué incluye la demo?</h3>
+              <h3 className="font-semibold">{t("landing.contact.leftColumn.includesTitle")}</h3>
               <ul className="space-y-3">
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-sm">Tour completo de la plataforma</span>
+                  <span className="text-sm">{t("landing.contact.leftColumn.includesItems.tour")}</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-sm">Configuración para tu tipo de club</span>
+                  <span className="text-sm">{t("landing.contact.leftColumn.includesItems.config")}</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-sm">Análisis de ROI personalizado</span>
+                  <span className="text-sm">{t("landing.contact.leftColumn.includesItems.roi")}</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-sm">Respuesta a todas tus preguntas</span>
+                  <span className="text-sm">{t("landing.contact.leftColumn.includesItems.questions")}</span>
                 </li>
               </ul>
             </div>
@@ -186,84 +188,83 @@ export const ContactSection = () => {
                   <div className="space-y-2">
                     <Label htmlFor="name" className="flex items-center">
                       <User className="h-4 w-4 mr-1" />
-                      Nombre *
+                      {t("landing.contact.form.name")} *
                     </Label>
-                    <Input id="name" value={formData.name} onChange={e => handleInputChange("name", e.target.value)} placeholder="Tu nombre completo" required />
+                    <Input id="name" value={formData.name} onChange={e => handleInputChange("name", e.target.value)} placeholder={t("landing.contact.form.namePlaceholder")} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="flex items-center">
                       <Phone className="h-4 w-4 mr-1" />
-                      Teléfono
+                      {t("landing.contact.form.phone")}
                     </Label>
-                    <Input id="phone" value={formData.phone} onChange={e => handleInputChange("phone", e.target.value)} placeholder="+34 600 000 000" />
+                    <Input id="phone" value={formData.phone} onChange={e => handleInputChange("phone", e.target.value)} placeholder={t("landing.contact.form.phonePlaceholder")} />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center">
                     <Mail className="h-4 w-4 mr-1" />
-                    Email *
+                    {t("landing.contact.form.email")} *
                   </Label>
-                  <Input id="email" type="email" value={formData.email} onChange={e => handleInputChange("email", e.target.value)} placeholder="tu@email.com" required />
+                  <Input id="email" type="email" value={formData.email} onChange={e => handleInputChange("email", e.target.value)} placeholder={t("landing.contact.form.emailPlaceholder")} required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="clubName" className="flex items-center">
                     <Building className="h-4 w-4 mr-1" />
-                    Nombre del Club
+                    {t("landing.contact.form.clubName")}
                   </Label>
-                  <Input id="clubName" value={formData.clubName} onChange={e => handleInputChange("clubName", e.target.value)} placeholder="Club de Pádel XYZ" />
+                  <Input id="clubName" value={formData.clubName} onChange={e => handleInputChange("clubName", e.target.value)} placeholder={t("landing.contact.form.clubNamePlaceholder")} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="clubSize">Tamaño del Club</Label>
+                    <Label htmlFor="clubSize">{t("landing.contact.form.clubSize")}</Label>
                     <Select value={formData.clubSize} onValueChange={value => handleInputChange("clubSize", value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona" />
+                        <SelectValue placeholder={t("landing.contact.form.clubSizePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="small">Pequeño (1-4 pistas)</SelectItem>
-                        <SelectItem value="medium">Mediano (5-10 pistas)</SelectItem>
-                        <SelectItem value="large">Grande (11+ pistas)</SelectItem>
+                        <SelectItem value="small">{t("landing.contact.form.clubSizeSmall")}</SelectItem>
+                        <SelectItem value="medium">{t("landing.contact.form.clubSizeMedium")}</SelectItem>
+                        <SelectItem value="large">{t("landing.contact.form.clubSizeLarge")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="role">Tu Rol</Label>
+                    <Label htmlFor="role">{t("landing.contact.form.role")}</Label>
                     <Select value={formData.role} onValueChange={value => handleInputChange("role", value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona" />
+                        <SelectValue placeholder={t("landing.contact.form.rolePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="owner">Propietario</SelectItem>
-                        <SelectItem value="manager">Gerente</SelectItem>
-                        <SelectItem value="coach">Entrenador</SelectItem>
-                        <SelectItem value="other">Otro</SelectItem>
+                        <SelectItem value="owner">{t("landing.contact.form.roleOwner")}</SelectItem>
+                        <SelectItem value="manager">{t("landing.contact.form.roleManager")}</SelectItem>
+                        <SelectItem value="coach">{t("landing.contact.form.roleCoach")}</SelectItem>
+                        <SelectItem value="other">{t("landing.contact.form.roleOther")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">Mensaje (Opcional)</Label>
-                  <Textarea id="message" value={formData.message} onChange={e => handleInputChange("message", e.target.value)} placeholder="Cuéntanos sobre tu club y qué te gustaría mejorar..." rows={4} />
+                  <Label htmlFor="message">{t("landing.contact.form.message")}</Label>
+                  <Textarea id="message" value={formData.message} onChange={e => handleInputChange("message", e.target.value)} placeholder={t("landing.contact.form.messagePlaceholder")} rows={4} />
                 </div>
 
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90 shadow-md shadow-primary/25" size="lg" disabled={isSubmitting}>
                   {isSubmitting ? <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Enviando...
+                      {t("landing.contact.form.submitting")}
                     </> : <>
-                      Solicitar Demo Gratuita
+                      {t("landing.contact.form.submitButton")}
                       <Send className="ml-2 h-4 w-4" />
                     </>}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Al enviar este formulario, aceptas nuestra Política de Privacidad y recibir 
-                  información sobre PadeLock. Puedes darte de baja en cualquier momento.
+                  {t("landing.contact.form.privacy")}
                 </p>
               </form>
             </CardContent>
@@ -276,31 +277,31 @@ export const ContactSection = () => {
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
               <Phone className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Llámanos</h3>
+            <h3 className="font-semibold mb-2">{t("landing.contact.methods.phone.title")}</h3>
             <a href="https://wa.me/34644658069" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors">
-              Contáctanos por WhatsApp
+              {t("landing.contact.methods.phone.link")}
             </a>
-            <p className="text-sm text-muted-foreground mt-1">Lun-Vie, 9:00-18:00</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("landing.contact.methods.phone.hours")}</p>
           </div>
 
           <div className="text-center p-6 rounded-xl bg-card border">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
               <Mail className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Escríbenos</h3>
+            <h3 className="font-semibold mb-2">{t("landing.contact.methods.email.title")}</h3>
             <a href="mailto:infopadelock@gmail.com" className="text-primary hover:text-primary/80 transition-colors">
               infopadelock@gmail.com
             </a>
-            <p className="text-sm text-muted-foreground mt-1">Respuesta en 24h</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("landing.contact.methods.email.response")}</p>
           </div>
 
           <div className="text-center p-6 rounded-xl bg-card border">
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Visítanos</h3>
-            <p className="text-muted-foreground">Sevilla, España</p>
-            <p className="text-sm text-muted-foreground mt-1">Cita previa</p>
+            <h3 className="font-semibold mb-2">{t("landing.contact.methods.location.title")}</h3>
+            <p className="text-muted-foreground">{t("landing.contact.methods.location.city")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("landing.contact.methods.location.appointment")}</p>
           </div>
         </div>
       </div>
