@@ -1,5 +1,5 @@
 
-import { LogOut, Settings, ChevronDown } from "lucide-react";
+import { LogOut, Settings, ChevronDown, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -73,6 +73,14 @@ const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {profile.role === 'admin' && (
+          <DropdownMenuItem asChild>
+            <a href="/dashboard/payment">
+              <Wallet className="mr-2 h-4 w-4" />
+              <span>Suscripción</span>
+            </a>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <a href="/dashboard/settings">
             <Settings className="mr-2 h-4 w-4" />

@@ -221,11 +221,6 @@ const AppSidebar = () => {
         icon: CreditCard
       },
       {
-        title: t('sidebar.payment'),
-        url: "/dashboard/payment",
-        icon: Wallet
-      },
-      {
         title: t('sidebar.players'),
         url: "/dashboard/players",
         icon: Users

@@ -99,7 +99,10 @@ serve(async (req) => {
       cancel_url: cancel_url,
       allow_promotion_codes: true, // Habilitar códigos de descuento/promoción
       automatic_tax: {
-        enabled: true, // Habilitar cálculo automático de impuestos
+        enabled: true, // Calcular IVA automáticamente según la ubicación del cliente
+      },
+      customer_update: {
+        address: 'auto', // Guardar automáticamente la dirección del cliente desde el checkout
       },
       metadata: {
         club_id: club_id,
