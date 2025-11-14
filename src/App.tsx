@@ -64,6 +64,7 @@ import WhatsAppReportsConfigPage from "@/pages/WhatsAppReportsConfigPage";
 import TrainerReportsPage from "@/pages/TrainerReportsPage";
 import StudentScoresPage from "@/pages/StudentScoresPage";
 import StudentScoreDetailPage from "@/pages/StudentScoreDetailPage";
+import StripePaymentPage from "@/pages/StripePaymentPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -246,6 +247,7 @@ function App() {
                      <Route path="/trainers" element={<TrainersPage />} />
                      <Route path="/promotions" element={<PromotionsPage />} />
                      <Route path="/payment-control" element={<PaymentControlPage />} />
+                     <Route path="/payment" element={<StripePaymentPage />} />
                      <Route path="/scheduled-classes" element={
                        (isPlayer || isGuardian) ? <PlayerScheduledClassesPage /> : <ScheduledClassesPage />
                      } />

@@ -34,7 +34,8 @@
     "trainers": "Trainers",
     "clubs": "Clubs",
     "standings": "Standings",
-    "waitlistNotifications": "Waitlist"
+    "waitlistNotifications": "Waitlist",
+    "payment": "Payment"
   },
   "userMenu": {
     "admin": "Administrator",

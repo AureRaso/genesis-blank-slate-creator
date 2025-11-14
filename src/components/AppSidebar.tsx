@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award, Wallet } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -221,6 +221,11 @@ const AppSidebar = () => {
         icon: CreditCard
       },
       {
+        title: t('sidebar.payment'),
+        url: "/dashboard/payment",
+        icon: Wallet
+      },
+      {
         title: t('sidebar.players'),
         url: "/dashboard/players",
         icon: Users
@@ -252,11 +257,18 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarMenu>
             {data.navMain.map(item => <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                  <Link to={item.url}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </Link>
+                <SidebarMenuButton asChild isActive={!item.external && location.pathname === item.url}>
+                  {item.external ? (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer">
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </a>
+                  ) : (
+                    <Link to={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>)}
           </SidebarMenu>

@@ -32,7 +32,11 @@
       "Bash(mkdir:*)",
       "Bash(node buscar-telefonos-clubes-avanzado.js:*)",
       "Bash(node test-busqueda.cjs:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \"El archivo .env ya existe\")",
+      "Bash(else touch .env)",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

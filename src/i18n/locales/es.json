@@ -34,7 +34,8 @@
     "trainers": "Entrenadores",
     "clubs": "Clubes",
     "standings": "Clasificación",
-    "waitlistNotifications": "Lista de Espera"
+    "waitlistNotifications": "Lista de Espera",
+    "payment": "Pago"
   },
   "userMenu": {
     "admin": "Administrador",
