@@ -97,6 +97,7 @@ serve(async (req) => {
       ],
       success_url: success_url,
       cancel_url: cancel_url,
+      allow_promotion_codes: true, // Habilitar códigos de descuento/promoción
       metadata: {
         club_id: club_id,
       },

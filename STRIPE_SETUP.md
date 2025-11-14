@@ -186,6 +186,39 @@ Repite el Paso 4.2 pero con la URL de producción y obtén un nuevo webhook secr
 
 ---
 
+## 🎟️ Códigos de Promoción y Descuentos
+
+El sistema ya está configurado para aceptar códigos de promoción en el checkout de Stripe.
+
+### Crear un Código de Promoción
+
+1. En el dashboard de Stripe, ve a **Productos** → **Cupones**
+2. Click en **Crear cupón**
+3. Configura el cupón:
+   - **Nombre**: Nombre interno (ej: "DESCUENTO_TEST")
+   - **Tipo**: Porcentaje o cantidad fija
+   - **Valor**: Ej: 20% de descuento o €10 de descuento
+   - **Duración**: Una vez, varios meses, o para siempre
+4. Guarda el cupón
+5. Ve a **Productos** → **Códigos de promoción**
+6. Click en **Crear código de promoción**
+7. Selecciona el cupón creado
+8. Define el código que los usuarios escribirán (ej: "PROMO2025")
+9. Guarda el código
+
+### Usar Códigos de Promoción
+
+Los administradores de clubes pueden:
+1. Ir a la página de **Pago**
+2. Click en **Proceder al Pago**
+3. En el checkout de Stripe, verán un link "Add promotion code"
+4. Introducir el código y aplicarlo
+5. El descuento se aplicará automáticamente
+
+**Nota**: Los códigos de promoción se muestran automáticamente en el checkout gracias a la configuración `allow_promotion_codes: true` en la Edge Function.
+
+---
+
 ## 💰 Configurar Precios Personalizados por Club
 
 Si quieres cobrar diferentes cantidades a diferentes clubes:
