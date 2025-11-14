@@ -19,10 +19,20 @@ serve(async (req) => {
   }
 
   try {
+    logStep("=== WEBHOOK DEBUG START ===");
     logStep("Webhook received");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+    // Log secret info (masked for security)
+    logStep("Environment check", {
+      hasStripeKey: !!stripeKey,
+      stripeKeyPrefix: stripeKey?.substring(0, 7),
+      hasWebhookSecret: !!webhookSecret,
+      webhookSecretPrefix: webhookSecret?.substring(0, 6),
+      webhookSecretLength: webhookSecret?.length
+    });
 
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET is not set");
@@ -40,6 +50,12 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
+    logStep("Request details", {
+      bodyLength: body.length,
+      hasSignature: !!signature,
+      signaturePreview: signature?.substring(0, 50) + "..."
+    });
+
     if (!signature) {
       throw new Error("No stripe signature found");
     }
@@ -47,10 +63,16 @@ serve(async (req) => {
     // Verify the webhook signature
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      logStep("Webhook signature verified", { eventType: event.type });
+      logStep("Attempting signature verification...");
+      // Use constructEventAsync for Deno/Edge Functions compatibility
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      logStep("✅ Webhook signature verified successfully!", { eventType: event.type });
     } catch (err) {
-      logStep("Webhook signature verification failed", { error: err.message });
+      logStep("❌ Webhook signature verification FAILED", {
+        error: err.message,
+        errorType: err.constructor.name,
+        webhookSecretUsed: webhookSecret?.substring(0, 10) + "..." + webhookSecret?.substring(webhookSecret.length - 4)
+      });
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -68,14 +90,30 @@ serve(async (req) => {
         });
 
         if (session.subscription && session.metadata?.club_id) {
-          // Create or update club subscription
-          const subscriptionData = {
+          // Fetch full subscription details to get period dates
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+
+          logStep("Fetched subscription details", {
+            currentPeriodStart: subscription.current_period_start,
+            currentPeriodEnd: subscription.current_period_end
+          });
+
+          // Create or update club subscription with full details
+          const subscriptionData: any = {
             club_id: session.metadata.club_id,
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: session.subscription as string,
             status: 'active',
             updated_at: new Date().toISOString()
           };
+
+          // Add period dates if available
+          if (subscription.current_period_start) {
+            subscriptionData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString();
+          }
+          if (subscription.current_period_end) {
+            subscriptionData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
+          }
 
           // Try to update first, if not found, insert
           const { error: updateError } = await supabaseClient
@@ -183,18 +221,32 @@ serve(async (req) => {
         logStep("Processing subscription update", {
           subscriptionId: subscription.id,
           status: subscription.status,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          currentPeriodStart: subscription.current_period_start,
+          currentPeriodEnd: subscription.current_period_end,
+          canceledAt: subscription.canceled_at
         });
 
         // Update subscription in database
-        const updateData = {
+        const updateData: any = {
           status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
           cancel_at_period_end: subscription.cancel_at_period_end,
-          canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
           updated_at: new Date().toISOString()
         };
+
+        // Only add timestamps if they are valid numbers (not null/undefined)
+        if (subscription.current_period_start && typeof subscription.current_period_start === 'number') {
+          updateData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString();
+        }
+
+        if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
+          updateData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
+        }
+
+        // Only add canceled_at if it exists and is a valid number
+        if (subscription.canceled_at && typeof subscription.canceled_at === 'number') {
+          updateData.canceled_at = new Date(subscription.canceled_at * 1000).toISOString();
+        }
 
         // Update class_subscriptions
         const { error: updateError } = await supabaseClient
@@ -229,14 +281,21 @@ serve(async (req) => {
           canceledAt: subscription.canceled_at
         });
 
+        // Prepare update data
+        const deleteUpdateData: any = {
+          status: 'canceled',
+          updated_at: new Date().toISOString()
+        };
+
+        // Only add canceled_at if it's a valid timestamp
+        if (subscription.canceled_at && typeof subscription.canceled_at === 'number') {
+          deleteUpdateData.canceled_at = new Date(subscription.canceled_at * 1000).toISOString();
+        }
+
         // Update subscription status to canceled for both tables
         const { error: updateError } = await supabaseClient
           .from('class_subscriptions')
-          .update({
-            status: 'canceled',
-            canceled_at: new Date(subscription.canceled_at * 1000).toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .update(deleteUpdateData)
           .eq('stripe_subscription_id', subscription.id);
 
         if (updateError) {
@@ -248,11 +307,7 @@ serve(async (req) => {
         // Also update club_subscriptions
         const { error: clubUpdateError } = await supabaseClient
           .from('club_subscriptions')
-          .update({
-            status: 'canceled',
-            canceled_at: new Date(subscription.canceled_at * 1000).toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .update(deleteUpdateData)
           .eq('stripe_subscription_id', subscription.id);
 
         if (clubUpdateError) {

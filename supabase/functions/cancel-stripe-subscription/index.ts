@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,16 +25,37 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const { subscription_id } = await req.json();
+    const { subscription_id, cancellation_reason } = await req.json();
 
     if (!subscription_id) {
       throw new Error("subscription_id es requerido");
+    }
+
+    // Crear cliente de Supabase para guardar el motivo de cancelación
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Guardar el motivo de cancelación en la base de datos
+    if (cancellation_reason && cancellation_reason.trim().length >= 20) {
+      await supabaseClient
+        .from('club_subscriptions')
+        .update({
+          cancellation_reason: cancellation_reason.trim(),
+          cancellation_requested_at: new Date().toISOString()
+        })
+        .eq('stripe_subscription_id', subscription_id);
     }
 
     // Cancelar la suscripción en Stripe
     // cancel_at_period_end = true significa que se cancelará al final del período actual
     const subscription = await stripe.subscriptions.update(subscription_id, {
       cancel_at_period_end: true,
+      cancellation_details: {
+        comment: cancellation_reason ? cancellation_reason.substring(0, 500) : undefined,
+      },
     });
 
     return new Response(

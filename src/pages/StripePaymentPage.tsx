@@ -107,11 +107,38 @@ const StripePaymentPage = () => {
   const handleCancelSubscription = async () => {
     if (!subscription?.stripe_subscription_id) return;
 
-    const confirmed = window.confirm(
-      "¿Estás seguro de que deseas cancelar tu suscripción? Se cancelará al final del período actual."
+    // Primer paso: Confirmación con advertencia
+    const firstConfirmed = window.confirm(
+      "⚠️ ADVERTENCIA: Estás a punto de cancelar tu suscripción.\n\n" +
+      "• La suscripción se cancelará al final del período actual\n" +
+      "• Perderás acceso a todas las funcionalidades premium\n" +
+      "• Tus datos se conservarán por si deseas volver\n\n" +
+      "¿Deseas continuar con la cancelación?"
     );
 
-    if (!confirmed) return;
+    if (!firstConfirmed) return;
+
+    // Segundo paso: Solicitar motivo de cancelación
+    let cancellationReason = "";
+    let reasonValid = false;
+
+    while (!reasonValid) {
+      cancellationReason = window.prompt(
+        "Por favor, indícanos el motivo de tu cancelación (mínimo 20 caracteres):\n\n" +
+        "Esto nos ayudará a mejorar nuestro servicio."
+      ) || "";
+
+      if (cancellationReason === null || cancellationReason === "") {
+        // Usuario canceló el prompt
+        return;
+      }
+
+      if (cancellationReason.trim().length < 20) {
+        alert("El motivo debe tener al menos 20 caracteres. Por favor, proporciona más detalles.");
+      } else {
+        reasonValid = true;
+      }
+    }
 
     try {
       setCancelLoading(true);
@@ -122,6 +149,7 @@ const StripePaymentPage = () => {
         {
           body: {
             subscription_id: subscription.stripe_subscription_id,
+            cancellation_reason: cancellationReason.trim(),
           },
         }
       );
@@ -134,7 +162,7 @@ const StripePaymentPage = () => {
       // Refrescar los datos de la suscripción
       await refetchSubscription();
 
-      alert("Tu suscripción ha sido cancelada. Se mantendrá activa hasta el final del período actual.");
+      alert("✅ Tu suscripción ha sido cancelada.\n\nSe mantendrá activa hasta el final del período actual.\n\nGracias por tu feedback.");
     } catch (err) {
       console.error("Error:", err);
       setError(err instanceof Error ? err.message : "Error al cancelar");
@@ -303,7 +331,8 @@ const StripePaymentPage = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold">€XX.XX</p>
+                <p className="text-3xl font-bold">€121.00</p>
+                <p className="text-xs text-muted-foreground">€100.00 + 21% IVA</p>
                 <p className="text-sm text-muted-foreground">por mes</p>
               </div>
             </div>
