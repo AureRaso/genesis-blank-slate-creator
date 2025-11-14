@@ -98,6 +98,9 @@ serve(async (req) => {
       success_url: success_url,
       cancel_url: cancel_url,
       allow_promotion_codes: true, // Habilitar códigos de descuento/promoción
+      automatic_tax: {
+        enabled: true, // Habilitar cálculo automático de impuestos
+      },
       metadata: {
         club_id: club_id,
       },
