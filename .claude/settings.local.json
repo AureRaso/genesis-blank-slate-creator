@@ -36,7 +36,10 @@
       "Bash(if [ -f .env ])",
       "Bash(then echo \"El archivo .env ya existe\")",
       "Bash(else touch .env)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []

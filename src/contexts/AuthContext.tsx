@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, clubs!profiles_club_id_fkey(is_subscription_active)')
         .eq('id', userId)
         .single();
 
@@ -147,12 +147,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         level: data?.level,
         levelType: typeof data?.level,
-        club_id: data?.club_id
+        club_id: data?.club_id,
+        is_subscription_active: data?.clubs?.is_subscription_active
       });
 
       if (error) {
         console.error('AuthContext - Error fetching profile:', error);
-        
+
         if (error.code === 'PGRST116') {
           console.log('AuthContext - Profile not found, but user exists');
           setProfile(null);
@@ -166,6 +167,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (data) {
         console.log('AuthContext - Profile fetched successfully:', data);
+
+        // Check if club subscription is active
+        const isSubscriptionActive = data.clubs?.is_subscription_active ?? true;
+
+        if (!isSubscriptionActive && data.club_id) {
+          console.log('AuthContext - Club subscription is inactive, redirecting to blocked page');
+          // Prevent infinite loop - only redirect if not already on blocked page
+          if (window.location.pathname !== '/subscription-blocked') {
+            window.location.href = '/subscription-blocked';
+            return;
+          }
+          // If already on blocked page, set profile but don't redirect
+          console.log('AuthContext - Already on blocked page, loading profile without redirect');
+        }
+
         const validProfile: Profile = {
           ...data,
           role: data.role as 'admin' | 'player' | 'trainer'

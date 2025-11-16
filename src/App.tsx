@@ -65,6 +65,7 @@ import TrainerReportsPage from "@/pages/TrainerReportsPage";
 import StudentScoresPage from "@/pages/StudentScoresPage";
 import StudentScoreDetailPage from "@/pages/StudentScoreDetailPage";
 import StripePaymentPage from "@/pages/StripePaymentPage";
+import SubscriptionBlockedPage from "@/pages/SubscriptionBlockedPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -179,6 +180,7 @@ function App() {
               } />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancel" element={<PaymentCancelPage />} />
+              <Route path="/subscription-blocked" element={<SubscriptionBlockedPage />} />
 
         {/* ============================================ */}
         {/* RUTAS DE OWNER - COMPLETAMENTE NUEVAS */}
