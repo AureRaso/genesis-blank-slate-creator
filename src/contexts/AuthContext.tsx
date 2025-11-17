@@ -70,36 +70,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        
+
+        // Handle PASSWORD_RECOVERY event - redirect to reset password page
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('AuthContext - PASSWORD_RECOVERY event detected, redirecting to /reset-password');
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+
+          // Don't fetch profile, just redirect to reset password page
+          // The ResetPasswordPage will handle the password update
+          if (window.location.pathname !== '/reset-password') {
+            window.location.href = '/reset-password' + window.location.hash;
+          }
+          return;
+        }
+
         // Prevent unnecessary re-authentication when window becomes visible again
         const timeSinceVisibilityChange = Date.now() - lastVisibilityChangeRef.current;
         const isRecentVisibilityChange = timeSinceVisibilityChange < 1000; // 1 second
-        
+
         if (isRecentVisibilityChange && session?.user && currentUserIdRef.current === session.user.id && profile) {
           console.log('AuthContext - Skipping auth update due to recent visibility change');
           return;
         }
-        
+
         console.log('AuthContext - Auth state change:', event, session?.user?.email);
-        
+
         // Clear any existing error
         setAuthError(null);
-        
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           const userId = session.user.id;
-          
+
           // Only fetch profile if it's a different user or we haven't fetched it yet
           if (currentUserIdRef.current !== userId || !profile) {
             currentUserIdRef.current = userId;
-            
+
             // Set loading and start timeout only if we're actually fetching
             if (!isCurrentlyFetching.current) {
               setLoading(true);
               setupLoadingTimeout();
-              
+
               fetchProfile(userId).finally(() => {
                 clearLoadingTimeout();
               });

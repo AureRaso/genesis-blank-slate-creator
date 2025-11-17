@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -550,6 +550,16 @@ export const AuthPage = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Enlace de recuperación de contraseña */}
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-playtomic-orange hover:text-orange-600 font-medium transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
             </div>
 
             <Button
