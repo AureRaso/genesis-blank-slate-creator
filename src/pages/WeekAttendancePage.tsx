@@ -680,7 +680,7 @@ const WeekAttendancePage = () => {
           )}
 
           {/* Statistics Cards */}
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-5">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium">
@@ -740,11 +740,6 @@ const WeekAttendancePage = () => {
                 </p>
               </CardContent>
             </Card>
-
-            {/* Waitlist stats card */}
-            {filteredClasses && filteredClasses.length > 0 && (
-              <WaitlistStatsCard classes={filteredClasses} />
-            )}
           </div>
         </div>
       </div>
@@ -1487,43 +1482,6 @@ const WeekAttendancePage = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-// Component to calculate total waitlist count across all classes
-const WaitlistStatsCard = ({ classes }: { classes: any[] }) => {
-  // Fetch waitlist data for all classes
-  const waitlistQueries = classes.map(classData => {
-    const classDate = classData.scheduled_date || format(new Date(), 'yyyy-MM-dd');
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useClassWaitlist(classData.id, classDate);
-  });
-
-  // Calculate total pending waitlist entries
-  const totalPendingWaitlist = waitlistQueries.reduce((total, query) => {
-    const pendingCount = query.data?.filter(w => w.status === 'pending').length || 0;
-    return total + pendingCount;
-  }, 0);
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-        <CardTitle className="text-xs sm:text-sm font-medium">Lista de Espera</CardTitle>
-        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-      </CardHeader>
-      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-        <div className="text-xl sm:text-2xl font-bold text-blue-600">
-          {totalPendingWaitlist}
-        </div>
-        <p className="text-xs text-muted-foreground truncate">
-          {totalPendingWaitlist === 0
-            ? 'Sin solicitudes'
-            : totalPendingWaitlist === 1
-            ? '1 solicitud pendiente'
-            : `${totalPendingWaitlist} solicitudes pendientes`}
-        </p>
-      </CardContent>
-    </Card>
   );
 };
 
