@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, User, Mail, Phone } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, XCircle, AlertCircle, User, Mail, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import { MonthlyPaymentWithStudent } from "@/hooks/useAdminMonthlyPayments";
 import {
   Dialog,
@@ -15,6 +15,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -56,6 +61,7 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notes, setNotes] = useState(payment.notes || "");
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
+  const [isClassesOpen, setIsClassesOpen] = useState(false);
 
   const statusConfig = STATUS_CONFIG[payment.status];
   const StatusIcon = statusConfig.icon;
@@ -81,110 +87,113 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
   };
 
   return (
-    <Card className="p-6 hover:shadow-md transition-shadow">
-      <div className="space-y-4">
-        {/* Header: Student Info */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-gray-500" />
-              <h3 className="text-lg font-semibold text-gray-900">
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-3">
+        {/* Header: Student Info & Status */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+              <h3 className="text-base font-semibold text-gray-900 truncate">
                 {payment.student_enrollment.full_name}
               </h3>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span>{payment.student_enrollment.email}</span>
-              </div>
-              {payment.student_enrollment.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  <span>{payment.student_enrollment.phone}</span>
-                </div>
-              )}
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
+              <span className="font-medium">
+                {MONTH_NAMES[payment.month - 1]} {payment.year}
+              </span>
             </div>
           </div>
-          <Badge className={`${statusConfig.color} flex items-center gap-1`}>
+          <Badge className={`${statusConfig.color} flex items-center gap-1 flex-shrink-0`}>
             <StatusIcon className="h-3 w-3" />
             {statusConfig.label}
           </Badge>
         </div>
 
-        {/* Payment Period */}
-        <div className="flex items-center gap-2 text-gray-700">
-          <Calendar className="h-5 w-5 text-primary" />
-          <span className="font-medium">
-            {MONTH_NAMES[payment.month - 1]} {payment.year}
-          </span>
-        </div>
-
-        {/* Payment Summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-          <div>
-            <p className="text-xs text-gray-500">Clases</p>
-            <p className="text-lg font-semibold text-gray-900">{payment.total_classes}</p>
+        {/* Payment Summary - Más compacto */}
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Clases:</span>
+            <span className="font-semibold text-gray-900">{payment.total_classes}</span>
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Precio/Clase</p>
-            <p className="text-lg font-semibold text-gray-900">{payment.price_per_class.toFixed(2)}€</p>
+          <span className="text-gray-300">•</span>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Precio:</span>
+            <span className="font-semibold text-gray-900">{payment.price_per_class.toFixed(2)}€</span>
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Total</p>
-            <p className="text-lg font-semibold text-primary">{payment.total_amount.toFixed(2)}€</p>
+          <span className="text-gray-300">•</span>
+          <div className="flex items-center gap-1">
+            <span className="text-gray-500">Total:</span>
+            <span className="font-semibold text-primary">{payment.total_amount.toFixed(2)}€</span>
           </div>
         </div>
 
-        {/* Classes List */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">Clases del mes:</p>
-          <div className="space-y-2">
-            {payment.classes_details.map((classDetail, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{classDetail.class_name}</p>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(classDetail.class_date).toLocaleDateString('es-ES')}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {classDetail.start_time} ({classDetail.duration_minutes} min)
-                    </span>
+        {/* Classes List - Collapsible */}
+        <Collapsible open={isClassesOpen} onOpenChange={setIsClassesOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full flex items-center justify-between p-2 h-auto text-sm hover:bg-gray-50"
+            >
+              <span className="font-medium text-gray-700">
+                Ver clases del mes ({payment.total_classes})
+              </span>
+              {isClassesOpen ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              {payment.classes_details.map((classDetail, index) => (
+                <div
+                  key={index}
+                  className="p-2 bg-gray-50 border border-gray-200 rounded text-xs"
+                >
+                  <p className="font-medium text-gray-900 truncate mb-1">{classDetail.class_name}</p>
+                  <div className="space-y-0.5 text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                      <span>{new Date(classDetail.class_date).toLocaleDateString('es-ES')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <span>{classDetail.start_time} ({classDetail.duration_minutes}min)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Payment Method & Notes */}
-        {(payment.payment_method || payment.notes) && (
-          <div className="space-y-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        {(payment.payment_method || payment.notes || payment.marked_paid_at) && (
+          <div className="space-y-1 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
             {payment.payment_method && (
-              <div>
-                <p className="text-xs text-gray-600">Método de pago:</p>
-                <p className="font-medium text-gray-900">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600">Método:</span>
+                <span className="font-medium text-gray-900">
                   {PAYMENT_METHOD_LABELS[payment.payment_method]}
-                </p>
+                </span>
               </div>
             )}
             {payment.notes && (
               <div>
-                <p className="text-xs text-gray-600">Notas:</p>
-                <p className="text-sm text-gray-900">{payment.notes}</p>
+                <span className="text-gray-600">Notas: </span>
+                <span className="text-gray-900">{payment.notes}</span>
               </div>
             )}
             {payment.marked_paid_at && (
-              <div>
-                <p className="text-xs text-gray-600">Marcado como pagado:</p>
-                <p className="text-sm text-gray-900">
-                  {new Date(payment.marked_paid_at).toLocaleString('es-ES')}
-                </p>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600">Marcado:</span>
+                <span className="text-gray-900">
+                  {new Date(payment.marked_paid_at).toLocaleDateString('es-ES')}
+                </span>
               </div>
             )}
           </div>
@@ -258,10 +267,8 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
         )}
 
         {payment.status === 'pagado' && payment.verified_paid_at && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
-            <p className="text-green-800">
-              ✓ Verificado el {new Date(payment.verified_paid_at).toLocaleString('es-ES')}
-            </p>
+          <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
+            ✓ Verificado el {new Date(payment.verified_paid_at).toLocaleDateString('es-ES')}
           </div>
         )}
       </div>

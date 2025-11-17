@@ -169,7 +169,7 @@ export default function AdminPaymentControlPage() {
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredPayments.map((payment) => (
                 <AdminPaymentCard
                   key={payment.id}
@@ -188,7 +188,7 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos pendientes</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {pendingPayments.map((payment) => (
                 <AdminPaymentCard
                   key={payment.id}
@@ -207,7 +207,7 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos en revisión</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {inReviewPayments.map((payment) => (
                 <AdminPaymentCard
                   key={payment.id}
@@ -226,7 +226,7 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos confirmados aún</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {paidPayments.map((payment) => (
                 <AdminPaymentCard
                   key={payment.id}
