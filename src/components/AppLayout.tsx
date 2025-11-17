@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Wallet } from "lucide-react";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 
 interface AppLayoutProps {
@@ -107,6 +107,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/payment" className="cursor-pointer">
+                      <Wallet className="mr-2 h-4 w-4" />
+                      <span>Suscripción</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
