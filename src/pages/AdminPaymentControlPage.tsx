@@ -1,16 +1,30 @@
 import { useAdminMonthlyPayments, useVerifyPayment } from "@/hooks/useAdminMonthlyPayments";
 import { AdminPaymentCard } from "@/components/AdminPaymentCard";
 import { Loader2, Wallet, FileText, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const MONTH_NAMES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+];
 
 export default function AdminPaymentControlPage() {
   const { data: payments, isLoading } = useAdminMonthlyPayments();
   const verifyPayment = useVerifyPayment();
   const [activeTab, setActiveTab] = useState<string>("todos");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
 
   if (isLoading) {
     return (
@@ -44,14 +58,40 @@ export default function AdminPaymentControlPage() {
     );
   }
 
-  // Filter by search term
+  // Get unique months and years from payments
+  const { availableMonths, availableYears } = useMemo(() => {
+    if (!payments) return { availableMonths: [], availableYears: [] };
+
+    const months = new Set<number>();
+    const years = new Set<number>();
+
+    payments.forEach(payment => {
+      months.add(payment.month);
+      years.add(payment.year);
+    });
+
+    return {
+      availableMonths: Array.from(months).sort((a, b) => a - b),
+      availableYears: Array.from(years).sort((a, b) => b - a), // Most recent first
+    };
+  }, [payments]);
+
+  // Filter by search term, month, and year
   const filteredPayments = payments.filter(payment => {
+    // Search filter
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       payment.student_enrollment.full_name.toLowerCase().includes(searchLower) ||
       payment.student_enrollment.email.toLowerCase().includes(searchLower) ||
-      (payment.student_enrollment.phone?.toLowerCase().includes(searchLower))
-    );
+      (payment.student_enrollment.phone?.toLowerCase().includes(searchLower));
+
+    // Month filter
+    const matchesMonth = selectedMonth === "all" || payment.month === parseInt(selectedMonth);
+
+    // Year filter
+    const matchesYear = selectedYear === "all" || payment.year === parseInt(selectedYear);
+
+    return matchesSearch && matchesMonth && matchesYear;
   });
 
   // Filter payments by status
@@ -63,7 +103,7 @@ export default function AdminPaymentControlPage() {
   const totalPending = pendingPayments.reduce((sum, p) => sum + p.total_amount, 0);
   const totalInReview = inReviewPayments.reduce((sum, p) => sum + p.total_amount, 0);
   const totalPaid = paidPayments.reduce((sum, p) => sum + p.total_amount, 0);
-  const totalExpected = payments.reduce((sum, p) => sum + p.total_amount, 0);
+  const totalExpected = filteredPayments.reduce((sum, p) => sum + p.total_amount, 0);
 
   const handleVerify = (paymentId: string, status: 'pagado' | 'pendiente', notes?: string) => {
     verifyPayment.mutate({ paymentId, status, notes });
@@ -134,14 +174,42 @@ export default function AdminPaymentControlPage() {
         </Card>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
+      {/* Search and Filters */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4">
         <Input
           placeholder="Buscar por nombre, email o teléfono..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md"
+          className="flex-1 md:max-w-md"
         />
+        <div className="flex gap-2">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filtrar por mes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los meses</SelectItem>
+              {availableMonths.map((month) => (
+                <SelectItem key={month} value={month.toString()}>
+                  {MONTH_NAMES[month - 1]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filtrar por año" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los años</SelectItem>
+              {availableYears.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Payments Tabs */}
