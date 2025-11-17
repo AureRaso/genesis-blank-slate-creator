@@ -480,10 +480,14 @@ const Index = () => {
                             size="sm"
                             variant="ghost"
                             className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => verifyPayment({
-                              paymentId: payment.id,
-                              status: 'pagado'
-                            })}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              verifyPayment({
+                                paymentId: payment.id,
+                                status: 'pagado'
+                              });
+                            }}
                             disabled={isVerifyingPayment}
                           >
                             <Check className="h-4 w-4" />
@@ -492,11 +496,15 @@ const Index = () => {
                             size="sm"
                             variant="ghost"
                             className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => verifyPayment({
-                              paymentId: payment.id,
-                              status: 'pendiente',
-                              rejectionReason: 'Pago rechazado. Por favor, verifica los datos e inténtalo nuevamente.'
-                            })}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              verifyPayment({
+                                paymentId: payment.id,
+                                status: 'pendiente',
+                                rejectionReason: 'Pago rechazado. Por favor, verifica los datos e inténtalo nuevamente.'
+                              });
+                            }}
                             disabled={isVerifyingPayment}
                           >
                             <X className="h-4 w-4" />
