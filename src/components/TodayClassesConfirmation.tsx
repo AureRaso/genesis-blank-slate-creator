@@ -463,7 +463,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                             `}
                           >
                             <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                            Voy
+                            Confirmar
                           </Button>
                         )}
 
@@ -477,7 +477,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                             className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1" />
-                            No voy
+                            Rechazar
                           </Button>
                         )}
 
