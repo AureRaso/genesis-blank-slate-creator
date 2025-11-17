@@ -494,7 +494,8 @@ const Index = () => {
                             className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => verifyPayment({
                               paymentId: payment.id,
-                              status: 'pendiente'
+                              status: 'pendiente',
+                              rejectionReason: 'Pago rechazado. Por favor, verifica los datos e inténtalo nuevamente.'
                             })}
                             disabled={isVerifyingPayment}
                           >

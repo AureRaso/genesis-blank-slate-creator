@@ -105,8 +105,8 @@ export default function AdminPaymentControlPage() {
   const totalPaid = paidPayments.reduce((sum, p) => sum + p.total_amount, 0);
   const totalExpected = filteredPayments.reduce((sum, p) => sum + p.total_amount, 0);
 
-  const handleVerify = (paymentId: string, status: 'pagado' | 'pendiente', notes?: string) => {
-    verifyPayment.mutate({ paymentId, status, notes });
+  const handleVerify = (paymentId: string, status: 'pagado' | 'pendiente', notes?: string, rejectionReason?: string) => {
+    verifyPayment.mutate({ paymentId, status, notes, rejectionReason });
   };
 
   return (

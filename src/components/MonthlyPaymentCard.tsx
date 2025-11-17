@@ -137,6 +137,30 @@ export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading }: Monthly
             </div>
           )}
 
+          {/* Rejection Message */}
+          {payment.status === 'pendiente' && payment.rejected_at && payment.rejection_reason && (
+            <div className="pt-2 border-t">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-900">Pago rechazado</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      <span className="font-medium">Motivo:</span> {payment.rejection_reason}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Rechazado el {new Date(payment.rejected_at).toLocaleDateString('es-ES')} a las{' '}
+                      {new Date(payment.rejected_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-sm text-red-700 mt-2 font-medium">
+                      Por favor, vuelve a marcar el pago corrigiendo el error indicado.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action Button */}
           {payment.status === 'pendiente' && (
             <div className="pt-2">

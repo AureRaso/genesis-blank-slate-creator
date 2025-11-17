@@ -22,6 +22,9 @@ export interface MonthlyPayment {
   marked_paid_at?: string;
   verified_paid_at?: string;
   verified_by?: string;
+  rejected_at?: string;
+  rejected_by?: string;
+  rejection_reason?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -102,26 +105,39 @@ export function useVerifyPayment() {
       paymentId,
       status,
       notes,
+      rejectionReason,
     }: {
       paymentId: string;
       status: 'pagado' | 'pendiente';
       notes?: string;
+      rejectionReason?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
       const updateData: any = {
         status,
-        notes,
         updated_at: new Date().toISOString(),
       };
 
       if (status === 'pagado') {
+        // Aprobar pago
         updateData.verified_paid_at = new Date().toISOString();
         updateData.verified_by = user.id;
+        updateData.rejected_at = null;
+        updateData.rejected_by = null;
+        updateData.rejection_reason = null;
+        if (notes) updateData.notes = notes;
       } else {
+        // Rechazar pago
         updateData.verified_paid_at = null;
         updateData.verified_by = null;
+        updateData.rejected_at = new Date().toISOString();
+        updateData.rejected_by = user.id;
+        updateData.rejection_reason = rejectionReason || notes || 'Pago rechazado por el administrador';
+        // Limpiar datos de marcado como pagado
+        updateData.marked_paid_at = null;
+        updateData.payment_method = null;
       }
 
       const { data, error } = await supabase
@@ -134,9 +150,15 @@ export function useVerifyPayment() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-monthly-payments'] });
-      toast.success('Estado de pago actualizado correctamente');
+      queryClient.invalidateQueries({ queryKey: ['player-monthly-payments'] });
+
+      if (variables.status === 'pagado') {
+        toast.success('Pago aprobado correctamente');
+      } else {
+        toast.success('Pago rechazado. El alumno ha sido notificado.');
+      }
     },
     onError: (error) => {
       console.error('Error updating payment:', error);

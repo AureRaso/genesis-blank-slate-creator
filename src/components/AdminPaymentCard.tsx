@@ -53,13 +53,14 @@ const PAYMENT_METHOD_LABELS = {
 
 interface AdminPaymentCardProps {
   payment: MonthlyPaymentWithStudent;
-  onVerify: (paymentId: string, status: 'pagado' | 'pendiente', notes?: string) => void;
+  onVerify: (paymentId: string, status: 'pagado' | 'pendiente', notes?: string, rejectionReason?: string) => void;
   isLoading?: boolean;
 }
 
 export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notes, setNotes] = useState(payment.notes || "");
+  const [rejectionReason, setRejectionReason] = useState("");
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [isClassesOpen, setIsClassesOpen] = useState(false);
 
@@ -70,10 +71,11 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
     if (actionType === 'approve') {
       onVerify(payment.id, 'pagado', notes);
     } else if (actionType === 'reject') {
-      onVerify(payment.id, 'pendiente', notes);
+      onVerify(payment.id, 'pendiente', notes, rejectionReason);
     }
     setIsDialogOpen(false);
     setActionType(null);
+    setRejectionReason("");
   };
 
   const openApproveDialog = () => {
@@ -171,6 +173,24 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Rejection Message */}
+        {payment.rejected_at && payment.rejection_reason && (
+          <div className="space-y-1 p-2 bg-red-50 border border-red-200 rounded text-xs">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-3 w-3 text-red-600 flex-shrink-0" />
+              <span className="font-medium text-red-900">Pago rechazado</span>
+            </div>
+            <div>
+              <span className="text-red-700">Motivo: </span>
+              <span className="text-red-900">{payment.rejection_reason}</span>
+            </div>
+            <div className="text-red-600">
+              {new Date(payment.rejected_at).toLocaleDateString('es-ES')} a las{' '}
+              {new Date(payment.rejected_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+        )}
+
         {/* Payment Method & Notes */}
         {(payment.payment_method || payment.notes || payment.marked_paid_at) && (
           <div className="space-y-1 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
@@ -235,18 +255,40 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
                   <DialogDescription>
                     {actionType === 'approve'
                       ? `Confirmar el pago de ${payment.total_amount.toFixed(2)}€ de ${payment.student_enrollment.full_name}`
-                      : `Rechazar el pago y devolverlo a estado pendiente`}
+                      : `El alumno será notificado del rechazo y deberá volver a marcar el pago.`}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {actionType === 'reject' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="rejectionReason">
+                        Motivo del rechazo <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        id="rejectionReason"
+                        placeholder="Ej: El comprobante no coincide con el monto, imagen borrosa, datos incorrectos..."
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        rows={3}
+                        className="resize-none"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Este motivo será visible para el alumno
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notas (opcional)</Label>
+                    <Label htmlFor="notes">
+                      Notas {actionType === 'approve' ? '(opcional)' : 'internas (opcional)'}
+                    </Label>
                     <Textarea
                       id="notes"
-                      placeholder="Añade notas sobre esta verificación..."
+                      placeholder={actionType === 'approve'
+                        ? "Añade notas sobre esta verificación..."
+                        : "Notas internas solo visibles para administradores..."}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
+                      rows={2}
                     />
                   </div>
                 </div>
@@ -257,6 +299,7 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
                   <Button
                     onClick={handleVerify}
                     variant={actionType === 'approve' ? 'default' : 'destructive'}
+                    disabled={actionType === 'reject' && !rejectionReason.trim()}
                   >
                     {actionType === 'approve' ? 'Confirmar' : 'Rechazar'}
                   </Button>
