@@ -4,7 +4,7 @@ import { useCanJoinWaitlist, useJoinWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, Calendar, User, MapPin, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Clock, Calendar, User, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,9 @@ const WaitlistJoinPage = () => {
 
   // Don't redirect to auth - let users see the waitlist info first
   // Authentication will be required when they click "Join Waitlist"
+
+  // Wait for auth to load before checking eligibility
+  const isLoading = authLoading || checkingEligibility;
 
   // Redirect to dashboard after 3 seconds when successfully joined waitlist
   useEffect(() => {
@@ -40,7 +43,7 @@ const WaitlistJoinPage = () => {
     }
   }, [isSuccess, navigate]);
 
-  if (checkingEligibility) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen w-full">
         <div className="text-center mx-auto">
