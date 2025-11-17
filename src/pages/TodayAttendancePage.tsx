@@ -1026,15 +1026,7 @@ const WaitlistButton = ({
       ) : (
         <>
           <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-          Ver lista de espera
-          {pendingCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]"
-            >
-              {pendingCount}
-            </Badge>
-          )}
+          Lista de espera {pendingCount > 0 && `(${pendingCount})`}
         </>
       )}
     </Button>
