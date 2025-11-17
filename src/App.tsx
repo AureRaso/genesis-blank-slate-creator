@@ -8,6 +8,7 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { usePWA } from "@/hooks/usePWA";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import Index from "@/pages/Index";
@@ -118,6 +119,9 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 function App() {
   const { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, profile, loading, user, authError, retryAuth } = useAuth();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
+
+  // Registrar PWA y manejar actualizaciones automáticas
+  usePWA();
 
   console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, loading, user: user?.email, authError });
 
