@@ -70,6 +70,8 @@ import SubscriptionBlockedPage from "@/pages/SubscriptionBlockedPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import TestPasswordResetPage from "@/pages/TestPasswordResetPage";
+import PlayerPaymentsPage from "@/pages/PlayerPaymentsPage";
+import AdminPaymentControlPage from "@/pages/AdminPaymentControlPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -238,6 +240,7 @@ function App() {
                     <Route path="/student-scores" element={<StudentScoresPage />} />
                     <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
+                    <Route path="/monthly-payments" element={<AdminPaymentControlPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
@@ -248,6 +251,7 @@ function App() {
                     <Route path="/dashboard" element={<Index />} />
                     <Route path="/my-classes" element={<StudentClassesPage />} />
                     <Route path="/my-children" element={<MyChildrenPage />} />
+                    <Route path="/my-payments" element={<PlayerPaymentsPage />} />
                     <Route path="/historial" element={<HistorialPage />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
                     {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
@@ -269,6 +273,7 @@ function App() {
                      {isAdmin && <Route path="/trainer-reports" element={<TrainerReportsPage />} />}
                      {isAdmin && <Route path="/student-scores" element={<StudentScoresPage />} />}
                      {isAdmin && <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />}
+                     {isAdmin && <Route path="/monthly-payments" element={<AdminPaymentControlPage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>

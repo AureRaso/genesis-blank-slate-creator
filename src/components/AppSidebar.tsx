@@ -75,6 +75,14 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
+                <Link to="/dashboard/monthly-payments">
+                  <Wallet />
+                  <span>Control de Pagos</span>
+                </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {/* Sistema de Scoring */}
               {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/trainer-reports"}>
@@ -121,8 +129,8 @@ const AppSidebar = () => {
       },
       {
         title: "Mis Pagos",
-        url: "/dashboard/my-classes",
-        icon: BookOpen
+        url: "/dashboard/my-payments",
+        icon: Wallet
       },
       ...(isGuardian ? [{
         title: "Mis Hijos",
@@ -217,8 +225,8 @@ const AppSidebar = () => {
       // },
       {
         title: "Control de Pagos",
-        url: "/dashboard/payment-control",
-        icon: CreditCard
+        url: "/dashboard/monthly-payments",
+        icon: Wallet
       },
       {
         title: t('sidebar.players'),

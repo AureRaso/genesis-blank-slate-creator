@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus, History } from "lucide-react";
+import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus, History, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
@@ -21,8 +21,8 @@ const MobileTabBar = () => {
     },
     {
       name: "Pagos",
-      path: "/dashboard/my-classes",
-      icon: CreditCard,
+      path: "/dashboard/my-payments",
+      icon: Wallet,
     },
     {
       name: "Historial",
@@ -66,6 +66,11 @@ const MobileTabBar = () => {
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
     },
+    {
+      name: "Pagos",
+      path: "/dashboard/monthly-payments",
+      icon: Wallet,
+    },
   ];
 
   // Tabs for admins
@@ -87,6 +92,11 @@ const MobileTabBar = () => {
       name: "Asistencia",
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
+    },
+    {
+      name: "Pagos",
+      path: "/dashboard/monthly-payments",
+      icon: Wallet,
     },
   ];
 
