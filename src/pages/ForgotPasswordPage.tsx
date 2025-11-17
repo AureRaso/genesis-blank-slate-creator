@@ -81,22 +81,43 @@ export const ForgotPasswordPage = () => {
     setIsLoading(true);
 
     try {
-      // First, check if user exists and their auth provider
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+      // First, check if user can reset password (not OAuth user)
+      const { data: checkData, error: checkError } = await supabase.functions.invoke('check-auth-provider', {
+        body: { email }
+      });
 
-      // Since we can't use admin methods on client, we'll just try to send the reset email
-      // Supabase will handle if the email exists or not
+      if (checkError) {
+        console.error("Error checking auth provider:", checkError);
+        // Continue anyway - don't block the flow
+      }
 
+      console.log('Auth provider check result:', checkData);
+
+      // If user is OAuth (Google), show specific message
+      if (checkData && !checkData.canResetPassword && checkData.provider === 'google') {
+        toast({
+          title: "No se puede restablecer contraseña",
+          description: "Esta cuenta fue creada con Google. Por favor, inicia sesión con Google en lugar de usar contraseña.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Try to send the reset email
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error sending reset email:", error);
+        throw error;
+      }
 
       // Update rate limit counter
       updateRateLimit();
 
-      // Show success message regardless of whether email exists (security best practice)
+      // Show success message
       setEmailSent(true);
 
       toast({
@@ -107,7 +128,7 @@ export const ForgotPasswordPage = () => {
     } catch (error: any) {
       console.error("Error sending reset email:", error);
 
-      // Don't reveal if email exists or not
+      // Don't reveal if email exists or not (security best practice)
       setEmailSent(true);
 
       toast({
@@ -202,12 +223,6 @@ export const ForgotPasswordPage = () => {
                     <p className="text-sm">
                       Si existe una cuenta asociada a <strong>{email}</strong>,
                       recibirás un correo con instrucciones para restablecer tu contraseña.
-                    </p>
-                    <p className="text-sm mt-3 text-green-700 font-medium">
-                      ⚠️ Importante: Haz click directamente en el enlace del email.
-                    </p>
-                    <p className="text-sm mt-1 text-green-700">
-                      Si copias y pegas el enlace, asegúrate de copiar TODO, incluyendo la parte después del símbolo # (hashtag).
                     </p>
                     <p className="text-sm mt-2 text-green-600">
                       El enlace expirará en 1 hora por seguridad.
