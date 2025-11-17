@@ -25,12 +25,20 @@ export const ResetPasswordPage = () => {
     // Check if we have a valid recovery token in the URL
     const checkRecoveryToken = async () => {
       try {
+        // IMPORTANT: Wait a bit for Supabase to process the redirect and add the hash
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Get the hash from URL (Supabase sends token in URL hash)
         const fullUrl = window.location.href;
         const hash = window.location.hash;
 
         console.log('🔍 Reset Password - Full URL:', fullUrl);
         console.log('🔍 Reset Password - Hash:', hash);
+        console.log('🔍 Reset Password - Pathname:', window.location.pathname);
+
+        // Also check if Supabase already set up the session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('🔍 Reset Password - Current session:', currentSession ? 'exists' : 'none');
 
         const hashParams = new URLSearchParams(hash.substring(1));
         const accessToken = hashParams.get('access_token');
@@ -40,18 +48,28 @@ export const ResetPasswordPage = () => {
           hasAccessToken: !!accessToken,
           accessTokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : null,
           type,
-          allHashParams: Array.from(hashParams.entries())
+          allHashParams: Array.from(hashParams.entries()),
+          hasCurrentSession: !!currentSession
         });
 
-        // Check if we have a hash at all
-        if (!hash || hash.length < 10) {
-          console.error('❌ No hash found in URL');
+        // Check if we have a hash OR if Supabase already established a recovery session
+        if ((!hash || hash.length < 10) && !currentSession) {
+          console.error('❌ No hash found in URL and no current session');
           toast({
             title: "Enlace incompleto",
             description: "Este enlace no contiene la información necesaria. Por favor, copia el enlace completo del email, incluyendo todo lo que viene después del símbolo #",
             variant: "destructive"
           });
           setTimeout(() => navigate('/forgot-password'), 3000);
+          return;
+        }
+
+        // If we have a current session but no hash, we can still proceed
+        // This happens when Supabase auto-establishes the session from the recovery link
+        if (currentSession && (!hash || hash.length < 10)) {
+          console.log('✅ Using current session from Supabase (no hash in URL)');
+          setIsValidToken(true);
+          setIsValidating(false);
           return;
         }
 
