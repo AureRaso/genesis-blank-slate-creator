@@ -26,25 +26,44 @@ export const ResetPasswordPage = () => {
     const checkRecoveryToken = async () => {
       try {
         // Get the hash from URL (Supabase sends token in URL hash)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const fullUrl = window.location.href;
+        const hash = window.location.hash;
+
+        console.log('🔍 Reset Password - Full URL:', fullUrl);
+        console.log('🔍 Reset Password - Hash:', hash);
+
+        const hashParams = new URLSearchParams(hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
 
-        console.log('🔍 Reset Password - URL params:', {
+        console.log('🔍 Reset Password - Parsed params:', {
           hasAccessToken: !!accessToken,
+          accessTokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : null,
           type,
-          fullHash: window.location.hash
+          allHashParams: Array.from(hashParams.entries())
         });
+
+        // Check if we have a hash at all
+        if (!hash || hash.length < 10) {
+          console.error('❌ No hash found in URL');
+          toast({
+            title: "Enlace incompleto",
+            description: "Este enlace no contiene la información necesaria. Por favor, copia el enlace completo del email, incluyendo todo lo que viene después del símbolo #",
+            variant: "destructive"
+          });
+          setTimeout(() => navigate('/forgot-password'), 3000);
+          return;
+        }
 
         // Verify it's a recovery token
         if (type !== 'recovery') {
           console.error('❌ Invalid token type:', type);
           toast({
             title: "Enlace inválido",
-            description: "Este enlace de recuperación no es válido.",
+            description: type ? `Tipo de enlace incorrecto: ${type}. Se esperaba un enlace de recuperación de contraseña.` : "Este enlace no contiene un token de recuperación válido. Asegúrate de copiar el enlace completo del email.",
             variant: "destructive"
           });
-          setTimeout(() => navigate('/auth'), 2000);
+          setTimeout(() => navigate('/forgot-password'), 3000);
           return;
         }
 
@@ -52,10 +71,10 @@ export const ResetPasswordPage = () => {
           console.error('❌ No access token found');
           toast({
             title: "Enlace inválido",
-            description: "Este enlace de recuperación ha expirado o no es válido.",
+            description: "Este enlace de recuperación ha expirado o no es válido. Por favor, solicita uno nuevo.",
             variant: "destructive"
           });
-          setTimeout(() => navigate('/auth'), 2000);
+          setTimeout(() => navigate('/forgot-password'), 3000);
           return;
         }
 

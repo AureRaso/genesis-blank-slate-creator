@@ -203,7 +203,13 @@ export const ForgotPasswordPage = () => {
                       Si existe una cuenta asociada a <strong>{email}</strong>,
                       recibirás un correo con instrucciones para restablecer tu contraseña.
                     </p>
-                    <p className="text-sm mt-2 text-green-700">
+                    <p className="text-sm mt-3 text-green-700 font-medium">
+                      ⚠️ Importante: Haz click directamente en el enlace del email.
+                    </p>
+                    <p className="text-sm mt-1 text-green-700">
+                      Si copias y pegas el enlace, asegúrate de copiar TODO, incluyendo la parte después del símbolo # (hashtag).
+                    </p>
+                    <p className="text-sm mt-2 text-green-600">
                       El enlace expirará en 1 hora por seguridad.
                     </p>
                   </AlertDescription>
