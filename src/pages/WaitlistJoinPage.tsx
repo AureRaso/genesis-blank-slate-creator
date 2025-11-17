@@ -52,7 +52,7 @@ const WaitlistJoinPage = () => {
 
       // Navigate after 3 seconds
       const timer = setTimeout(() => {
-        navigate('/');
+        navigate('/dashboard');
       }, 3000);
 
       return () => {
