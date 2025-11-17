@@ -1011,6 +1011,15 @@ const WaitlistButton = ({
   const { data: waitlistData } = useClassWaitlist(classId, today);
   const pendingCount = waitlistData?.filter(w => w.status === 'pending').length || 0;
 
+  console.log('🔍 [WaitlistButton] Debug:', {
+    classId,
+    today,
+    waitlistData,
+    pendingCount,
+    hasData: !!waitlistData,
+    dataLength: waitlistData?.length
+  });
+
   return (
     <Button
       size="sm"
