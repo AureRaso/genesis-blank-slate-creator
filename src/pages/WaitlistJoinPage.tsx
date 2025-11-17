@@ -20,8 +20,27 @@ const WaitlistJoinPage = () => {
   // Don't redirect to auth - let users see the waitlist info first
   // Authentication will be required when they click "Join Waitlist"
 
-  // Wait for auth to load before checking eligibility
-  const isLoading = authLoading || checkingEligibility;
+  // Wait for auth to load before showing any content
+  // If auth is loading, show spinner
+  // If we have eligibility data OR we know user is not authenticated, we can show content
+  const shouldShowContent = !authLoading && (canJoinData !== undefined || !user);
+  const isLoading = !shouldShowContent;
+
+  // DEBUG: Log state changes
+  console.log('🔍 [WAITLIST_PAGE] Render state:', {
+    classId,
+    date,
+    authLoading,
+    checkingEligibility,
+    hasUser: !!user,
+    userId: user?.id,
+    hasCanJoinData: canJoinData !== undefined,
+    canJoinData,
+    canJoinReason: canJoinData?.reason,
+    canJoin: canJoinData?.canJoin,
+    shouldShowContent,
+    isLoading
+  });
 
   // Redirect to dashboard after 3 seconds when successfully joined waitlist
   useEffect(() => {
@@ -103,8 +122,8 @@ const WaitlistJoinPage = () => {
   // Format date nicely
   const formattedDate = date ? format(new Date(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es }) : '';
 
-  // Show error states
-  if (canJoinData && !canJoinData.canJoin) {
+  // Show error states (but not for not_authenticated - that should show the full page with login button)
+  if (canJoinData && !canJoinData.canJoin && canJoinData.reason !== 'not_authenticated') {
     let icon = <AlertTriangle className="h-12 w-12 text-yellow-600" />;
     let title = "No disponible";
     let colorClass = "border-yellow-300";

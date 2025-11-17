@@ -7,24 +7,25 @@ import { subHours } from "date-fns";
 
 // Hook to check if user can join waitlist
 export const useCanJoinWaitlist = (classId: string, classDate: string) => {
-  const { profile } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
+
+  console.log('🔍 [HOOK] useCanJoinWaitlist called:', {
+    classId,
+    classDate,
+    hasProfile: !!profile,
+    profileId: profile?.id,
+    authLoading,
+    enabled: !!profile?.id && !!classId && !!classDate
+  });
 
   return useQuery({
     queryKey: ['can-join-waitlist', classId, classDate, profile?.id],
     queryFn: async () => {
       console.log('🔍 [WAITLIST] Step 1: Starting validation');
       console.log('🔍 [WAITLIST] Profile:', profile);
+      console.log('🔍 [WAITLIST] Auth loading:', authLoading);
 
-      if (!profile?.id) {
-        console.log('❌ [WAITLIST] No profile found');
-        return {
-          canJoin: false,
-          reason: 'not_authenticated',
-          message: 'Debes iniciar sesión para unirte a la lista de espera'
-        };
-      }
-
-      // 1. Get class info
+      // 1. Get class info - ALWAYS fetch this regardless of authentication
       console.log('🔍 [WAITLIST] Step 2: Fetching class info for classId:', classId);
       const { data: classData, error: classError } = await supabase
         .from('programmed_classes')
@@ -50,7 +51,8 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         return {
           canJoin: false,
           reason: 'class_not_found',
-          message: 'Clase no encontrada'
+          message: 'Clase no encontrada',
+          classData: null
         };
       }
 
@@ -59,7 +61,8 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         return {
           canJoin: false,
           reason: 'class_inactive',
-          message: 'Esta clase no está activa'
+          message: 'Esta clase no está activa',
+          classData
         };
       }
 
@@ -87,7 +90,8 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         return {
           canJoin: false,
           reason: 'class_ended',
-          message: 'Esta clase ya ha finalizado'
+          message: 'Esta clase ya ha finalizado',
+          classData
         };
       }
 
@@ -97,14 +101,26 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         return {
           canJoin: false,
           reason: 'too_late',
-          message: 'La lista de espera se cierra 3 horas antes de la clase'
+          message: 'La lista de espera se cierra 3 horas antes de la clase',
+          classData
         };
       }
 
       // If we're here, we're before the 3-hour cutoff, so it's OK to join
       console.log('✅ [WAITLIST] Time window OK - can join (before 3h cutoff)');
 
-      // 3. Get user's enrollment for this club
+      // 3. Check authentication - if not authenticated, return with class data
+      if (!profile?.id) {
+        console.log('❌ [WAITLIST] No profile found - user needs to login');
+        return {
+          canJoin: false,
+          reason: 'not_authenticated',
+          message: 'Debes iniciar sesión para unirte a la lista de espera',
+          classData
+        };
+      }
+
+      // 4. Get user's enrollment for this club
       console.log('🔍 [WAITLIST] Step 4: Checking enrollment');
       console.log('🔍 [WAITLIST] Looking for email:', profile.email);
       console.log('🔍 [WAITLIST] Looking for club_id:', classData.club_id);
@@ -229,7 +245,9 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         enrollmentId
       };
     },
-    enabled: !!profile?.id && !!classId && !!classDate,
+    // Always run this query if we have classId and classDate
+    // The query itself will check authentication and return appropriate messages
+    enabled: !!classId && !!classDate,
   });
 };
 
