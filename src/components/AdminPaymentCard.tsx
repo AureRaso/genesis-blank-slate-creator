@@ -191,7 +191,7 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
         )}
 
         {/* Actions */}
-        {payment.status === 'en_revision' && (
+        {(payment.status === 'pendiente' || payment.status === 'en_revision') && (
           <div className="flex gap-2 pt-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -202,20 +202,22 @@ export function AdminPaymentCard({ payment, onVerify, isLoading }: AdminPaymentC
                   disabled={isLoading}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Confirmar Pago
+                  Marcar como Pagado
                 </Button>
               </DialogTrigger>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={openRejectDialog}
-                  className="flex-1"
-                  variant="outline"
-                  disabled={isLoading}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Rechazar
-                </Button>
-              </DialogTrigger>
+              {payment.status === 'en_revision' && (
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={openRejectDialog}
+                    className="flex-1"
+                    variant="outline"
+                    disabled={isLoading}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rechazar
+                  </Button>
+                </DialogTrigger>
+              )}
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
