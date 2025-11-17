@@ -3,13 +3,32 @@ import { useEffect } from 'react';
 /**
  * Hook para registrar y manejar el Service Worker de la PWA
  * Actualiza automáticamente la app cuando hay una nueva versión disponible
+ * Soporta Android (Service Worker completo) e iOS (limitado)
  */
 export const usePWA = () => {
   useEffect(() => {
+    // Detectar iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as any).standalone;
+
+    console.log('[PWA] Device info:', { isIOS, isInStandaloneMode, userAgent: navigator.userAgent });
+
     // Solo registrar en producción
     if (process.env.NODE_ENV !== 'production') {
       console.log('[PWA] Service Worker disabled in development');
       return;
+    }
+
+    // iOS tiene soporte limitado de Service Workers
+    if (isIOS) {
+      console.log('[PWA] iOS detected - Service Worker support is limited');
+
+      // En iOS, solo funciona si está instalada como PWA
+      if (isInStandaloneMode) {
+        console.log('[PWA] Running as installed PWA on iOS');
+      } else {
+        console.log('[PWA] iOS browser mode - Add to Home Screen for full PWA experience');
+      }
     }
 
     if ('serviceWorker' in navigator) {
