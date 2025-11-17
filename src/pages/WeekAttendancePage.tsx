@@ -104,11 +104,16 @@ const WeekAttendancePage = () => {
     open: boolean;
     classData: any | null;
     notificationType?: 'absence' | 'free_spot';
+    selectedGroups: string[]; // Array de group_chat_id seleccionados
   }>({
     open: false,
     classData: null,
     notificationType: 'absence',
+    selectedGroups: [],
   });
+
+  // Estado para tracking de notificaciones enviadas con cooldown de 10 minutos
+  const [notificationCooldowns, setNotificationCooldowns] = useState<Record<string, number>>({});
 
   // Solo administradores pueden notificar por WhatsApp
   const isAdmin = profile?.role === 'admin';
@@ -327,11 +332,66 @@ const WeekAttendancePage = () => {
     setConfirmDialog({ ...confirmDialog, open: false });
   };
 
+  // Función para verificar si una clase está en cooldown
+  const isInCooldown = (classId: string): boolean => {
+    const cooldownEnd = notificationCooldowns[classId];
+    if (!cooldownEnd) return false;
+    return Date.now() < cooldownEnd;
+  };
+
+  // Función para obtener el tiempo restante de cooldown en minutos
+  const getCooldownMinutesRemaining = (classId: string): number => {
+    const cooldownEnd = notificationCooldowns[classId];
+    if (!cooldownEnd) return 0;
+    const remaining = Math.ceil((cooldownEnd - Date.now()) / 1000 / 60);
+    return remaining > 0 ? remaining : 0;
+  };
+
+  // Toggle de selección de grupo en el diálogo
+  const toggleGroupSelection = (groupChatId: string) => {
+    setWhatsappGroupDialog(prev => {
+      const isSelected = prev.selectedGroups.includes(groupChatId);
+      const newSelectedGroups = isSelected
+        ? prev.selectedGroups.filter(id => id !== groupChatId)
+        : [...prev.selectedGroups, groupChatId];
+
+      return {
+        ...prev,
+        selectedGroups: newSelectedGroups
+      };
+    });
+  };
+
+  // Seleccionar todos los grupos
+  const selectAllGroups = () => {
+    if (!allWhatsAppGroups) return;
+    const allGroupIds = allWhatsAppGroups.map(g => g.group_chat_id);
+    setWhatsappGroupDialog(prev => ({
+      ...prev,
+      selectedGroups: allGroupIds
+    }));
+  };
+
+  // Limpiar selección
+  const clearGroupSelection = () => {
+    setWhatsappGroupDialog(prev => ({
+      ...prev,
+      selectedGroups: []
+    }));
+  };
+
   const handleNotifyWhatsApp = (classData: any, dateForNotification: string) => {
     console.log('🔔 handleNotifyWhatsApp called');
     console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
     console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
     console.log('📊 whatsappGroup:', whatsappGroup);
+
+    // Verificar si la clase está en cooldown
+    if (isInCooldown(classData.id)) {
+      const minutesRemaining = getCooldownMinutesRemaining(classData.id);
+      toast.error(`⏰ Debes esperar ${minutesRemaining} minuto${minutesRemaining > 1 ? 's' : ''} antes de enviar otra notificación para esta clase`);
+      return;
+    }
 
     // Si hay múltiples grupos, mostrar diálogo de selección
     if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
@@ -340,6 +400,7 @@ const WeekAttendancePage = () => {
         open: true,
         classData: { ...classData, notificationDate: dateForNotification },
         notificationType: 'absence',
+        selectedGroups: [],
       });
       return;
     }
@@ -361,6 +422,13 @@ const WeekAttendancePage = () => {
     console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
     console.log('📊 whatsappGroup:', whatsappGroup);
 
+    // Verificar si la clase está en cooldown
+    if (isInCooldown(classData.id)) {
+      const minutesRemaining = getCooldownMinutesRemaining(classData.id);
+      toast.error(`⏰ Debes esperar ${minutesRemaining} minuto${minutesRemaining > 1 ? 's' : ''} antes de enviar otra notificación para esta clase`);
+      return;
+    }
+
     // Si hay múltiples grupos, mostrar diálogo de selección
     if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
       console.log('✅ Múltiples grupos detectados, mostrando diálogo');
@@ -368,6 +436,7 @@ const WeekAttendancePage = () => {
         open: true,
         classData: { ...classData, notificationDate: dateForNotification },
         notificationType: 'free_spot',
+        selectedGroups: [],
       });
       return;
     }
@@ -403,7 +472,7 @@ const WeekAttendancePage = () => {
     });
 
     // Cerrar el diálogo si estaba abierto
-    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence', selectedGroups: [] });
   };
 
   const sendFreeSpotNotification = (groupChatId: string, classData: any, dateForNotification: string) => {
@@ -433,7 +502,45 @@ const WeekAttendancePage = () => {
     sendWhatsApp(params);
 
     // Cerrar el diálogo si estaba abierto
-    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence' });
+    setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence', selectedGroups: [] });
+  };
+
+  // Nueva función para enviar a múltiples grupos seleccionados
+  const sendNotificationToMultipleGroups = async () => {
+    const { selectedGroups, classData, notificationType } = whatsappGroupDialog;
+
+    if (!classData || selectedGroups.length === 0) return;
+
+    const dateForNotification = classData.notificationDate || format(new Date(), 'yyyy-MM-dd');
+
+    // Enviar a cada grupo seleccionado
+    for (const groupChatId of selectedGroups) {
+      if (notificationType === 'free_spot') {
+        sendFreeSpotNotification(groupChatId, classData, dateForNotification);
+      } else {
+        sendNotificationToGroup(groupChatId, classData, dateForNotification);
+      }
+
+      // Pequeña pausa entre envíos para evitar rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Establecer cooldown de 10 minutos para esta clase
+    const cooldownEnd = Date.now() + 10 * 60 * 1000; // 10 minutos en milisegundos
+    setNotificationCooldowns(prev => ({
+      ...prev,
+      [classData.id]: cooldownEnd
+    }));
+
+    // Cerrar el diálogo
+    setWhatsappGroupDialog({
+      open: false,
+      classData: null,
+      notificationType: 'absence',
+      selectedGroups: []
+    });
+
+    toast.success(`✓ Notificación enviada a ${selectedGroups.length} grupo${selectedGroups.length > 1 ? 's' : ''}`);
   };
 
   const toggleWaitlist = (classId: string) => {
@@ -573,7 +680,7 @@ const WeekAttendancePage = () => {
           )}
 
           {/* Statistics Cards */}
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium">
@@ -633,6 +740,11 @@ const WeekAttendancePage = () => {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Waitlist stats card */}
+            {filteredClasses && filteredClasses.length > 0 && (
+              <WaitlistStatsCard classes={filteredClasses} />
+            )}
           </div>
         </div>
       </div>
@@ -1025,32 +1137,72 @@ const WeekAttendancePage = () => {
                                 {isAdmin && (
                                   <>
                                     {/* Mostrar "Notificar ausencia" solo si hay ausencias sin cubrir */}
-                                    {slotsByAbsence > 0 && (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleNotifyWhatsApp(classData, notificationDate)}
-                                        disabled={isSendingWhatsApp || !whatsappGroup}
-                                        className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                                        title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Enviar notificación al grupo"}
-                                      >
-                                        <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                        Notificar ausencia
-                                      </Button>
-                                    )}
+                                    {slotsByAbsence > 0 && (() => {
+                                      const inCooldown = isInCooldown(classData.id);
+                                      const minutesRemaining = getCooldownMinutesRemaining(classData.id);
+
+                                      return (
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleNotifyWhatsApp(classData, notificationDate)}
+                                          disabled={isSendingWhatsApp || !whatsappGroup || inCooldown}
+                                          className={`${inCooldown ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]`}
+                                          title={
+                                            inCooldown
+                                              ? `Espera ${minutesRemaining} min antes de enviar otra notificación`
+                                              : !whatsappGroup
+                                              ? "No hay grupo de WhatsApp configurado"
+                                              : "Enviar notificación al grupo"
+                                          }
+                                        >
+                                          {inCooldown ? (
+                                            <>
+                                              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                              Espera {minutesRemaining} min
+                                            </>
+                                          ) : (
+                                            <>
+                                              <WhatsAppIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                              Notificar ausencia
+                                            </>
+                                          )}
+                                        </Button>
+                                      );
+                                    })()}
 
                                     {/* Botón "Comunicar hueco libre": Solo si hay plazas por CAPACIDAD, no por ausencias */}
-                                    {slotsByCapacity > 0 && (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleNotifyFreeSpot(classData, notificationDate)}
-                                        disabled={isSendingWhatsApp || !whatsappGroup}
-                                        className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
-                                        title={!whatsappGroup ? "No hay grupo de WhatsApp configurado" : "Comunicar hueco libre al grupo"}
-                                      >
-                                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                        Comunicar hueco libre
-                                      </Button>
-                                    )}
+                                    {slotsByCapacity > 0 && (() => {
+                                      const inCooldown = isInCooldown(classData.id);
+                                      const minutesRemaining = getCooldownMinutesRemaining(classData.id);
+
+                                      return (
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleNotifyFreeSpot(classData, notificationDate)}
+                                          disabled={isSendingWhatsApp || !whatsappGroup || inCooldown}
+                                          className={`${inCooldown ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]`}
+                                          title={
+                                            inCooldown
+                                              ? `Espera ${minutesRemaining} min antes de enviar otra notificación`
+                                              : !whatsappGroup
+                                              ? "No hay grupo de WhatsApp configurado"
+                                              : "Comunicar hueco libre al grupo"
+                                          }
+                                        >
+                                          {inCooldown ? (
+                                            <>
+                                              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                              Espera {minutesRemaining} min
+                                            </>
+                                          ) : (
+                                            <>
+                                              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                                              Comunicar hueco libre
+                                            </>
+                                          )}
+                                        </Button>
+                                      );
+                                    })()}
 
                                     <WaitlistButtonWithCount
                                       classId={classData.id}
@@ -1085,34 +1237,102 @@ const WeekAttendancePage = () => {
           <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Seleccionar grupo de WhatsApp</DialogTitle>
+                <DialogTitle>Seleccionar grupos de WhatsApp</DialogTitle>
                 <DialogDescription>
-                  Elige el grupo al que deseas enviar la notificación
+                  Elige uno o varios grupos para enviar la notificación
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2 py-4">
+              <div className="space-y-4 py-4">
                 {loadingAllGroups ? (
                   <div className="text-center py-8 text-slate-500">Cargando grupos...</div>
                 ) : allWhatsAppGroups && allWhatsAppGroups.length > 0 ? (
-                  allWhatsAppGroups.map((group) => (
-                    <Button
-                      key={group.id}
-                      variant="outline"
-                      className="w-full justify-center text-center h-auto py-3 px-4"
-                      onClick={() => {
-                        // Decidir qué función llamar según el tipo de notificación
-                        const dateForNotification = whatsappGroupDialog.classData?.notificationDate || format(new Date(), 'yyyy-MM-dd');
-                        if (whatsappGroupDialog.notificationType === 'free_spot') {
-                          sendFreeSpotNotification(group.group_chat_id, whatsappGroupDialog.classData, dateForNotification);
-                        } else {
-                          sendNotificationToGroup(group.group_chat_id, whatsappGroupDialog.classData, dateForNotification);
-                        }
-                      }}
-                      disabled={isSendingWhatsApp}
-                    >
-                      <span className="font-semibold">{group.group_name}</span>
-                    </Button>
-                  ))
+                  <>
+                    {/* Botones de selección rápida */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={selectAllGroups}
+                        className="flex-1"
+                      >
+                        Seleccionar todos
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={clearGroupSelection}
+                        className="flex-1"
+                      >
+                        Limpiar
+                      </Button>
+                    </div>
+
+                    {/* Lista de grupos con checkboxes */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-2">
+                      {allWhatsAppGroups.map((group) => {
+                        const isSelected = whatsappGroupDialog.selectedGroups.includes(group.group_chat_id);
+                        return (
+                          <label
+                            key={group.id}
+                            className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-blue-50 border-blue-300'
+                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleGroupSelection(group.group_chat_id)}
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
+                            <span className="flex-1 font-medium text-sm">{group.group_name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {/* Resumen y botón de envío */}
+                    <div className="space-y-3 pt-2">
+                      {whatsappGroupDialog.selectedGroups.length > 0 && (
+                        <div className="text-sm text-center text-muted-foreground">
+                          Se enviará a {whatsappGroupDialog.selectedGroups.length} grupo{whatsappGroupDialog.selectedGroups.length > 1 ? 's' : ''}
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setWhatsappGroupDialog({
+                            open: false,
+                            classData: null,
+                            notificationType: 'absence',
+                            selectedGroups: []
+                          })}
+                          className="flex-1"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={sendNotificationToMultipleGroups}
+                          disabled={isSendingWhatsApp || whatsappGroupDialog.selectedGroups.length === 0}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          {isSendingWhatsApp ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Enviar notificación
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-8 text-slate-500">No hay grupos disponibles</div>
                 )}
@@ -1267,6 +1487,43 @@ const WeekAttendancePage = () => {
         </TabsContent>
       </Tabs>
     </div>
+  );
+};
+
+// Component to calculate total waitlist count across all classes
+const WaitlistStatsCard = ({ classes }: { classes: any[] }) => {
+  // Fetch waitlist data for all classes
+  const waitlistQueries = classes.map(classData => {
+    const classDate = classData.scheduled_date || format(new Date(), 'yyyy-MM-dd');
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useClassWaitlist(classData.id, classDate);
+  });
+
+  // Calculate total pending waitlist entries
+  const totalPendingWaitlist = waitlistQueries.reduce((total, query) => {
+    const pendingCount = query.data?.filter(w => w.status === 'pending').length || 0;
+    return total + pendingCount;
+  }, 0);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+        <CardTitle className="text-xs sm:text-sm font-medium">Lista de Espera</CardTitle>
+        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+      </CardHeader>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+        <div className="text-xl sm:text-2xl font-bold text-blue-600">
+          {totalPendingWaitlist}
+        </div>
+        <p className="text-xs text-muted-foreground truncate">
+          {totalPendingWaitlist === 0
+            ? 'Sin solicitudes'
+            : totalPendingWaitlist === 1
+            ? '1 solicitud pendiente'
+            : `${totalPendingWaitlist} solicitudes pendientes`}
+        </p>
+      </CardContent>
+    </Card>
   );
 };
 
