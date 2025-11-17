@@ -6,7 +6,7 @@ import PlayerDashboard from "@/components/PlayerDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X } from "lucide-react";
+import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
@@ -16,6 +16,7 @@ import { useClassesWithAbsences } from "@/hooks/useClassesWithAbsences";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { usePendingWaitlistRequests, useApproveWaitlistRequest, useRejectWaitlistRequest } from "@/hooks/usePendingWaitlistRequests";
+import { useAdminMonthlyPayments, useVerifyPayment } from "@/hooks/useAdminMonthlyPayments";
 import { format } from "date-fns";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
@@ -79,6 +80,11 @@ const Index = () => {
   const { data: waitlistRequests } = usePendingWaitlistRequests(profile?.club_id);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
+
+  // Fetch payments in review for admin
+  const { data: allPayments } = useAdminMonthlyPayments();
+  const { mutate: verifyPayment, isPending: isVerifyingPayment } = useVerifyPayment();
+  const paymentsInReview = allPayments?.filter(p => p.status === 'en_revision') || [];
 
   // Filtrar solicitudes que no deben mostrarse (más de 1h después del inicio de clase)
   const filteredWaitlistRequests = waitlistRequests?.filter((request) => {
@@ -425,83 +431,104 @@ const Index = () => {
 
       {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
       <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Actividad Reciente */}
+        {/* Pagos en Revisión */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              Actividad Reciente
+            <h3 className="text-base sm:text-lg font-bold text-[#10172a] flex items-center gap-2">
+              <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Pagos en Revisión
             </h3>
-            {recentActivities && recentActivities.length > 3 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAllActivities(!showAllActivities)}
-                className="text-xs text-primary hover:text-primary/80"
-              >
-                {showAllActivities ? (
-                  <>
-                    Ver menos <ChevronUp className="h-3 w-3 ml-1" />
-                  </>
-                ) : (
-                  <>
-                    Ver todas ({recentActivities.length}) <ChevronDown className="h-3 w-3 ml-1" />
-                  </>
-                )}
-              </Button>
+            {paymentsInReview && paymentsInReview.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {paymentsInReview.length}
+              </Badge>
             )}
           </div>
           <div className="space-y-2 sm:space-y-3">
             {profile?.role === 'admin' ? (
               <>
-                {recentActivities && recentActivities.length > 0 ? (
-                  (showAllActivities ? recentActivities : recentActivities.slice(0, 3)).map((activity, index) => {
-                    const Icon = activity.icon;
+                {paymentsInReview && paymentsInReview.length > 0 ? (
+                  paymentsInReview.slice(0, showAllActivities ? undefined : 3).map((payment) => {
+                    const monthNames = [
+                      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    ];
+
                     return (
                       <div
-                        key={`${activity.type}-${index}`}
-                        className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10"
+                        key={payment.id}
+                        className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-blue-50 border border-blue-200"
                       >
-                        <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 mt-0.5 flex-shrink-0">
+                          <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-medium text-[#10172a]">{activity.title}</p>
-                          <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 line-clamp-2">{activity.description}</p>
-                          <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">{getTimeAgo(activity.timestamp)}</p>
+                          <p className="text-xs sm:text-sm font-medium text-[#10172a]">
+                            {payment.student_enrollment.full_name}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">
+                            {monthNames[payment.month - 1]} {payment.year} • {payment.total_classes} clases • {payment.total_amount.toFixed(2)}€
+                          </p>
+                          {payment.payment_method && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Método: {payment.payment_method}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-1 mt-0.5 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => verifyPayment({
+                              paymentId: payment.id,
+                              status: 'pagado'
+                            })}
+                            disabled={isVerifyingPayment}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => verifyPayment({
+                              paymentId: payment.id,
+                              status: 'pendiente'
+                            })}
+                            disabled={isVerifyingPayment}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     );
                   })
                 ) : (
                   <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <p className="text-xs sm:text-sm">No hay actividades recientes</p>
+                    <p className="text-xs sm:text-sm">No hay pagos en revisión</p>
                   </div>
                 )}
+                {paymentsInReview && paymentsInReview.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAllActivities(!showAllActivities)}
+                    className="w-full text-xs text-primary hover:text-primary/80"
+                  >
+                    {showAllActivities ? (
+                      <>
+                        Ver menos <ChevronUp className="h-3 w-3 ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        Ver todos ({paymentsInReview.length}) <ChevronDown className="h-3 w-3 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                )}
               </>
-            ) : (
-              <>
-                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Clase completada</p>
-                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">Clase de nivel intermedio - 8 asistentes</p>
-                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">Hace 1 hora</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                    <Users className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-[#10172a]">Nuevo alumno inscrito</p>
-                    <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">María González se inscribió en tus clases</p>
-                    <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">Hace 3 horas</p>
-                  </div>
-                </div>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
 
