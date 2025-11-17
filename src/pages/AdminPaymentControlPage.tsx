@@ -1,10 +1,11 @@
 import { useAdminMonthlyPayments, useVerifyPayment } from "@/hooks/useAdminMonthlyPayments";
 import { AdminPaymentCard } from "@/components/AdminPaymentCard";
-import { Loader2, Wallet, FileText, TrendingUp } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Loader2, Wallet, FileText, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,8 @@ const MONTH_NAMES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
+const ITEMS_PER_PAGE = 50;
+
 export default function AdminPaymentControlPage() {
   const { data: payments, isLoading } = useAdminMonthlyPayments();
   const verifyPayment = useVerifyPayment();
@@ -25,6 +28,30 @@ export default function AdminPaymentControlPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Get unique months and years from payments - MUST be called before any early returns
+  const { availableMonths, availableYears } = useMemo(() => {
+    if (!payments) return { availableMonths: [], availableYears: [] };
+
+    const months = new Set<number>();
+    const years = new Set<number>();
+
+    payments.forEach(payment => {
+      months.add(payment.month);
+      years.add(payment.year);
+    });
+
+    return {
+      availableMonths: Array.from(months).sort((a, b) => a - b),
+      availableYears: Array.from(years).sort((a, b) => b - a), // Most recent first
+    };
+  }, [payments]);
+
+  // Reset to page 1 when active tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   if (isLoading) {
     return (
@@ -58,24 +85,6 @@ export default function AdminPaymentControlPage() {
     );
   }
 
-  // Get unique months and years from payments
-  const { availableMonths, availableYears } = useMemo(() => {
-    if (!payments) return { availableMonths: [], availableYears: [] };
-
-    const months = new Set<number>();
-    const years = new Set<number>();
-
-    payments.forEach(payment => {
-      months.add(payment.month);
-      years.add(payment.year);
-    });
-
-    return {
-      availableMonths: Array.from(months).sort((a, b) => a - b),
-      availableYears: Array.from(years).sort((a, b) => b - a), // Most recent first
-    };
-  }, [payments]);
-
   // Filter by search term, month, and year
   const filteredPayments = payments.filter(payment => {
     // Search filter
@@ -105,8 +114,74 @@ export default function AdminPaymentControlPage() {
   const totalPaid = paidPayments.reduce((sum, p) => sum + p.total_amount, 0);
   const totalExpected = filteredPayments.reduce((sum, p) => sum + p.total_amount, 0);
 
+  // Pagination logic
+  const getPaginatedData = (data: typeof filteredPayments) => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data: typeof filteredPayments) => {
+    return Math.ceil(data.length / ITEMS_PER_PAGE);
+  };
+
+  const paginatedAll = getPaginatedData(filteredPayments);
+  const paginatedPending = getPaginatedData(pendingPayments);
+  const paginatedInReview = getPaginatedData(inReviewPayments);
+  const paginatedPaid = getPaginatedData(paidPayments);
+
+  const totalPagesAll = getTotalPages(filteredPayments);
+  const totalPagesPending = getTotalPages(pendingPayments);
+  const totalPagesInReview = getTotalPages(inReviewPayments);
+  const totalPagesPaid = getTotalPages(paidPayments);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
+
   const handleVerify = (paymentId: string, status: 'pagado' | 'pendiente', notes?: string, rejectionReason?: string) => {
     verifyPayment.mutate({ paymentId, status, notes, rejectionReason });
+  };
+
+  const PaginationControls = ({ totalItems, totalPages, currentData }: { totalItems: number; totalPages: number; currentData: any[] }) => {
+    if (totalPages <= 1) return null;
+
+    const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+
+    return (
+      <div className="flex items-center justify-between mt-6 px-4">
+        <div className="text-sm text-gray-600">
+          Mostrando {startItem} - {endItem} de {totalItems} pagos
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </Button>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-gray-600">
+              Página {currentPage} de {totalPages}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Siguiente
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -179,11 +254,17 @@ export default function AdminPaymentControlPage() {
         <Input
           placeholder="Buscar por nombre, email o teléfono..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            handleFilterChange();
+          }}
           className="flex-1 md:max-w-md"
         />
         <div className="flex gap-2">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <Select value={selectedMonth} onValueChange={(value) => {
+            setSelectedMonth(value);
+            handleFilterChange();
+          }}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por mes" />
             </SelectTrigger>
@@ -196,7 +277,10 @@ export default function AdminPaymentControlPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <Select value={selectedYear} onValueChange={(value) => {
+            setSelectedYear(value);
+            handleFilterChange();
+          }}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Filtrar por año" />
             </SelectTrigger>
@@ -237,16 +321,23 @@ export default function AdminPaymentControlPage() {
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredPayments.map((payment) => (
-                <AdminPaymentCard
-                  key={payment.id}
-                  payment={payment}
-                  onVerify={handleVerify}
-                  isLoading={verifyPayment.isPending}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedAll.map((payment) => (
+                  <AdminPaymentCard
+                    key={payment.id}
+                    payment={payment}
+                    onVerify={handleVerify}
+                    isLoading={verifyPayment.isPending}
+                  />
+                ))}
+              </div>
+              <PaginationControls
+                totalItems={filteredPayments.length}
+                totalPages={totalPagesAll}
+                currentData={paginatedAll}
+              />
+            </>
           )}
         </TabsContent>
 
@@ -256,16 +347,23 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos pendientes</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingPayments.map((payment) => (
-                <AdminPaymentCard
-                  key={payment.id}
-                  payment={payment}
-                  onVerify={handleVerify}
-                  isLoading={verifyPayment.isPending}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedPending.map((payment) => (
+                  <AdminPaymentCard
+                    key={payment.id}
+                    payment={payment}
+                    onVerify={handleVerify}
+                    isLoading={verifyPayment.isPending}
+                  />
+                ))}
+              </div>
+              <PaginationControls
+                totalItems={pendingPayments.length}
+                totalPages={totalPagesPending}
+                currentData={paginatedPending}
+              />
+            </>
           )}
         </TabsContent>
 
@@ -275,16 +373,23 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos en revisión</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inReviewPayments.map((payment) => (
-                <AdminPaymentCard
-                  key={payment.id}
-                  payment={payment}
-                  onVerify={handleVerify}
-                  isLoading={verifyPayment.isPending}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedInReview.map((payment) => (
+                  <AdminPaymentCard
+                    key={payment.id}
+                    payment={payment}
+                    onVerify={handleVerify}
+                    isLoading={verifyPayment.isPending}
+                  />
+                ))}
+              </div>
+              <PaginationControls
+                totalItems={inReviewPayments.length}
+                totalPages={totalPagesInReview}
+                currentData={paginatedInReview}
+              />
+            </>
           )}
         </TabsContent>
 
@@ -294,16 +399,23 @@ export default function AdminPaymentControlPage() {
               <p className="text-gray-500">No hay pagos confirmados aún</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {paidPayments.map((payment) => (
-                <AdminPaymentCard
-                  key={payment.id}
-                  payment={payment}
-                  onVerify={handleVerify}
-                  isLoading={verifyPayment.isPending}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedPaid.map((payment) => (
+                  <AdminPaymentCard
+                    key={payment.id}
+                    payment={payment}
+                    onVerify={handleVerify}
+                    isLoading={verifyPayment.isPending}
+                  />
+                ))}
+              </div>
+              <PaginationControls
+                totalItems={paidPayments.length}
+                totalPages={totalPagesPaid}
+                currentData={paginatedPaid}
+              />
+            </>
           )}
         </TabsContent>
       </Tabs>
