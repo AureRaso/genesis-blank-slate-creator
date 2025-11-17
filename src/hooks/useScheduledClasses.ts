@@ -231,19 +231,44 @@ export const useDeleteScheduledClass = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // First, get the class details to find all recurring instances
+      const { data: classData, error: fetchError } = await supabase
+        .from("programmed_classes")
+        .select('id, club_id, name, start_time')
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!classData) throw new Error("Clase no encontrada");
+
+      // Find all classes in the recurring series (same club_id, name, and start_time)
+      const { data: matchingClasses, error: matchError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, start_time, club_id')
+        .eq('club_id', classData.club_id)
+        .eq('name', classData.name)
+        .eq('start_time', classData.start_time)
+        .eq('is_active', true);
+
+      if (matchError) throw matchError;
+
+      // Delete all matching classes (soft delete by setting is_active to false)
+      const classIds = matchingClasses?.map(c => c.id) || [id];
+
       const { error } = await supabase
         .from("programmed_classes")
         .update({ is_active: false })
-        .eq("id", id);
+        .in("id", classIds);
 
       if (error) throw error;
-      return id;
+
+      return { deletedCount: classIds.length, classIds };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
       toast({
-        title: "Clase eliminada",
-        description: "La clase se ha eliminado correctamente.",
+        title: "Clases eliminadas",
+        description: `Se han eliminado ${data.deletedCount} clase${data.deletedCount > 1 ? 's' : ''} de la serie recurrente.`,
       });
     },
     onError: (error: any) => {

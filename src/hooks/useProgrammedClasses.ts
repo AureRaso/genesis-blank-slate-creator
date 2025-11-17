@@ -246,14 +246,20 @@ export const useDeleteProgrammedClass = () => {
     mutationFn: async (id: string) => {
       console.log('🔴 [DELETE] Marking programmed class as inactive:', id);
 
-      // First, check the class details and current user
-      const { data: classData } = await supabase
+      // First, get the class details to find all recurring instances
+      const { data: classData, error: fetchError } = await supabase
         .from("programmed_classes")
-        .select("id, trainer_profile_id, created_by, is_active")
+        .select("id, club_id, name, start_time, trainer_profile_id, created_by, is_active")
         .eq("id", id)
         .single();
 
       console.log('📋 [DELETE] Class data:', classData);
+
+      if (fetchError) {
+        console.error('🔴 [DELETE] Failed to fetch class:', fetchError);
+        throw fetchError;
+      }
+      if (!classData) throw new Error("Clase no encontrada");
 
       const { data: { user } } = await supabase.auth.getUser();
       console.log('👤 [DELETE] Current user:', user?.id);
@@ -266,16 +272,35 @@ export const useDeleteProgrammedClass = () => {
 
       console.log('👤 [DELETE] User profile:', profileData);
 
+      // Find all classes in the recurring series (same club_id, name, and start_time)
+      const { data: matchingClasses, error: matchError } = await supabase
+        .from('programmed_classes')
+        .select('id, name, start_time, club_id')
+        .eq('club_id', classData.club_id)
+        .eq('name', classData.name)
+        .eq('start_time', classData.start_time)
+        .eq('is_active', true);
+
+      console.log('🔍 [DELETE] Found matching classes:', matchingClasses?.length);
+
+      if (matchError) {
+        console.error('🔴 [DELETE] Failed to find matching classes:', matchError);
+        throw matchError;
+      }
+
+      // Delete all matching classes (soft delete by setting is_active to false)
+      const classIds = matchingClasses?.map(c => c.id) || [id];
+
       // Since RLS policies prevent hard deletion, we use soft delete (is_active = false)
       // This ensures the class disappears from queries while preserving data integrity
       const { data, error } = await supabase
         .from("programmed_classes")
         .update({ is_active: false })
-        .eq("id", id)
+        .in("id", classIds)
         .select();
 
       if (error) {
-        console.error('🔴 [DELETE] Failed to mark class as inactive:', error);
+        console.error('🔴 [DELETE] Failed to mark classes as inactive:', error);
         throw error;
       }
 
@@ -285,21 +310,21 @@ export const useDeleteProgrammedClass = () => {
       const { data: verifyData } = await supabase
         .from("programmed_classes")
         .select("id, is_active")
-        .eq("id", id)
-        .single();
+        .in("id", classIds);
 
       console.log('🔍 [DELETE] Verification after update:', verifyData);
 
-      if (verifyData && verifyData.is_active === true) {
-        console.error('⚠️ [DELETE] UPDATE FAILED - is_active is still true!');
+      const stillActive = verifyData?.filter(c => c.is_active === true);
+      if (stillActive && stillActive.length > 0) {
+        console.error('⚠️ [DELETE] UPDATE FAILED - some classes are still active!', stillActive);
         throw new Error('No se pudo eliminar la clase. Verifica los permisos.');
       }
 
-      console.log('✅ [DELETE] Successfully marked class as inactive');
-      return id;
+      console.log('✅ [DELETE] Successfully marked all classes as inactive');
+      return { deletedCount: classIds.length, classIds };
     },
-    onSuccess: (deletedId) => {
-      console.log('✅ [DELETE] Invalidating queries for deleted class:', deletedId);
+    onSuccess: (data) => {
+      console.log('✅ [DELETE] Invalidating queries for deleted classes:', data);
 
       // Remove the queries from cache completely to force refetch
       queryClient.removeQueries({ queryKey: ["programmed-classes"] });
@@ -331,8 +356,8 @@ export const useDeleteProgrammedClass = () => {
       });
 
       toast({
-        title: "Clase eliminada",
-        description: "La clase se ha eliminado correctamente.",
+        title: "Clases eliminadas",
+        description: `Se han eliminado ${data.deletedCount} clase${data.deletedCount > 1 ? 's' : ''} de la serie recurrente.`,
       });
     },
     onError: (error: any) => {
