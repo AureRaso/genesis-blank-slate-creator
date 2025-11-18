@@ -13,7 +13,6 @@ import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import Index from "@/pages/Index";
 import LeaguesPage from "@/pages/LeaguesPage";
-import MatchesPage from "@/pages/MatchesPage";
 import ClassesPage from "@/pages/ClassesPage";
 import PlayersPage from "@/pages/PlayersPage";
 import ClubsPage from "@/pages/ClubsPage";
@@ -120,7 +119,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 
 function App() {
   const { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, profile, loading, user, authError, retryAuth } = useAuth();
-  const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
+  const { leagues: leaguesEnabled } = useFeatureFlags();
 
   // Registrar PWA y manejar actualizaciones automáticas
   usePWA();
@@ -254,7 +253,6 @@ function App() {
                     <Route path="/my-payments" element={<PlayerPaymentsPage />} />
                     <Route path="/historial" element={<HistorialPage />} />
                     {leaguesEnabled && <Route path="/leagues" element={<LeaguesPage />} />}
-                    {matchesEnabled && <Route path="/matches" element={<MatchesPage />} />}
                     <Route path="/classes" element={<ClassesPage />} />
                     <Route path="/players" element={<PlayersPage />} />
                      <Route path="/clubs" element={<ClubsPage />} />
