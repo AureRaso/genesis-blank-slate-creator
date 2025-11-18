@@ -67,7 +67,7 @@ export default function AdminPaymentControlPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Wallet className="h-8 w-8" />
-            Control de Pagos
+            Control de pagos
           </h1>
           <p className="text-gray-600 mt-2">Gestiona los pagos mensuales de todos los estudiantes</p>
         </div>
@@ -189,7 +189,7 @@ export default function AdminPaymentControlPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <Wallet className="h-8 w-8" />
-          Control de Pagos
+          Control de pagos
         </h1>
         <p className="text-gray-600 mt-2">Gestiona los pagos mensuales de todos los estudiantes</p>
       </div>
