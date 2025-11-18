@@ -79,7 +79,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
                 <Link to="/dashboard/monthly-payments">
                   <Wallet />
-                  <span>Control de Pagos</span>
+                  <span>Control de pagos</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -224,7 +224,7 @@ const AppSidebar = () => {
       //   icon: Award
       // },
       {
-        title: "Control de Pagos",
+        title: "Control de pagos",
         url: "/dashboard/monthly-payments",
         icon: Wallet
       },
