@@ -240,6 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    // For iOS compatibility, we add skipRedirectCheck to handle OAuth callback properly
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -247,7 +248,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-        }
+        },
+        skipBrowserRedirect: false,
       }
     });
     return { error };
