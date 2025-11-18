@@ -79,14 +79,14 @@ export const ClearCachePage = () => {
 
       // Redirigir después de 2 segundos
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/auth';
       }, 2000);
 
     } catch (error) {
       console.error('Error during cleanup:', error);
       // Incluso si hay error, intentamos redirigir
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/auth';
       }, 2000);
     }
   };
