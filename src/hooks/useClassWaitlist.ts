@@ -29,17 +29,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       console.log('🔍 [WAITLIST] Step 2: Fetching class info for classId:', classId);
       const { data: classData, error: classError } = await supabase
         .from('programmed_classes')
-        .select(`
-          id,
-          name,
-          start_time,
-          duration_minutes,
-          max_participants,
-          is_active,
-          start_date,
-          end_date,
-          club_id
-        `)
+        .select('id,name,start_time,duration_minutes,max_participants,is_active,start_date,end_date,club_id')
         .eq('id', classId)
         .single();
 
@@ -297,25 +287,7 @@ export const useClassWaitlist = (classId: string, classDate: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('class_waitlist')
-        .select(`
-          id,
-          class_id,
-          class_date,
-          student_enrollment_id,
-          requested_at,
-          status,
-          accepted_by,
-          accepted_at,
-          rejected_by,
-          rejected_at,
-          notes,
-          student_enrollment:student_enrollments!student_enrollment_id(
-            id,
-            full_name,
-            email,
-            level
-          )
-        `)
+        .select('id,class_id,class_date,student_enrollment_id,requested_at,status,accepted_by,accepted_at,rejected_by,rejected_at,notes,student_enrollment:student_enrollments!student_enrollment_id(id,full_name,email,level)')
         .eq('class_id', classId)
         .eq('class_date', classDate)
         .order('requested_at', { ascending: true });
@@ -452,13 +424,7 @@ export const useAcceptFromWaitlist = () => {
         console.log('🔔 [EMAIL] Fetching class data for ID:', variables.classId);
         const { data: classData, error: classError } = await supabase
           .from('programmed_classes')
-          .select(`
-            name,
-            start_time,
-            clubs:club_id (
-              name
-            )
-          `)
+          .select('name,start_time,clubs:club_id(name)')
           .eq('id', variables.classId)
           .single();
 
@@ -507,13 +473,7 @@ export const useAcceptFromWaitlist = () => {
           // Fetch class data once (we need it for all emails)
           const { data: classData } = await supabase
             .from('programmed_classes')
-            .select(`
-              name,
-              start_time,
-              clubs:club_id (
-                name
-              )
-            `)
+            .select('name,start_time,clubs:club_id(name)')
             .eq('id', variables.classId)
             .single();
 
@@ -630,13 +590,7 @@ export const useRejectFromWaitlist = () => {
           console.log('🔔 [EMAIL-REJECT] Fetching class data for ID:', variables.classId);
           const { data: classData, error: classError } = await supabase
             .from('programmed_classes')
-            .select(`
-              name,
-              start_time,
-              clubs:club_id (
-                name
-              )
-            `)
+            .select('name,start_time,clubs:club_id(name)')
             .eq('id', variables.classId)
             .single();
 
@@ -735,13 +689,7 @@ export const useMyWaitlistRequests = () => {
       const classIds = waitlistData.map(w => w.class_id);
       const { data: classesData, error: classesError } = await supabase
         .from('programmed_classes')
-        .select(`
-          id,
-          name,
-          start_time,
-          duration_minutes,
-          trainer:profiles(full_name)
-        `)
+        .select('id,name,start_time,duration_minutes,trainer:profiles(full_name)')
         .in('id', classIds);
 
       if (classesError) {
