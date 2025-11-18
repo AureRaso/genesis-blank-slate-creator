@@ -1,6 +1,6 @@
 // Service Worker para PadeLock PWA
-const CACHE_NAME = 'padelock-v1';
-const RUNTIME_CACHE = 'padelock-runtime';
+const CACHE_NAME = 'padelock-v2';
+const RUNTIME_CACHE = 'padelock-runtime-v2';
 
 // Recursos críticos que queremos cachear durante la instalación
 const PRECACHE_URLS = [
