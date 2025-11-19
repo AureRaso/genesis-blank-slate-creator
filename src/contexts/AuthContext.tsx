@@ -66,6 +66,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 10000);
     };
 
+    // Initialize session on mount - critical for OAuth and direct URL navigation
+    const initializeSession = async () => {
+      if (!mounted || hasInitializedRef.current) return;
+
+      try {
+        console.log('AuthContext - Initializing session...');
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('AuthContext - Error getting initial session:', error);
+          setAuthError('Error al recuperar la sesión');
+          setLoading(false);
+          return;
+        }
+
+        hasInitializedRef.current = true;
+
+        if (initialSession) {
+          console.log('AuthContext - Initial session found:', initialSession.user.email);
+          setSession(initialSession);
+          setUser(initialSession.user);
+          currentUserIdRef.current = initialSession.user.id;
+
+          setLoading(true);
+          setupLoadingTimeout();
+
+          fetchProfile(initialSession.user.id).finally(() => {
+            clearLoadingTimeout();
+          });
+        } else {
+          console.log('AuthContext - No initial session found');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('AuthContext - Exception during session initialization:', error);
+        setLoading(false);
+      }
+    };
+
+    // Call initialize immediately
+    initializeSession();
+
     // Only use onAuthStateChange for all auth state management
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -83,6 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (window.location.pathname !== '/reset-password') {
             window.location.href = '/reset-password' + window.location.hash;
           }
+          return;
+        }
+
+        // Skip INITIAL_SESSION event since we handle it manually in initializeSession
+        if (event === 'INITIAL_SESSION' && hasInitializedRef.current) {
+          console.log('AuthContext - Skipping INITIAL_SESSION (already initialized)');
           return;
         }
 

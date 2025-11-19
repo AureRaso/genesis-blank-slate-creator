@@ -1,6 +1,6 @@
 // Service Worker para PadeLock PWA
-const CACHE_NAME = 'padelock-v2';
-const RUNTIME_CACHE = 'padelock-runtime-v2';
+const CACHE_NAME = 'padelock-v3';
+const RUNTIME_CACHE = 'padelock-runtime-v3';
 
 // Recursos críticos que queremos cachear durante la instalación
 const PRECACHE_URLS = [
@@ -52,8 +52,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Ignorar requests de analytics, supabase auth, etc.
+  // Ignorar requests no HTTP/HTTPS (extensiones de Chrome, etc.)
   const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Ignorar requests de analytics, supabase auth, etc.
   if (
     url.origin.includes('supabase') ||
     url.origin.includes('analytics') ||
