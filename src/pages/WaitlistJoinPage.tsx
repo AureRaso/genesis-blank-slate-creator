@@ -232,7 +232,11 @@ const WaitlistJoinPage = () => {
                   <Button
                     size="lg"
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => navigate('/auth', { state: { from: `/waitlist/${classId}/${date}` } })}
+                    onClick={() => {
+                      // Save current URL in sessionStorage for redirect after login
+                      sessionStorage.setItem('returnUrl', `/waitlist/${classId}/${date}`);
+                      navigate('/auth', { state: { from: `/waitlist/${classId}/${date}` } });
+                    }}
                   >
                     <User className="h-4 w-4 mr-2" />
                     Iniciar sesión para unirme

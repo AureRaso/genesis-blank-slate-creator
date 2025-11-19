@@ -22,6 +22,9 @@ export const AuthCallback = () => {
     if (loading) return;
 
     if (user && profile) {
+      // Check if there's a return URL saved from before login
+      const returnUrl = sessionStorage.getItem('returnUrl');
+
       // Only check profile completion for players
       const isProfileIncomplete = profile.role === 'player' && (!profile.club_id || !profile.level);
 
@@ -29,12 +32,18 @@ export const AuthCallback = () => {
         role: profile.role,
         club_id: profile.club_id,
         level: profile.level,
-        isProfileIncomplete
+        isProfileIncomplete,
+        returnUrl
       });
 
       if (isProfileIncomplete) {
         console.log('🔍 DEBUG - Player profile incomplete, redirecting to complete-profile');
         navigate("/complete-profile", { replace: true });
+      } else if (returnUrl) {
+        // Clear the return URL and navigate to it
+        console.log('🔍 DEBUG - Returning to saved URL:', returnUrl);
+        sessionStorage.removeItem('returnUrl');
+        navigate(returnUrl, { replace: true });
       } else {
         console.log('🔍 DEBUG - Profile complete, redirecting to dashboard');
         navigate("/dashboard", { replace: true });
