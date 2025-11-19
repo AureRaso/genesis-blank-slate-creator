@@ -67,6 +67,18 @@ const monitoredStorage = {
       } else {
         console.error(`❌ [STORAGE VERIFY] Write verification FAILED!`);
       }
+
+      // Log ALL localStorage keys after write to see what's actually there
+      const allKeysAfterWrite = Object.keys(localStorage);
+      console.log(`🔑 [STORAGE VERIFY] ALL localStorage keys after write (${allKeysAfterWrite.length}):`, allKeysAfterWrite);
+
+      // Check if the key we just wrote exists in the list
+      const keyExists = allKeysAfterWrite.includes(key);
+      console.log(`🔍 [STORAGE VERIFY] Key "${key}" exists in Object.keys():`, keyExists);
+
+      // Try direct access
+      const directAccess = localStorage[key];
+      console.log(`🔍 [STORAGE VERIFY] Direct access localStorage["${key}"]:`, directAccess ? 'EXISTS' : 'NULL');
     } catch (error) {
       console.error(`❌ [STORAGE WRITE] Failed to write to localStorage:`, error);
     }
@@ -103,9 +115,22 @@ supabase.auth.onAuthStateChange((event, session) => {
 
   if (session) {
     console.log('✅ [AUTH STATE CHANGE] Session detected, checking localStorage...');
-    const supabaseKeys = Object.keys(localStorage).filter(k => k.includes('supabase'));
-    console.log('📊 [AUTH STATE CHANGE] Supabase keys in localStorage:', supabaseKeys.length);
-    supabaseKeys.forEach(key => {
+
+    // Show ALL keys first
+    const allKeys = Object.keys(localStorage);
+    console.log('🔑 [AUTH STATE CHANGE] ALL localStorage keys:', allKeys);
+
+    // Try different filters
+    const supabaseKeys = allKeys.filter(k => k.includes('supabase'));
+    const sbKeys = allKeys.filter(k => k.includes('sb-'));
+    const authKeys = allKeys.filter(k => k.includes('auth'));
+
+    console.log('📊 [AUTH STATE CHANGE] Keys with "supabase":', supabaseKeys.length, supabaseKeys);
+    console.log('📊 [AUTH STATE CHANGE] Keys with "sb-":', sbKeys.length, sbKeys);
+    console.log('📊 [AUTH STATE CHANGE] Keys with "auth":', authKeys.length, authKeys);
+
+    // Check each type
+    [...supabaseKeys, ...sbKeys, ...authKeys].forEach(key => {
       const value = localStorage.getItem(key);
       console.log(`  - ${key}: ${value ? 'EXISTS (' + value.length + ' chars)' : 'NULL'}`);
     });
