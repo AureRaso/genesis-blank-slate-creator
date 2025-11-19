@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell, Save } from "lucide-react";
 import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
-import ConfirmAbsenceDialog from "./ConfirmAbsenceDialog";
+import { AttendanceToggle } from "./AttendanceToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
 import { format } from "date-fns";
@@ -38,38 +41,50 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const confirmAbsence = useConfirmAbsence();
   const cancelAbsence = useCancelAbsenceConfirmation();
 
-  const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  // Estado para manejar el toggle y motivo de ausencia
+  const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
+  const [absenceReasons, setAbsenceReasons] = useState<Record<string, string>>({});
+  const [selectedReasonType, setSelectedReasonType] = useState<Record<string, string>>({});
 
-  const handleToggleConfirmation = (participantId: string, isConfirmed: boolean, scheduledDate: string) => {
-    if (isConfirmed) {
-      cancelConfirmation.mutate(participantId);
-    } else {
-      confirmAttendance.mutate({ participantId, scheduledDate });
-    }
-  };
-
-  const handleOpenAbsenceDialog = (participantId: string) => {
-    setSelectedClassId(participantId);
-    setAbsenceDialogOpen(true);
-  };
-
-  const handleConfirmAbsence = (reason?: string) => {
-    if (selectedClassId) {
-      confirmAbsence.mutate(
-        { participantId: selectedClassId, reason },
-        {
-          onSuccess: () => {
-            setAbsenceDialogOpen(false);
-            setSelectedClassId(null);
-          },
+  // Manejar cambio del toggle
+  const handleToggleAttendance = (participantId: string, willAttend: boolean, scheduledDate: string) => {
+    if (willAttend) {
+      // Cambió a "VOY" - cancelar ausencia Y confirmar asistencia
+      cancelAbsence.mutate(participantId, {
+        onSuccess: () => {
+          // Después de cancelar la ausencia, confirmar la asistencia
+          confirmAttendance.mutate({ participantId, scheduledDate });
         }
-      );
+      });
+      setExpandedClassId(null);
+    } else {
+      // Cambió a "NO VOY" - expandir para mostrar motivo
+      setExpandedClassId(participantId);
     }
   };
 
-  const handleCancelAbsence = (participantId: string) => {
-    cancelAbsence.mutate(participantId);
+  // Guardar ausencia con motivo
+  const handleSaveAbsence = (participantId: string) => {
+    const reasonType = selectedReasonType[participantId] || '';
+    const customReason = absenceReasons[participantId] || '';
+
+    let finalReason = '';
+    if (reasonType === 'otro') {
+      finalReason = customReason;
+    } else if (reasonType) {
+      finalReason = reasonType;
+    }
+
+    confirmAbsence.mutate(
+      { participantId, reason: finalReason },
+      {
+        onSuccess: () => {
+          setExpandedClassId(null);
+          setAbsenceReasons(prev => ({ ...prev, [participantId]: '' }));
+          setSelectedReasonType(prev => ({ ...prev, [participantId]: '' }));
+        },
+      }
+    );
   };
 
   const formatDate = (dateStr: string) => {
@@ -348,17 +363,17 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
         {/* Reminder Banner - Full width on mobile, 50% on desktop */}
         <div className="w-full md:w-1/2">
-          <div className="p-3 sm:p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl sm:rounded-2xl">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl sm:rounded-2xl">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-amber-100 rounded-lg flex-shrink-0">
-                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+              <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-amber-800">
-                  Confirma tu asistencia
+                <p className="text-xs sm:text-sm font-medium text-green-800">
+                  Estás confirmado automáticamente
                 </p>
-                <p className="text-xs text-amber-600 mt-0.5 sm:mt-1 line-clamp-2">
-                  Ayuda a tu entrenador a planificar mejor las clases.
+                <p className="text-xs text-green-600 mt-0.5 sm:mt-1 line-clamp-2">
+                  Si no puedes asistir, usa el interruptor para liberar tu plaza.
                 </p>
               </div>
             </div>
@@ -391,9 +406,9 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                 }
               `}
             >
-              <CardContent className="p-4 sm:p-6 lg:p-8">
+              <CardContent className="p-3 sm:p-4 lg:p-5">
                 {/* Header Section - Responsive */}
-                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 sm:mb-2">
                       <span className="text-xs sm:text-sm font-semibold text-slate-700">
@@ -410,10 +425,10 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                 </div>
 
                 {/* Class Details - Responsive */}
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-1.5 sm:space-y-2">
                   {/* Class Name with Cancelled Badge */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-800 leading-tight line-clamp-2">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 leading-tight line-clamp-2">
                       {classItem.programmed_class.name}
                     </h3>
                     {isCancelled && (
@@ -424,112 +439,108 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                   </div>
 
                   {/* Trainer Info */}
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <div className="p-1 bg-primary/10 rounded flex-shrink-0">
-                      <User className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <div className="p-0.5 bg-primary/10 rounded flex-shrink-0">
+                      <User className="h-3 w-3 text-primary" />
                     </div>
-                    <span className="text-xs sm:text-sm font-medium truncate">
+                    <span className="text-xs font-medium truncate">
                       {classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}
                     </span>
                   </div>
                 </div>
 
-                {/* Action Buttons - Responsive: stacked on mobile, inline on desktop */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mt-4 sm:mt-6 pt-4 border-t border-slate-200/60">
-                  {/* Action Buttons Group */}
-                  <div className="flex flex-col gap-2 w-full">
-                    {isCancelled ? (
-                      <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border border-gray-200">
-                        <AlertCircle className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm text-gray-700 font-medium">
-                          Esta clase ha sido cancelada por el club
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Attendance Button */}
-                        {!isAbsent && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleConfirmation(classItem.id, isConfirmedForThisDate, scheduledDate)}
-                            disabled={confirmAttendance.isPending || cancelConfirmation.isPending}
-                            className={`
-                              px-3 py-1 h-8
-                              ${isConfirmedForThisDate
-                                ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 hover:border-green-400'
-                                : 'border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-300'
-                              }
-                            `}
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                            Confirmar
-                          </Button>
-                        )}
+                {/* Toggle de Asistencia - Compacto */}
+                <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-200/60">
+                  {isCancelled ? (
+                    <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg border border-gray-200">
+                      <AlertCircle className="h-3.5 w-3.5 text-gray-600" />
+                      <span className="text-xs text-gray-700 font-medium">
+                        Esta clase ha sido cancelada por el club
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {/* Toggle Component */}
+                      <AttendanceToggle
+                        isAttending={!isAbsent}
+                        onChange={(willAttend) => handleToggleAttendance(classItem.id, willAttend, scheduledDate)}
+                        disabled={cancelAbsence.isPending || confirmAbsence.isPending || classItem.absence_locked}
+                      />
 
-                        {/* Absence Button */}
-                        {!isConfirmedForThisDate && !isAbsent && (
+                      {/* Absence Reason Section - Solo visible cuando NO asiste */}
+                      {(!isAbsent && expandedClassId === classItem.id) && (
+                        <div className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-1.5 text-red-800 font-medium text-xs">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            <span>Motivo (opcional)</span>
+                          </div>
+
+                          {/* Selector de motivo */}
+                          <Select
+                            value={selectedReasonType[classItem.id] || ''}
+                            onValueChange={(value) => setSelectedReasonType(prev => ({ ...prev, [classItem.id]: value }))}
+                          >
+                            <SelectTrigger className="w-full bg-white h-9 text-xs">
+                              <SelectValue placeholder="Selecciona un motivo..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lesion">🤕 Lesión</SelectItem>
+                              <SelectItem value="trabajo">💼 Trabajo</SelectItem>
+                              <SelectItem value="enfermedad">🏥 Enfermedad</SelectItem>
+                              <SelectItem value="familiar">👨‍👩‍👧 Motivos familiares</SelectItem>
+                              <SelectItem value="otro">✏️ Otro motivo...</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          {/* Campo de texto personalizado */}
+                          {selectedReasonType[classItem.id] === 'otro' && (
+                            <Textarea
+                              placeholder="Describe tu motivo..."
+                              value={absenceReasons[classItem.id] || ''}
+                              onChange={(e) => setAbsenceReasons(prev => ({ ...prev, [classItem.id]: e.target.value }))}
+                              className="w-full min-h-[60px] bg-white text-xs"
+                            />
+                          )}
+
+                          {/* Botón guardar */}
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenAbsenceDialog(classItem.id)}
+                            onClick={() => handleSaveAbsence(classItem.id)}
                             disabled={confirmAbsence.isPending}
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 px-3 py-1 h-8"
-                          >
-                            <XCircle className="h-3.5 w-3.5 mr-1" />
-                            Rechazar
-                          </Button>
-                        )}
-
-                        {/* Cancel Absence Button */}
-                        {isAbsent && !classItem.absence_locked && (
-                          <Button
-                            variant="outline"
                             size="sm"
-                            onClick={() => handleCancelAbsence(classItem.id)}
-                            disabled={cancelAbsence.isPending}
-                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 px-3 py-1 h-8"
+                            className="w-full bg-red-500 hover:bg-red-600 text-white h-8 text-xs"
                           >
-                            Cancelar ausencia
+                            <Save className="h-3.5 w-3.5 mr-1.5" />
+                            {confirmAbsence.isPending ? 'Guardando...' : 'Guardar ausencia'}
                           </Button>
-                        )}
+                        </div>
+                      )}
 
-                        {/* Add to Google Calendar Button - Visible on mobile */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addToGoogleCalendar(classItem)}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 px-3 py-1 h-8 md:hidden"
-                        >
-                          <CalendarPlus className="h-3.5 w-3.5 mr-1" />
-                          Agregar
-                        </Button>
-                      </div>
-                    )}
+                      {/* Mostrar motivo guardado */}
+                      {isAbsent && classItem.absence_reason && (
+                        <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-xs text-red-800">
+                            <strong>Motivo:</strong> {classItem.absence_reason}
+                          </p>
+                        </div>
+                      )}
 
-                    {/* Locked Absence Warning */}
-                    {isAbsent && classItem.absence_locked && (
-                      <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                        <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-800">
-                        Tu ausencia ha sido registrada correctamente. No es posible realizar cambios en este momento. ¡Gracias por avisar!                        </p>
-                      </div>
-                    )}
-                  </div>
+                      {/* Locked Absence Warning */}
+                      {isAbsent && classItem.absence_locked && (
+                        <div className="flex items-start gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-amber-800">
+                            Tu ausencia ha sido registrada. Tu plaza está disponible.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
-
-      {/* Absence confirmation dialog */}
-      <ConfirmAbsenceDialog
-        open={absenceDialogOpen}
-        onOpenChange={setAbsenceDialogOpen}
-        onConfirm={handleConfirmAbsence}
-        isLoading={confirmAbsence.isPending}
-      />
     </div>
   );
 };

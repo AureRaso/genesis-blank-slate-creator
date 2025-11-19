@@ -93,6 +93,13 @@ export const useCreateClassParticipant = () => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
+      // Obtener la fecha de inicio de la clase para auto-confirmar
+      const { data: classData } = await supabase
+        .from("programmed_classes")
+        .select("start_date")
+        .eq("id", participantData.class_id)
+        .single();
+
       const { data, error } = await supabase
         .from("class_participants")
         .insert({
@@ -102,6 +109,10 @@ export const useCreateClassParticipant = () => {
           payment_verified: participantData.payment_verified || false,
           amount_paid: participantData.amount_paid || 0,
           total_amount_due: participantData.total_amount_due || 0,
+          // Auto-confirmar asistencia desde el inicio
+          attendance_confirmed_for_date: classData?.start_date || null,
+          attendance_confirmed_at: new Date().toISOString(),
+          confirmed_by_trainer: false, // Auto-confirmado por el sistema
         })
         .select()
         .single();
@@ -253,7 +264,7 @@ export const useBulkEnrollToRecurringClass = () => {
         throw new Error('El alumno ya está inscrito en todas las clases de esta serie');
       }
 
-      // Step 3: Bulk insert the student into all classes
+      // Step 3: Bulk insert the student into all classes con auto-confirmación
       const participantsToInsert = classesToEnroll.map(cls => ({
         class_id: cls.id,
         student_enrollment_id: enrollmentData.student_enrollment_id,
@@ -264,6 +275,10 @@ export const useBulkEnrollToRecurringClass = () => {
         payment_verified: false,
         amount_paid: 0,
         total_amount_due: 0,
+        // Auto-confirmar asistencia desde el inicio
+        attendance_confirmed_for_date: cls.start_date,
+        attendance_confirmed_at: new Date().toISOString(),
+        confirmed_by_trainer: false, // Auto-confirmado por el sistema
       }));
 
       const { data: insertedData, error: insertError } = await supabase

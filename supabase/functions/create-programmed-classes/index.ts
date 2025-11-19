@@ -115,13 +115,21 @@ serve(async (req) => {
         participantsData = groupMembers.map(member => ({
           class_id: createdClass.id,
           student_enrollment_id: member.student_enrollment_id,
-          status: 'active'
+          status: 'active',
+          // Auto-confirmar asistencia desde el inicio
+          attendance_confirmed_for_date: classData.start_date,
+          attendance_confirmed_at: new Date().toISOString(),
+          confirmed_by_trainer: false
         }))
       } else if (classData.selected_students && classData.selected_students.length > 0) {
         participantsData = classData.selected_students.map(studentId => ({
           class_id: createdClass.id,
           student_enrollment_id: studentId,
-          status: 'active'
+          status: 'active',
+          // Auto-confirmar asistencia desde el inicio
+          attendance_confirmed_for_date: classData.start_date,
+          attendance_confirmed_at: new Date().toISOString(),
+          confirmed_by_trainer: false
         }))
       }
 

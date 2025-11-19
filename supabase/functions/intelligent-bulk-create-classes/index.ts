@@ -126,7 +126,7 @@ async function validateClassData(classData: ClassToCreate, supabaseClient: any, 
   return true;
 }
 
-async function createClassParticipants(programmedClassId: string, participantIds: string[], supabaseClient: any) {
+async function createClassParticipants(programmedClassId: string, participantIds: string[], classStartDate: string, supabaseClient: any) {
   if (!participantIds || participantIds.length === 0) {
     return 0;
   }
@@ -136,7 +136,11 @@ async function createClassParticipants(programmedClassId: string, participantIds
   const participants = participantIds.map(studentEnrollmentId => ({
     class_id: programmedClassId,
     student_enrollment_id: studentEnrollmentId,
-    status: 'active'
+    status: 'active',
+    // Auto-confirmar asistencia desde el inicio
+    attendance_confirmed_for_date: classStartDate,
+    attendance_confirmed_at: new Date().toISOString(),
+    confirmed_by_trainer: false
   }));
 
   console.log(`🔵 Participants to insert:`, participants);
@@ -205,7 +209,7 @@ async function createSingleClass(classData: ClassToCreate, supabaseClient: any, 
 
     // Create class participants if provided
     if (classData.participant_ids && classData.participant_ids.length > 0) {
-      const participantsCount = await createClassParticipants(createdClass.id, classData.participant_ids, supabaseClient);
+      const participantsCount = await createClassParticipants(createdClass.id, classData.participant_ids, classData.start_date, supabaseClient);
       console.log(`✅ Assigned ${participantsCount} participants to programmed class ${createdClass.id}`);
     }
 

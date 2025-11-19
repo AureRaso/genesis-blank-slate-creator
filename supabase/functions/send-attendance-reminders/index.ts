@@ -35,7 +35,7 @@ async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
       month: 'long'
     });
 
-    const subject = `⏰ Confirma tu asistencia - ${data.className}`;
+    const subject = `✅ Estás confirmado - ${data.className}`;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -43,11 +43,11 @@ async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirma tu asistencia</title>
+  <title>Recordatorio de clase</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Recordatorio</h1>
+  <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 28px;">✅ Estás confirmado</h1>
   </div>
 
   <div style="background-color: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
@@ -56,10 +56,10 @@ async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
     </p>
 
     <p style="font-size: 16px; color: #4b5563; margin-bottom: 25px;">
-      Tienes un entrenamiento próximo y aún no has confirmado tu asistencia:
+      Tu asistencia está confirmada automáticamente para tu próximo entrenamiento:
     </p>
 
-    <div style="background-color: white; padding: 25px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #f59e0b;">
+    <div style="background-color: white; padding: 25px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
       <p style="font-size: 18px; font-weight: bold; color: #1f2937; margin: 0 0 15px 0;">
         📅 ${formattedDate}
       </p>
@@ -73,21 +73,21 @@ async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
 
     <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 5px; margin: 25px 0;">
       <p style="margin: 0 0 15px 0; color: #92400e; font-size: 16px; font-weight: 600;">
-        ⚠️ Por favor, confirma tu asistencia
+        ⚠️ ¿No puedes asistir?
       </p>
       <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
-        Si no puedes asistir, márcalo para que otra persona pueda aprovechar tu plaza.
+        Marca tu ausencia en la app para que otra persona pueda aprovechar tu plaza. ¡Es importante!
       </p>
     </div>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${data.confirmationLink}" style="background-color: #f59e0b; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">
-        Confirmar ahora
+        Gestionar mi asistencia
       </a>
     </div>
 
     <p style="color: #6b7280; font-size: 14px; margin-top: 30px; text-align: center;">
-      Si no confirmas, tu plaza podría liberarse para otro jugador.
+      Recuerda: Tu plaza está reservada. Si no puedes venir, márcalo cuanto antes.
     </p>
   </div>
 
