@@ -4,6 +4,7 @@ import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, us
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { useClassWaitlist } from "@/hooks/useClassWaitlist";
+import { getWaitlistUrl } from "@/utils/url";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -270,7 +271,7 @@ const TodayAttendancePage = () => {
     const availableSlots = absentCount - substituteCount;
 
     // Generate waitlist URL
-    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+    const waitlistUrl = getWaitlistUrl(classData.id, today);
 
     sendWhatsApp({
       groupChatId: groupChatId,
@@ -381,7 +382,7 @@ const TodayAttendancePage = () => {
     const totalAvailableSlots = maxParticipants - enrolledCount;
 
     // Generate waitlist URL
-    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+    const waitlistUrl = getWaitlistUrl(classData.id, today);
 
     const params = {
       groupChatId: groupChatId,

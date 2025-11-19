@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getWaitlistUrl } from "@/utils/url";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -458,7 +459,7 @@ const WeekAttendancePage = () => {
     const availableSlots = absentCount - substituteCount;
 
     // Generate waitlist URL
-    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${dateForNotification}`;
+    const waitlistUrl = getWaitlistUrl(classData.id, dateForNotification);
 
     sendWhatsApp({
       groupChatId: groupChatId,
@@ -483,7 +484,7 @@ const WeekAttendancePage = () => {
     const totalAvailableSlots = maxParticipants - enrolledCount;
 
     // Generate waitlist URL
-    const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${dateForNotification}`;
+    const waitlistUrl = getWaitlistUrl(classData.id, dateForNotification);
 
     const params = {
       groupChatId: groupChatId,

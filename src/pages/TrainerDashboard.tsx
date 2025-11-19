@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { UserMinusIcon } from "@/components/icons/UserMinusIcon";
+import { getWaitlistUrl } from "@/utils/url";
 import {
   Sheet,
   SheetContent,
@@ -775,7 +776,7 @@ const TrainerDashboard = () => {
 
                         console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
-                        const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+                        const waitlistUrl = getWaitlistUrl(classData.id, today);
                         const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
                         const substituteCount = classData.participants.filter(p => p.is_substitute).length;
                         const availableSlots = absentCount - substituteCount;
@@ -1080,7 +1081,7 @@ const TrainerDashboard = () => {
 
                         console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
-                        const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
+                        const waitlistUrl = getWaitlistUrl(classData.id, today);
                         const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
                         const substituteCount = classData.participants.filter(p => p.is_substitute).length;
                         const availableSlots = absentCount - substituteCount;
@@ -1223,7 +1224,7 @@ const TrainerDashboard = () => {
                     if (!whatsappGroupDialog.classData) return;
 
                     const today = format(new Date(), 'yyyy-MM-dd');
-                    const waitlistUrl = `${window.location.origin}/waitlist/${whatsappGroupDialog.classData.id}/${today}`;
+                    const waitlistUrl = getWaitlistUrl(whatsappGroupDialog.classData.id, today);
                     const absentCount = whatsappGroupDialog.classData.participants.filter(p => p.absence_confirmed).length;
                     const substituteCount = whatsappGroupDialog.classData.participants.filter(p => p.is_substitute).length;
                     const availableSlots = absentCount - substituteCount;
