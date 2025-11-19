@@ -72,6 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         console.log('AuthContext - Initializing session...');
+
+        // Debug localStorage keys
+        const allKeys = Object.keys(localStorage);
+        const supabaseKeys = allKeys.filter(k => k.includes('supabase'));
+        console.log('AuthContext - localStorage keys:', { allKeys: allKeys.length, supabaseKeys });
+
+        // Try to read the session directly from localStorage
+        supabaseKeys.forEach(key => {
+          const value = localStorage.getItem(key);
+          console.log(`AuthContext - localStorage[${key}]:`, value ? `${value.substring(0, 100)}...` : 'NULL');
+        });
+
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -80,6 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
           return;
         }
+
+        console.log('AuthContext - getSession() result:', initialSession ? 'SESSION FOUND' : 'NULL', {
+          hasSession: !!initialSession,
+          user: initialSession?.user?.email,
+          expiresAt: initialSession?.expires_at
+        });
 
         hasInitializedRef.current = true;
 
@@ -96,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearLoadingTimeout();
           });
         } else {
-          console.log('AuthContext - No initial session found');
+          console.log('AuthContext - No initial session found - user needs to login');
           setLoading(false);
         }
       } catch (error) {
