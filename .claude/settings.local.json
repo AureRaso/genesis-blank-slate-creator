@@ -46,7 +46,9 @@
       "Bash(git restore:*)",
       "Bash(then cat .env)",
       "Bash(else echo \"Archivo .env no encontrado\")",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(then grep -E \"DATABASE_URL|SUPABASE\" .env)",
+      "Bash(else echo \"No .env file found\")"
     ],
     "deny": [],
     "ask": []
