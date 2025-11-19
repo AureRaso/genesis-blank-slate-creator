@@ -7,10 +7,36 @@ export const AuthCallback = () => {
   const { user, profile, loading } = useAuth();
 
   useEffect(() => {
-    console.log('🔍 DEBUG - AuthCallback useEffect:', {
+    console.log('🔐 [AUTH CALLBACK] useEffect triggered');
+
+    // Check URL hash for OAuth tokens
+    const hash = window.location.hash;
+    if (hash) {
+      console.log('🔐 [AUTH CALLBACK] URL hash present:', hash.substring(0, 50) + '...');
+
+      // Check if this is an OAuth callback with access_token
+      if (hash.includes('access_token')) {
+        console.log('✅ [AUTH CALLBACK] OAuth access_token detected in URL');
+      } else {
+        console.log('⚠️ [AUTH CALLBACK] URL hash present but no access_token');
+      }
+    } else {
+      console.log('⚠️ [AUTH CALLBACK] No URL hash present');
+    }
+
+    // Check localStorage immediately
+    const supabaseKeys = Object.keys(localStorage).filter(k => k.includes('supabase'));
+    console.log('📊 [AUTH CALLBACK] localStorage state:', {
+      totalKeys: Object.keys(localStorage).length,
+      supabaseKeys: supabaseKeys.length,
+      keys: supabaseKeys
+    });
+
+    console.log('🔍 [AUTH CALLBACK] Auth state:', {
       loading,
       hasUser: !!user,
       hasProfile: !!profile,
+      userEmail: user?.email,
       profileData: profile ? {
         role: profile.role,
         club_id: profile.club_id,

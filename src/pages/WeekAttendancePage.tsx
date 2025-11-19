@@ -1192,7 +1192,7 @@ const WeekAttendancePage = () => {
                                           ) : (
                                             <>
                                               <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                                              Comunicar hueco libre
+                                              Comunicar hueco
                                             </>
                                           )}
                                         </Button>

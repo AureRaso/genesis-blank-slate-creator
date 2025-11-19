@@ -39,7 +39,14 @@
       "Bash(fi)",
       "Bash(timeout:*)",
       "Bash(ping:*)",
-      "Bash(nul)"
+      "Bash(nul)",
+      "Bash(where:*)",
+      "Bash(copy \"src\\assets\\PadeLock_D5Red.png\" \"public\\icon-192.png\")",
+      "Bash(copy \"src\\assets\\PadeLock_D5Red.png\" \"public\\icon-512.png\")",
+      "Bash(git restore:*)",
+      "Bash(then cat .env)",
+      "Bash(else echo \"Archivo .env no encontrado\")",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

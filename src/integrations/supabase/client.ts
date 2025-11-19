@@ -8,10 +8,108 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Test 1: Verify localStorage is accessible and writable
+console.log('🔍 [SUPABASE CLIENT] Step 1: Testing localStorage access...');
+try {
+  const testKey = 'supabase-test-key';
+  const testValue = 'test-value-' + Date.now();
+  localStorage.setItem(testKey, testValue);
+  const readValue = localStorage.getItem(testKey);
+  localStorage.removeItem(testKey);
+
+  if (readValue === testValue) {
+    console.log('✅ [SUPABASE CLIENT] localStorage is WRITABLE and READABLE');
+  } else {
+    console.error('❌ [SUPABASE CLIENT] localStorage READ/WRITE MISMATCH!', { written: testValue, read: readValue });
+  }
+} catch (error) {
+  console.error('❌ [SUPABASE CLIENT] localStorage is NOT accessible!', error);
+}
+
+// Test 2: Check current localStorage state
+console.log('🔍 [SUPABASE CLIENT] Step 2: Checking current localStorage state...');
+const allKeys = Object.keys(localStorage);
+const supabaseKeys = allKeys.filter(k => k.includes('supabase'));
+console.log('📊 [SUPABASE CLIENT] localStorage keys:', {
+  total: allKeys.length,
+  supabaseKeys: supabaseKeys.length,
+  allKeys: allKeys.slice(0, 10)  // Show first 10 keys
+});
+
+if (supabaseKeys.length > 0) {
+  console.log('📋 [SUPABASE CLIENT] Existing Supabase keys:', supabaseKeys);
+  supabaseKeys.forEach(key => {
+    const value = localStorage.getItem(key);
+    console.log(`  - ${key}: ${value ? value.substring(0, 50) + '...' : 'NULL'}`);
+  });
+}
+
+// Test 3: Create custom storage wrapper to monitor all localStorage operations
+console.log('🔍 [SUPABASE CLIENT] Step 3: Creating monitored storage wrapper...');
+
+const monitoredStorage = {
+  getItem: (key: string) => {
+    const value = localStorage.getItem(key);
+    console.log(`📖 [STORAGE READ] key="${key}", value=${value ? 'EXISTS (' + value.length + ' chars)' : 'NULL'}`);
+    return value;
+  },
+  setItem: (key: string, value: string) => {
+    console.log(`📝 [STORAGE WRITE] key="${key}", value length=${value.length} chars`);
+    console.log(`📝 [STORAGE WRITE] First 100 chars:`, value.substring(0, 100));
+    try {
+      localStorage.setItem(key, value);
+      console.log(`✅ [STORAGE WRITE] Successfully wrote to localStorage`);
+
+      // Verify write
+      const readBack = localStorage.getItem(key);
+      if (readBack === value) {
+        console.log(`✅ [STORAGE VERIFY] Write verified successfully`);
+      } else {
+        console.error(`❌ [STORAGE VERIFY] Write verification FAILED!`);
+      }
+    } catch (error) {
+      console.error(`❌ [STORAGE WRITE] Failed to write to localStorage:`, error);
+    }
+  },
+  removeItem: (key: string) => {
+    console.log(`🗑️ [STORAGE DELETE] key="${key}"`);
+    localStorage.removeItem(key);
+  }
+};
+
+console.log('🔍 [SUPABASE CLIENT] Step 4: Creating Supabase client with monitored storage...');
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: monitoredStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'implicit'
+  }
+});
+
+console.log('✅ [SUPABASE CLIENT] Client created successfully');
+
+// Test 5: Monitor auth state changes
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔐 [AUTH STATE CHANGE]', {
+    event,
+    hasSession: !!session,
+    user: session?.user?.email,
+    expiresAt: session?.expires_at,
+    timestamp: new Date().toISOString()
+  });
+
+  if (session) {
+    console.log('✅ [AUTH STATE CHANGE] Session detected, checking localStorage...');
+    const supabaseKeys = Object.keys(localStorage).filter(k => k.includes('supabase'));
+    console.log('📊 [AUTH STATE CHANGE] Supabase keys in localStorage:', supabaseKeys.length);
+    supabaseKeys.forEach(key => {
+      const value = localStorage.getItem(key);
+      console.log(`  - ${key}: ${value ? 'EXISTS (' + value.length + ' chars)' : 'NULL'}`);
+    });
+  } else {
+    console.log('⚠️ [AUTH STATE CHANGE] No session in state change event');
   }
 });
