@@ -23,7 +23,10 @@ interface ReminderEmailData {
   confirmationLink: string;
 }
 
-async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
+async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promise<boolean> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
+
   try {
     console.log('📧 Sending reminder email to:', data.studentEmail);
 
@@ -116,6 +119,13 @@ async function sendReminderEmail(data: ReminderEmailData): Promise<boolean> {
     console.log('Resend API Response:', responseData);
 
     if (!response.ok) {
+      // Handle rate limit error (429)
+      if (response.status === 429 && retryCount < MAX_RETRIES) {
+        console.warn(`⚠️ Rate limit hit for ${data.studentEmail}. Retrying in ${RETRY_DELAY}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return sendReminderEmail(data, retryCount + 1);
+      }
+
       console.error('Resend API Error:', responseData);
       return false;
     }
@@ -278,8 +288,8 @@ serve(async (req) => {
           totalRemindersSent++;
         }
 
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
+        await new Promise(resolve => setTimeout(resolve, 600));
       }
     }
 
