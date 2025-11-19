@@ -137,20 +137,21 @@ serve(async (req) => {
   try {
     console.log('🔄 Starting attendance reminder job...');
 
-    // Calculate time window: 6 hours from now
+    // Calculate time window: 24 hours from now (with 1-hour window)
     const now = new Date();
-    const sixHoursFromNow = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-    const sevenHoursFromNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
     console.log('⏰ Looking for classes between:', {
-      start: sixHoursFromNow.toISOString(),
-      end: sevenHoursFromNow.toISOString()
+      start: twentyFourHoursFromNow.toISOString(),
+      end: twentyFiveHoursFromNow.toISOString()
     });
 
-    // Get today's date in YYYY-MM-DD format
-    const today = now.toISOString().split('T')[0];
+    // Get tomorrow's date in YYYY-MM-DD format (since we're looking 24 hours ahead)
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0];
 
-    // 1. Get all active programmed classes for today
+    // 1. Get all active programmed classes for tomorrow
     const { data: classes, error: classesError} = await supabase
       .from('programmed_classes')
       .select(`
@@ -164,19 +165,19 @@ serve(async (req) => {
         )
       `)
       .eq('is_active', true)
-      .lte('start_date', today)
-      .gte('end_date', today);
+      .lte('start_date', tomorrowDate)
+      .gte('end_date', tomorrowDate);
 
     if (classesError) {
       throw new Error(`Error fetching classes: ${classesError.message}`);
     }
 
-    console.log(`📚 Found ${classes?.length || 0} active classes for today`);
+    console.log(`📚 Found ${classes?.length || 0} active classes for tomorrow`);
 
     if (!classes || classes.length === 0) {
       return new Response(JSON.stringify({
         success: true,
-        message: 'No classes found for today',
+        message: 'No classes found for tomorrow',
         remindersSent: 0
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -184,16 +185,16 @@ serve(async (req) => {
       });
     }
 
-    // Filter classes that start in ~6 hours
+    // Filter classes that start in ~24 hours (between 24-25 hours from now)
     const targetClasses = classes.filter(cls => {
       const [hours, minutes] = cls.start_time.split(':').map(Number);
-      const classDateTime = new Date(today);
+      const classDateTime = new Date(tomorrowDate);
       classDateTime.setHours(hours, minutes, 0, 0);
 
-      return classDateTime >= sixHoursFromNow && classDateTime < sevenHoursFromNow;
+      return classDateTime >= twentyFourHoursFromNow && classDateTime < twentyFiveHoursFromNow;
     });
 
-    console.log(`🎯 Found ${targetClasses.length} classes starting in ~6 hours`);
+    console.log(`🎯 Found ${targetClasses.length} classes starting in ~24 hours`);
 
     // Filter out cancelled classes
     const classIds = targetClasses.map(c => c.id);
@@ -201,7 +202,7 @@ serve(async (req) => {
       .from('cancelled_classes')
       .select('class_id')
       .in('class_id', classIds)
-      .eq('cancelled_date', today);
+      .eq('cancelled_date', tomorrowDate);
 
     const cancelledClassIds = new Set(cancelledData?.map(c => c.class_id) || []);
 
@@ -217,15 +218,13 @@ serve(async (req) => {
 
     let totalRemindersSent = 0;
 
-    // 2. For each target class, find participants without confirmation
+    // 2. For each target class, send reminders to all active participants
     for (const classInfo of activeTargetClasses) {
       console.log(`\n📋 Processing class: ${classInfo.name} at ${classInfo.start_time}`);
 
-      // Get participants for this class who haven't confirmed attendance
-      // Note: absence_confirmed can be true (confirmed absence), false (not confirmed), or null (not confirmed)
-      // We want to send reminders when:
-      // - attendance_confirmed_for_date is NULL (hasn't confirmed attendance)
-      // - AND absence_confirmed is NOT true (hasn't confirmed they're NOT coming)
+      // Get all active participants for this class who haven't confirmed absence
+      // We send reminders to everyone who is confirmed (auto or manual) to remind them
+      // We DON'T send to people who have confirmed they're NOT coming (absence_confirmed = true)
       const { data: participants, error: participantsError } = await supabase
         .from('class_participants')
         .select(`
@@ -241,7 +240,6 @@ serve(async (req) => {
         `)
         .eq('class_id', classInfo.id)
         .eq('status', 'active')
-        .is('attendance_confirmed_for_date', null)
         .neq('absence_confirmed', true);
 
       if (participantsError) {
@@ -249,7 +247,7 @@ serve(async (req) => {
         continue;
       }
 
-      console.log(`👥 Found ${participants?.length || 0} participants without confirmation`);
+      console.log(`👥 Found ${participants?.length || 0} participants to remind (confirmed and attending)`);
 
       if (!participants || participants.length === 0) {
         continue;
@@ -270,7 +268,7 @@ serve(async (req) => {
           studentEmail: enrollment.email,
           studentName: enrollment.full_name,
           className: classInfo.name,
-          classDate: today,
+          classDate: tomorrowDate,
           classTime: classInfo.start_time,
           clubName: (classInfo.clubs as any)?.name || '',
           confirmationLink
