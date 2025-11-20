@@ -7,6 +7,7 @@ import {
   useResolveNotification,
   type StudentScoreNotification,
 } from "@/hooks/useScoreNotifications";
+import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,9 @@ import {
   User,
   Calendar,
   TrendingDown,
+  Loader2,
+  Skull,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -36,6 +40,78 @@ interface NotificationsPanelProps {
   clubId?: string;
   showResolved?: boolean;
 }
+
+// Component to display student behavior metrics (compact version)
+const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: string }) => {
+  // Para las notificaciones, usamos un UUID genérico ya que la función requiere un class_id
+  // pero las métricas se calculan a nivel de student_enrollment
+  const PLACEHOLDER_CLASS_ID = "00000000-0000-0000-0000-000000000000";
+
+  const { data: metrics, isLoading } = useStudentBehaviorMetrics(
+    studentEnrollmentId,
+    PLACEHOLDER_CLASS_ID
+  );
+  const badge = getReliabilityBadge(metrics);
+
+  if (isLoading) {
+    return (
+      <div className="mt-2 pt-2 border-t border-gray-200">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Cargando historial...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!metrics) return null;
+
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-200">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs font-semibold text-gray-700">📊 Historial:</span>
+        <Badge
+          variant="outline"
+          className={`text-[10px] px-1.5 py-0 h-4 ${
+            badge.color === 'green' ? 'bg-green-100 text-green-700 border-green-300' :
+            badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+            badge.color === 'red' ? 'bg-red-100 text-red-700 border-red-300' :
+            badge.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+            'bg-gray-100 text-gray-700 border-gray-300'
+          }`}
+        >
+          {badge.emoji} {badge.text}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+        <div className="flex items-center gap-1">
+          <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+          <span className="text-gray-600">Asistió:</span>
+          <span className="font-semibold">{metrics.total_attended}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Skull className="h-3 w-3 text-orange-600 flex-shrink-0" />
+          <span className="text-gray-600">Tardíos:</span>
+          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <span className="text-gray-600">Anticipados:</span>
+          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <X className="h-3 w-3 text-gray-500 flex-shrink-0" />
+          <span className="text-gray-600">Canceladas:</span>
+          <span className="font-semibold">{metrics.club_cancelled_classes}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
   clubId,
@@ -208,6 +284,11 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     ({notification.student_enrollment?.email})
                   </span>
                 </div>
+
+                {/* Historial de asistencia del alumno */}
+                <StudentMetricsCompact
+                  studentEnrollmentId={notification.student_enrollment_id}
+                />
 
                 {/* Mensaje */}
                 <p className="text-sm">{notification.message}</p>

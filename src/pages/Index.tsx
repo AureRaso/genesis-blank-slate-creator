@@ -7,8 +7,9 @@ import { getWaitlistUrl } from "@/utils/url";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet } from "lucide-react";
+import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet, Loader2, Skull } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +37,76 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// Component to display student behavior metrics (compact version for dashboard)
+const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: string }) => {
+  const PLACEHOLDER_CLASS_ID = "00000000-0000-0000-0000-000000000000";
+
+  const { data: metrics, isLoading } = useStudentBehaviorMetrics(
+    studentEnrollmentId,
+    PLACEHOLDER_CLASS_ID
+  );
+  const badge = getReliabilityBadge(metrics);
+
+  if (isLoading) {
+    return (
+      <div className="mt-2 pt-2 border-t border-gray-200">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Cargando historial...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!metrics) return null;
+
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-200">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs font-semibold text-gray-700">📊 Historial:</span>
+        <Badge
+          variant="outline"
+          className={`text-[10px] px-1.5 py-0 h-4 ${
+            badge.color === 'green' ? 'bg-green-100 text-green-700 border-green-300' :
+            badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+            badge.color === 'red' ? 'bg-red-100 text-red-700 border-red-300' :
+            badge.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+            'bg-gray-100 text-gray-700 border-gray-300'
+          }`}
+        >
+          {badge.emoji} {badge.text}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+        <div className="flex items-center gap-1">
+          <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+          <span className="text-gray-600">Asistió:</span>
+          <span className="font-semibold">{metrics.total_attended}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Skull className="h-3 w-3 text-orange-600 flex-shrink-0" />
+          <span className="text-gray-600">Tardíos:</span>
+          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <span className="text-gray-600">Anticipados:</span>
+          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <X className="h-3 w-3 text-gray-500 flex-shrink-0" />
+          <span className="text-gray-600">Canceladas:</span>
+          <span className="font-semibold">{metrics.club_cancelled_classes}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Index = () => {
   const { user, profile, isAdmin, loading } = useAuth();
@@ -809,6 +880,8 @@ const Index = () => {
                         <p className="text-xs text-gray-500 mt-1">
                           Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
                         </p>
+                        {/* Historial de asistencia del alumno */}
+                        <StudentMetricsCompact studentEnrollmentId={request.student_enrollment_id} />
                       </div>
                     </div>
                     <div className="flex gap-2 ml-3">
@@ -1102,54 +1175,58 @@ const Index = () => {
                 return (
                   <div
                     key={`waitlist-mobile-${request.id}`}
-                    className={`flex items-center justify-between p-4 rounded-lg bg-white border ${borderClass} transition-all duration-300`}
+                    className={`flex flex-col p-4 rounded-lg bg-white border ${borderClass} transition-all duration-300`}
                   >
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
-                        <Bell className="h-4 w-4 text-blue-600" />
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
+                          <Bell className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#10172a]">
+                            {request.user_profile.full_name}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#10172a]">
-                          {request.user_profile.full_name}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
-                        </p>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 border-green-200 hover:bg-green-50"
+                          onClick={() => {
+                            setProcessedRequests(prev => new Map(prev).set(request.id, 'approved'));
+                            approveRequest({
+                              waitlistId: request.id,
+                              classId: request.class_id,
+                              userId: request.user_id
+                            });
+                          }}
+                          disabled={isApproving || isRejecting}
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 border-red-200 hover:bg-red-50"
+                          onClick={() => {
+                            setProcessedRequests(prev => new Map(prev).set(request.id, 'rejected'));
+                            rejectRequest({ waitlistId: request.id });
+                          }}
+                          disabled={isApproving || isRejecting}
+                        >
+                          <X className="h-4 w-4 text-red-600" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2 ml-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 w-8 p-0 border-green-200 hover:bg-green-50"
-                        onClick={() => {
-                          setProcessedRequests(prev => new Map(prev).set(request.id, 'approved'));
-                          approveRequest({
-                            waitlistId: request.id,
-                            classId: request.class_id,
-                            userId: request.user_id
-                          });
-                        }}
-                        disabled={isApproving || isRejecting}
-                      >
-                        <Check className="h-4 w-4 text-green-600" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 w-8 p-0 border-red-200 hover:bg-red-50"
-                        onClick={() => {
-                          setProcessedRequests(prev => new Map(prev).set(request.id, 'rejected'));
-                          rejectRequest({ waitlistId: request.id });
-                        }}
-                        disabled={isApproving || isRejecting}
-                      >
-                        <X className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
+                    {/* Historial de asistencia del alumno */}
+                    <StudentMetricsCompact studentEnrollmentId={request.student_enrollment_id} />
                   </div>
                 );
               }

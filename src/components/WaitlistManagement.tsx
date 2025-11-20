@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useClassWaitlist, useAcceptFromWaitlist, useRejectFromWaitlist } from "@/hooks/useClassWaitlist";
+import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2 } from "lucide-react";
+import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2, AlertTriangle, Ban, Skull, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -22,6 +23,71 @@ interface WaitlistManagementProps {
   classDate: string;
   className: string;
 }
+
+// Component to display student behavior metrics
+const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnrollmentId: string; classId: string }) => {
+  const { data: metrics, isLoading } = useStudentBehaviorMetrics(studentEnrollmentId, classId);
+  const badge = getReliabilityBadge(metrics);
+
+  if (isLoading) {
+    return (
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Cargando historial...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!metrics) return null;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-200">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-semibold text-gray-700">📊 Historial de asistencia:</span>
+        <Badge
+          variant="outline"
+          className={`text-[10px] px-1.5 py-0 h-4 ${
+            badge.color === 'green' ? 'bg-green-100 text-green-700 border-green-300' :
+            badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+            badge.color === 'red' ? 'bg-red-100 text-red-700 border-red-300' :
+            badge.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-300' :
+            'bg-gray-100 text-gray-700 border-gray-300'
+          }`}
+        >
+          {badge.emoji} {badge.text}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="flex items-center gap-1.5">
+          <Check className="h-3.5 w-3.5 text-green-600" />
+          <span className="text-gray-600">Asistió:</span>
+          <span className="font-semibold">{metrics.total_attended}</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Skull className="h-3.5 w-3.5 text-orange-600" />
+          <span className="text-gray-600">Avisos tardíos:</span>
+          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <X className="h-3.5 w-3.5 text-red-600" />
+          <span className="text-gray-600">Avisos anticipados:</span>
+          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <X className="h-3.5 w-3.5 text-gray-500" />
+          <span className="text-gray-600">Canceladas (club):</span>
+          <span className="font-semibold">{metrics.club_cancelled_classes}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WaitlistManagement = ({ classId, classDate, className }: WaitlistManagementProps) => {
   const { data: waitlist = [], isLoading } = useClassWaitlist(classId, classDate);
@@ -142,7 +208,8 @@ const WaitlistManagement = ({ classId, classDate, className }: WaitlistManagemen
                   key={entry.id}
                   className="p-4 rounded-lg border-2 border-blue-200 bg-white hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  {/* Header con info del estudiante y botones - Desktop */}
+                  <div className="hidden md:flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-blue-600 border-blue-300">
@@ -168,6 +235,12 @@ const WaitlistManagement = ({ classId, classDate, className }: WaitlistManagemen
                           </span>
                         </div>
                       </div>
+
+                      {/* Student behavior metrics */}
+                      <StudentMetricsDisplay
+                        studentEnrollmentId={entry.student_enrollment_id}
+                        classId={classId}
+                      />
                     </div>
 
                     <div className="flex flex-col gap-2 shrink-0">
@@ -191,6 +264,65 @@ const WaitlistManagement = ({ classId, classDate, className }: WaitlistManagemen
                         Rechazar
                       </Button>
                     </div>
+                  </div>
+
+                  {/* Layout mobile optimizado */}
+                  <div className="md:hidden flex flex-col gap-3">
+                    {/* Primera sección: Info + Botones */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <Badge variant="outline" className="text-blue-600 border-blue-300">
+                            #{index + 1}
+                          </Badge>
+                          <span className="font-semibold text-base">{student.full_name}</span>
+                          {student.level && (
+                            <Badge variant="secondary" className="text-xs">
+                              Nivel {student.level}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Email:</span>
+                            <span className="truncate">{student.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <span>
+                              Solicitado: {format(new Date(entry.requested_at), "HH:mm 'del' d MMM", { locale: es })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 h-8 px-3"
+                          onClick={() => handleAccept(entry.id, entry.student_enrollment_id, student.full_name)}
+                          disabled={isAccepting || isRejecting}
+                        >
+                          <UserCheck className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50 h-8 px-3"
+                          onClick={() => handleReject(entry.id, entry.student_enrollment_id, student.full_name)}
+                          disabled={isAccepting || isRejecting}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Segunda sección: Historial de asistencia */}
+                    <StudentMetricsDisplay
+                      studentEnrollmentId={entry.student_enrollment_id}
+                      classId={classId}
+                    />
                   </div>
                 </div>
               );

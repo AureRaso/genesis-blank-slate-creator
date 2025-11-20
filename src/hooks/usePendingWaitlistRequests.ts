@@ -7,6 +7,7 @@ export interface WaitlistRequest {
   id: string;
   class_id: string;
   user_id: string;
+  student_enrollment_id: string;
   joined_at: string;
   status: string;
   position: number;
@@ -146,6 +147,7 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
           id: entry.id,
           class_id: entry.class_id,
           user_id: '', // Not used since we don't have profile_id in student_enrollments
+          student_enrollment_id: entry.student_enrollment_id,
           joined_at: entry.requested_at,
           status: entry.status,
           position: 0, // Position is not used in new system

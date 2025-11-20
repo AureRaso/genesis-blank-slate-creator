@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X, UserMinus } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X, UserMinus } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -42,6 +42,46 @@ import {
 const getDayOfWeekInSpanish = (date: Date): string => {
   const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   return days[date.getDay()];
+};
+
+// Check if absence was notified with less than 5 hours notice
+const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedDate: string): { isLate: boolean; hoursNotice: number } => {
+  console.log('🔍 isLateAbsenceNotice called:', {
+    absence_confirmed: participant.absence_confirmed,
+    absence_confirmed_at: participant.absence_confirmed_at,
+    classStartTime,
+    selectedDate
+  });
+
+  if (!participant.absence_confirmed || !participant.absence_confirmed_at) {
+    console.log('❌ No absence data, returning false');
+    return { isLate: false, hoursNotice: 0 };
+  }
+
+  // Build class start datetime
+  const [hours, minutes] = classStartTime.split(':').map(Number);
+  const classDateTime = new Date(selectedDate);
+  classDateTime.setHours(hours, minutes, 0, 0);
+
+  // Timestamp when absence was confirmed
+  const absenceConfirmedTime = new Date(participant.absence_confirmed_at);
+
+  // Calculate difference in hours
+  const diffInMs = classDateTime.getTime() - absenceConfirmedTime.getTime();
+  const diffInHours = diffInMs / (1000 * 60 * 60);
+
+  console.log('⏰ Time calculation:', {
+    classDateTime: classDateTime.toISOString(),
+    absenceConfirmedTime: absenceConfirmedTime.toISOString(),
+    diffInHours,
+    isLate: diffInHours < 5 && diffInHours >= 0
+  });
+
+  // If confirmed with less than 5 hours notice and it's in the future
+  return {
+    isLate: diffInHours < 5 && diffInHours >= 0,
+    hoursNotice: diffInHours
+  };
 };
 
 const WeekAttendancePage = () => {
@@ -124,7 +164,7 @@ const WeekAttendancePage = () => {
   // Estados para diálogos de confirmación
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    type: 'attendance' | 'absence' | 'clear' | 'remove';
+    type: 'attendance' | 'absence' | 'remove';
     participantId: string;
     participantName: string;
     scheduledDate?: string;
@@ -269,15 +309,6 @@ const WeekAttendancePage = () => {
     });
   };
 
-  const handleConfirmClear = (participantId: string, participantName: string) => {
-    setConfirmDialog({
-      open: true,
-      type: 'clear',
-      participantId,
-      participantName,
-    });
-  };
-
   const handleConfirmRemove = (participantId: string, participantName: string) => {
     setConfirmDialog({
       open: true,
@@ -325,8 +356,6 @@ const WeekAttendancePage = () => {
         participantId: confirmDialog.participantId,
         reason: 'Marcado por profesor',
       });
-    } else if (confirmDialog.type === 'clear') {
-      clearStatus.mutate(confirmDialog.participantId);
     } else if (confirmDialog.type === 'remove') {
       removeParticipant.mutate(confirmDialog.participantId);
     }
@@ -909,6 +938,9 @@ const WeekAttendancePage = () => {
                               console.log('🎯 Participant render:', {
                                 name: participant.student_enrollment?.full_name,
                                 isConfirmed,
+                                isAbsent,
+                                absence_reason: participant.absence_reason,
+                                absence_confirmed_at: participant.absence_confirmed_at,
                                 confirmed_by_trainer: participant.confirmed_by_trainer,
                                 shouldShowIndicator: isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer
                               });
@@ -1018,23 +1050,6 @@ const WeekAttendancePage = () => {
                                           <span className="hidden sm:inline">Ausente</span>
                                         </Button>
 
-                                        {/* Reset Button */}
-                                        {(isConfirmed || isAbsent) && !participant.is_substitute && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => handleConfirmClear(
-                                              participant.id,
-                                              participant.student_enrollment!.full_name
-                                            )}
-                                            disabled={clearStatus.isPending}
-                                            className="h-9 w-9 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                                            title="Restablecer"
-                                          >
-                                            <RotateCcw className="h-4 w-4" />
-                                          </Button>
-                                        )}
-
                                         {/* Delete Button - Solo para sustitutos */}
                                         {participant.is_substitute && (
                                           <Button
@@ -1068,17 +1083,44 @@ const WeekAttendancePage = () => {
                                     )}
 
                                     {/* Absence Reason */}
-                                    {isAbsent && participant.absence_reason && (
-                                      <div className="mt-3 pt-3 border-t border-red-200/50">
-                                        <div className="flex items-start gap-2">
-                                          <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                                          <div>
-                                            <p className="text-xs font-medium text-red-900 mb-0.5">Motivo de ausencia</p>
-                                            <p className="text-xs text-red-700">{participant.absence_reason}</p>
+                                    {isAbsent && (() => {
+                                      const lateNotice = isLateAbsenceNotice(participant, classData.start_time, notificationDate);
+                                      const hoursNotice = Math.floor(lateNotice.hoursNotice);
+                                      const minutesNotice = Math.round((lateNotice.hoursNotice - hoursNotice) * 60);
+
+                                      // Only show if there's a reason OR if it's a late notice
+                                      if (!participant.absence_reason && !lateNotice.isLate) {
+                                        return null;
+                                      }
+
+                                      return (
+                                        <div className="mt-3 pt-3 border-t border-red-200/50">
+                                          <div className="flex items-start gap-2">
+                                            <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                                <p className="text-xs font-medium text-red-900">
+                                                  {participant.absence_reason ? 'Motivo de ausencia' : 'Ausencia confirmada'}
+                                                </p>
+                                                {lateNotice.isLate && (
+                                                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 bg-orange-600 hover:bg-orange-700">
+                                                    ⚠️ Aviso tardío (&lt;5h)
+                                                  </Badge>
+                                                )}
+                                              </div>
+                                              {participant.absence_reason && (
+                                                <p className="text-xs text-red-700">{participant.absence_reason}</p>
+                                              )}
+                                              {lateNotice.isLate && (
+                                                <p className="text-[10px] text-orange-700 mt-1 italic font-medium">
+                                                  Avisó {hoursNotice > 0 ? `${hoursNotice}h` : ''}{minutesNotice > 0 ? ` ${minutesNotice}min` : ''} antes de la clase
+                                                </p>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               );
@@ -1399,7 +1441,6 @@ const WeekAttendancePage = () => {
                 <AlertDialogTitle>
                   {confirmDialog.type === 'attendance' && '¿Marcar como presente?'}
                   {confirmDialog.type === 'absence' && '¿Marcar como ausente?'}
-                  {confirmDialog.type === 'clear' && '¿Restablecer estado?'}
                   {confirmDialog.type === 'remove' && '¿Eliminar alumno de la clase?'}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
@@ -1415,13 +1456,6 @@ const WeekAttendancePage = () => {
                       Vas a marcar a <strong>{confirmDialog.participantName}</strong> como ausente.
                       <br /><br />
                       Esta acción se reflejará en el dashboard del alumno y en las estadísticas de asistencia.
-                    </>
-                  )}
-                  {confirmDialog.type === 'clear' && (
-                    <>
-                      Vas a restablecer el estado de <strong>{confirmDialog.participantName}</strong> a pendiente.
-                      <br /><br />
-                      Esto eliminará la confirmación de asistencia o ausencia actual.
                     </>
                   )}
                   {confirmDialog.type === 'remove' && (
