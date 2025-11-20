@@ -79,7 +79,7 @@ async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promi
         ⚠️ ¿No puedes asistir?
       </p>
       <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
-        Marca tu ausencia en la app para que otra persona pueda aprovechar tu plaza. ¡Es importante!
+        Marca tu ausencia en la web al menos 5 horas antes del entrenamiento para que otra persona pueda aprovechar tu plaza y tú recuperar la clase.
       </p>
     </div>
 

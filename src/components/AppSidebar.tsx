@@ -83,23 +83,27 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {/* Sistema de Scoring */}
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/trainer-reports"}>
-                <Link to="/dashboard/trainer-reports">
-                  <TrendingUp />
-                  <span>Reportes y Métricas</span>
-                </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/student-scores"}>
-                <Link to="/dashboard/student-scores">
-                  <Award />
-                  <span>Scores de Alumnos</span>
-                </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem> */}
+              {/* Sistema de Scoring - Visible para trainers con scoring habilitado */}
+              {club?.enable_scoring_reports && (
+                <>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/trainer-reports"}>
+                    <Link to="/dashboard/trainer-reports">
+                      <TrendingUp />
+                      <span>Reportes y Métricas</span>
+                    </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/student-scores"}>
+                    <Link to="/dashboard/student-scores">
+                      <Award />
+                      <span>Scores de Alumnos</span>
+                    </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
@@ -212,17 +216,17 @@ const AppSidebar = () => {
         url: "/dashboard/today-attendance",
         icon: ClipboardCheck
       },
-      // Sistema de Scoring
-      // {
-      //   title: "Reportes y Métricas",
-      //   url: "/dashboard/trainer-reports",
-      //   icon: TrendingUp
-      // },
-      // {
-      //   title: "Scores de Alumnos",
-      //   url: "/dashboard/student-scores",
-      //   icon: Award
-      // },
+      // Sistema de Scoring - Visible para admins (verificación de permisos dentro de cada página)
+      {
+        title: "Reportes y Métricas",
+        url: "/dashboard/trainer-reports",
+        icon: TrendingUp
+      },
+      {
+        title: "Scores de Alumnos",
+        url: "/dashboard/student-scores",
+        icon: Award
+      },
       {
         title: "Control de pagos",
         url: "/dashboard/monthly-payments",
