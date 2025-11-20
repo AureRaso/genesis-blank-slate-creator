@@ -49,7 +49,8 @@
       "Bash(psql:*)",
       "Bash(then grep -E \"DATABASE_URL|SUPABASE\" .env)",
       "Bash(else echo \"No .env file found\")",
-      "Bash(then grep \"VITE_SUPABASE\" .env)"
+      "Bash(then grep \"VITE_SUPABASE\" .env)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
