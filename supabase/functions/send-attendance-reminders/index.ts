@@ -161,6 +161,13 @@ serve(async (req) => {
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const tomorrowDate = tomorrow.toISOString().split('T')[0];
 
+    // Get tomorrow's day of week in Spanish format (to match days_of_week array)
+    const dayOfWeekNumber = tomorrow.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysMap = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const tomorrowDayName = daysMap[dayOfWeekNumber];
+
+    console.log(`📅 Tomorrow is: ${tomorrowDate} (${tomorrowDayName})`);
+
     // 1. Get all active programmed classes for tomorrow
     const { data: classes, error: classesError} = await supabase
       .from('programmed_classes')
@@ -168,6 +175,7 @@ serve(async (req) => {
         id,
         name,
         start_time,
+        days_of_week,
         club_id,
         clubs:club_id (
           name,
@@ -182,7 +190,7 @@ serve(async (req) => {
       throw new Error(`Error fetching classes: ${classesError.message}`);
     }
 
-    console.log(`📚 Found ${classes?.length || 0} active classes for tomorrow`);
+    console.log(`📚 Found ${classes?.length || 0} active classes in date range`);
 
     if (!classes || classes.length === 0) {
       return new Response(JSON.stringify({
@@ -195,13 +203,29 @@ serve(async (req) => {
       });
     }
 
-    // Filter classes that start in ~24 hours (between 24-25 hours from now)
+    // Filter classes that:
+    // 1. Match tomorrow's day of week
+    // 2. Start in ~24 hours (between 24-25 hours from now)
     const targetClasses = classes.filter(cls => {
+      // Check if class occurs on tomorrow's day of week
+      const daysOfWeek = cls.days_of_week || [];
+      if (!daysOfWeek.includes(tomorrowDayName)) {
+        console.log(`⏭️ Skipping ${cls.name} - not scheduled for ${tomorrowDayName} (scheduled for: ${daysOfWeek.join(', ')})`);
+        return false;
+      }
+
+      // Check if class starts in the 24-25 hour window
       const [hours, minutes] = cls.start_time.split(':').map(Number);
       const classDateTime = new Date(tomorrowDate);
       classDateTime.setHours(hours, minutes, 0, 0);
 
-      return classDateTime >= twentyFourHoursFromNow && classDateTime < twentyFiveHoursFromNow;
+      const isInTimeWindow = classDateTime >= twentyFourHoursFromNow && classDateTime < twentyFiveHoursFromNow;
+
+      if (!isInTimeWindow) {
+        console.log(`⏭️ Skipping ${cls.name} at ${cls.start_time} - outside 24-hour window`);
+      }
+
+      return isInTimeWindow;
     });
 
     console.log(`🎯 Found ${targetClasses.length} classes starting in ~24 hours`);
