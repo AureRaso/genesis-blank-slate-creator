@@ -50,7 +50,11 @@
       "Bash(then grep -E \"DATABASE_URL|SUPABASE\" .env)",
       "Bash(else echo \"No .env file found\")",
       "Bash(then grep \"VITE_SUPABASE\" .env)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(curl:*)",
+      "Bash(then grep \"SUPABASE_SERVICE_ROLE_KEY\" .env)",
+      "Bash(del \"C:\\Users\\sefac\\Documents\\Sergio\\Proyectos\\genesis-blank-slate-creator\\supabase\\migrations\\20250121000000_update_cron_to_30_minutes.sql\")",
+      "Bash(then grep \"DATABASE_URL\" .env)"
     ],
     "deny": [],
     "ask": []

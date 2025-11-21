@@ -9,6 +9,10 @@ const corsHeaders = {
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const WHATSAPP_REMINDER_URL = Deno.env.get('WHATSAPP_REMINDER_URL') ||
+  'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/send-class-reminder-whatsapp';
+const TEST_SECRET = Deno.env.get('TEST_SECRET') || 'whatsapp-test-2025';
+const GALI_CLUB_ID = 'cc0a5265-99c5-4b99-a479-5334280d0c6d'; // Gali club ID for WhatsApp testing
 
 // Create Supabase client with service role (bypasses RLS)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -21,6 +25,36 @@ interface ReminderEmailData {
   classTime: string;
   clubName: string;
   confirmationLink: string;
+}
+
+async function sendWhatsAppReminder(studentEmail: string): Promise<boolean> {
+  try {
+    console.log('📱 Sending WhatsApp reminder to:', studentEmail);
+
+    const response = await fetch(WHATSAPP_REMINDER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userEmail: studentEmail,
+        testSecret: TEST_SECRET
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log('✅ WhatsApp reminder sent successfully');
+      return true;
+    } else {
+      console.error('❌ WhatsApp reminder failed:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error sending WhatsApp reminder:', error);
+    return false;
+  }
 }
 
 async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promise<boolean> {
@@ -147,26 +181,44 @@ serve(async (req) => {
   try {
     console.log('🔄 Starting attendance reminder job...');
 
-    // Calculate time window: 24 hours from now (with 1-hour window)
     const now = new Date();
-    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
-    console.log('⏰ Looking for classes between:', {
-      start: twentyFourHoursFromNow.toISOString(),
-      end: twentyFiveHoursFromNow.toISOString()
-    });
+    // Get current time in Spain timezone (Europe/Madrid)
+    const spainTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
+    const spainTime = new Date(spainTimeStr);
+    const currentHour = spainTime.getHours();
+    const currentMinutes = spainTime.getMinutes();
 
-    // Get tomorrow's date in YYYY-MM-DD format (since we're looking 24 hours ahead)
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    console.log(`⏰ Current time in Spain: ${spainTime.toLocaleString()}, ${currentHour}:${currentMinutes.toString().padStart(2, '0')}`);
 
-    // Get tomorrow's day of week in Spanish format (to match days_of_week array)
-    const dayOfWeekNumber = tomorrow.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const daysMap = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-    const tomorrowDayName = daysMap[dayOfWeekNumber];
+    // Calculate the 24-hour window: classes starting between 24h and 24h30m from now
+    // This way, with cron running every 30 min, each class gets exactly one reminder
+    const twentyFourHoursFromNow = new Date(spainTime.getTime() + 24 * 60 * 60 * 1000);
+    const twentyFourAndHalfHoursFromNow = new Date(spainTime.getTime() + (24 * 60 + 30) * 60 * 1000);
 
-    console.log(`📅 Tomorrow is: ${tomorrowDate} (${tomorrowDayName})`);
+    // Get the target date (could be tomorrow or day after if it's late)
+    const targetDate = twentyFourHoursFromNow.toISOString().split('T')[0];
+
+    // Get target time window in HH:MM format
+    const windowStartTime = `${twentyFourHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+    const windowEndTime = `${twentyFourAndHalfHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourAndHalfHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+
+    console.log(`🎯 Looking for classes on ${targetDate} between ${windowStartTime} and ${windowEndTime}`);
+
+    // Get target day of week in Spanish format (support both accented and unaccented)
+    const dayOfWeekNumber = twentyFourHoursFromNow.getDay();
+    const daysMap: { [key: number]: string[] } = {
+      0: ['domingo'],
+      1: ['lunes'],
+      2: ['martes'],
+      3: ['miercoles', 'miércoles'],
+      4: ['jueves'],
+      5: ['viernes'],
+      6: ['sabado', 'sábado']
+    };
+    const targetDayNames = daysMap[dayOfWeekNumber] || [];
+
+    console.log(`📅 Target day: ${targetDate} (${targetDayNames.join(' or ')})`);
 
     // 1. Get all active programmed classes for tomorrow
     const { data: classes, error: classesError} = await supabase
@@ -183,8 +235,8 @@ serve(async (req) => {
         )
       `)
       .eq('is_active', true)
-      .lte('start_date', tomorrowDate)
-      .gte('end_date', tomorrowDate);
+      .lte('start_date', targetDate)
+      .gte('end_date', targetDate);
 
     if (classesError) {
       throw new Error(`Error fetching classes: ${classesError.message}`);
@@ -204,28 +256,30 @@ serve(async (req) => {
     }
 
     // Filter classes that:
-    // 1. Match tomorrow's day of week
-    // 2. Start in ~24 hours (between 24-25 hours from now)
+    // 1. Match target day of week (support both accented and unaccented)
+    // 2. Start within the 30-minute window (24h to 24h30m from now)
     const targetClasses = classes.filter(cls => {
-      // Check if class occurs on tomorrow's day of week
       const daysOfWeek = cls.days_of_week || [];
-      if (!daysOfWeek.includes(tomorrowDayName)) {
-        console.log(`⏭️ Skipping ${cls.name} - not scheduled for ${tomorrowDayName} (scheduled for: ${daysOfWeek.join(', ')})`);
+
+      // Check if class is scheduled for target day
+      const matchesDay = targetDayNames.some((dayName: string) => daysOfWeek.includes(dayName));
+
+      if (!matchesDay) {
+        console.log(`⏭️ Skipping ${cls.name} - not scheduled for ${targetDayNames.join('/')} (scheduled for: ${daysOfWeek.join(', ')})`);
         return false;
       }
 
-      // Check if class starts in the 24-25 hour window
-      const [hours, minutes] = cls.start_time.split(':').map(Number);
-      const classDateTime = new Date(tomorrowDate);
-      classDateTime.setHours(hours, minutes, 0, 0);
-
-      const isInTimeWindow = classDateTime >= twentyFourHoursFromNow && classDateTime < twentyFiveHoursFromNow;
+      // Check if class time falls within the 30-minute window
+      const classTime = cls.start_time.substring(0, 5); // HH:MM format
+      const isInTimeWindow = classTime >= windowStartTime && classTime < windowEndTime;
 
       if (!isInTimeWindow) {
-        console.log(`⏭️ Skipping ${cls.name} at ${cls.start_time} - outside 24-hour window`);
+        console.log(`⏭️ Skipping ${cls.name} at ${classTime} - outside window ${windowStartTime}-${windowEndTime}`);
+        return false;
       }
 
-      return isInTimeWindow;
+      console.log(`✅ Including ${cls.name} at ${classTime} - within 24h window`);
+      return true;
     });
 
     console.log(`🎯 Found ${targetClasses.length} classes starting in ~24 hours`);
@@ -236,7 +290,7 @@ serve(async (req) => {
       .from('cancelled_classes')
       .select('class_id')
       .in('class_id', classIds)
-      .eq('cancelled_date', tomorrowDate);
+      .eq('cancelled_date', targetDate);
 
     const cancelledClassIds = new Set(cancelledData?.map(c => c.class_id) || []);
 
@@ -251,6 +305,7 @@ serve(async (req) => {
     console.log(`📋 Processing ${activeTargetClasses.length} active classes (${cancelledClassIds.size} cancelled)`);
 
     let totalRemindersSent = 0;
+    let totalWhatsAppSent = 0;
 
     // 2. For each target class, send reminders to all active participants
     for (const classInfo of activeTargetClasses) {
@@ -302,7 +357,7 @@ serve(async (req) => {
           studentEmail: enrollment.email,
           studentName: enrollment.full_name,
           className: classInfo.name,
-          classDate: tomorrowDate,
+          classDate: targetDate,
           classTime: classInfo.start_time,
           clubName: (classInfo.clubs as any)?.name || '',
           confirmationLink
@@ -312,17 +367,29 @@ serve(async (req) => {
           totalRemindersSent++;
         }
 
+        // Send WhatsApp reminder for Gali club students
+        if (classInfo.club_id === GALI_CLUB_ID) {
+          console.log(`📱 Sending WhatsApp to Gali club student: ${enrollment.email}`);
+          const whatsappSent = await sendWhatsAppReminder(enrollment.email);
+          if (whatsappSent) {
+            totalWhatsAppSent++;
+          }
+          // Extra delay for WhatsApp to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
         // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
         await new Promise(resolve => setTimeout(resolve, 600));
       }
     }
 
-    console.log(`\n✅ Job completed. Sent ${totalRemindersSent} reminder emails`);
+    console.log(`\n✅ Job completed. Sent ${totalRemindersSent} reminder emails and ${totalWhatsAppSent} WhatsApp messages`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Sent ${totalRemindersSent} attendance reminder emails`,
+      message: `Sent ${totalRemindersSent} attendance reminder emails and ${totalWhatsAppSent} WhatsApp messages`,
       remindersSent: totalRemindersSent,
+      whatsappSent: totalWhatsAppSent,
       classesProcessed: activeTargetClasses.length,
       cancelledClassesSkipped: cancelledClassIds.size
     }), {

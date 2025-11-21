@@ -20,6 +20,15 @@ verify_jwt = true
 
 [functions.stripe-login-link]
 verify_jwt = true
+[functions.send-test-whatsapp]
+verify_jwt = false
+
+[functions.send-class-reminder-whatsapp]
+verify_jwt = false
+
+[functions.send-daily-class-reminders]
+verify_jwt = false
+
 [functions.send-attendance-reminders]
 enabled = true
 verify_jwt = false
