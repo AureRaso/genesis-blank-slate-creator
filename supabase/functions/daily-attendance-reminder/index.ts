@@ -137,8 +137,10 @@ serve(async (req) => {
     // Generate the weekly reminder message (only sent on Mondays)
     const message = `👋 ¡Buenas, equipo!
 
-Como cada semana, recordad confirmar vuestra asistencia a las clases desde PadeLock 💪
-👉 https://www.padelock.com/auth
+Como cada semana, recordad que la asistencia a las clases está confirmada por defecto 💪
+👉 Solo tenéis que comunicar vuestra ausencia desde PadeLock si no podéis venir.
+
+🔗 https://www.padelock.com/auth
 
 Si tenéis cualquier duda con la aplicación, podéis escribirnos por privado a este número.
 
