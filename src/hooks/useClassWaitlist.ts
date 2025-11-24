@@ -456,6 +456,22 @@ export const useAcceptFromWaitlist = () => {
           }
 
           console.log('✅ [EMAIL] Acceptance email sent successfully to:', studentData.email);
+
+          // Send WhatsApp notification
+          console.log('📱 [WHATSAPP] Sending acceptance WhatsApp...');
+          try {
+            const { data: whatsappData, error: whatsappError } = await supabase.functions.invoke('send-waitlist-whatsapp', {
+              body: emailPayload
+            });
+            console.log('📱 [WHATSAPP] Response:', whatsappData);
+            if (whatsappError) {
+              console.error('📱 [WHATSAPP] Error:', whatsappError);
+            } else {
+              console.log('✅ [WHATSAPP] Acceptance WhatsApp sent to:', studentData.email);
+            }
+          } catch (whatsappErr) {
+            console.error('📱 [WHATSAPP] Error sending:', whatsappErr);
+          }
         } else {
           console.warn('⚠️ [EMAIL] Missing data - student or class not found');
         }
@@ -491,19 +507,31 @@ export const useAcceptFromWaitlist = () => {
                 if (expiredStudentData) {
                   console.log('🔔 [EMAIL-EXPIRED] Sending to:', expiredStudentData.email);
 
+                  const rejectionPayload = {
+                    type: 'rejected',
+                    studentEmail: expiredStudentData.email,
+                    studentName: expiredStudentData.full_name,
+                    className: classData.name,
+                    classDate: variables.classDate,
+                    classTime: classData.start_time,
+                    clubName: (classData.clubs as any)?.name || ''
+                  };
+
                   await supabase.functions.invoke('send-waitlist-email', {
-                    body: {
-                      type: 'rejected',
-                      studentEmail: expiredStudentData.email,
-                      studentName: expiredStudentData.full_name,
-                      className: classData.name,
-                      classDate: variables.classDate,
-                      classTime: classData.start_time,
-                      clubName: (classData.clubs as any)?.name || ''
-                    }
+                    body: rejectionPayload
                   });
 
                   console.log('✅ [EMAIL-EXPIRED] Email sent to:', expiredStudentData.email);
+
+                  // Send WhatsApp notification
+                  try {
+                    await supabase.functions.invoke('send-waitlist-whatsapp', {
+                      body: rejectionPayload
+                    });
+                    console.log('✅ [WHATSAPP-EXPIRED] WhatsApp sent to:', expiredStudentData.email);
+                  } catch (whatsappErr) {
+                    console.error('📱 [WHATSAPP-EXPIRED] Error sending:', whatsappErr);
+                  }
                 }
               } catch (singleEmailError) {
                 console.error('❌ [EMAIL-EXPIRED] Error sending to single recipient:', singleEmailError);
@@ -622,6 +650,22 @@ export const useRejectFromWaitlist = () => {
             }
 
             console.log('✅ [EMAIL-REJECT] Rejection email sent successfully to:', studentData.email);
+
+            // Send WhatsApp notification
+            console.log('📱 [WHATSAPP-REJECT] Sending rejection WhatsApp...');
+            try {
+              const { data: whatsappData, error: whatsappError } = await supabase.functions.invoke('send-waitlist-whatsapp', {
+                body: emailPayload
+              });
+              console.log('📱 [WHATSAPP-REJECT] Response:', whatsappData);
+              if (whatsappError) {
+                console.error('📱 [WHATSAPP-REJECT] Error:', whatsappError);
+              } else {
+                console.log('✅ [WHATSAPP-REJECT] Rejection WhatsApp sent to:', studentData.email);
+              }
+            } catch (whatsappErr) {
+              console.error('📱 [WHATSAPP-REJECT] Error sending:', whatsappErr);
+            }
           } else {
             console.warn('⚠️ [EMAIL-REJECT] Missing data - student or class not found');
           }

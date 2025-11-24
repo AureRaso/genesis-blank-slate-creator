@@ -147,12 +147,15 @@ serve(async (req) => {
       throw new Error(`No phone number for user: ${userEmail}`);
     }
 
-    // Get tomorrow's day names in Spanish (for 24h advance reminder)
-    // Using array to support both accented and unaccented versions
-    const tomorrow = new Date();
+    // Get tomorrow's date and day names in Spanish (for 24h advance reminder)
+    // Using Spain timezone for accurate date calculation
+    const nowStr = new Date().toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
+    const spainNow = new Date(nowStr);
+    const tomorrow = new Date(spainNow);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDayNames = getSpanishDayNames(tomorrow);
-    console.log('✓ Tomorrow is:', tomorrowDayNames.join(' or '));
+    const tomorrowDateStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD format
+    console.log('✓ Tomorrow is:', tomorrowDayNames.join(' or '), '- Date:', tomorrowDateStr);
 
     // Get tomorrow's classes for this student using a raw query approach
     const { data: participations, error: participationsError } = await supabaseClient
@@ -184,13 +187,15 @@ serve(async (req) => {
       );
     }
 
-    // Get programmed classes details
+    // Get programmed classes details - filter by is_active AND date range
     const classIds = participations.map((p: any) => p.class_id);
     const { data: programmedClasses, error: classesError } = await supabaseClient
       .from('programmed_classes')
-      .select('id, name, start_time, duration_minutes, court_number, days_of_week, is_active')
+      .select('id, name, start_time, duration_minutes, court_number, days_of_week, is_active, start_date, end_date')
       .in('id', classIds)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .lte('start_date', tomorrowDateStr)  // Class must have started by tomorrow
+      .gte('end_date', tomorrowDateStr);   // Class must not have ended before tomorrow
 
     if (classesError) {
       console.error('Error fetching classes:', classesError);

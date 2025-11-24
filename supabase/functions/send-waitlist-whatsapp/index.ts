@@ -1,0 +1,222 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface SendWaitlistWhatsAppRequest {
+  type: 'accepted' | 'rejected';
+  studentEmail: string;
+  studentName: string;
+  className: string;
+  classDate: string;
+  classTime: string;
+  clubName?: string;
+}
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const GALI_CLUB_ID = 'cc0a5265-99c5-4b99-a479-5334280d0c6d'; // Only send WhatsApp to Gali club students
+
+/**
+ * Format phone number for Whapi
+ */
+function formatPhoneNumber(phone: string): string {
+  let digits = phone.replace(/\D/g, '');
+
+  if (digits.length === 9 && (digits.startsWith('6') || digits.startsWith('7'))) {
+    digits = '34' + digits;
+  }
+
+  if (!phone.includes('@')) {
+    return `${digits}@s.whatsapp.net`;
+  }
+
+  return phone;
+}
+
+/**
+ * Format date to Spanish
+ */
+function formatDateToSpanish(dateStr: string): string {
+  const dateObj = new Date(dateStr);
+  return dateObj.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+}
+
+/**
+ * Format accepted message
+ */
+function formatAcceptedMessage(request: SendWaitlistWhatsAppRequest): string {
+  const formattedDate = formatDateToSpanish(request.classDate);
+  const time = request.classTime.substring(0, 5);
+
+  return `Hola ${request.studentName}!
+
+*Ya tienes plaza en el entrenamiento*
+
+${request.clubName ? `${request.clubName} - ` : ''}${request.className}
+${formattedDate}
+${time}
+
+*Disfruta del entreno!*`;
+}
+
+/**
+ * Format rejected message
+ */
+function formatRejectedMessage(request: SendWaitlistWhatsAppRequest): string {
+  const formattedDate = formatDateToSpanish(request.classDate);
+  const time = request.classTime.substring(0, 5);
+
+  return `Hola ${request.studentName}!
+
+El entrenamiento del ${formattedDate} a las ${time} ha quedado completo y no ha sido posible darte plaza esta vez.
+
+Gracias por estar pendiente. *La siguiente te esperamos!*`;
+}
+
+async function sendWhatsAppMessage(phone: string, message: string): Promise<boolean> {
+  const whapiToken = Deno.env.get('WHAPI_TOKEN');
+  const whapiEndpoint = Deno.env.get('WHAPI_ENDPOINT') || 'https://gate.whapi.cloud';
+
+  if (!whapiToken) {
+    console.error('WHAPI_TOKEN not configured');
+    return false;
+  }
+
+  try {
+    const formattedPhone = formatPhoneNumber(phone);
+    console.log('Sending WhatsApp to:', formattedPhone);
+
+    const response = await fetch(`${whapiEndpoint}/messages/text`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${whapiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: formattedPhone,
+        body: message,
+        typing_time: 2
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Whapi error:', errorText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('WhatsApp message sent successfully:', result.id || result.message_id);
+    return true;
+  } catch (error) {
+    console.error('Error sending WhatsApp message:', error);
+    return false;
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const request: SendWaitlistWhatsAppRequest = await req.json();
+
+    console.log('Processing WhatsApp request:', {
+      type: request.type,
+      to: request.studentEmail,
+      className: request.className
+    });
+
+    // Validate required fields
+    if (!request.type || !request.studentEmail || !request.studentName ||
+        !request.className || !request.classDate || !request.classTime) {
+      throw new Error('Missing required fields');
+    }
+
+    // Validate type
+    if (request.type !== 'accepted' && request.type !== 'rejected') {
+      throw new Error('Invalid type. Must be "accepted" or "rejected"');
+    }
+
+    // Get student phone and club from database
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: studentData, error: studentError } = await supabaseClient
+      .from('student_enrollments')
+      .select('phone, club_id')
+      .eq('email', request.studentEmail)
+      .single();
+
+    if (studentError || !studentData) {
+      console.error('Student not found:', request.studentEmail);
+      throw new Error(`Student not found: ${request.studentEmail}`);
+    }
+
+    // Only send WhatsApp to Gali club students (for testing)
+    if (studentData.club_id !== GALI_CLUB_ID) {
+      console.log(`Student ${request.studentEmail} is not from Gali club - WhatsApp not sent`);
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Student not from Gali club - WhatsApp not sent`,
+        whatsappSent: false
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    if (!studentData.phone) {
+      console.log('No phone number for student:', request.studentEmail);
+      return new Response(JSON.stringify({
+        success: true,
+        message: `No phone number for ${request.studentEmail} - WhatsApp not sent`,
+        whatsappSent: false
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // Format message based on type
+    const message = request.type === 'accepted'
+      ? formatAcceptedMessage(request)
+      : formatRejectedMessage(request);
+
+    // Send WhatsApp
+    const messageSent = await sendWhatsAppMessage(studentData.phone, message);
+
+    if (!messageSent) {
+      throw new Error('Failed to send WhatsApp message');
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: `WhatsApp sent successfully to ${request.studentEmail}`,
+      type: request.type,
+      whatsappSent: true
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
+  } catch (error: any) {
+    console.error('Error in send-waitlist-whatsapp function:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
