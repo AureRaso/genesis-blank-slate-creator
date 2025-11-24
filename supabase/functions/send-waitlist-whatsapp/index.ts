@@ -56,15 +56,14 @@ function formatAcceptedMessage(request: SendWaitlistWhatsAppRequest): string {
   const formattedDate = formatDateToSpanish(request.classDate);
   const time = request.classTime.substring(0, 5);
 
-  return `Hola ${request.studentName}!
+  return `*Ya tienes plaza en el entrenamiento!*
 
-*Ya tienes plaza en el entrenamiento*
+Clase: ${request.className}
+Fecha: ${formattedDate}
+Hora: ${time}
+${request.clubName ? `Club: ${request.clubName}` : ''}
 
-${request.clubName ? `${request.clubName} - ` : ''}${request.className}
-${formattedDate}
-${time}
-
-*Disfruta del entreno!*`;
+Nos vemos en la pista!`;
 }
 
 /**
