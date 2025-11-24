@@ -48,6 +48,20 @@
   </head>
 
   <body>
+    <!-- Redirección temporal mientras se verifica el DNS del dominio -->
+    <script>
+      (function() {
+        var blockedDomains = ['www.padelock.com', 'padelock.com'];
+        var targetDomain = 'padelock.lovable.app';
+
+        if (blockedDomains.includes(window.location.hostname)) {
+          // Preservar el path y query string
+          var newUrl = 'https://' + targetDomain + window.location.pathname + window.location.search + window.location.hash;
+          console.log('[REDIRECT] Redirigiendo de ' + window.location.hostname + ' a ' + targetDomain);
+          window.location.replace(newUrl);
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
