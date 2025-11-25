@@ -180,9 +180,31 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
 
       if (studentsError) throw studentsError;
 
-      // Transform data to include club information
+      // Get profile data for students to get phone numbers
+      const emails = (students || []).map(s => s.email).filter(Boolean);
+      let profilePhones: Record<string, string> = {};
+
+      if (emails.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('email, phone')
+          .in('email', emails);
+
+        if (profiles) {
+          profilePhones = profiles.reduce((acc, p) => {
+            if (p.email && p.phone) {
+              acc[p.email] = p.phone;
+            }
+            return acc;
+          }, {} as Record<string, string>);
+        }
+      }
+
+      // Transform data to include club information and phone from profiles as fallback
       const studentsWithClubs = (students || []).map(student => ({
         ...student,
+        // Use phone from enrollment, fallback to phone from profiles
+        phone: student.phone || profilePhones[student.email] || '',
         club_name: student.clubs?.name || 'Club desconocido',
         club_status: student.clubs?.status || null,
       }));

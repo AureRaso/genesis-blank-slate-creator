@@ -437,7 +437,7 @@ const AdminStudentsList = () => {
                         </div>
 
                         {/* Columna 5: Acciones */}
-                        <div className="col-span-1 md:col-span-1 flex items-center justify-center">
+                        <div className="col-span-1 md:col-span-1 flex items-start md:items-center justify-start">
                           <Button
                             variant="ghost"
                             size="sm"
