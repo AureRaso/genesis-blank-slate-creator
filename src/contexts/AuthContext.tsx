@@ -316,6 +316,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           prompt: 'consent',
         },
         skipBrowserRedirect: false,
+        // Set default metadata for new Google users
+        data: {
+          level: 5, // Nivel por defecto para nuevos usuarios de Google
+          role: 'player'
+        }
       }
     });
     return { error };

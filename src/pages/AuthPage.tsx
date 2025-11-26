@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, Target, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,7 @@ export const AuthPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [level, setLevel] = useState("");
+  const [level, setLevel] = useState("5"); // Nivel por defecto: 5
   const [clubCode, setClubCode] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
   const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
@@ -253,16 +253,6 @@ export const AuthPage = () => {
       return;
     }
 
-    // El nivel solo es obligatorio para players, no para guardians
-    if (userType === 'player' && !level) {
-      toast({
-        title: "Error",
-        description: "El nivel es obligatorio para jugadores",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // LOPIVI es obligatorio para guardians
     if (userType === 'guardian' && !lopiviAccepted) {
       toast({
@@ -293,26 +283,12 @@ export const AuthPage = () => {
       return;
     }
 
-    // Validar nivel solo para players
-    let numLevel = 1.0; // Valor por defecto para guardians
-    if (userType === 'player') {
-      numLevel = parseFloat(level);
-      console.log('🔍 DEBUG - Level validation:', {
-        levelString: level,
-        levelNumber: numLevel,
-        isNaN: isNaN(numLevel),
-        isValid: !isNaN(numLevel) && numLevel >= 1.0 && numLevel <= 10.0
-      });
-
-      if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
-        toast({
-          title: "Error",
-          description: "El nivel debe ser un número entre 1.0 y 10.0",
-          variant: "destructive"
-        });
-        return;
-      }
-    }
+    // Establecer nivel por defecto: 5 para jugadores, 1 para guardianes
+    const numLevel = userType === 'player' ? 5 : 1;
+    console.log('🔍 DEBUG - Level set to default:', {
+      userType,
+      numLevel
+    });
 
     if (!selectedClubId) {
       setClubError("Debes ingresar un código de club válido");
@@ -846,35 +822,6 @@ export const AuthPage = () => {
                 error={clubError}
               />
             </div>
-
-            {/* Nivel de juego - Solo para players */}
-            {userType === 'player' && (
-              <div className="space-y-3">
-                <Label htmlFor="signup-level" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Nivel de Juego (Playtomic) *
-                </Label>
-                <Input
-                  id="signup-level"
-                  type="text"
-                  inputMode="decimal"
-                  value={level}
-                  onChange={e => {
-                    const value = e.target.value;
-                    // Allow only numbers and one decimal point
-                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                      setLevel(value);
-                    }
-                  }}
-                  placeholder="Ej: 3.5"
-                  className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
-                  required
-                />
-                <p className="text-xs text-slate-500">
-                  Introduce tu nivel Playtomic (1.0 - 10.0)
-                </p>
-              </div>
-            )}
 
             {/* Checkbox de términos y condiciones */}
             <div className="space-y-3 pt-2">

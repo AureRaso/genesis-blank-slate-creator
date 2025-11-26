@@ -52,7 +52,7 @@ const PublicEnrollmentPage = () => {
     full_name: '',
     email: '',
     phone: '',
-    level: 3,
+    level: 5, // Nivel por defecto: 5 (intermedio)
     observations: ''
   });
 
@@ -366,28 +366,21 @@ const PublicEnrollmentPage = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="phone">Teléfono *</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="level">Nivel de Juego (1-10) *</Label>
-                    <Input
-                      id="level"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={formData.level}
-                      onChange={(e) => handleInputChange('level', parseInt(e.target.value))}
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="phone">Teléfono *</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Mensaje informativo sobre el nivel */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>ℹ️ Nivel de juego:</strong> Tu nivel inicial se establecerá en 5 (intermedio). El profesor podrá ajustarlo si es necesario.
+                  </p>
                 </div>
                 
                 <div>
