@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ClassWaitlist } from "@/types/waitlist";
-import { subHours } from "date-fns";
+// import { subHours } from "date-fns"; // COMMENTED: Removed 3-hour restriction for waitlist
 
 // Hook to check if user can join waitlist
 export const useCanJoinWaitlist = (classId: string, classDate: string) => {
@@ -56,14 +56,15 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // 2. Check if class has already passed or waitlist is closed
+      // 2. Check if class has already passed
       console.log('🔍 [WAITLIST] Step 3: Checking time window');
       const [hours, minutes] = classData.start_time.split(':');
       const classDateTime = new Date(classDate);
       classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
 
       const now = new Date();
-      const threeHoursBefore = subHours(classDateTime, 3);
+      // COMMENTED: Removed 3-hour restriction - users can join waitlist until class ends
+      // const threeHoursBefore = subHours(classDateTime, 3);
 
       // Calculate class end time
       const classEndTime = new Date(classDateTime);
@@ -72,7 +73,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       console.log('🔍 [WAITLIST] Now:', now);
       console.log('🔍 [WAITLIST] Class start time:', classDateTime);
       console.log('🔍 [WAITLIST] Class end time:', classEndTime);
-      console.log('🔍 [WAITLIST] Three hours before (cutoff):', threeHoursBefore);
+      // console.log('🔍 [WAITLIST] Three hours before (cutoff):', threeHoursBefore);
 
       // Check if class has already ended
       if (now >= classEndTime) {
@@ -85,19 +86,20 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // Check if we're past the cutoff time (3 hours before class)
-      if (now >= threeHoursBefore) {
-        console.log('❌ [WAITLIST] Too late - waitlist closed');
-        return {
-          canJoin: false,
-          reason: 'too_late',
-          message: 'La lista de espera se cierra 3 horas antes de la clase',
-          classData
-        };
-      }
+      // COMMENTED: Removed 3-hour cutoff restriction
+      // Users can now join waitlist anytime before class ends
+      // if (now >= threeHoursBefore) {
+      //   console.log('❌ [WAITLIST] Too late - waitlist closed');
+      //   return {
+      //     canJoin: false,
+      //     reason: 'too_late',
+      //     message: 'La lista de espera se cierra 3 horas antes de la clase',
+      //     classData
+      //   };
+      // }
 
-      // If we're here, we're before the 3-hour cutoff, so it's OK to join
-      console.log('✅ [WAITLIST] Time window OK - can join (before 3h cutoff)');
+      // If we're here, class hasn't ended yet, so it's OK to join
+      console.log('✅ [WAITLIST] Time window OK - can join (class not ended yet)');
 
       // 3. Check authentication - if not authenticated, return with class data
       if (!profile?.id) {
