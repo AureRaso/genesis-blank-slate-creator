@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 
 export const CompleteProfile = () => {
-  const [level, setLevel] = useState("");
+  const [level, setLevel] = useState("5"); // Nivel por defecto: 5
   const [phone, setPhone] = useState("");
   const [clubCode, setClubCode] = useState("");
   const [selectedClubId, setSelectedClubId] = useState("");
@@ -71,7 +71,7 @@ export const CompleteProfile = () => {
     console.log('🔧 CompleteProfile - Form submitted:', { level, phone, selectedClubId });
 
     // Validations
-    if (!level || !phone || !selectedClubId) {
+    if (!phone || !selectedClubId) {
       console.log('🔧 CompleteProfile - Validation failed: missing fields');
       if (!selectedClubId) {
         setClubError("Debes ingresar un código de club válido");
@@ -84,16 +84,8 @@ export const CompleteProfile = () => {
       return;
     }
 
-    const numLevel = parseFloat(level);
-    if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
-      console.log('🔧 CompleteProfile - Validation failed: invalid level', { numLevel });
-      toast({
-        title: "Error",
-        description: "El nivel debe ser un número entre 1.0 y 10.0",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Nivel por defecto: 5 (siempre)
+    const numLevel = 5;
 
     console.log('🔧 CompleteProfile - Validation passed, updating profile...');
     setIsLoading(true);
@@ -344,33 +336,19 @@ export const CompleteProfile = () => {
                 </p>
               </div>
 
-              {/* Nivel de juego */}
-              <div className="space-y-2">
-                <Label htmlFor="level" className="text-sm font-semibold text-slate-700">
-                  Nivel de Juego (Playtomic) *
-                </Label>
-                <div className="relative">
-                  <Target className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                  <Input
-                    id="level"
-                    type="text"
-                    inputMode="decimal"
-                    value={level}
-                    onChange={e => {
-                      const value = e.target.value;
-                      // Allow only numbers and one decimal point
-                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                        setLevel(value);
-                      }
-                    }}
-                    placeholder="Ej: 3.5"
-                    className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                    required
-                  />
+              {/* Mensaje informativo sobre el nivel */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Target className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900 mb-1">
+                      Nivel de juego
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      Tu nivel inicial se establecerá en <strong>5 (intermedio)</strong>. Podrás ajustarlo más adelante desde tu perfil o tu entrenador podrá modificarlo según tu progreso.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Introduce tu nivel en Playtomic (1.0 - 10.0)
-                </p>
               </div>
 
               {/* Club code input */}
