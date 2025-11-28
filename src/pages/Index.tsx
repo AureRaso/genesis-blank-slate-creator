@@ -7,7 +7,7 @@ import { getWaitlistUrl } from "@/utils/url";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet, Loader2, Skull } from "lucide-react";
+import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet, Loader2, Circle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -87,13 +87,13 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
         </div>
 
         <div className="flex items-center gap-1">
-          <Skull className="h-3 w-3 text-orange-600 flex-shrink-0" />
+          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
           <span className="text-gray-600">Tardíos:</span>
-          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+          <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1">
-          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <Circle className="h-3 w-3 text-red-600 flex-shrink-0" />
           <span className="text-gray-600">Anticipados:</span>
           <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
         </div>

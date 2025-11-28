@@ -30,8 +30,8 @@ import {
   Calendar,
   TrendingDown,
   Loader2,
-  Skull,
   X,
+  Circle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -92,13 +92,13 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
         </div>
 
         <div className="flex items-center gap-1">
-          <Skull className="h-3 w-3 text-orange-600 flex-shrink-0" />
+          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
           <span className="text-gray-600">Tardíos:</span>
-          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+          <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1">
-          <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <Circle className="h-3 w-3 text-red-600 flex-shrink-0" />
           <span className="text-gray-600">Anticipados:</span>
           <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
         </div>

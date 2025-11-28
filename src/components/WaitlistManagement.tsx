@@ -4,7 +4,7 @@ import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStude
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2, AlertTriangle, Ban, Skull, Check, X } from "lucide-react";
+import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2, AlertTriangle, Ban, Check, X, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -68,13 +68,13 @@ const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnroll
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Skull className="h-3.5 w-3.5 text-orange-600" />
+          <X className="h-3.5 w-3.5 text-red-600" />
           <span className="text-gray-600">Avisos tardíos:</span>
-          <span className="font-semibold text-orange-700">{metrics.late_notice_absences}</span>
+          <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <X className="h-3.5 w-3.5 text-red-600" />
+          <Circle className="h-3.5 w-3.5 text-red-600" />
           <span className="text-gray-600">Avisos anticipados:</span>
           <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
         </div>
