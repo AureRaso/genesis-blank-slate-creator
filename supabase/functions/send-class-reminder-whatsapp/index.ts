@@ -268,8 +268,15 @@ serve(async (req) => {
       throw new Error('WHAPI_TOKEN not configured');
     }
 
-    // Send text message (buttons are not supported in current Whapi plan)
-    const response = await fetch(`${whapiEndpoint}/messages/text`, {
+    // Build interactive buttons - one button per class for absence confirmation
+    const buttons = tomorrowClasses.slice(0, 3).map((cls, index) => ({
+      type: 'quick_reply',
+      id: `absence_${cls.participation_id}`,
+      title: `❌ No puedo ir (${index + 1})`
+    }));
+
+    // Send interactive message with buttons
+    const response = await fetch(`${whapiEndpoint}/messages/interactive`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${whapiToken}`,
@@ -277,19 +284,30 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         to: formattedPhone,
-        body: message,
-        typing_time: 2
+        type: 'button',
+        body: {
+          text: message
+        },
+        action: {
+          buttons: buttons
+        }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Whapi error:', errorText);
-      throw new Error(`Whapi API error: ${response.status}`);
+      console.error('Whapi error response:', errorText);
+      console.error('Request body was:', JSON.stringify({
+        to: formattedPhone,
+        type: 'button',
+        body: { text: message },
+        action: { buttons: buttons }
+      }, null, 2));
+      throw new Error(`Whapi API error ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('✓ WhatsApp message sent successfully');
+    console.log('✓ WhatsApp interactive message sent successfully');
 
     return new Response(
       JSON.stringify({
