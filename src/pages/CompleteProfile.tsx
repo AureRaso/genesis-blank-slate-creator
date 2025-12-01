@@ -198,7 +198,7 @@ export const CompleteProfile = () => {
           created_by_profile_id: user!.id,
           email: user!.email!,
           full_name: user!.user_metadata?.full_name || user!.email!,
-          phone: user!.user_metadata?.phone || '',
+          phone: phone, // Use phone from form instead of user_metadata
           level: numLevel,
           club_id: selectedClubId,
           status: 'active'
