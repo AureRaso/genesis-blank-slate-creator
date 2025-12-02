@@ -949,16 +949,16 @@ const WeekAttendancePage = () => {
                                 <div
                                   key={participant.id}
                                   className={`group relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                                    isConfirmed
-                                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm hover:shadow-md'
-                                      : isAbsent
+                                    isAbsent
                                       ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300 shadow-sm hover:shadow-md'
+                                      : isConfirmed
+                                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm hover:shadow-md'
                                       : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
                                   }`}
                                 >
                                   {/* Indicator Bar */}
                                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                                    isConfirmed ? 'bg-green-500' : isAbsent ? 'bg-red-500' : 'bg-slate-300'
+                                    isAbsent ? 'bg-red-500' : isConfirmed ? 'bg-green-500' : 'bg-slate-300'
                                   }`} />
 
                                   <div className="p-4 pl-5">
@@ -968,16 +968,16 @@ const WeekAttendancePage = () => {
                                       <div className="flex items-center gap-3 min-w-0 flex-1">
                                         {/* Status Icon */}
                                         <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                                          isConfirmed
-                                            ? 'bg-green-100 text-green-600'
-                                            : isAbsent
+                                          isAbsent
                                             ? 'bg-red-100 text-red-600'
+                                            : isConfirmed
+                                            ? 'bg-green-100 text-green-600'
                                             : 'bg-slate-100 text-slate-400'
                                         }`}>
-                                          {isConfirmed ? (
-                                            <CheckCircle2 className="h-5 w-5" />
-                                          ) : isAbsent ? (
+                                          {isAbsent ? (
                                             <XCircle className="h-5 w-5" />
+                                          ) : isConfirmed ? (
+                                            <CheckCircle2 className="h-5 w-5" />
                                           ) : (
                                             <Clock className="h-5 w-5" />
                                           )}
@@ -1087,11 +1087,6 @@ const WeekAttendancePage = () => {
                                       const lateNotice = isLateAbsenceNotice(participant, classData.start_time, notificationDate);
                                       const hoursNotice = Math.floor(lateNotice.hoursNotice);
                                       const minutesNotice = Math.round((lateNotice.hoursNotice - hoursNotice) * 60);
-
-                                      // Only show if there's a reason OR if it's a late notice
-                                      if (!participant.absence_reason && !lateNotice.isLate) {
-                                        return null;
-                                      }
 
                                       return (
                                         <div className="mt-3 pt-3 border-t border-red-200/50">

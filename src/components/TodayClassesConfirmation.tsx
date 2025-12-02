@@ -398,10 +398,10 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                 border-0 shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
                 ${isCancelled
                   ? 'bg-gradient-to-br from-gray-50 to-slate-100/30 border-l-4 border-l-gray-400 opacity-75'
-                  : isConfirmedForThisDate
-                    ? 'bg-gradient-to-br from-green-50 to-emerald-100/30 border-l-4 border-l-green-400'
-                    : isAbsent
-                      ? 'bg-gradient-to-br from-red-50 to-rose-100/30 border-l-4 border-l-red-400'
+                  : isAbsent
+                    ? 'bg-gradient-to-br from-red-50 to-rose-100/30 border-l-4 border-l-red-400'
+                    : isConfirmedForThisDate
+                      ? 'bg-gradient-to-br from-green-50 to-emerald-100/30 border-l-4 border-l-green-400'
                       : 'bg-gradient-to-br from-slate-50 to-white border-l-4 border-l-primary'
                 }
               `}
