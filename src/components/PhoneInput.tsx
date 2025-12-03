@@ -121,12 +121,10 @@ export const PhoneInput = ({ value, onChange, label = "Teléfono", required = tr
         {/* Selector de país integrado en el lado izquierdo */}
         <Select value={countryCode} onValueChange={handleCountryChange}>
           <SelectTrigger className="h-12 w-[110px] rounded-r-none border-r-0 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2 bg-slate-50">
-            <SelectValue>
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg">{selectedCountry.flag}</span>
-                <span className="text-base font-medium">{selectedCountry.prefix}</span>
-              </div>
-            </SelectValue>
+            <div className="flex items-center gap-1.5 w-full">
+              <span className="text-lg leading-none">{selectedCountry.flag}</span>
+              <span className="text-base font-medium">{selectedCountry.prefix}</span>
+            </div>
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
             {COUNTRIES.map((country) => (
