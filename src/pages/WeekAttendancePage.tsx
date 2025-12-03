@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
@@ -99,7 +100,9 @@ const WeekAttendancePage = () => {
   const endDateStr = format(weekEnd, 'yyyy-MM-dd');
 
   // Fetch classes for the entire week
-  const { data: classes, isLoading, error, isFetching } = useTodayAttendance(startDateStr, endDateStr);
+  const { data: attendanceData, isLoading, error, isFetching } = useTodayAttendance(startDateStr, endDateStr);
+  const classes = attendanceData?.classes || [];
+  const confirmationsMap = attendanceData?.confirmationsMap || new Map();
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
   const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(profile?.club_id || undefined);
@@ -272,8 +275,13 @@ const WeekAttendancePage = () => {
     const classesToCount = filteredClasses || [];
     const totalClasses = classesToCount.length;
     const totalParticipants = classesToCount.reduce((acc, c) => acc + c.participants.length, 0);
+    // Apply implicit confirmation logic: if no absence is confirmed, consider as confirmed
     const confirmedParticipants = classesToCount.reduce(
-      (acc, c) => acc + c.participants.filter(p => p.attendance_confirmed_for_date).length,
+      (acc, c) => acc + c.participants.filter(p => {
+        const hasExplicitConfirmation = !!p.attendance_confirmed_for_date;
+        // Confirmed if either explicit or implicit (not absent)
+        return hasExplicitConfirmation || !p.absence_confirmed;
+      }).length,
       0
     );
     const absentParticipants = classesToCount.reduce(
@@ -300,12 +308,18 @@ const WeekAttendancePage = () => {
     });
   };
 
-  const handleConfirmAbsence = (participantId: string, participantName: string) => {
+  const handleConfirmAbsence = (participantId: string, participantName: string, scheduledDate: string) => {
+    console.log('🔴 [WeekAttendancePage] handleConfirmAbsence called:', {
+      participantId,
+      participantName,
+      scheduledDate
+    });
     setConfirmDialog({
       open: true,
       type: 'absence',
       participantId,
       participantName,
+      scheduledDate,
     });
   };
 
@@ -346,16 +360,26 @@ const WeekAttendancePage = () => {
   };
 
   const executeAction = () => {
+    console.log('🔍 [WeekAttendancePage] executeAction called:', {
+      type: confirmDialog.type,
+      participantId: confirmDialog.participantId,
+      scheduledDate: confirmDialog.scheduledDate
+    });
+    
     if (confirmDialog.type === 'attendance' && confirmDialog.scheduledDate) {
       markAttendance.mutate({
         participantId: confirmDialog.participantId,
         scheduledDate: confirmDialog.scheduledDate,
       });
-    } else if (confirmDialog.type === 'absence') {
+    } else if (confirmDialog.type === 'absence' && confirmDialog.scheduledDate) {
+      console.log('🔴 [WeekAttendancePage] Marking absence with scheduledDate:', confirmDialog.scheduledDate);
       markAbsence.mutate({
         participantId: confirmDialog.participantId,
+        scheduledDate: confirmDialog.scheduledDate,
         reason: 'Marcado por profesor',
       });
+    } else if (confirmDialog.type === 'absence' && !confirmDialog.scheduledDate) {
+      console.error('⚠️ [WeekAttendancePage] Missing scheduledDate for absence!');
     } else if (confirmDialog.type === 'remove') {
       removeParticipant.mutate(confirmDialog.participantId);
     }
@@ -817,14 +841,61 @@ const WeekAttendancePage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {sortedClasses.map((classData) => {
                 const validParticipants = classData.participants.filter(p => p.student_enrollment);
+                
+                // Get the notification date - use selected date or calculate the next occurrence of this class
+                let notificationDate: string;
+                if (selectedDate) {
+                  notificationDate = selectedDate;
+                } else {
+                  // Calculate the next occurrence of this class in the current week
+                  // Find the first day of the week that matches this class's days_of_week
+                  const classDays = classData.days_of_week || [];
+                  const today = new Date();
+                  const todayDayName = getDayOfWeekInSpanish(today);
+                  
+                  // If today matches one of the class days, use today
+                  if (classDays.includes(todayDayName)) {
+                    notificationDate = format(today, 'yyyy-MM-dd');
+                  } else {
+                    // Find the next occurrence in the current week
+                    let foundDate: Date | null = null;
+                    for (let i = 0; i < 7; i++) {
+                      const checkDate = new Date(weekStart);
+                      checkDate.setDate(checkDate.getDate() + i);
+                      const checkDayName = getDayOfWeekInSpanish(checkDate);
+                      if (classDays.includes(checkDayName) && checkDate >= today) {
+                        foundDate = checkDate;
+                        break;
+                      }
+                    }
+                    // If not found in current week, use the first day of the week that matches
+                    if (!foundDate) {
+                      for (let i = 0; i < 7; i++) {
+                        const checkDate = new Date(weekStart);
+                        checkDate.setDate(checkDate.getDate() + i);
+                        const checkDayName = getDayOfWeekInSpanish(checkDate);
+                        if (classDays.includes(checkDayName)) {
+                          foundDate = checkDate;
+                          break;
+                        }
+                      }
+                    }
+                    notificationDate = foundDate ? format(foundDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+                  }
+                }
+                
+                // Apply implicit confirmation logic: if no absence is confirmed, consider as confirmed
                 const confirmedCount = validParticipants.filter(
-                  p => p.attendance_confirmed_for_date
+                  p => {
+                    // Explicit confirmation: has attendance_confirmed_for_date
+                    const hasExplicitConfirmation = !!p.attendance_confirmed_for_date;
+                    // Implicit confirmation: no absence confirmed
+                    // Confirmed if either explicit or implicit (not absent)
+                    return hasExplicitConfirmation || !p.absence_confirmed;
+                  }
                 ).length;
                 const maxParticipants = classData.max_participants || 8;
                 const confirmationRate = maxParticipants > 0 ? (confirmedCount / maxParticipants) * 100 : 0;
-
-                // Get the notification date - use selected date or today
-                const notificationDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
 
                 // Check if class has ended
                 const now = new Date();
@@ -930,19 +1001,41 @@ const WeekAttendancePage = () => {
                           </div>
                           <div className="grid gap-3">
                             {validParticipants.map((participant) => {
-                              const isConfirmed = !!participant.attendance_confirmed_for_date;
-                              const isAbsent = !!participant.absence_confirmed;
-                              const isPending = !isConfirmed && !isAbsent;
+                              // Get confirmation for this specific date
+                              const confirmationKey = `${participant.id}-${notificationDate}`;
+                              const confirmation = confirmationsMap.get(confirmationKey);
+
+                              // Use confirmation data if available, otherwise fallback to class_participants data
+                              const isAbsent = confirmation
+                                ? confirmation.absence_confirmed
+                                : (participant.absence_confirmed || false);
+                              
+                              const hasExplicitConfirmation = confirmation
+                                ? confirmation.attendance_confirmed
+                                : !!participant.attendance_confirmed_for_date;
+                              
+                              // Confirmed if either explicit confirmation OR implicit (no absence)
+                              const isConfirmed = hasExplicitConfirmation || (!isAbsent);
+                              const isPending = false; // No pending state with implicit confirmation
                               const isSubstitute = !!participant.is_substitute;
+
+                              // Get the correct values for display (prefer confirmation over participant)
+                              const displayAbsenceReason = confirmation?.absence_reason || participant.absence_reason;
+                              const displayAbsenceConfirmedAt = confirmation?.absence_confirmed_at || participant.absence_confirmed_at;
+                              const displayAttendanceConfirmedAt = confirmation?.attendance_confirmed_at || participant.attendance_confirmed_at;
+                              const displayConfirmedByTrainer = confirmation?.confirmed_by_trainer || participant.confirmed_by_trainer;
 
                               console.log('🎯 Participant render:', {
                                 name: participant.student_enrollment?.full_name,
+                                notificationDate,
+                                confirmationKey,
+                                hasConfirmation: !!confirmation,
                                 isConfirmed,
                                 isAbsent,
-                                absence_reason: participant.absence_reason,
-                                absence_confirmed_at: participant.absence_confirmed_at,
-                                confirmed_by_trainer: participant.confirmed_by_trainer,
-                                shouldShowIndicator: isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer
+                                absence_reason: displayAbsenceReason,
+                                absence_confirmed_at: displayAbsenceConfirmedAt,
+                                confirmed_by_trainer: displayConfirmedByTrainer,
+                                shouldShowIndicator: isConfirmed && (isAdmin || isTrainer) && displayConfirmedByTrainer
                               });
 
                               return (
@@ -997,13 +1090,13 @@ const WeekAttendancePage = () => {
                                           </div>
 
                                           {/* Timestamp */}
-                                          {(participant.attendance_confirmed_at || participant.absence_confirmed_at) && (
+                                          {(displayAttendanceConfirmedAt || displayAbsenceConfirmedAt) && (
                                             <div className="flex items-center gap-1 mt-1">
                                               <Clock className="h-3 w-3 text-slate-400" />
                                               <p className="text-xs text-slate-400">
-                                                {participant.attendance_confirmed_at
-                                                  ? format(new Date(participant.attendance_confirmed_at), 'HH:mm')
-                                                  : format(new Date(participant.absence_confirmed_at!), 'HH:mm')
+                                                {displayAttendanceConfirmedAt
+                                                  ? format(new Date(displayAttendanceConfirmedAt), 'HH:mm')
+                                                  : format(new Date(displayAbsenceConfirmedAt!), 'HH:mm')
                                                 }
                                               </p>
                                             </div>
@@ -1037,7 +1130,8 @@ const WeekAttendancePage = () => {
                                           size="sm"
                                           onClick={() => handleConfirmAbsence(
                                             participant.id,
-                                            participant.student_enrollment!.full_name
+                                            participant.student_enrollment!.full_name,
+                                            notificationDate
                                           )}
                                           disabled={markAbsence.isPending || isAbsent}
                                           className={`h-9 px-3 gap-1.5 font-medium transition-all ${
@@ -1070,7 +1164,7 @@ const WeekAttendancePage = () => {
                                     </div>
 
                                     {/* Attendance marked by trainer/admin */}
-                                    {isConfirmed && (isAdmin || isTrainer) && participant.confirmed_by_trainer && (
+                                    {isConfirmed && (isAdmin || isTrainer) && displayConfirmedByTrainer && (
                                       <div className="mt-3 pt-3 border-t border-green-200/50">
                                         <div className="flex items-start gap-2">
                                           <CheckCircle2 className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -1084,7 +1178,14 @@ const WeekAttendancePage = () => {
 
                                     {/* Absence Reason */}
                                     {isAbsent && (() => {
-                                      const lateNotice = isLateAbsenceNotice(participant, classData.start_time, notificationDate);
+                                      // Create a participant object with the correct absence data for the late notice calculation
+                                      const participantForLateNotice = {
+                                        ...participant,
+                                        absence_confirmed: true,
+                                        absence_confirmed_at: displayAbsenceConfirmedAt,
+                                        absence_reason: displayAbsenceReason
+                                      };
+                                      const lateNotice = isLateAbsenceNotice(participantForLateNotice, classData.start_time, notificationDate);
                                       const hoursNotice = Math.floor(lateNotice.hoursNotice);
                                       const minutesNotice = Math.round((lateNotice.hoursNotice - hoursNotice) * 60);
 
@@ -1095,7 +1196,7 @@ const WeekAttendancePage = () => {
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                                                 <p className="text-xs font-medium text-red-900">
-                                                  {participant.absence_reason ? 'Motivo de ausencia' : 'Ausencia confirmada'}
+                                                  {displayAbsenceReason ? 'Motivo de ausencia' : 'Ausencia confirmada'}
                                                 </p>
                                                 {lateNotice.isLate && (
                                                   <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 bg-orange-600 hover:bg-orange-700">
@@ -1103,8 +1204,8 @@ const WeekAttendancePage = () => {
                                                   </Badge>
                                                 )}
                                               </div>
-                                              {participant.absence_reason && (
-                                                <p className="text-xs text-red-700">{participant.absence_reason}</p>
+                                              {displayAbsenceReason && (
+                                                <p className="text-xs text-red-700">{displayAbsenceReason}</p>
                                               )}
                                               {lateNotice.isLate && (
                                                 <p className="text-[10px] text-orange-700 mt-1 italic font-medium">

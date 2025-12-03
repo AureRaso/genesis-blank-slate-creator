@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export interface TodayAttendanceClass {
   id: string;
@@ -146,6 +147,43 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         );
       });
 
+      // Get all participant IDs for fetching attendance confirmations
+      const allParticipantIds = filteredClasses.flatMap((classData: any) =>
+        (classData.participants || [])
+          .filter((p: any) => p.status === 'active')
+          .map((p: any) => p.id)
+      );
+
+      // Get all attendance confirmations for the date range
+      let attendanceConfirmations: any[] = [];
+      if (allParticipantIds.length > 0) {
+        // Generate all dates in the range
+        const datesInRange: string[] = [];
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          datesInRange.push(format(d, 'yyyy-MM-dd'));
+        }
+
+        const { data: confirmationsData, error: confirmationsError } = await supabase
+          .from('class_attendance_confirmations')
+          .select('*')
+          .in('class_participant_id', allParticipantIds)
+          .in('scheduled_date', datesInRange);
+
+        if (confirmationsError) {
+          console.error('⚠️ Error fetching attendance confirmations:', confirmationsError);
+          // Don't throw, just log - we can fallback to class_participants data
+        } else {
+          attendanceConfirmations = confirmationsData || [];
+        }
+      }
+
+      // Create a Map for quick lookup: participantId-date -> confirmation data
+      const confirmationsMap = new Map(
+        attendanceConfirmations.map(c =>
+          [`${c.class_participant_id}-${c.scheduled_date}`, c]
+        )
+      );
+
       const weekClasses = filteredClasses.map((classData: any) => ({
         id: classData.id,
         name: classData.name,
@@ -159,6 +197,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           .map((p: any) => ({
             id: p.id,
             student_enrollment: p.student_enrollment,
+            // Store base data from class_participants (fallback)
             attendance_confirmed_for_date: p.attendance_confirmed_for_date,
             attendance_confirmed_at: p.attendance_confirmed_at,
             confirmed_by_trainer: p.confirmed_by_trainer,
@@ -166,11 +205,14 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
             absence_reason: p.absence_reason,
             absence_confirmed_at: p.absence_confirmed_at,
             is_substitute: p.is_substitute,
-            joined_from_waitlist_at: p.joined_from_waitlist_at
+            joined_from_waitlist_at: p.joined_from_waitlist_at,
+            // Store confirmations map for this participant (will be used in component)
+            _confirmationsMap: confirmationsMap
           }))
-      })) as TodayAttendanceClass[];
+      })) as any[];
 
-      return weekClasses;
+      // Also return the confirmations map for use in components
+      return { classes: weekClasses as TodayAttendanceClass[], confirmationsMap };
     },
     enabled: !!profile?.id,
     // Refetch on window focus as fallback (Realtime handles live updates)
@@ -181,8 +223,8 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   useEffect(() => {
     if (!profile?.id) return;
 
-    // Subscribe to changes in BOTH class_participants AND programmed_classes tables
-    // This ensures we catch participant updates AND class cancellations/deletions
+    // Subscribe to changes in class_participants, programmed_classes, AND class_attendance_confirmations tables
+    // This ensures we catch participant updates, class cancellations/deletions, and date-specific confirmations
     const channel = supabase
       .channel('today-attendance-changes')
       .on(
@@ -213,6 +255,20 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'class_attendance_confirmations',
+        },
+        () => {
+          // Invalidate when attendance confirmations are created, updated, or deleted
+          queryClient.invalidateQueries({
+            queryKey: ['today-attendance']
+          });
+        }
+      )
       .subscribe();
 
     // Cleanup subscription on unmount
@@ -234,25 +290,44 @@ export const useTrainerMarkAttendance = () => {
     mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
       console.log('👨‍🏫 Trainer marking attendance for:', { participantId, scheduledDate });
 
-      const { data, error } = await supabase
-        .from('class_participants')
+      // IMPORTANT: Only update class_attendance_confirmations, NOT class_participants
+      // This ensures that marking attendance for one date doesn't affect other dates in a recurring series
+      console.log('📅 Updating class_attendance_confirmations for date:', scheduledDate);
+      
+      // Use RPC function to ensure the record exists
+      const { data: recordId, error: rpcError } = await supabase.rpc('ensure_attendance_record', {
+        p_class_participant_id: participantId,
+        p_scheduled_date: scheduledDate,
+      });
+
+      if (rpcError) {
+        console.error('⚠️ Error ensuring attendance record:', rpcError);
+        throw rpcError;
+      }
+
+      // Update the attendance confirmation record
+      const { data: updatedConfirmation, error: updateError } = await supabase
+        .from('class_attendance_confirmations')
         .update({
-          attendance_confirmed_for_date: scheduledDate,
+          attendance_confirmed: true,
           attendance_confirmed_at: new Date().toISOString(),
           confirmed_by_trainer: true,
-          // Limpiar ausencia si existía
+          // Clear absence if exists
           absence_confirmed: false,
           absence_reason: null,
           absence_confirmed_at: null,
         })
-        .eq('id', participantId)
+        .eq('id', recordId)
         .select()
         .single();
 
-      if (error) throw error;
-      console.log('✅ Attendance marked by trainer:', data);
-      console.log('🔍 confirmed_by_trainer value:', data?.confirmed_by_trainer);
-      return data;
+      if (updateError) {
+        console.error('⚠️ Error updating attendance confirmation:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ Attendance marked in class_attendance_confirmations:', updatedConfirmation);
+      return updatedConfirmation;
     },
     onSuccess: () => {
       // Invalidate all today-attendance queries (including week views with different date ranges)
@@ -274,26 +349,66 @@ export const useTrainerMarkAbsence = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
-    mutationFn: async ({ participantId, reason }: { participantId: string; reason?: string }) => {
-      console.log('👨‍🏫 Trainer marking absence for:', { participantId, reason });
+    mutationFn: async ({ participantId, scheduledDate, reason }: { participantId: string; scheduledDate?: string; reason?: string }) => {
+      console.log('👨‍🏫 Trainer marking absence for:', { participantId, scheduledDate, reason });
 
-      const { data, error } = await supabase
-        .from('class_participants')
+      if (!scheduledDate) {
+        throw new Error('scheduledDate is required to mark absence for a specific class occurrence');
+      }
+
+      // IMPORTANT: Only update class_attendance_confirmations, NOT class_participants
+      // This ensures that marking absence for one date doesn't affect other dates in a recurring series
+      console.log('📅 [Trainer] Updating class_attendance_confirmations for date:', scheduledDate);
+      
+      // Use RPC function to ensure the record exists
+      const { data: recordId, error: rpcError } = await supabase.rpc('ensure_attendance_record', {
+        p_class_participant_id: participantId,
+        p_scheduled_date: scheduledDate,
+      });
+
+      if (rpcError) {
+        console.error('⚠️ [Trainer] Error ensuring attendance record:', rpcError);
+        throw rpcError;
+      }
+
+      console.log('✅ [Trainer] Attendance record ID:', recordId);
+      
+      // Update the attendance confirmation record
+      const { data: updatedConfirmation, error: updateError } = await supabase
+        .from('class_attendance_confirmations')
         .update({
           absence_confirmed: true,
           absence_reason: reason || 'Marcado por profesor',
           absence_confirmed_at: new Date().toISOString(),
-          // Limpiar confirmación de asistencia si existía
-          attendance_confirmed_for_date: null,
+          // Clear attendance confirmation if exists
+          attendance_confirmed: false,
           attendance_confirmed_at: null,
+          confirmed_by_trainer: true,
         })
-        .eq('id', participantId)
+        .eq('id', recordId)
         .select()
         .single();
 
-      if (error) throw error;
-      console.log('✅ Absence marked by trainer:', data);
-      return data;
+      if (updateError) {
+        console.error('⚠️ [Trainer] Error updating attendance confirmation:', updateError);
+        throw updateError;
+      }
+
+      console.log('✅ [Trainer] Absence marked in class_attendance_confirmations:', {
+        recordId,
+        updatedConfirmation: updatedConfirmation ? {
+          id: updatedConfirmation.id,
+          class_participant_id: updatedConfirmation.class_participant_id,
+          scheduled_date: updatedConfirmation.scheduled_date,
+          absence_confirmed: updatedConfirmation.absence_confirmed,
+          absence_reason: updatedConfirmation.absence_reason,
+          absence_confirmed_at: updatedConfirmation.absence_confirmed_at,
+          attendance_confirmed: updatedConfirmation.attendance_confirmed,
+          confirmed_by_trainer: updatedConfirmation.confirmed_by_trainer
+        } : null
+      });
+
+      return updatedConfirmation;
     },
     onSuccess: () => {
       // Invalidate all today-attendance queries (including week views with different date ranges)
