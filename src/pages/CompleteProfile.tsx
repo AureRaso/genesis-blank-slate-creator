@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Target, CheckCircle2, Phone } from "lucide-react";
+import { Target, CheckCircle2 } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const CompleteProfile = () => {
   const [level, setLevel] = useState("5"); // Nivel por defecto: 5
@@ -314,27 +315,13 @@ export const CompleteProfile = () => {
                 </div>
               </div>
 
-              {/* Teléfono */}
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-semibold text-slate-700">
-                  Teléfono *
-                </Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="+34 600 00 00 00"
-                    className="pl-11 h-12 text-base border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
-                    required
-                  />
-                </div>
-                <p className="text-xs text-slate-500">
-                  Introduce tu número de teléfono de contacto
-                </p>
-              </div>
+              {/* Teléfono con selector de país */}
+              <PhoneInput
+                value={phone}
+                onChange={setPhone}
+                label="Teléfono"
+                required
+              />
 
               {/* Mensaje informativo sobre el nivel */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

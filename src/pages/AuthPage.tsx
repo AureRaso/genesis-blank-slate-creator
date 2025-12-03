@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { UserPlus, LogIn, Mail, Lock, User, CheckCircle2, Eye, EyeOff, Users, Phone } from "lucide-react";
+import { UserPlus, LogIn, Mail, Lock, User, CheckCircle2, Eye, EyeOff, Users } from "lucide-react";
 import ClubCodeInput from "@/components/ClubCodeInput";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
 import { LopiviModal } from "@/components/LopiviModal";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -662,22 +663,13 @@ export const AuthPage = () => {
               />
             </div>
 
-            {/* Teléfono */}
-            <div className="space-y-3">
-              <Label htmlFor="signup-phone" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Teléfono *
-              </Label>
-              <Input
-                id="signup-phone"
-                type="tel"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="+34 600 00 00 00"
-                className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
-                required
-              />
-            </div>
+            {/* Teléfono con selector de país */}
+            <PhoneInput
+              value={phone}
+              onChange={setPhone}
+              label="Teléfono"
+              required
+            />
 
             {/* Email y confirmación */}
             <div className="grid grid-cols-1 gap-4">
