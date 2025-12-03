@@ -5,6 +5,7 @@ export interface CurrentUserEnrollment {
   id: string;
   full_name: string;
   email: string;
+  phone: string | null;
   status: string;
   club_id: string;
   club_name?: string;
@@ -23,14 +24,13 @@ export const useCurrentUserEnrollment = (profileId?: string) => {
     queryFn: async () => {
       if (!profileId) return null;
 
-      console.log('🔍 Fetching enrollment for profile:', profileId);
-
       const { data, error } = await supabase
         .from('student_enrollments')
         .select(`
           id,
           full_name,
           email,
+          phone,
           status,
           club_id,
           level,
@@ -55,12 +55,6 @@ export const useCurrentUserEnrollment = (profileId?: string) => {
         ...data,
         club_name: (data.clubs as any)?.name
       };
-
-      console.log('✅ User enrollment:', {
-        id: enrollment.id,
-        status: enrollment.status,
-        club_name: enrollment.club_name
-      });
 
       return enrollment;
     },

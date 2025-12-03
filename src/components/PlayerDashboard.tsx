@@ -4,14 +4,17 @@ import PlayerLeagueDetails from "./PlayerLeagueDetails";
 import LeagueRegistrationModal from "./LeagueRegistrationModal";
 import { PlayerClassesTabs } from "./PlayerClassesTabs";
 import DeletedUserMessage from "./DeletedUserMessage";
+import { PhoneRequiredModal } from "./PhoneRequiredModal";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const PlayerDashboard = () => {
   const { profile, isGuardian } = useAuth();
+  const queryClient = useQueryClient();
   const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
@@ -22,6 +25,11 @@ const PlayerDashboard = () => {
 
   // Get children if user is guardian
   const { children, isLoading: loadingChildren } = useGuardianChildren();
+
+  // Callback to refresh enrollment data after phone update
+  const handlePhoneUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['current-user-enrollment'] });
+  };
 
   console.log('🔍 PlayerDashboard - Guardian children:', {
     isGuardian,
@@ -87,8 +95,19 @@ const PlayerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
-      {/* Encabezado con bienvenida y Selector - Responsive */}
+    <>
+      {/* Phone Required Modal - SOLO para usuario de prueba */}
+      {enrollment && profile?.email && (
+        <PhoneRequiredModal
+          studentEnrollmentId={enrollment.id}
+          currentPhone={enrollment.phone}
+          studentEmail={profile.email}
+          onPhoneUpdated={handlePhoneUpdated}
+        />
+      )}
+
+      <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+        {/* Encabezado con bienvenida y Selector - Responsive */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         {/* Título y subtítulo */}
         <div className="space-y-2">
@@ -132,14 +151,15 @@ const PlayerDashboard = () => {
       {/* Tabs: Próximas Clases y Clases Disponibles */}
       <PlayerClassesTabs selectedChildId={isGuardian ? selectedChildId : undefined} />
 
-      {/* Modal de confirmación de inscripción */}
-      <LeagueRegistrationModal
-        league={registrationLeague}
-        isOpen={!!registrationLeague}
-        onClose={handleCloseRegistrationModal}
-        profileId={profile?.id || ''}
-      />
-    </div>
+        {/* Modal de confirmación de inscripción */}
+        <LeagueRegistrationModal
+          league={registrationLeague}
+          isOpen={!!registrationLeague}
+          onClose={handleCloseRegistrationModal}
+          profileId={profile?.id || ''}
+        />
+      </div>
+    </>
   );
 };
 
