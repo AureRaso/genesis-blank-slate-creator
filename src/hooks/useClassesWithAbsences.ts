@@ -101,7 +101,7 @@ export const useClassesWithAbsences = (clubId?: string) => {
         return [];
       }
 
-      // Get participants for all these classes with absence info
+      // Get participants for all these classes
       const classIds = todayClasses.map(c => c.id);
       const { data: participants, error: participantsError } = await supabase
         .from('class_participants')
@@ -110,9 +110,14 @@ export const useClassesWithAbsences = (clubId?: string) => {
           class_id,
           student_enrollment_id,
           status,
-          absence_confirmed,
-          absence_locked,
           is_substitute,
+          absence_confirmed,
+          absence_reason,
+          absence_confirmed_at,
+          absence_locked,
+          attendance_confirmed_for_date,
+          attendance_confirmed_at,
+          confirmed_by_trainer,
           student_enrollment:student_enrollments(
             full_name,
             email,
@@ -129,10 +134,66 @@ export const useClassesWithAbsences = (clubId?: string) => {
 
       console.log('👥 [useClassesWithAbsences] Participants fetched:', participants?.length || 0);
 
+      // Get attendance confirmations for today's date
+      const participantIds = participants?.map(p => p.id) || [];
+      const { data: attendanceConfirmations, error: confirmationsError } = await supabase
+        .from('class_attendance_confirmations')
+        .select('*')
+        .in('class_participant_id', participantIds)
+        .eq('scheduled_date', today);
+
+      if (confirmationsError) {
+        console.error('❌ [useClassesWithAbsences] Error fetching confirmations:', confirmationsError);
+        throw confirmationsError;
+      }
+
+      console.log('📊 [useClassesWithAbsences] Attendance confirmations fetched:', attendanceConfirmations?.length || 0);
+
+      // Create a map of participant confirmations for quick lookup
+      const confirmationsMap = new Map(
+        attendanceConfirmations?.map(c => [c.class_participant_id, c]) || []
+      );
+
       // Group participants by class and filter classes with absences
       const classesWithParticipants: ClassWithAbsences[] = todayClasses
         .map((classData: any) => {
-          const classParticipants = participants?.filter(p => p.class_id === classData.id) || [];
+          const classParticipants = (participants?.filter(p => p.class_id === classData.id) || [])
+            .map(p => {
+              const confirmation = confirmationsMap.get(p.id);
+
+              // Determine absence status
+              const isAbsent = confirmation
+                ? confirmation.absence_confirmed
+                : (p.absence_confirmed || false);
+
+              // REGLA DE NEGOCIO: Si NO hay ausencia confirmada, entonces está implícitamente confirmado para asistir
+              const implicitAttendanceConfirmed = !isAbsent;
+
+              // FALLBACK PATTERN: use confirmation if exists, otherwise use class_participants data
+              return {
+                ...p,
+                absence_confirmed: isAbsent,
+                absence_locked: confirmation
+                  ? confirmation.absence_locked
+                  : (p.absence_locked || false),
+                absence_reason: confirmation
+                  ? confirmation.absence_reason
+                  : p.absence_reason,
+                absence_confirmed_at: confirmation
+                  ? confirmation.absence_confirmed_at
+                  : p.absence_confirmed_at,
+                attendance_confirmed_for_date: confirmation
+                  ? (confirmation.attendance_confirmed ? today : (implicitAttendanceConfirmed ? today : null))
+                  : (p.attendance_confirmed_for_date || (implicitAttendanceConfirmed ? today : null)),
+                attendance_confirmed_at: confirmation
+                  ? confirmation.attendance_confirmed_at
+                  : p.attendance_confirmed_at,
+                confirmed_by_trainer: confirmation
+                  ? confirmation.confirmed_by_trainer
+                  : (p.confirmed_by_trainer || false),
+              };
+            });
+
           const absenceCount = classParticipants.filter(p => p.absence_confirmed).length;
 
           return {

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell, Save } from "lucide-react";
-import { useTodayClassAttendance, useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsenceConfirmation } from "@/hooks/useTodayClassAttendance";
+import { useTodayClassAttendance } from "@/hooks/useTodayClassAttendance";
+import { useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsence } from "@/hooks/useAttendanceConfirmations";
 import { AttendanceToggle } from "./AttendanceToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
@@ -39,7 +40,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const confirmAttendance = useConfirmAttendance();
   const cancelConfirmation = useCancelAttendanceConfirmation();
   const confirmAbsence = useConfirmAbsence();
-  const cancelAbsence = useCancelAbsenceConfirmation();
+  const cancelAbsence = useCancelAbsence();
 
   // Estado para manejar el toggle y motivo de ausencia
   const [expandedClassId, setExpandedClassId] = useState<string | null>(null);
@@ -50,10 +51,10 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const handleToggleAttendance = (participantId: string, willAttend: boolean, scheduledDate: string) => {
     if (willAttend) {
       // Cambió a "VOY" - cancelar ausencia Y confirmar asistencia
-      cancelAbsence.mutate(participantId, {
+      cancelAbsence.mutate({ classParticipantId: participantId, scheduledDate }, {
         onSuccess: () => {
           // Después de cancelar la ausencia, confirmar la asistencia
-          confirmAttendance.mutate({ participantId, scheduledDate });
+          confirmAttendance.mutate({ classParticipantId: participantId, scheduledDate });
         }
       });
       setExpandedClassId(null);
@@ -64,7 +65,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   };
 
   // Guardar ausencia con motivo
-  const handleSaveAbsence = (participantId: string) => {
+  const handleSaveAbsence = (participantId: string, scheduledDate: string) => {
     const reasonType = selectedReasonType[participantId] || '';
     const customReason = absenceReasons[participantId] || '';
 
@@ -76,7 +77,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     }
 
     confirmAbsence.mutate(
-      { participantId, reason: finalReason },
+      { classParticipantId: participantId, scheduledDate, reason: finalReason },
       {
         onSuccess: () => {
           setExpandedClassId(null);
@@ -504,7 +505,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
                           {/* Botón guardar */}
                           <Button
-                            onClick={() => handleSaveAbsence(classItem.id)}
+                            onClick={() => handleSaveAbsence(classItem.id, scheduledDate)}
                             disabled={confirmAbsence.isPending}
                             size="sm"
                             className="w-full bg-red-500 hover:bg-red-600 text-white h-8 text-xs"

@@ -343,6 +343,42 @@ export const useTodayClassAttendance = () => {
         cancelledClasses?.map(c => `${c.programmed_class_id}-${c.cancelled_date}`) || []
       );
 
+      // STEP 6: Get attendance confirmations for all participants and dates
+      console.log('📍 STEP 6: Fetching attendance confirmations...');
+      const participantIds = participantsBasic.map(p => p.id);
+      const dateRange = next10Days.map(d => d.dateStr);
+
+      const { data: attendanceConfirmations, error: attendanceError } = await supabase
+        .from('class_attendance_confirmations')
+        .select('*')
+        .in('class_participant_id', participantIds)
+        .in('scheduled_date', dateRange);
+
+      console.log('📊 STEP 6 Result:', {
+        attendanceConfirmations,
+        attendanceError,
+        participantCount: participantIds.length,
+        dateCount: dateRange.length,
+        confirmationsByParticipant: attendanceConfirmations?.reduce((acc: any, c: any) => {
+          const key = c.class_participant_id;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push({
+            scheduled_date: c.scheduled_date,
+            absence_confirmed: c.absence_confirmed,
+            absence_reason: c.absence_reason,
+            attendance_confirmed: c.attendance_confirmed
+          });
+          return acc;
+        }, {}) || {}
+      });
+
+      // Create a Map for quick lookup: participantId-date -> confirmation data
+      const confirmationsMap = new Map(
+        attendanceConfirmations?.map(c =>
+          [`${c.class_participant_id}-${c.scheduled_date}`, c]
+        ) || []
+      );
+
       // Filter classes that are scheduled in the next 10 days
       const upcomingClasses: any[] = [];
 
@@ -389,12 +425,83 @@ export const useTodayClassAttendance = () => {
               key: `${programmedClass.id}-${dateStr}`,
               isCancelled
             });
+
+            // Get attendance confirmation for this specific participant and date
+            const confirmationKey = `${participation.id}-${dateStr}`;
+            const confirmation = confirmationsMap.get(confirmationKey);
+
+            console.log('🔍 [Player] DEBUG - Attendance confirmation:', {
+              participantId: participation.id,
+              date: dateStr,
+              key: confirmationKey,
+              hasConfirmation: !!confirmation,
+              confirmation: confirmation ? {
+                id: confirmation.id,
+                absence_confirmed: confirmation.absence_confirmed,
+                absence_reason: confirmation.absence_reason,
+                absence_confirmed_at: confirmation.absence_confirmed_at,
+                attendance_confirmed: confirmation.attendance_confirmed,
+                confirmed_by_trainer: confirmation.confirmed_by_trainer,
+                scheduled_date: confirmation.scheduled_date,
+                class_participant_id: confirmation.class_participant_id
+              } : null,
+              participationAbsence: participation.absence_confirmed,
+              participationAbsenceReason: participation.absence_reason,
+              participationAbsenceAt: participation.absence_confirmed_at
+            });
+
             // Add the class with the specific date information
+            // Priority: use confirmation data if available, otherwise fallback to class_participants data
+
+            // Determine absence status
+            const isAbsent = confirmation
+              ? confirmation.absence_confirmed
+              : (participation.absence_confirmed || false);
+            
+            console.log('🔍 [Player] DEBUG - Final absence status:', {
+              participantId: participation.id,
+              date: dateStr,
+              isAbsent,
+              hasConfirmation: !!confirmation,
+              confirmationAbsence: confirmation?.absence_confirmed,
+              confirmationAbsenceReason: confirmation?.absence_reason,
+              confirmationAbsenceAt: confirmation?.absence_confirmed_at,
+              participationAbsence: participation.absence_confirmed,
+              participationAbsenceReason: participation.absence_reason,
+              participationAbsenceAt: participation.absence_confirmed_at,
+              finalAbsenceReason: confirmation?.absence_reason || participation.absence_reason,
+              finalAbsenceAt: confirmation?.absence_confirmed_at || participation.absence_confirmed_at
+            });
+
+            // REGLA DE NEGOCIO: Si NO hay ausencia confirmada, entonces está implícitamente confirmado para asistir
+            // Esto significa que cuando se añade un alumno a una clase, por defecto se asume que va a ir
+            const implicitAttendanceConfirmed = !isAbsent;
+
             upcomingClasses.push({
               ...participation,
               scheduled_date: dateStr,
               day_name: dayName,
-              is_cancelled: isCancelled
+              is_cancelled: isCancelled,
+              // Si hay confirmación explícita de asistencia, usarla; si no, usar confirmación implícita
+              attendance_confirmed_for_date: confirmation
+                ? (confirmation.attendance_confirmed ? dateStr : (implicitAttendanceConfirmed ? dateStr : null))
+                : (participation.attendance_confirmed_for_date || (implicitAttendanceConfirmed ? dateStr : null)),
+              attendance_confirmed_at: confirmation
+                ? confirmation.attendance_confirmed_at
+                : participation.attendance_confirmed_at,
+              confirmed_by_trainer: confirmation
+                ? confirmation.confirmed_by_trainer
+                : (participation.confirmed_by_trainer || false),
+              absence_confirmed: isAbsent,
+              absence_reason: confirmation
+                ? confirmation.absence_reason
+                : participation.absence_reason,
+              absence_confirmed_at: confirmation
+                ? confirmation.absence_confirmed_at
+                : participation.absence_confirmed_at,
+              absence_locked: confirmation
+                ? confirmation.absence_locked
+                : (participation.absence_locked || false),
             });
           }
         });
@@ -413,11 +520,30 @@ export const useTodayClassAttendance = () => {
   useEffect(() => {
     if (!profile?.id) return;
 
-    console.log('🔌 [Player] Setting up Realtime subscription for class_participants');
+    console.log('🔌 [Player] Setting up Realtime subscription for class_attendance_confirmations');
 
-    // Subscribe to changes in class_participants table
+    // Subscribe to changes in class_attendance_confirmations table
     const channel = supabase
       .channel('player-attendance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'class_attendance_confirmations',
+        },
+        (payload) => {
+          console.log('🔔 [Player] Realtime update received from class_attendance_confirmations:', {
+            eventType: payload.eventType,
+            table: payload.table,
+          });
+
+          // Invalidate and refetch ALL upcoming-class-attendance queries
+          queryClient.invalidateQueries({
+            queryKey: ['upcoming-class-attendance']
+          });
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -426,7 +552,7 @@ export const useTodayClassAttendance = () => {
           table: 'class_participants',
         },
         (payload) => {
-          console.log('🔔 [Player] Realtime update received:', {
+          console.log('🔔 [Player] Realtime update received from class_participants:', {
             eventType: payload.eventType,
             table: payload.table,
           });

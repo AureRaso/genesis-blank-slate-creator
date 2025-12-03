@@ -142,10 +142,12 @@ export const useCreateProgrammedClass = () => {
 
       if (error) {
         console.error('Edge function error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw error;
       }
 
       if (!result?.success) {
+        console.error('Edge function result:', JSON.stringify(result, null, 2));
         throw new Error(result?.error || 'Failed to create programmed class');
       }
 

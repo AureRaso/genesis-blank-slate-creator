@@ -264,30 +264,64 @@ export const useCreateTrainer = () => {
       // Obtener el ID del usuario actual (admin) que está creando el profesor
       const { data: { user } } = await supabase.auth.getUser();
 
+      const requestBody = {
+        full_name: trainerData.full_name,
+        email: trainerData.email,
+        club_id: trainerData.club_id,
+        phone: trainerData.phone,
+        specialty: trainerData.specialty || null,
+        photo_url: trainerData.photo_url || null,
+        is_active: trainerData.is_active,
+        created_by_id: user?.id // Pasar el ID del admin que crea el profesor
+      };
+
+      console.log('🚀 Sending trainer data to Edge Function:', requestBody);
+
       // Llamar a la Edge Function para crear el usuario completo
-      const { data, error } = await supabase.functions.invoke('create-trainer-user', {
-        body: {
-          full_name: trainerData.full_name,
-          email: trainerData.email,
-          club_id: trainerData.club_id,
-          phone: trainerData.phone,
-          specialty: trainerData.specialty || null,
-          photo_url: trainerData.photo_url || null,
-          is_active: trainerData.is_active,
-          created_by_id: user?.id // Pasar el ID del admin que crea el profesor
-        }
+      const response = await supabase.functions.invoke('create-trainer-user', {
+        body: requestBody
       });
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Error calling create-trainer-user function: ${error.message}`);
+      console.log('📥 Edge Function response:', response);
+
+      if (response.error) {
+        console.error('Edge function error:', response.error);
+
+        // Try to get more details from the error
+        let errorMessage = response.error.message || 'Unknown error';
+
+        // Try to extract error from response context
+        if (response.error.context && response.error.context instanceof Response) {
+          try {
+            const errorBody = await response.error.context.text();
+            console.error('Error response body:', errorBody);
+
+            // Try to parse as JSON
+            try {
+              const errorJson = JSON.parse(errorBody);
+              if (errorJson.error) {
+                errorMessage = errorJson.error;
+              }
+            } catch (e) {
+              // Not JSON, use as is
+              errorMessage = errorBody || errorMessage;
+            }
+          } catch (e) {
+            console.error('Could not read error response body:', e);
+          }
+        }
+
+        console.error('Final error message:', errorMessage);
+        throw new Error(errorMessage);
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (response.data?.error) {
+        console.error('Edge function returned error in data:', response.data.error);
+        throw new Error(response.data.error);
       }
 
-      return data;
+      console.log('✅ Trainer created successfully:', response.data);
+      return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['trainers'] });

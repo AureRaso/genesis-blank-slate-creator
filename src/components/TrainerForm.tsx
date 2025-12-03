@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, UserCheck } from "lucide-react";
 import { useClubs, useAdminClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
+import { PhoneInput } from "@/components/PhoneInput";
 
 const createFormSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
@@ -260,9 +261,13 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Teléfono</FormLabel>
                       <FormControl>
-                        <Input placeholder="600 123 456" {...field} />
+                        <PhoneInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          label="Teléfono"
+                          required={true}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

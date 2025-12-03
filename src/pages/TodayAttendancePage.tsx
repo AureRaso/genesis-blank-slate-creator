@@ -143,12 +143,13 @@ const TodayAttendancePage = () => {
     });
   };
 
-  const handleConfirmAbsence = (participantId: string, participantName: string) => {
+  const handleConfirmAbsence = (participantId: string, participantName: string, scheduledDate: string) => {
     setConfirmDialog({
       open: true,
       type: 'absence',
       participantId,
       participantName,
+      scheduledDate,
     });
   };
 
@@ -176,9 +177,10 @@ const TodayAttendancePage = () => {
         participantId: confirmDialog.participantId,
         scheduledDate: confirmDialog.scheduledDate,
       });
-    } else if (confirmDialog.type === 'absence') {
+    } else if (confirmDialog.type === 'absence' && confirmDialog.scheduledDate) {
       markAbsence.mutate({
         participantId: confirmDialog.participantId,
+        scheduledDate: confirmDialog.scheduledDate,
         reason: 'Marcado por profesor',
       });
     } else if (confirmDialog.type === 'clear') {
@@ -607,8 +609,13 @@ const TodayAttendancePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {classes.map((classData) => {
             const validParticipants = classData.participants.filter(p => p.student_enrollment);
+            // Apply implicit confirmation logic: if no absence is confirmed, consider as confirmed
             const confirmedCount = validParticipants.filter(
-              p => p.attendance_confirmed_for_date
+              p => {
+                const hasExplicitConfirmation = !!p.attendance_confirmed_for_date;
+                // Confirmed if either explicit or implicit (not absent)
+                return hasExplicitConfirmation || !p.absence_confirmed;
+              }
             ).length;
             const maxParticipants = classData.max_participants || 8;
             const confirmationRate = maxParticipants > 0 ? (confirmedCount / maxParticipants) * 100 : 0;
@@ -682,14 +689,17 @@ const TodayAttendancePage = () => {
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold text-slate-700">Lista de Alumnos</h4>
                         <Badge variant="outline" className="text-xs font-medium">
-                          {totalCount} {totalCount === 1 ? 'alumno' : 'alumnos'}
+                          {validParticipants.length} {validParticipants.length === 1 ? 'alumno' : 'alumnos'}
                         </Badge>
                       </div>
                       <div className="grid gap-3">
                         {validParticipants.map((participant) => {
-                          const isConfirmed = !!participant.attendance_confirmed_for_date;
+                          // Apply implicit confirmation logic: if no absence is confirmed, consider as confirmed
+                          const hasExplicitConfirmation = !!participant.attendance_confirmed_for_date;
                           const isAbsent = !!participant.absence_confirmed;
-                          const isPending = !isConfirmed && !isAbsent;
+                          // Confirmed if either explicit confirmation OR implicit (no absence)
+                          const isConfirmed = hasExplicitConfirmation || (!isAbsent);
+                          const isPending = false; // No pending state with implicit confirmation
                           const isSubstitute = !!participant.is_substitute;
 
                           const today = new Date().toISOString().split('T')[0];
@@ -797,7 +807,8 @@ const TodayAttendancePage = () => {
                                       size="sm"
                                       onClick={() => handleConfirmAbsence(
                                         participant.id,
-                                        participant.student_enrollment!.full_name
+                                        participant.student_enrollment!.full_name,
+                                        today
                                       )}
                                       disabled={markAbsence.isPending || isAbsent}
                                       className={`h-9 px-3 gap-1.5 font-medium transition-all ${
