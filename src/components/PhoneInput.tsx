@@ -120,9 +120,12 @@ export const PhoneInput = ({ value, onChange, label = "Teléfono", required = tr
       <div className="flex gap-0 relative">
         {/* Selector de país integrado en el lado izquierdo */}
         <Select value={countryCode} onValueChange={handleCountryChange}>
-          <SelectTrigger className="h-12 w-[100px] rounded-r-none border-r-0 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2 bg-slate-50">
+          <SelectTrigger className="h-12 w-[110px] rounded-r-none border-r-0 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2 bg-slate-50">
             <SelectValue>
-              <span className="text-base font-medium">{selectedCountry.prefix}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg">{selectedCountry.flag}</span>
+                <span className="text-base font-medium">{selectedCountry.prefix}</span>
+              </div>
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
