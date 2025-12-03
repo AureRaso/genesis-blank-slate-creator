@@ -113,32 +113,28 @@ export const PhoneInput = ({ value, onChange, label = "Teléfono", required = tr
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <Label htmlFor="country" className="text-sm font-semibold text-slate-700">
-        País *
-      </Label>
-      <Select value={countryCode} onValueChange={handleCountryChange}>
-        <SelectTrigger className="w-full h-12 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2">
-          <SelectValue>
-            {selectedCountry.flag} {selectedCountry.name} ({selectedCountry.prefix})
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
-          {COUNTRIES.map((country) => (
-            <SelectItem key={country.code} value={country.code}>
-              {country.flag} {country.name} ({country.prefix})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       <Label htmlFor="phone" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
         <Phone className="h-4 w-4" />
         {label} {required && "*"}
       </Label>
-      <div className="flex gap-2">
-        <div className="flex items-center px-3 border rounded-md bg-muted text-muted-foreground min-w-[80px] justify-center h-12">
-          <span className="text-base font-medium">{selectedCountry.prefix}</span>
-        </div>
+      <div className="flex gap-0 relative">
+        {/* Selector de país integrado en el lado izquierdo */}
+        <Select value={countryCode} onValueChange={handleCountryChange}>
+          <SelectTrigger className="h-12 w-[100px] rounded-r-none border-r-0 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2 bg-slate-50">
+            <SelectValue>
+              <span className="text-base font-medium">{selectedCountry.prefix}</span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            {COUNTRIES.map((country) => (
+              <SelectItem key={country.code} value={country.code}>
+                {country.flag} {country.name} ({country.prefix})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Input del teléfono */}
         <Input
           id="phone"
           type="tel"
@@ -148,7 +144,7 @@ export const PhoneInput = ({ value, onChange, label = "Teléfono", required = tr
           value={phone}
           onChange={handlePhoneChange}
           maxLength={selectedCountry.maxDigits}
-          className="text-base flex-1 h-12 border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
+          className="text-base flex-1 h-12 rounded-l-none border-slate-200 focus:border-playtomic-orange focus:ring-playtomic-orange/20 focus:ring-2"
           required={required}
         />
       </div>
