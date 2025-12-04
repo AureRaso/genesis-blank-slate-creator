@@ -941,6 +941,8 @@ const TodayAttendancePage = () => {
                       slotsByAbsence,
                       slotsByCapacity,
                       totalAvailableSlots,
+                      showSection: totalAvailableSlots > 0,
+                      showNotifyButton: absentCount > 0,
                       participants: validParticipants.map(p => ({
                         name: p.student_enrollment?.full_name,
                         isSubstitute: p.is_substitute,
