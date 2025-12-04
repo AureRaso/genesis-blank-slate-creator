@@ -1239,6 +1239,24 @@ const WeekAttendancePage = () => {
                         // Total available slots is the maximum of both
                         const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
 
+                        console.log('🔍 DEBUG - Clase:', classData.name, {
+                          totalParticipants: validParticipants.length,
+                          maxParticipants,
+                          enrolledCount,
+                          absentCount,
+                          substituteCount,
+                          slotsByAbsence,
+                          slotsByCapacity,
+                          totalAvailableSlots,
+                          showSection: totalAvailableSlots > 0,
+                          showNotifyButton: absentCount > 0,
+                          participants: validParticipants.map(p => ({
+                            name: p.student_enrollment?.full_name,
+                            isSubstitute: p.is_substitute,
+                            isAbsent: p.absence_confirmed
+                          }))
+                        });
+
                         return totalAvailableSlots > 0 && (
                           <div className="mt-4 space-y-3">
                             <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
