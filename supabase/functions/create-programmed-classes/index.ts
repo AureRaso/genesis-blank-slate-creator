@@ -168,9 +168,14 @@ serve(async (req) => {
 
 function generateClassDates(classData: CreateClassData): string[] {
   const dates: string[] = []
-  const startDate = new Date(classData.start_date)
-  const endDate = new Date(classData.end_date)
-  
+
+  // Parse dates in local timezone to avoid UTC offset issues
+  const [startYear, startMonth, startDay] = classData.start_date.split('-').map(Number)
+  const [endYear, endMonth, endDay] = classData.end_date.split('-').map(Number)
+
+  const startDate = new Date(startYear, startMonth - 1, startDay, 12, 0, 0) // Use noon to avoid timezone issues
+  const endDate = new Date(endYear, endMonth - 1, endDay, 12, 0, 0)
+
   const dayMap: Record<string, number> = {
     'domingo': 0,
     'lunes': 1,
@@ -191,11 +196,15 @@ function generateClassDates(classData: CreateClassData): string[] {
     }
 
     // Generate dates based on recurrence
-    const intervalDays = classData.recurrence_type === 'weekly' ? 7 : 
+    const intervalDays = classData.recurrence_type === 'weekly' ? 7 :
                         classData.recurrence_type === 'biweekly' ? 14 : 30
 
     while (currentDate <= endDate) {
-      dates.push(currentDate.toISOString().split('T')[0])
+      // Format date as YYYY-MM-DD
+      const year = currentDate.getFullYear()
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0')
+      const day = String(currentDate.getDate()).padStart(2, '0')
+      dates.push(`${year}-${month}-${day}`)
       currentDate.setDate(currentDate.getDate() + intervalDays)
     }
   })
