@@ -963,8 +963,8 @@ const TodayAttendancePage = () => {
                             {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
                             {isAdmin && (
                               <>
-                                {/* Mostrar "Notificar ausencia" solo si hay ausencias sin cubrir */}
-                                {slotsByAbsence > 0 && (() => {
+                                {/* Mostrar "Notificar ausencia" si hay ausencias (cubiertas o no) */}
+                                {absentCount > 0 && (() => {
                                   const inCooldown = isInCooldown(classData.id);
                                   const minutesRemaining = getCooldownMinutesRemaining(classData.id);
 
