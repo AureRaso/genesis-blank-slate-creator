@@ -49,6 +49,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
   // Manejar cambio del toggle
   const handleToggleAttendance = (participantId: string, willAttend: boolean, scheduledDate: string) => {
+    const uniqueKey = `${participantId}-${scheduledDate}`;
     if (willAttend) {
       // Cambió a "VOY" - cancelar ausencia Y confirmar asistencia
       cancelAbsence.mutate({ classParticipantId: participantId, scheduledDate }, {
@@ -60,14 +61,15 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
       setExpandedClassId(null);
     } else {
       // Cambió a "NO VOY" - expandir para mostrar motivo
-      setExpandedClassId(participantId);
+      setExpandedClassId(uniqueKey);
     }
   };
 
   // Guardar ausencia con motivo
   const handleSaveAbsence = (participantId: string, scheduledDate: string) => {
-    const reasonType = selectedReasonType[participantId] || '';
-    const customReason = absenceReasons[participantId] || '';
+    const uniqueKey = `${participantId}-${scheduledDate}`;
+    const reasonType = selectedReasonType[uniqueKey] || '';
+    const customReason = absenceReasons[uniqueKey] || '';
 
     let finalReason = '';
     if (reasonType === 'otro') {
@@ -81,8 +83,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
       {
         onSuccess: () => {
           setExpandedClassId(null);
-          setAbsenceReasons(prev => ({ ...prev, [participantId]: '' }));
-          setSelectedReasonType(prev => ({ ...prev, [participantId]: '' }));
+          setAbsenceReasons(prev => ({ ...prev, [uniqueKey]: '' }));
+          setSelectedReasonType(prev => ({ ...prev, [uniqueKey]: '' }));
         },
       }
     );
@@ -469,7 +471,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                       />
 
                       {/* Absence Reason Section - Solo visible cuando NO asiste */}
-                      {(!isAbsent && expandedClassId === classItem.id) && (
+                      {(!isAbsent && expandedClassId === `${classItem.id}-${scheduledDate}`) && (
                         <div className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
                           <div className="flex items-center gap-1.5 text-red-800 font-medium text-xs">
                             <AlertCircle className="h-3.5 w-3.5" />
@@ -478,8 +480,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
                           {/* Selector de motivo */}
                           <Select
-                            value={selectedReasonType[classItem.id] || ''}
-                            onValueChange={(value) => setSelectedReasonType(prev => ({ ...prev, [classItem.id]: value }))}
+                            value={selectedReasonType[`${classItem.id}-${scheduledDate}`] || ''}
+                            onValueChange={(value) => setSelectedReasonType(prev => ({ ...prev, [`${classItem.id}-${scheduledDate}`]: value }))}
                           >
                             <SelectTrigger className="w-full bg-white h-9 text-xs">
                               <SelectValue placeholder="Selecciona un motivo..." />
@@ -494,11 +496,11 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                           </Select>
 
                           {/* Campo de texto personalizado */}
-                          {selectedReasonType[classItem.id] === 'otro' && (
+                          {selectedReasonType[`${classItem.id}-${scheduledDate}`] === 'otro' && (
                             <Textarea
                               placeholder="Describe tu motivo..."
-                              value={absenceReasons[classItem.id] || ''}
-                              onChange={(e) => setAbsenceReasons(prev => ({ ...prev, [classItem.id]: e.target.value }))}
+                              value={absenceReasons[`${classItem.id}-${scheduledDate}`] || ''}
+                              onChange={(e) => setAbsenceReasons(prev => ({ ...prev, [`${classItem.id}-${scheduledDate}`]: e.target.value }))}
                               className="w-full min-h-[60px] bg-white text-xs"
                             />
                           )}
