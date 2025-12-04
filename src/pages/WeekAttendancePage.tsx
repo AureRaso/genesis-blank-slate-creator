@@ -1227,7 +1227,12 @@ const WeekAttendancePage = () => {
 
                       {/* Substitute Search and WhatsApp Notification */}
                       {(() => {
-                        const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
+                        // Calculate absentCount using confirmationsMap for the specific date
+                        const absentCount = validParticipants.filter(p => {
+                          const confirmationKey = `${p.id}-${notificationDate}`;
+                          const confirmation = confirmationsMap.get(confirmationKey);
+                          return confirmation ? confirmation.absence_confirmed : (p.absence_confirmed || false);
+                        }).length;
                         const substituteCount = validParticipants.filter(p => p.is_substitute).length;
                         const slotsByAbsence = absentCount - substituteCount;
 
@@ -1250,11 +1255,16 @@ const WeekAttendancePage = () => {
                           totalAvailableSlots,
                           showSection: totalAvailableSlots > 0,
                           showNotifyButton: absentCount > 0,
-                          participants: validParticipants.map(p => ({
-                            name: p.student_enrollment?.full_name,
-                            isSubstitute: p.is_substitute,
-                            isAbsent: p.absence_confirmed
-                          }))
+                          participants: validParticipants.map(p => {
+                            const confirmationKey = `${p.id}-${notificationDate}`;
+                            const confirmation = confirmationsMap.get(confirmationKey);
+                            const isAbsent = confirmation ? confirmation.absence_confirmed : (p.absence_confirmed || false);
+                            return {
+                              name: p.student_enrollment?.full_name,
+                              isSubstitute: p.is_substitute,
+                              isAbsent: isAbsent
+                            };
+                          })
                         });
 
                         return totalAvailableSlots > 0 && (
