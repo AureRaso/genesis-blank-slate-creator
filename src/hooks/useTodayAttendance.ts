@@ -147,42 +147,9 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         );
       });
 
-      // Get all participant IDs for fetching attendance confirmations
-      const allParticipantIds = filteredClasses.flatMap((classData: any) =>
-        (classData.participants || [])
-          .filter((p: any) => p.status === 'active')
-          .map((p: any) => p.id)
-      );
-
-      // Get all attendance confirmations for the date range
-      let attendanceConfirmations: any[] = [];
-      if (allParticipantIds.length > 0) {
-        // Generate all dates in the range
-        const datesInRange: string[] = [];
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          datesInRange.push(format(d, 'yyyy-MM-dd'));
-        }
-
-        const { data: confirmationsData, error: confirmationsError } = await supabase
-          .from('class_attendance_confirmations')
-          .select('*')
-          .in('class_participant_id', allParticipantIds)
-          .in('scheduled_date', datesInRange);
-
-        if (confirmationsError) {
-          console.error('⚠️ Error fetching attendance confirmations:', confirmationsError);
-          // Don't throw, just log - we can fallback to class_participants data
-        } else {
-          attendanceConfirmations = confirmationsData || [];
-        }
-      }
-
-      // Create a Map for quick lookup: participantId-date -> confirmation data
-      const confirmationsMap = new Map(
-        attendanceConfirmations.map(c =>
-          [`${c.class_participant_id}-${c.scheduled_date}`, c]
-        )
-      );
+      // Since class_attendance_confirmations doesn't exist, we use class_participants directly
+      // Create an empty confirmationsMap for backwards compatibility
+      const confirmationsMap = new Map();
 
       const weekClasses = filteredClasses.map((classData: any) => ({
         id: classData.id,
@@ -290,26 +257,13 @@ export const useTrainerMarkAttendance = () => {
     mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
       console.log('👨‍🏫 Trainer marking attendance for:', { participantId, scheduledDate });
 
-      // IMPORTANT: Only update class_attendance_confirmations, NOT class_participants
-      // This ensures that marking attendance for one date doesn't affect other dates in a recurring series
-      console.log('📅 Updating class_attendance_confirmations for date:', scheduledDate);
-      
-      // Use RPC function to ensure the record exists
-      const { data: recordId, error: rpcError } = await supabase.rpc('ensure_attendance_record', {
-        p_class_participant_id: participantId,
-        p_scheduled_date: scheduledDate,
-      });
+      // Update class_participants directly since class_attendance_confirmations doesn't exist
+      console.log('📅 [Trainer] Updating class_participants for participant:', participantId);
 
-      if (rpcError) {
-        console.error('⚠️ Error ensuring attendance record:', rpcError);
-        throw rpcError;
-      }
-
-      // Update the attendance confirmation record
-      const { data: updatedConfirmation, error: updateError } = await supabase
-        .from('class_attendance_confirmations')
+      const { data: updatedParticipant, error: updateError } = await supabase
+        .from('class_participants')
         .update({
-          attendance_confirmed: true,
+          attendance_confirmed_for_date: scheduledDate,
           attendance_confirmed_at: new Date().toISOString(),
           confirmed_by_trainer: true,
           // Clear absence if exists
@@ -317,17 +271,22 @@ export const useTrainerMarkAttendance = () => {
           absence_reason: null,
           absence_confirmed_at: null,
         })
-        .eq('id', recordId)
+        .eq('id', participantId)
         .select()
         .single();
 
       if (updateError) {
-        console.error('⚠️ Error updating attendance confirmation:', updateError);
+        console.error('⚠️ [Trainer] Error updating participant:', updateError);
         throw updateError;
       }
 
-      console.log('✅ Attendance marked in class_attendance_confirmations:', updatedConfirmation);
-      return updatedConfirmation;
+      console.log('✅ [Trainer] Attendance marked in class_participants:', {
+        participantId,
+        attendance_confirmed_for_date: updatedParticipant?.attendance_confirmed_for_date,
+        confirmed_by_trainer: updatedParticipant?.confirmed_by_trainer,
+      });
+
+      return updatedParticipant;
     },
     onSuccess: () => {
       // Invalidate all today-attendance queries (including week views with different date ranges)
@@ -356,59 +315,37 @@ export const useTrainerMarkAbsence = () => {
         throw new Error('scheduledDate is required to mark absence for a specific class occurrence');
       }
 
-      // IMPORTANT: Only update class_attendance_confirmations, NOT class_participants
-      // This ensures that marking absence for one date doesn't affect other dates in a recurring series
-      console.log('📅 [Trainer] Updating class_attendance_confirmations for date:', scheduledDate);
-      
-      // Use RPC function to ensure the record exists
-      const { data: recordId, error: rpcError } = await supabase.rpc('ensure_attendance_record', {
-        p_class_participant_id: participantId,
-        p_scheduled_date: scheduledDate,
-      });
+      // Update class_participants directly since class_attendance_confirmations doesn't exist
+      console.log('📅 [Trainer] Updating class_participants for participant:', participantId);
 
-      if (rpcError) {
-        console.error('⚠️ [Trainer] Error ensuring attendance record:', rpcError);
-        throw rpcError;
-      }
-
-      console.log('✅ [Trainer] Attendance record ID:', recordId);
-      
-      // Update the attendance confirmation record
-      const { data: updatedConfirmation, error: updateError } = await supabase
-        .from('class_attendance_confirmations')
+      const { data: updatedParticipant, error: updateError } = await supabase
+        .from('class_participants')
         .update({
           absence_confirmed: true,
           absence_reason: reason || 'Marcado por profesor',
           absence_confirmed_at: new Date().toISOString(),
           // Clear attendance confirmation if exists
-          attendance_confirmed: false,
+          attendance_confirmed_for_date: null,
           attendance_confirmed_at: null,
           confirmed_by_trainer: true,
         })
-        .eq('id', recordId)
+        .eq('id', participantId)
         .select()
         .single();
 
       if (updateError) {
-        console.error('⚠️ [Trainer] Error updating attendance confirmation:', updateError);
+        console.error('⚠️ [Trainer] Error updating participant:', updateError);
         throw updateError;
       }
 
-      console.log('✅ [Trainer] Absence marked in class_attendance_confirmations:', {
-        recordId,
-        updatedConfirmation: updatedConfirmation ? {
-          id: updatedConfirmation.id,
-          class_participant_id: updatedConfirmation.class_participant_id,
-          scheduled_date: updatedConfirmation.scheduled_date,
-          absence_confirmed: updatedConfirmation.absence_confirmed,
-          absence_reason: updatedConfirmation.absence_reason,
-          absence_confirmed_at: updatedConfirmation.absence_confirmed_at,
-          attendance_confirmed: updatedConfirmation.attendance_confirmed,
-          confirmed_by_trainer: updatedConfirmation.confirmed_by_trainer
-        } : null
+      console.log('✅ [Trainer] Absence marked in class_participants:', {
+        participantId,
+        absence_confirmed: updatedParticipant?.absence_confirmed,
+        absence_reason: updatedParticipant?.absence_reason,
+        absence_confirmed_at: updatedParticipant?.absence_confirmed_at,
       });
 
-      return updatedConfirmation;
+      return updatedParticipant;
     },
     onSuccess: () => {
       // Invalidate all today-attendance queries (including week views with different date ranges)
