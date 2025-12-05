@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.intelligent-bulk-create-classes]
 verify_jwt = true
 
+[functions.stripe-webhook]
+verify_jwt = false
+
 [functions.stripe-connect]
 verify_jwt = true
 
@@ -39,3 +42,9 @@ entrypoint = "./functions/send-attendance-reminders/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-attendance-reminders/*.html" ]
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.send-waitlist-whatsapp]
+verify_jwt = false

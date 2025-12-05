@@ -655,22 +655,34 @@ export const useConfirmAbsence = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
-    mutationFn: async ({ participantId, reason }: { participantId: string; reason?: string }) => {
+    mutationFn: async ({ participantId, scheduledDate, reason }: { participantId: string; scheduledDate: string; reason?: string }) => {
+      console.log('🔴 [Player] Confirming absence for:', { participantId, scheduledDate, reason });
+
+      // Use class_attendance_confirmations for date-specific absence tracking
       const { data, error } = await supabase
-        .from('class_participants')
-        .update({
+        .from('class_attendance_confirmations')
+        .upsert({
+          class_participant_id: participantId,
+          scheduled_date: scheduledDate,
           absence_confirmed: true,
           absence_reason: reason || null,
           absence_confirmed_at: new Date().toISOString(),
           // Clear attendance confirmation if exists
-          attendance_confirmed_for_date: null,
+          attendance_confirmed: false,
           attendance_confirmed_at: null,
+          confirmed_by_trainer: false,
+        }, {
+          onConflict: 'class_participant_id,scheduled_date'
         })
-        .eq('id', participantId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [Player] Error confirming absence:', error);
+        throw error;
+      }
+
+      console.log('✅ [Player] Absence confirmed in class_attendance_confirmations:', data);
       return data;
     },
     onSuccess: () => {
@@ -691,32 +703,47 @@ export const useCancelAbsenceConfirmation = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
-    mutationFn: async (participantId: string) => {
-      // Primero verificamos si la ausencia está bloqueada
-      const { data: participant, error: checkError } = await supabase
-        .from('class_participants')
+    mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
+      console.log('🟢 [Player] Canceling absence for:', { participantId, scheduledDate });
+
+      // Check if absence is locked in class_attendance_confirmations
+      const { data: confirmation, error: checkError } = await supabase
+        .from('class_attendance_confirmations')
         .select('absence_locked')
-        .eq('id', participantId)
-        .single();
+        .eq('class_participant_id', participantId)
+        .eq('scheduled_date', scheduledDate)
+        .maybeSingle();
 
-      if (checkError) throw checkError;
+      if (checkError) {
+        console.error('❌ [Player] Error checking absence lock:', checkError);
+        throw checkError;
+      }
 
-      if (participant?.absence_locked) {
+      if (confirmation?.absence_locked) {
         throw new Error('No puedes cambiar tu ausencia porque el profesor ya notificó tu plaza disponible al grupo de WhatsApp');
       }
 
+      // Use class_attendance_confirmations for date-specific tracking
       const { data, error } = await supabase
-        .from('class_participants')
-        .update({
+        .from('class_attendance_confirmations')
+        .upsert({
+          class_participant_id: participantId,
+          scheduled_date: scheduledDate,
           absence_confirmed: false,
           absence_reason: null,
           absence_confirmed_at: null,
+        }, {
+          onConflict: 'class_participant_id,scheduled_date'
         })
-        .eq('id', participantId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [Player] Error canceling absence:', error);
+        throw error;
+      }
+
+      console.log('✅ [Player] Absence canceled in class_attendance_confirmations:', data);
       return data;
     },
     onSuccess: () => {

@@ -138,37 +138,68 @@ export const useConfirmAbsence = () => {
       scheduledDate: string;
       reason?: string;
     }) => {
-      console.log('🔴 Confirming absence for:', { classParticipantId, scheduledDate, reason });
+      console.log('🔴 [Player] Confirming absence for:', { classParticipantId, scheduledDate, reason });
 
-      // Usar la función RPC para asegurar que existe el registro
+      // 1. Update class_participants table (same as trainer does)
+      console.log('📅 [Player] Updating class_participants for participant:', classParticipantId);
+      const { data: updatedParticipant, error: participantError } = await supabase
+        .from('class_participants')
+        .update({
+          absence_confirmed: true,
+          absence_reason: reason || 'Marcado por jugador',
+          absence_confirmed_at: new Date().toISOString(),
+          // Clear attendance confirmation if exists
+          attendance_confirmed_for_date: null,
+          attendance_confirmed_at: null,
+          confirmed_by_trainer: false,
+        })
+        .eq('id', classParticipantId)
+        .select()
+        .single();
+
+      if (participantError) {
+        console.error('⚠️ [Player] Error updating class_participants:', participantError);
+        throw participantError;
+      }
+
+      console.log('✅ [Player] Absence marked in class_participants:', updatedParticipant);
+
+      // 2. Also update class_attendance_confirmations for date-specific tracking
       const { data: recordId, error: rpcError } = await supabase.rpc('ensure_attendance_record', {
         p_class_participant_id: classParticipantId,
         p_scheduled_date: scheduledDate,
       });
 
-      if (rpcError) throw rpcError;
+      if (rpcError) {
+        console.error('⚠️ [Player] Error ensuring attendance record:', rpcError);
+        throw rpcError;
+      }
 
-      // Actualizar el registro
-      const { data, error } = await supabase
+      const { data: confirmation, error: confirmationError } = await supabase
         .from('class_attendance_confirmations')
         .update({
           absence_confirmed: true,
-          absence_reason: reason || null,
+          absence_reason: reason || 'Marcado por jugador',
           absence_confirmed_at: new Date().toISOString(),
-          // Limpiar confirmación de asistencia si existe
           attendance_confirmed: false,
           attendance_confirmed_at: null,
+          confirmed_by_trainer: false,
         })
         .eq('id', recordId)
         .select()
         .single();
 
-      if (error) throw error;
-      console.log('🔴 Absence confirmed:', data);
-      return data;
+      if (confirmationError) {
+        console.error('⚠️ [Player] Error updating class_attendance_confirmations:', confirmationError);
+        throw confirmationError;
+      }
+
+      console.log('✅ [Player] Absence confirmed in class_attendance_confirmations:', confirmation);
+      return { participant: updatedParticipant, confirmation };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       toast.success('Ausencia confirmada');
     },
     onError: (error: any) => {
@@ -193,9 +224,46 @@ export const useCancelAbsence = () => {
       classParticipantId: string;
       scheduledDate: string;
     }) => {
-      console.log('✓ Canceling absence for:', { classParticipantId, scheduledDate });
+      console.log('🟢 [Player] Canceling absence for:', { classParticipantId, scheduledDate });
 
-      // Buscar el registro
+      // 1. Check if absence is locked in class_attendance_confirmations
+      const { data: confirmation, error: checkError } = await supabase
+        .from('class_attendance_confirmations')
+        .select('absence_locked')
+        .eq('class_participant_id', classParticipantId)
+        .eq('scheduled_date', scheduledDate)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('❌ [Player] Error checking absence lock:', checkError);
+        throw checkError;
+      }
+
+      if (confirmation?.absence_locked) {
+        throw new Error('No puedes cambiar tu ausencia porque el profesor ya notificó tu plaza disponible al grupo de WhatsApp');
+      }
+
+      // 2. Update class_participants table (same as trainer does)
+      console.log('📅 [Player] Updating class_participants for participant:', classParticipantId);
+      const { data: updatedParticipant, error: participantError } = await supabase
+        .from('class_participants')
+        .update({
+          absence_confirmed: false,
+          absence_reason: null,
+          absence_confirmed_at: null,
+        })
+        .eq('id', classParticipantId)
+        .select()
+        .single();
+
+      if (participantError) {
+        console.error('⚠️ [Player] Error updating class_participants:', participantError);
+        throw participantError;
+      }
+
+      console.log('✅ [Player] Absence canceled in class_participants:', updatedParticipant);
+
+      // 3. Update class_attendance_confirmations for date-specific tracking
       const { data: record, error: fetchError } = await supabase
         .from('class_attendance_confirmations')
         .select('id')
@@ -203,36 +271,43 @@ export const useCancelAbsence = () => {
         .eq('scheduled_date', scheduledDate)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
-
-      if (!record) {
-        console.log('⚠️ No attendance record found to cancel absence');
-        return null;
+      if (fetchError) {
+        console.error('⚠️ [Player] Error fetching attendance record:', fetchError);
+        throw fetchError;
       }
 
-      // Actualizar el registro
-      const { data, error } = await supabase
-        .from('class_attendance_confirmations')
-        .update({
-          absence_confirmed: false,
-          absence_reason: null,
-          absence_confirmed_at: null,
-        })
-        .eq('id', record.id)
-        .select()
-        .single();
+      if (record) {
+        const { data, error } = await supabase
+          .from('class_attendance_confirmations')
+          .update({
+            absence_confirmed: false,
+            absence_reason: null,
+            absence_confirmed_at: null,
+          })
+          .eq('id', record.id)
+          .select()
+          .single();
 
-      if (error) throw error;
-      console.log('✓ Absence canceled:', data);
-      return data;
+        if (error) {
+          console.error('⚠️ [Player] Error updating class_attendance_confirmations:', error);
+          throw error;
+        }
+
+        console.log('✅ [Player] Absence canceled in class_attendance_confirmations:', data);
+        return { participant: updatedParticipant, confirmation: data };
+      }
+
+      console.log('⚠️ No attendance record found in class_attendance_confirmations, but class_participants updated');
+      return { participant: updatedParticipant, confirmation: null };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance', profile?.id] });
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       toast.success('Ausencia cancelada');
     },
     onError: (error: any) => {
       console.error('Error canceling absence:', error);
-      toast.error('Error al cancelar ausencia');
+      toast.error(error.message || 'Error al cancelar ausencia');
     },
   });
 };

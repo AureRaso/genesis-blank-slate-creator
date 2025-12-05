@@ -62,92 +62,117 @@ serve(async (req) => {
     const classDates = generateClassDates(classData)
     console.log(`Generated ${classDates.length} class dates`)
 
-    // Create the base programmed class
-    const { data: createdClass, error: classError } = await supabase
-      .from("programmed_classes")
-      .insert([{
-        name: classData.name,
-        level_from: classData.level_from,
-        level_to: classData.level_to,
-        custom_level: classData.custom_level,
-        duration_minutes: classData.duration_minutes,
-        start_time: classData.start_time,
-        days_of_week: classData.days_of_week,
-        start_date: classData.start_date,
-        end_date: classData.end_date,
-        recurrence_type: classData.recurrence_type,
-        trainer_profile_id: classData.trainer_profile_id,
-        club_id: classData.club_id,
-        court_number: classData.court_number,
-        monthly_price: classData.monthly_price || 0,
-        max_participants: classData.max_participants || 8,
-        is_open: classData.is_open ?? false,
-        group_id: classData.group_id,
-        created_by: user.id
-      }])
-      .select()
-      .single()
+    // Create individual classes for each date
+    const createdClassIds: string[] = []
 
-    if (classError) {
-      console.error('Error creating programmed class:', classError)
-      throw classError
-    }
+    for (const classDate of classDates) {
+      // Create a programmed class for each specific date
+      const { data: createdClass, error: classError } = await supabase
+        .from("programmed_classes")
+        .insert([{
+          name: classData.name,
+          level_from: classData.level_from,
+          level_to: classData.level_to,
+          custom_level: classData.custom_level,
+          duration_minutes: classData.duration_minutes,
+          start_time: classData.start_time,
+          days_of_week: classData.days_of_week,
+          start_date: classDate,      // Individual date
+          end_date: classDate,        // Same as start_date for individual classes
+          recurrence_type: classData.recurrence_type,
+          trainer_profile_id: classData.trainer_profile_id,
+          club_id: classData.club_id,
+          court_number: classData.court_number,
+          monthly_price: classData.monthly_price || 0,
+          max_participants: classData.max_participants || 8,
+          is_open: classData.is_open ?? false,
+          group_id: classData.group_id,
+          created_by: user.id
+        }])
+        .select()
+        .single()
 
-    console.log('Created programmed class:', createdClass.id)
-
-    // Handle participants if needed
-    if (classData.group_id || (classData.selected_students && classData.selected_students.length > 0)) {
-      let participantsData: any[] = []
-
-      if (classData.group_id) {
-        // Get group members
-        const { data: groupMembers, error: groupError } = await supabase
-          .from("group_members")
-          .select("student_enrollment_id")
-          .eq("group_id", classData.group_id)
-          .eq("is_active", true)
-
-        if (groupError) {
-          console.error('Error fetching group members:', groupError)
-          throw groupError
-        }
-
-        participantsData = groupMembers.map(member => ({
-          class_id: createdClass.id,
-          student_enrollment_id: member.student_enrollment_id,
-          status: 'active'
-        }))
-      } else if (classData.selected_students && classData.selected_students.length > 0) {
-        participantsData = classData.selected_students.map(studentId => ({
-          class_id: createdClass.id,
-          student_enrollment_id: studentId,
-          status: 'active'
-        }))
+      if (classError) {
+        console.error('Error creating programmed class for date:', classDate, classError)
+        throw classError
       }
 
-      // Insert participants in batches to avoid timeout
-      if (participantsData.length > 0) {
-        console.log(`Creating ${participantsData.length} participants`)
-        const { error: participantsError } = await supabase
-          .from("class_participants")
-          .insert(participantsData)
+      console.log(`Created programmed class for ${classDate}:`, createdClass.id)
+      createdClassIds.push(createdClass.id)
 
-        if (participantsError) {
-          console.error('Error creating participants:', participantsError)
-          throw participantsError
+      // Handle participants for this specific class
+      if (classData.group_id || (classData.selected_students && classData.selected_students.length > 0)) {
+        let participantsData: any[] = []
+
+        if (classData.group_id) {
+          // Get group members (only fetch once, reuse for all classes)
+          if (classDates.indexOf(classDate) === 0) {
+            // First iteration, fetch members
+            const { data: groupMembers, error: groupError } = await supabase
+              .from("group_members")
+              .select("student_enrollment_id")
+              .eq("group_id", classData.group_id)
+              .eq("is_active", true)
+
+            if (groupError) {
+              console.error('Error fetching group members:', groupError)
+              throw groupError
+            }
+
+            participantsData = groupMembers.map(member => ({
+              class_id: createdClass.id,
+              student_enrollment_id: member.student_enrollment_id,
+              status: 'active'
+            }))
+          } else {
+            // Reuse members from first class (fetch again to be safe)
+            const { data: groupMembers, error: groupError } = await supabase
+              .from("group_members")
+              .select("student_enrollment_id")
+              .eq("group_id", classData.group_id)
+              .eq("is_active", true)
+
+            if (!groupError && groupMembers) {
+              participantsData = groupMembers.map(member => ({
+                class_id: createdClass.id,
+                student_enrollment_id: member.student_enrollment_id,
+                status: 'active'
+              }))
+            }
+          }
+        } else if (classData.selected_students && classData.selected_students.length > 0) {
+          participantsData = classData.selected_students.map(studentId => ({
+            class_id: createdClass.id,
+            student_enrollment_id: studentId,
+            status: 'active'
+          }))
+        }
+
+        // Insert participants for this class
+        if (participantsData.length > 0) {
+          console.log(`Creating ${participantsData.length} participants for class ${createdClass.id}`)
+          const { error: participantsError } = await supabase
+            .from("class_participants")
+            .insert(participantsData)
+
+          if (participantsError) {
+            console.error('Error creating participants:', participantsError)
+            throw participantsError
+          }
         }
       }
     }
 
-    console.log('Successfully created programmed class and participants')
+    console.log(`Successfully created ${createdClassIds.length} programmed classes and their participants`)
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        class_id: createdClass.id,
+      JSON.stringify({
+        success: true,
+        class_ids: createdClassIds,
+        total_classes: createdClassIds.length,
         total_dates: classDates.length
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )

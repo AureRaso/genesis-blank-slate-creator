@@ -54,7 +54,10 @@
       "Bash(curl:*)",
       "Bash(then grep \"SUPABASE_SERVICE_ROLE_KEY\" .env)",
       "Bash(del \"C:\\Users\\sefac\\Documents\\Sergio\\Proyectos\\genesis-blank-slate-creator\\supabase\\migrations\\20250121000000_update_cron_to_30_minutes.sql\")",
-      "Bash(then grep \"DATABASE_URL\" .env)"
+      "Bash(then grep \"DATABASE_URL\" .env)",
+      "Bash(then grep \"WHAPI_TOKEN\" .env)",
+      "Bash(if [ ! -f \"src/hooks/useAttendanceRecords.ts\" ])",
+      "Bash(then echo \"File does not exist\")"
     ],
     "deny": [],
     "ask": []
