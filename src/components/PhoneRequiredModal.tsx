@@ -30,6 +30,7 @@ const COUNTRIES = [
   { code: "GR", name: "Grecia", flag: "🇬🇷", prefix: "+30", minDigits: 10, maxDigits: 10 },
   { code: "CZ", name: "República Checa", flag: "🇨🇿", prefix: "+420", minDigits: 9, maxDigits: 9 },
   { code: "HU", name: "Hungría", flag: "🇭🇺", prefix: "+36", minDigits: 9, maxDigits: 9 },
+  { code: "UA", name: "Ucrania", flag: "🇺🇦", prefix: "+380", minDigits: 9, maxDigits: 9 },
   { code: "US", name: "Estados Unidos", flag: "🇺🇸", prefix: "+1", minDigits: 10, maxDigits: 10 },
   { code: "CA", name: "Canadá", flag: "🇨🇦", prefix: "+1", minDigits: 10, maxDigits: 10 },
   { code: "MX", name: "México", flag: "🇲🇽", prefix: "+52", minDigits: 10, maxDigits: 10 },
