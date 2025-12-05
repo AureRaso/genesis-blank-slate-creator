@@ -61,7 +61,8 @@
   "language": {
     "selectLanguage": "Seleccionar idioma",
     "spanish": "Español",
-    "english": "Inglés"
+    "english": "Inglés",
+    "italian": "Italiano"
   },
   "classes": {
     "availableClasses": "Clases Disponibles",

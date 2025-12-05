@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Menu, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
 import padelockLogo from "@/assets/padelock-logo-red.png";
 
@@ -23,9 +29,17 @@ export const StickyNavigation = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "es" : "en";
-    i18n.changeLanguage(newLang);
+  const languages = [
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  ];
+
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    localStorage.setItem('language', langCode);
   };
 
   const navigationItems = [
@@ -96,15 +110,30 @@ export const StickyNavigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className="text-slate-700 hover:text-slate-900 hover:bg-slate-100"
-            >
-              <Globe className="h-4 w-4 mr-2" />
-              {i18n.language === "en" ? "ES" : "EN"}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  {currentLanguage.flag}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {languages.map((lang) => (
+                  <DropdownMenuItem
+                    key={lang.code}
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={i18n.language === lang.code ? "bg-accent" : ""}
+                  >
+                    <span className="mr-2">{lang.flag}</span>
+                    {lang.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               size="sm"
               onClick={() => {
@@ -150,15 +179,30 @@ export const StickyNavigation = () => {
                 </a>
               ))}
               <div className="flex flex-col space-y-2 pt-2 border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleLanguage}
-                  className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-100"
-                >
-                  <Globe className="h-4 w-4 mr-2" />
-                  {i18n.language === "en" ? "Español" : "English"}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      {currentLanguage.flag} {currentLanguage.name}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    {languages.map((lang) => (
+                      <DropdownMenuItem
+                        key={lang.code}
+                        onClick={() => handleLanguageChange(lang.code)}
+                        className={i18n.language === lang.code ? "bg-accent" : ""}
+                      >
+                        <span className="mr-2">{lang.flag}</span>
+                        {lang.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   size="sm"
                   onClick={() => {

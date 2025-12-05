@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setDefaultOptions } from 'date-fns';
-import { es, enUS, type Locale } from 'date-fns/locale';
+import { es, enUS, it, type Locale } from 'date-fns/locale';
 
 interface LanguageContextType {
   language: string;
@@ -28,7 +28,9 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   const [language, setLanguage] = useState(i18n.language || 'es');
 
   const getDateFnsLocale = () => {
-    return language === 'en' ? enUS : es;
+    if (language === 'en') return enUS;
+    if (language === 'it') return it;
+    return es;
   };
 
   const changeLanguage = (lang: string) => {
@@ -37,7 +39,8 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
     localStorage.setItem('language', lang);
 
     // Update date-fns default locale
-    setDefaultOptions({ locale: lang === 'en' ? enUS : es });
+    const dateFnsLocale = lang === 'en' ? enUS : lang === 'it' ? it : es;
+    setDefaultOptions({ locale: dateFnsLocale });
   };
 
   useEffect(() => {

@@ -1,0 +1,501 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "view": "Visualizza",
+    "close": "Chiudi",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "yes": "Sì",
+    "no": "No",
+    "selectDate": "Seleziona data"
+  },
+  "auth": {
+    "signIn": "Accedi",
+    "signUp": "Registrati",
+    "signOut": "Esci",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Nome Completo",
+    "loginError": "Errore di accesso",
+    "signupError": "Errore di registrazione"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "leagues": "Leghe",
+    "matches": "Partite",
+    "scheduledClasses": "Lezioni Programmate",
+    "classes": "Lezioni",
+    "players": "Giocatori",
+    "trainers": "Allenatori",
+    "clubs": "Club",
+    "standings": "Classifica",
+    "waitlistNotifications": "Lista d'Attesa",
+    "payment": "Pagamento"
+  },
+  "userMenu": {
+    "admin": "Amministratore",
+    "trainer": "Allenatore",
+    "player": "Giocatore",
+    "settings": "Impostazioni",
+    "signOut": "Esci"
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Riepilogo della tua attività"
+    },
+    "scheduledClasses": {
+      "title": "Lezioni Programmate",
+      "description": "Gestisci le lezioni programmate"
+    },
+    "waitlistNotifications": {
+      "title": "Lista d'Attesa",
+      "description": "Gestisci le notifiche degli studenti in lista d'attesa"
+    }
+  },
+  "language": {
+    "selectLanguage": "Seleziona lingua",
+    "spanish": "Spagnolo",
+    "english": "Inglese",
+    "italian": "Italiano"
+  },
+  "classes": {
+    "availableClasses": "Lezioni Disponibili",
+    "availableClassesDescription": "Tutte le lezioni programmate nel tuo club - Iscriviti o unisciti alla lista d'attesa",
+    "filters": "Filtri",
+    "searchAndFilters": "Ricerca e Filtri",
+    "search": "Cerca",
+    "searchPlaceholder": "Nome lezione o livello...",
+    "level": "Livello",
+    "allLevels": "Tutti i livelli",
+    "dayOfWeek": "Giorno della settimana",
+    "allDays": "Tutti i giorni",
+    "clearFilters": "Cancella filtri",
+    "noClassesAvailable": "Nessuna lezione disponibile",
+    "noClassesFiltered": "Nessuna lezione trovata corrispondente ai filtri applicati.",
+    "noClassesScheduled": "Nessuna lezione programmata disponibile al momento.",
+    "duration": "Durata",
+    "minutes": "minuti",
+    "court": "Campo",
+    "period": "Periodo",
+    "teacher": "Insegnante",
+    "spots": "posti occupati",
+    "waitlist": "in lista d'attesa",
+    "enrolledStudents": "Studenti iscritti",
+    "studentWithoutName": "Studente senza nome",
+    "showMore": "Mostra di più",
+    "showLess": "Mostra meno",
+    "joinWaitlist": "Unisciti alla lista d'attesa",
+    "leaveWaitlist": "Lascia la lista d'attesa",
+    "positionInWaitlist": "Posizione in lista d'attesa:",
+    "classDetails": "Dettagli lezione e opzioni di iscrizione",
+    "level1": "Livello 1",
+    "level2": "Livello 2",
+    "level3": "Livello 3",
+    "level4": "Livello 4",
+    "level5": "Livello 5",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzato",
+    "monday": "Lunedì",
+    "tuesday": "Martedì",
+    "wednesday": "Mercoledì",
+    "thursday": "Giovedì",
+    "friday": "Venerdì",
+    "saturday": "Sabato",
+    "sunday": "Domenica",
+    "mondayShort": "L",
+    "tuesdayShort": "M",
+    "wednesdayShort": "M",
+    "thursdayShort": "G",
+    "fridayShort": "V",
+    "saturdayShort": "S",
+    "sundayShort": "D",
+    "createScheduledClasses": "Crea Lezioni Programmate",
+    "basicInfoAndRecurrence": "Informazioni base e ricorrenza",
+    "groupAndStudents": "Gruppo e studenti",
+    "finalConfiguration": "Configurazione finale",
+    "className": "Nome lezione",
+    "classNamePlaceholder": "Es: Padel Intermedio",
+    "levelFormat": "Formato livello",
+    "numeric": "Numerico",
+    "levelCategories": "Categorie livello",
+    "levelFrom": "Livello da",
+    "levelTo": "Livello a",
+    "categoryLevel": "Livello Categoria",
+    "selectLevel": "Seleziona livello",
+    "selectLevelRange": "Seleziona l'intervallo di livello di gioco per questa lezione (formato Playtomic).",
+    "startTime": "Ora di inizio",
+    "daysOfWeek": "Giorni della settimana",
+    "startDate": "Data di inizio",
+    "endDate": "Data di fine",
+    "recurrence": "Ricorrenza",
+    "weekly": "Settimanale",
+    "biweekly": "Bisettimanale",
+    "monthly": "Mensile",
+    "previewDates": "Anteprima date",
+    "conflictsWarning": "Avvisi di conflitto",
+    "groupSelection": "Selezione partecipanti",
+    "individualStudents": "Studenti individuali",
+    "existingGroup": "Gruppo esistente",
+    "selectGroup": "Seleziona un gruppo",
+    "selectStudents": "Seleziona studenti",
+    "studentsSelected": "studenti selezionati",
+    "courtNumber": "Numero campo",
+    "objective": "Obiettivo (opzionale)",
+    "objectivePlaceholder": "Descrivi l'obiettivo di questa lezione...",
+    "scheduledClassesSummary": "Riepilogo lezioni programmate",
+    "totalClasses": "Totale lezioni",
+    "participants": "Partecipanti",
+    "schedule": "Orario",
+    "groupName": "Gruppo:",
+    "previous": "Precedente",
+    "next": "Successivo",
+    "createClasses": "Crea Lezioni",
+    "editClass": "Modifica Lezione",
+    "levelType": "Tipo di livello",
+    "numericLevel": "Livello numerico",
+    "customLevel": "Livello personalizzato",
+    "addDay": "Aggiungi giorno",
+    "saving": "Salvataggio...",
+    "saveChanges": "Salva modifiche",
+    "primeraAlta": "Prima Alta",
+    "primeraMedia": "Prima Media",
+    "primeraBaja": "Prima Baja",
+    "segundaAlta": "Segunda Alta",
+    "segundaMedia": "Segunda Media",
+    "segundaBaja": "Segunda Baja",
+    "terceraAlta": "Tercera Alta",
+    "terceraMedia": "Tercera Media",
+    "terceraBaja": "Tercera Baja",
+    "calendarTitle": "Calendario Lezioni",
+    "of": "di",
+    "today": "Oggi",
+    "hour": "Ora",
+    "classList": "Lista Lezioni",
+    "noClassesFound": "Nessuna lezione trovata corrispondente ai filtri selezionati.",
+    "viewDetails": "Visualizza dettagli",
+    "manageStudents": "Gestisci studenti",
+    "edit": "Modifica",
+    "cancelClass": "Annulla lezione",
+    "classDetails": "Dettagli Lezione",
+    "students": "Studenti",
+    "days": "Giorni",
+    "manageStudentsAction": "Gestisci studenti",
+    "teachers": "Insegnanti",
+    "clearAll": "Cancella tutto",
+    "activeFilters": "Filtri attivi",
+    "allStates": "Tutti gli stati",
+    "scheduled": "Programmata",
+    "completed": "Completata",
+    "cancelled": "Annullata",
+    "allGroups": "Tutti i gruppi",
+    "allTrainers": "Tutti gli allenatori",
+    "trainer": "Allenatore",
+    "group": "Gruppo",
+    "state": "Stato",
+    "searchBy": "Ricerca: {{value}}",
+    "levelBy": "Livello: {{value}}",
+    "dayBy": "Giorno: {{value}}",
+    "groupBy": "Gruppo: {{value}}",
+    "trainerBy": "Allenatore: {{value}}",
+    "stateBy": "Stato: {{value}}",
+    "minStudentsBy": "Min. studenti: {{value}}",
+    "maxStudentsBy": "Max. studenti: {{value}}",
+    "levelFromBy": "Livello da: {{value}}",
+    "levelToBy": "Livello a: {{value}}",
+    "levelsBy": "Livelli: {{count}}",
+    "daysBy": "Giorni: {{count}}",
+    "studentBy": "Studente: {{value}}",
+    "withDiscount": "Con sconto",
+    "withoutLevel": "Senza livello",
+    "min": "min",
+    "selectCourt": "Seleziona un campo"
+  },
+  "landing": {
+    "navigation": {
+      "home": "Home",
+      "onboarding": "Onboarding",
+      "problem": "Problema",
+      "product": "Prodotto",
+      "features": "Funzionalità",
+      "team": "Team",
+      "contact": "Contatti",
+      "requestDemo": "Richiedi Demo"
+    },
+    "onboarding": {
+      "title": "Onboarding senza sforzo",
+      "subtitle": "L'onboarding non richiede tempo da parte tua. Ci occupiamo noi del 100% della configurazione iniziale e dell'accompagnamento dei tuoi studenti.",
+      "step1Title": "Invia i tuoi orari",
+      "step1Desc": "In qualsiasi formato: Excel, PDF, immagine, note o qualsiasi file. Non devi preparare nulla di speciale né organizzare dati. Come li hai ora, va bene per noi.",
+      "step2Title": "Configuriamo tutto noi",
+      "step2Desc": "Importiamo i tuoi orari, organizziamo i programmi, prepariamo gli utenti, configuriamo i ruoli e lasciamo tutto pronto per funzionare. Tu non muovi un dito.",
+      "step3Title": "Invitiamo i tuoi studenti",
+      "step3Desc": "Ci occupiamo di invitare tutti i tuoi studenti sulla piattaforma, li guidiamo passo dopo passo per entrare e insegniamo loro come funziona l'app. Nessuna complicazione per te o per loro.",
+      "step4Title": "Tu continui con la tua vita",
+      "step4Desc": "Non perdere ore ad imparare o configurare. Mentre prepariamo tutto, tu ti concentri su ciò che conta davvero: gestire la tua accademia e insegnare.",
+      "trialTitle": "14 giorni di prova gratuita",
+      "trialDesc1": "I 14 giorni di prova iniziano solo quando il 100% dei tuoi studenti è sulla piattaforma.",
+      "trialDesc2": "Garantiamo che inizierai a testare Padelock in condizioni reali, con tutta la tua accademia funzionante.",
+      "ctaButton": "Inizia la tua prova gratuita"
+    },
+    "features": {
+      "title": "Più di una piattaforma di gestione",
+      "subtitle": "Padelock integra sicurezza, semplicità e tecnologia all'avanguardia per offrirti un'esperienza completa",
+      "lopiviTitle": "Un CRM turbo-caricato",
+      "lopiviDesc": "Costruito per andare ben oltre la tradizionale gestione clienti. Con flussi di lavoro ottimizzati, insights in tempo reale, comunicazione automatizzata e un'interfaccia progettata per la velocità, ti dà tutto ciò di cui hai bisogno per gestire le relazioni senza sforzo. Veloce, intuitivo e incredibilmente potente — è il CRM che mantiene le tue operazioni a pieno regime.",
+      "simpleTitle": "Semplice per tutti",
+      "simpleDesc": "Non serve essere esperti di tecnologia. L'interfaccia di Padelock è progettata perché chiunque possa usarla senza complicazioni, dal primo momento. Tutto è comprensibile al primo sguardo: chiaro, diretto e senza passaggi inutili.",
+      "notificationsTitle": "Notifiche in tempo reale",
+      "notificationsDesc": "Ricevi avvisi istantanei tramite WhatsApp e email per rimanere sempre informato. Che tu sia amministratore, allenatore o familiare, sarai a conoscenza di ogni aggiornamento senza bisogno di entrare nella piattaforma.",
+      "webappTitle": "Nessun download, nessuna complicazione",
+      "webappDesc": "Padelock è una WebApp, quindi non devi scaricare o installare nulla. Accedi semplicemente da qualsiasi dispositivo attraverso un link sicuro e goditi tutte le funzionalità istantaneamente. Funziona ugualmente bene su mobile, tablet o computer."
+    },
+    "hero": {
+      "badge": "Progettato specificamente per accademie di padel",
+      "title1": "Risparmia",
+      "title2": "4 ore al giorno",
+      "title3": "gestendo la tua accademia",
+      "subtitle": "La prima piattaforma progettata specificamente per accademie di padel. Gestisci allenatori, lezioni e studenti senza complicazioni.",
+      "ctaDemo": "Richiedi Demo Gratuita",
+      "ctaHow": "Scopri come funziona",
+      "activeAcademies": "Accademie attive",
+      "spanish100": "100% Spagnolo",
+      "supportIncluded": "Supporto incluso"
+    },
+    "problem": {
+      "title": "Ti suona familiare?",
+      "subtitle": "L'87% delle accademie di padel gestisce con Excel, WhatsApp e carta. Il risultato: caos operativo e opportunità perse.",
+      "problem1Title": "4 ore perse al giorno",
+      "problem1Desc": "Coordinare orari, gestire pagamenti e aggiornare manualmente le liste consuma tempo prezioso che potresti dedicare a ciò che conta davvero.",
+      "problem2Title": "Totale mancanza di controllo sui conti",
+      "problem2Desc": "Nessuna visibilità chiara su quanti studenti attivi ci sono realmente o quanto si sta guadagnando. Tutto stimato, niente di certo.",
+      "problem3Title": "Lezioni sbilanciate",
+      "problem3Desc": "La mancanza di controllo nelle presenze e nella gestione dei recuperi genera lezioni con numeri irregolari ed esperienza inconsistente.",
+      "problem4Title": "Esperienza poco professionale",
+      "problem4Desc": "Excel, WhatsApp e carta trasmettono un'immagine amatoriale che non riflette la qualità della tua accademia né il livello dei tuoi allenatori."
+    },
+    "product": {
+      "title": "Progettato per ogni ruolo",
+      "subtitle": "Accademie, allenatori e giocatori hanno esperienze ottimizzate per le loro esigenze specifiche",
+      "academia": {
+        "title": "Accademia",
+        "description": "Controllo totale della tua accademia da un unico pannello",
+        "features": [
+          "Dashboard con metriche di presenza in tempo reale",
+          "Controllo completo di pagamenti e fatturazione",
+          "Visione globale di tutti gli orari e allenatori",
+          "Gestione automatizzata dei recuperi",
+          "Report dettagliati sulle prestazioni dell'accademia",
+          "Assegnazione intelligente degli studenti per livello"
+        ],
+        "benefits": "Risparmia 4 ore al giorno nelle attività amministrative"
+      },
+      "profesor": {
+        "title": "Allenatore",
+        "description": "Tutto ciò di cui hai bisogno per gestire le tue lezioni",
+        "features": [
+          "Fai l'appello in pochi secondi con un solo clic",
+          "Comunica con gli studenti direttamente via WhatsApp senza cambiare app",
+          "Visualizza il programma completo della settimana a colpo d'occhio",
+          "Gestisci recuperi e lista d'attesa automaticamente",
+          "Accedi alle informazioni dei tuoi studenti istantaneamente"
+        ],
+        "benefits": "Riduci il tempo di gestione da 30 minuti a 2 minuti per lezione"
+      },
+      "jugador": {
+        "title": "Giocatore",
+        "description": "La tua accademia sempre con te, sul tuo telefono",
+        "features": [
+          "Calendario personale con tutte le tue lezioni",
+          "Gestisci i tuoi recuperi facilmente",
+          "Unisciti alla lista d'attesa quando c'è una cancellazione",
+          "Comunicazione diretta con il tuo allenatore",
+          "Disponibilità in tempo reale delle lezioni aperte",
+          "Storico delle lezioni"
+        ],
+        "benefits": "Esperienza moderna e professionale che migliora la soddisfazione"
+      },
+      "benefitsHeading": "💡 Beneficio chiave"
+    },
+    "comparison": {
+      "title": "Perché Padelock?",
+      "subtitle": "Confronto tra metodi tradizionali, strumenti generici e Padelock",
+      "functionality": "Funzionalità",
+      "excelWhatsapp": "Excel/WhatsApp",
+      "genericSoftware": "Software Generico",
+      "padelock": "Padelock",
+      "categories": {
+        "classManagement": "Gestione Lezioni",
+        "communication": "Comunicazione",
+        "recoveries": "Recuperi",
+        "administrativeManagement": "Gestione Amministrativa",
+        "experience": "Esperienza"
+      },
+      "features": {
+        "digitalAttendance": "Appello digitale",
+        "customSchedules": "Orari personalizzati per allenatore",
+        "automaticAttendance": "Controllo presenze automatico",
+        "integratedWhatsapp": "WhatsApp integrato",
+        "automaticNotifications": "Notifiche automatiche",
+        "waitlistSystem": "Sistema lista d'attesa",
+        "automaticLevelAssignment": "Assegnazione automatica per livello",
+        "paymentControl": "Controllo pagamenti",
+        "metricsDashboard": "Dashboard metriche",
+        "multiClubManagement": "Gestione multi-club",
+        "designedForAcademies": "Progettato per accademie",
+        "supportIncluded": "Supporto incluso"
+      },
+      "legend": {
+        "included": "Incluso",
+        "partial": "Parziale",
+        "notAvailable": "Non disponibile"
+      },
+      "cta": {
+        "title": "Progettato specificamente per accademie di padel",
+        "subtitle": "Basta con Excel, WhatsApp o software generici che non capiscono il tuo business"
+      }
+    },
+    "team": {
+      "title": "Il Nostro Team",
+      "subtitle": "Conosci i co-fondatori che stanno rivoluzionando la gestione delle accademie di padel",
+      "members": {
+        "aurelio": {
+          "name": "Aurelio Contreras",
+          "role": "Co-founder & CPO"
+        },
+        "sergio": {
+          "name": "Sergio Falcón",
+          "role": "Co-founder & CTO"
+        }
+      }
+    },
+    "contact": {
+      "badge": "Prenota una demo",
+      "title": "Pronto a trasformare la tua accademia?",
+      "subtitle": "Richiedi una demo personalizzata e scopri come PadeLock può ottimizzare la gestione della tua accademia e migliorare l'esperienza per tutti.",
+      "leftColumn": {
+        "title": "Demo personalizzata",
+        "description": "I nostri specialisti ti mostreranno come PadeLock si adatta alle esigenze specifiche della tua accademia di padel.",
+        "duration": "30 minuti",
+        "durationDesc": "Durata approssimativa",
+        "oneOnOne": "1-on-1",
+        "oneOnOneDesc": "Attenzione personalizzata",
+        "followUp": "Follow-up",
+        "followUpDesc": "Materiali e supporto post-demo",
+        "includesTitle": "Cosa include la demo?",
+        "includesItems": {
+          "tour": "Tour completo della piattaforma",
+          "config": "Configurazione per il tuo tipo di club",
+          "roi": "Analisi ROI personalizzata",
+          "questions": "Risposta a tutte le tue domande"
+        }
+      },
+      "form": {
+        "name": "Nome",
+        "namePlaceholder": "Il tuo nome completo",
+        "phone": "Telefono",
+        "phonePlaceholder": "+39 333 000 0000",
+        "email": "Email",
+        "emailPlaceholder": "tua@email.com",
+        "clubName": "Nome del Club",
+        "clubNamePlaceholder": "Club Padel XYZ",
+        "clubSize": "Dimensione Club",
+        "clubSizePlaceholder": "Seleziona",
+        "clubSizeSmall": "Piccolo (1-4 campi)",
+        "clubSizeMedium": "Medio (5-10 campi)",
+        "clubSizeLarge": "Grande (11+ campi)",
+        "role": "Il tuo Ruolo",
+        "rolePlaceholder": "Seleziona",
+        "roleOwner": "Proprietario",
+        "roleManager": "Manager",
+        "roleCoach": "Allenatore",
+        "roleOther": "Altro",
+        "message": "Messaggio (Opzionale)",
+        "messagePlaceholder": "Raccontaci del tuo club e cosa vorresti migliorare...",
+        "submitButton": "Richiedi Demo Gratuita",
+        "submitting": "Invio in corso...",
+        "privacy": "Inviando questo modulo, accetti la nostra Politica sulla Privacy e di ricevere informazioni su PadeLock. Puoi annullare l'iscrizione in qualsiasi momento."
+      },
+      "success": {
+        "title": "Grazie per il tuo interesse!",
+        "description": "Abbiamo ricevuto la tua richiesta di demo. Il nostro team ti contatterà entro le prossime 24 ore per programmare una dimostrazione personalizzata.",
+        "nextSteps": "Cosa succede dopo?",
+        "nextStepsDesc": "Ti chiameremo o ti invieremo un'email per coordinare l'orario migliore per la tua demo personalizzata."
+      },
+      "toast": {
+        "successTitle": "Richiesta inviata!",
+        "successDesc": "Ti contatteremo entro le prossime 24 ore.",
+        "errorTitle": "Errore nell'invio",
+        "errorDesc": "C'è stato un problema nell'invio della tua richiesta. Per favore riprova o scrivici direttamente a infopadelock@gmail.com"
+      },
+      "whatsapp": {
+        "title": "Parliamo su WhatsApp!",
+        "description": "Chatta con noi direttamente e prenota la tua demo personalizzata. Rispondiamo istantaneamente.",
+        "button": "Apri WhatsApp",
+        "availability": "Disponibile 24h/7g"
+      },
+      "methods": {
+        "phone": {
+          "title": "Chiamaci",
+          "link": "Contattaci via WhatsApp",
+          "hours": "Lun-Ven, 9:00-18:00"
+        },
+        "email": {
+          "title": "Scrivici",
+          "response": "Risposta entro 24h"
+        },
+        "location": {
+          "title": "Visitaci",
+          "city": "Siviglia, Spagna",
+          "appointment": "Su appuntamento"
+        }
+      }
+    },
+    "footer": {
+      "brand": {
+        "description": "La piattaforma all-in-one per la gestione digitale delle accademie di padel. Progettata per ottimizzare le operazioni e migliorare l'esperienza per allenatori e giocatori.",
+        "founders": "Fondatori",
+        "newsletter": "Iscriviti alla nostra newsletter",
+        "newsletterPlaceholder": "La tua email"
+      },
+      "platform": {
+        "title": "Piattaforma",
+        "features": "Funzionalità",
+        "howItWorks": "Come Funziona",
+        "pricing": "Prezzi",
+        "freeDemo": "Demo Gratuita",
+        "successStories": "Storie di Successo"
+      },
+      "resources": {
+        "title": "Risorse",
+        "helpCenter": "Centro Assistenza",
+        "blog": "Blog",
+        "tutorials": "Tutorial",
+        "webinars": "Webinar",
+        "apiDocs": "API Docs"
+      },
+      "contact": {
+        "title": "Contatti",
+        "whatsappLink": "Contattaci via WhatsApp",
+        "location": "Siviglia, Spagna"
+      },
+      "trust": {
+        "dataProtected": "Dati protetti GDPR",
+        "availability": "Disponibilità 99.9%"
+      },
+      "bottom": {
+        "rights": "Tutti i diritti riservati.",
+        "privacy": "Politica sulla Privacy",
+        "terms": "Termini di Servizio",
+        "cookies": "Cookie",
+        "backToTop": "Torna su"
+      }
+    }
+  }
+}

@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { useTranslation } from "react-i18next";
 
@@ -10,24 +16,47 @@ const HeroSection = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'es' : 'en';
-    i18n.changeLanguage(newLang);
+  const languages = [
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  ];
+
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    localStorage.setItem('language', langCode);
   };
 
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
       {/* Language Toggle Button */}
       <div className="absolute top-4 right-4 z-20">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLanguage}
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
-        >
-          <Globe className="w-4 h-4 mr-2" />
-          {i18n.language === 'es' ? 'EN' : 'ES'}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              {currentLanguage.flag}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {languages.map((lang) => (
+              <DropdownMenuItem
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                className={i18n.language === lang.code ? "bg-accent" : ""}
+              >
+                <span className="mr-2">{lang.flag}</span>
+                {lang.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Background decoration */}
@@ -98,8 +127,6 @@ const HeroSection = () => {
               </div>
               <span>{t("landing.hero.activeAcademies")}</span>
             </div>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">{t("landing.hero.spanish100")}</span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden sm:inline">{t("landing.hero.supportIncluded")}</span>
           </div>
