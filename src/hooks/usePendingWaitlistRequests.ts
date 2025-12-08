@@ -41,17 +41,6 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
       if (!clubId) return [];
 
       const today = format(new Date(), 'yyyy-MM-dd');
-      const todayDayName = getDayOfWeekInSpanish(new Date(today));
-
-      console.log('🔔 [usePendingWaitlistRequests] Fetching for:', { clubId, today, todayDayName });
-
-      // First, let's check if there are ANY waitlist entries at all
-      const { data: allWaitlists, error: allWaitlistsError } = await supabase
-        .from('class_waitlist')
-        .select('id, status, class_id, student_enrollment_id')
-        .limit(10);
-
-      console.log('🔍 [usePendingWaitlistRequests] ALL waitlist entries (sample):', allWaitlists?.length || 0, allWaitlists);
 
       // Get all pending waitlist entries with class details
       const { data: waitlistData, error: waitlistError } = await supabase
@@ -79,48 +68,17 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
         .order('requested_at', { ascending: true });
 
       if (waitlistError) {
-        console.error('❌ [usePendingWaitlistRequests] Error:', waitlistError);
         throw waitlistError;
       }
 
-      console.log('📊 [usePendingWaitlistRequests] Raw waitlist entries:', waitlistData?.length || 0);
-
-      if (waitlistData && waitlistData.length > 0) {
-        console.log('📋 [usePendingWaitlistRequests] First entry sample:', {
-          id: waitlistData[0].id,
-          class_id: waitlistData[0].class_id,
-          user_id: waitlistData[0].user_id,
-          status: waitlistData[0].status,
-          programmed_class: waitlistData[0].programmed_classes
-        });
-      }
-
       if (!waitlistData || waitlistData.length === 0) {
-        console.log('⚠️ [usePendingWaitlistRequests] No waitlist entries found');
         return [];
       }
 
       // Filter entries for classes happening today
       const todayWaitlistEntries = waitlistData.filter((entry: any) => {
-        const classData = entry.programmed_classes;
-        const classDate = entry.class_date;
-
-        // Check if the waitlist entry is for today's date
-        const isForToday = classDate === today;
-
-        if (isForToday) {
-          console.log('🔍 [usePendingWaitlistRequests] Class analysis:', {
-            className: classData?.name,
-            classDate,
-            today,
-            isForToday
-          });
-        }
-
-        return isForToday;
+        return entry.class_date === today;
       });
-
-      console.log('📅 [usePendingWaitlistRequests] Entries for today:', todayWaitlistEntries.length);
 
       if (todayWaitlistEntries.length === 0) {
         return [];
@@ -134,11 +92,8 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
         .in('id', enrollmentIds);
 
       if (enrollmentsError) {
-        console.error('❌ [usePendingWaitlistRequests] Error fetching enrollments:', enrollmentsError);
         throw enrollmentsError;
       }
-
-      console.log('✅ [usePendingWaitlistRequests] Enrollments fetched:', enrollments?.length, enrollments);
 
       // Combine data
       const requests: WaitlistRequest[] = todayWaitlistEntries.map((entry: any) => {
@@ -165,11 +120,6 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
         };
       });
 
-      console.log('✅ [usePendingWaitlistRequests] Requests prepared:', requests.length);
-      requests.forEach(r => {
-        console.log(`  - ${r.user_profile.full_name} -> ${r.programmed_class.name} (${r.programmed_class.start_time})`);
-      });
-
       return requests;
     },
     enabled: !!clubId,
@@ -187,8 +137,6 @@ export const useApproveWaitlistRequest = () => {
 
   return useMutation({
     mutationFn: async ({ waitlistId, classId, userId }: { waitlistId: string; classId: string; userId: string }) => {
-      console.log('✅ [useApproveWaitlistRequest] Approving:', { waitlistId, classId, userId });
-
       // Get the waitlist entry to find student_enrollment_id and class_date
       const { data: waitlistEntry, error: waitlistFetchError } = await supabase
         .from('class_waitlist')
@@ -243,7 +191,6 @@ export const useApproveWaitlistRequest = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ [useApproveWaitlistRequest] Error:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo aprobar la solicitud",
@@ -263,8 +210,6 @@ export const useRejectWaitlistRequest = () => {
 
   return useMutation({
     mutationFn: async ({ waitlistId }: { waitlistId: string }) => {
-      console.log('❌ [useRejectWaitlistRequest] Rejecting:', { waitlistId });
-
       const { error } = await supabase
         .from('class_waitlist')
         .update({
@@ -287,7 +232,6 @@ export const useRejectWaitlistRequest = () => {
       });
     },
     onError: (error: any) => {
-      console.error('❌ [useRejectWaitlistRequest] Error:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudo rechazar la solicitud",

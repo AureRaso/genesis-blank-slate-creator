@@ -75,8 +75,6 @@ export const useAllWhatsAppGroups = (clubId?: string) => {
   return useQuery({
     queryKey: ["all-whatsapp-groups", clubId],
     queryFn: async () => {
-      console.log('📱 Fetching WhatsApp groups for club:', clubId || 'all clubs');
-
       let query = supabase
         .from("whatsapp_groups")
         .select("*")
@@ -90,12 +88,8 @@ export const useAllWhatsAppGroups = (clubId?: string) => {
       const { data, error } = await query.order("group_name", { ascending: true });
 
       if (error) {
-        console.error('❌ Error fetching groups:', error);
         throw error;
       }
-
-      console.log('✅ WhatsApp groups fetched:', data?.length, 'groups');
-      console.log('📋 Groups:', data);
 
       return data as WhatsAppGroupData[];
     },

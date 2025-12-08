@@ -44,8 +44,6 @@ export const useClassesWithAbsences = (clubId?: string) => {
       const today = format(new Date(), 'yyyy-MM-dd');
       const todayDayName = getDayOfWeekInSpanish(new Date(today));
 
-      console.log('🔍 [useClassesWithAbsences] Fetching classes for:', { clubId, today, todayDayName });
-
       // Get all active classes for this club
       const { data: classes, error: classesError } = await supabase
         .from('programmed_classes')
@@ -69,35 +67,20 @@ export const useClassesWithAbsences = (clubId?: string) => {
         .gte('end_date', today);
 
       if (classesError) {
-        console.error('❌ [useClassesWithAbsences] Error fetching classes:', classesError);
         throw classesError;
       }
 
-      console.log('📊 [useClassesWithAbsences] Raw classes fetched:', classes?.length || 0);
-
       if (!classes || classes.length === 0) {
-        console.log('⚠️ [useClassesWithAbsences] No classes found');
         return [];
       }
 
       // Filter classes that match today's day of week
       const todayClasses = classes.filter((classData: any) => {
         const classDays = classData.days_of_week || [];
-        const matches = classDays.includes(todayDayName);
-        if (matches) {
-          console.log('✅ [useClassesWithAbsences] Class matches today:', {
-            name: classData.name,
-            days_of_week: classDays,
-            todayDayName
-          });
-        }
-        return matches;
+        return classDays.includes(todayDayName);
       });
 
-      console.log('📅 [useClassesWithAbsences] Classes for today:', todayClasses.length);
-
       if (todayClasses.length === 0) {
-        console.log('⚠️ [useClassesWithAbsences] No classes match today');
         return [];
       }
 
@@ -128,11 +111,8 @@ export const useClassesWithAbsences = (clubId?: string) => {
         .eq('status', 'active');
 
       if (participantsError) {
-        console.error('❌ [useClassesWithAbsences] Error fetching participants:', participantsError);
         throw participantsError;
       }
-
-      console.log('👥 [useClassesWithAbsences] Participants fetched:', participants?.length || 0);
 
       // Get attendance confirmations for today's date
       const participantIds = participants?.map(p => p.id) || [];
@@ -143,11 +123,8 @@ export const useClassesWithAbsences = (clubId?: string) => {
         .eq('scheduled_date', today);
 
       if (confirmationsError) {
-        console.error('❌ [useClassesWithAbsences] Error fetching confirmations:', confirmationsError);
         throw confirmationsError;
       }
-
-      console.log('📊 [useClassesWithAbsences] Attendance confirmations fetched:', attendanceConfirmations?.length || 0);
 
       // Create a map of participant confirmations for quick lookup
       const confirmationsMap = new Map(
@@ -209,11 +186,6 @@ export const useClassesWithAbsences = (clubId?: string) => {
           };
         })
         .filter(c => c.absenceCount > 0); // Only classes with at least one absence
-
-      console.log('🎯 [useClassesWithAbsences] Classes with absences:', classesWithParticipants.length);
-      classesWithParticipants.forEach(c => {
-        console.log(`  - ${c.name}: ${c.absenceCount} ausencias de ${c.totalParticipants} alumnos`);
-      });
 
       return classesWithParticipants;
     },

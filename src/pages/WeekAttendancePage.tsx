@@ -47,15 +47,7 @@ const getDayOfWeekInSpanish = (date: Date): string => {
 
 // Check if absence was notified with less than 5 hours notice
 const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedDate: string): { isLate: boolean; hoursNotice: number } => {
-  console.log('🔍 isLateAbsenceNotice called:', {
-    absence_confirmed: participant.absence_confirmed,
-    absence_confirmed_at: participant.absence_confirmed_at,
-    classStartTime,
-    selectedDate
-  });
-
   if (!participant.absence_confirmed || !participant.absence_confirmed_at) {
-    console.log('❌ No absence data, returning false');
     return { isLate: false, hoursNotice: 0 };
   }
 
@@ -70,13 +62,6 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
   // Calculate difference in hours
   const diffInMs = classDateTime.getTime() - absenceConfirmedTime.getTime();
   const diffInHours = diffInMs / (1000 * 60 * 60);
-
-  console.log('⏰ Time calculation:', {
-    classDateTime: classDateTime.toISOString(),
-    absenceConfirmedTime: absenceConfirmedTime.toISOString(),
-    diffInHours,
-    isLate: diffInHours < 5 && diffInHours >= 0
-  });
 
   // If confirmed with less than 5 hours notice and it's in the future
   return {
@@ -309,11 +294,6 @@ const WeekAttendancePage = () => {
   };
 
   const handleConfirmAbsence = (participantId: string, participantName: string, scheduledDate: string) => {
-    console.log('🔴 [WeekAttendancePage] handleConfirmAbsence called:', {
-      participantId,
-      participantName,
-      scheduledDate
-    });
     setConfirmDialog({
       open: true,
       type: 'absence',
@@ -360,26 +340,17 @@ const WeekAttendancePage = () => {
   };
 
   const executeAction = () => {
-    console.log('🔍 [WeekAttendancePage] executeAction called:', {
-      type: confirmDialog.type,
-      participantId: confirmDialog.participantId,
-      scheduledDate: confirmDialog.scheduledDate
-    });
-    
     if (confirmDialog.type === 'attendance' && confirmDialog.scheduledDate) {
       markAttendance.mutate({
         participantId: confirmDialog.participantId,
         scheduledDate: confirmDialog.scheduledDate,
       });
     } else if (confirmDialog.type === 'absence' && confirmDialog.scheduledDate) {
-      console.log('🔴 [WeekAttendancePage] Marking absence with scheduledDate:', confirmDialog.scheduledDate);
       markAbsence.mutate({
         participantId: confirmDialog.participantId,
         scheduledDate: confirmDialog.scheduledDate,
         reason: 'Marcado por profesor',
       });
-    } else if (confirmDialog.type === 'absence' && !confirmDialog.scheduledDate) {
-      console.error('⚠️ [WeekAttendancePage] Missing scheduledDate for absence!');
     } else if (confirmDialog.type === 'remove') {
       removeParticipant.mutate(confirmDialog.participantId);
     }
@@ -435,11 +406,6 @@ const WeekAttendancePage = () => {
   };
 
   const handleNotifyWhatsApp = (classData: any, dateForNotification: string) => {
-    console.log('🔔 handleNotifyWhatsApp called');
-    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
-    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
-    console.log('📊 whatsappGroup:', whatsappGroup);
-
     // Verificar si la clase está en cooldown
     if (isInCooldown(classData.id)) {
       const minutesRemaining = getCooldownMinutesRemaining(classData.id);
@@ -449,7 +415,6 @@ const WeekAttendancePage = () => {
 
     // Si hay múltiples grupos, mostrar diálogo de selección
     if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
-      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
       setWhatsappGroupDialog({
         open: true,
         classData: { ...classData, notificationDate: dateForNotification },
@@ -459,11 +424,8 @@ const WeekAttendancePage = () => {
       return;
     }
 
-    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
-
     // Si solo hay un grupo, enviarlo directamente
     if (!whatsappGroup?.group_chat_id) {
-      console.error("No WhatsApp group configured");
       return;
     }
 
@@ -471,11 +433,6 @@ const WeekAttendancePage = () => {
   };
 
   const handleNotifyFreeSpot = (classData: any, dateForNotification: string) => {
-    console.log('📢 handleNotifyFreeSpot called');
-    console.log('📊 allWhatsAppGroups:', allWhatsAppGroups);
-    console.log('📊 allWhatsAppGroups length:', allWhatsAppGroups?.length);
-    console.log('📊 whatsappGroup:', whatsappGroup);
-
     // Verificar si la clase está en cooldown
     if (isInCooldown(classData.id)) {
       const minutesRemaining = getCooldownMinutesRemaining(classData.id);
@@ -485,7 +442,6 @@ const WeekAttendancePage = () => {
 
     // Si hay múltiples grupos, mostrar diálogo de selección
     if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
-      console.log('✅ Múltiples grupos detectados, mostrando diálogo');
       setWhatsappGroupDialog({
         open: true,
         classData: { ...classData, notificationDate: dateForNotification },
@@ -495,11 +451,8 @@ const WeekAttendancePage = () => {
       return;
     }
 
-    console.log('ℹ️ Un solo grupo o menos, enviando directamente');
-
     // Si solo hay un grupo, enviarlo directamente
     if (!whatsappGroup?.group_chat_id) {
-      console.error("No WhatsApp group configured");
       return;
     }
 
@@ -539,7 +492,7 @@ const WeekAttendancePage = () => {
     // Generate waitlist URL
     const waitlistUrl = getWaitlistUrl(classData.id, dateForNotification);
 
-    const params = {
+    sendWhatsApp({
       groupChatId: groupChatId,
       className: classData.name,
       classDate: dateForNotification,
@@ -549,11 +502,7 @@ const WeekAttendancePage = () => {
       availableSlots: totalAvailableSlots,
       classId: classData.id,
       notificationType: 'free_spot' as const
-    };
-
-    console.log('📤 Sending free spot notification with params:', params);
-
-    sendWhatsApp(params);
+    });
 
     // Cerrar el diálogo si estaba abierto
     setWhatsappGroupDialog({ open: false, classData: null, notificationType: 'absence', selectedGroups: [] });
@@ -1025,19 +974,6 @@ const WeekAttendancePage = () => {
                               const displayAttendanceConfirmedAt = confirmation?.attendance_confirmed_at || participant.attendance_confirmed_at;
                               const displayConfirmedByTrainer = confirmation?.confirmed_by_trainer || participant.confirmed_by_trainer;
 
-                              console.log('🎯 Participant render:', {
-                                name: participant.student_enrollment?.full_name,
-                                notificationDate,
-                                confirmationKey,
-                                hasConfirmation: !!confirmation,
-                                isConfirmed,
-                                isAbsent,
-                                absence_reason: displayAbsenceReason,
-                                absence_confirmed_at: displayAbsenceConfirmedAt,
-                                confirmed_by_trainer: displayConfirmedByTrainer,
-                                shouldShowIndicator: isConfirmed && (isAdmin || isTrainer) && displayConfirmedByTrainer
-                              });
-
                               return (
                                 <div
                                   key={participant.id}
@@ -1243,29 +1179,6 @@ const WeekAttendancePage = () => {
 
                         // Total available slots is the maximum of both
                         const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
-
-                        console.log('🔍 DEBUG - Clase:', classData.name, {
-                          totalParticipants: validParticipants.length,
-                          maxParticipants,
-                          enrolledCount,
-                          absentCount,
-                          substituteCount,
-                          slotsByAbsence,
-                          slotsByCapacity,
-                          totalAvailableSlots,
-                          showSection: totalAvailableSlots > 0,
-                          showNotifyButton: absentCount > 0,
-                          participants: validParticipants.map(p => {
-                            const confirmationKey = `${p.id}-${notificationDate}`;
-                            const confirmation = confirmationsMap.get(confirmationKey);
-                            const isAbsent = confirmation ? confirmation.absence_confirmed : (p.absence_confirmed || false);
-                            return {
-                              name: p.student_enrollment?.full_name,
-                              isSubstitute: p.is_substitute,
-                              isAbsent: isAbsent
-                            };
-                          })
-                        });
 
                         return totalAvailableSlots > 0 && (
                           <div className="mt-4 space-y-3">
