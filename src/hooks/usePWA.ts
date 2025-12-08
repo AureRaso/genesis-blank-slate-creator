@@ -11,24 +11,9 @@ export const usePWA = () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as any).standalone;
 
-    console.log('[PWA] Device info:', { isIOS, isInStandaloneMode, userAgent: navigator.userAgent });
-
     // Solo registrar en producción
     if (process.env.NODE_ENV !== 'production') {
-      console.log('[PWA] Service Worker disabled in development');
       return;
-    }
-
-    // iOS tiene soporte limitado de Service Workers
-    if (isIOS) {
-      console.log('[PWA] iOS detected - Service Worker support is limited');
-
-      // En iOS, solo funciona si está instalada como PWA
-      if (isInStandaloneMode) {
-        console.log('[PWA] Running as installed PWA on iOS');
-      } else {
-        console.log('[PWA] iOS browser mode - Add to Home Screen for full PWA experience');
-      }
     }
 
     if ('serviceWorker' in navigator) {
@@ -36,8 +21,6 @@ export const usePWA = () => {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration.scope);
-
           // Verificar actualizaciones cada hora
           setInterval(() => {
             registration.update();
@@ -50,15 +33,11 @@ export const usePWA = () => {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // Hay una nueva versión disponible
-                  console.log('[PWA] New version available! Updating...');
-
-                  // Notificar al nuevo SW que tome control inmediatamente
+                  // Hay una nueva versión disponible - Notificar al nuevo SW que tome control inmediatamente
                   newWorker.postMessage({ type: 'SKIP_WAITING' });
 
                   // Recargar la página después de 1 segundo
                   setTimeout(() => {
-                    console.log('[PWA] Reloading to activate new version...');
                     window.location.reload();
                   }, 1000);
                 }
@@ -66,16 +45,9 @@ export const usePWA = () => {
             }
           });
         })
-        .catch((error) => {
-          console.error('[PWA] Service Worker registration failed:', error);
+        .catch(() => {
+          // Service Worker registration failed silently
         });
-
-      // Manejar cuando el service worker toma control
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[PWA] Service Worker updated and active');
-      });
-    } else {
-      console.log('[PWA] Service Workers not supported in this browser');
     }
   }, []);
 };

@@ -75,8 +75,6 @@ import AdminPaymentControlPage from "@/pages/AdminPaymentControlPage";
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
 
-  console.log('ProtectedRoute - Auth state:', { user: user?.email, loading, authError });
-
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -123,8 +121,6 @@ function App() {
 
   // Registrar PWA y manejar actualizaciones automáticas
   usePWA();
-
-  console.log('App - Auth state:', { isAdmin, isPlayer, isTrainer, isOwner, isGuardian, loading, user: user?.email, authError });
 
   if (loading) {
     return (

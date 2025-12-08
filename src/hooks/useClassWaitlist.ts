@@ -9,35 +9,17 @@ import { ClassWaitlist } from "@/types/waitlist";
 export const useCanJoinWaitlist = (classId: string, classDate: string) => {
   const { profile, loading: authLoading } = useAuth();
 
-  console.log('🔍 [HOOK] useCanJoinWaitlist called:', {
-    classId,
-    classDate,
-    hasProfile: !!profile,
-    profileId: profile?.id,
-    authLoading,
-    enabled: !!profile?.id && !!classId && !!classDate
-  });
-
   return useQuery({
     queryKey: ['can-join-waitlist', classId, classDate, profile?.id],
     queryFn: async () => {
-      console.log('🔍 [WAITLIST] Step 1: Starting validation');
-      console.log('🔍 [WAITLIST] Profile:', profile);
-      console.log('🔍 [WAITLIST] Auth loading:', authLoading);
-
       // 1. Get class info - ALWAYS fetch this regardless of authentication
-      console.log('🔍 [WAITLIST] Step 2: Fetching class info for classId:', classId);
       const { data: classData, error: classError } = await supabase
         .from('programmed_classes')
         .select('id,name,start_time,duration_minutes,max_participants,is_active,start_date,end_date,club_id')
         .eq('id', classId)
         .single();
 
-      console.log('🔍 [WAITLIST] Class data:', classData);
-      console.log('🔍 [WAITLIST] Class error:', classError);
-
       if (classError || !classData) {
-        console.log('❌ [WAITLIST] Class not found');
         return {
           canJoin: false,
           reason: 'class_not_found',
@@ -47,7 +29,6 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       }
 
       if (!classData.is_active) {
-        console.log('❌ [WAITLIST] Class is inactive');
         return {
           canJoin: false,
           reason: 'class_inactive',
@@ -57,27 +38,18 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       }
 
       // 2. Check if class has already passed
-      console.log('🔍 [WAITLIST] Step 3: Checking time window');
       const [hours, minutes] = classData.start_time.split(':');
       const classDateTime = new Date(classDate);
       classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
 
       const now = new Date();
-      // COMMENTED: Removed 3-hour restriction - users can join waitlist until class ends
-      // const threeHoursBefore = subHours(classDateTime, 3);
 
       // Calculate class end time
       const classEndTime = new Date(classDateTime);
       classEndTime.setMinutes(classEndTime.getMinutes() + (classData.duration_minutes || 60));
 
-      console.log('🔍 [WAITLIST] Now:', now);
-      console.log('🔍 [WAITLIST] Class start time:', classDateTime);
-      console.log('🔍 [WAITLIST] Class end time:', classEndTime);
-      // console.log('🔍 [WAITLIST] Three hours before (cutoff):', threeHoursBefore);
-
       // Check if class has already ended
       if (now >= classEndTime) {
-        console.log('❌ [WAITLIST] Class has already ended');
         return {
           canJoin: false,
           reason: 'class_ended',
@@ -86,24 +58,8 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // COMMENTED: Removed 3-hour cutoff restriction
-      // Users can now join waitlist anytime before class ends
-      // if (now >= threeHoursBefore) {
-      //   console.log('❌ [WAITLIST] Too late - waitlist closed');
-      //   return {
-      //     canJoin: false,
-      //     reason: 'too_late',
-      //     message: 'La lista de espera se cierra 3 horas antes de la clase',
-      //     classData
-      //   };
-      // }
-
-      // If we're here, class hasn't ended yet, so it's OK to join
-      console.log('✅ [WAITLIST] Time window OK - can join (class not ended yet)');
-
       // 3. Check authentication - if not authenticated, return with class data
       if (!profile?.id) {
-        console.log('❌ [WAITLIST] No profile found - user needs to login');
         return {
           canJoin: false,
           reason: 'not_authenticated',
@@ -113,15 +69,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       }
 
       // 4. Get user's enrollment for this club
-      console.log('🔍 [WAITLIST] Step 4: Checking enrollment');
-      console.log('🔍 [WAITLIST] Looking for email:', profile.email);
-      console.log('🔍 [WAITLIST] Looking for club_id:', classData.club_id);
-
-      // First, check if user belongs to the correct club
-      console.log('🔍 [WAITLIST] User profile club_id:', profile.club_id);
-
       if (profile.club_id && profile.club_id !== classData.club_id) {
-        console.log('❌ [WAITLIST] User belongs to different club');
         return {
           canJoin: false,
           reason: 'wrong_club',
@@ -129,26 +77,14 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
         };
       }
 
-      // Check ALL enrollments for this user for debugging
-      const { data: allEnrollments } = await supabase
-        .from('student_enrollments')
-        .select('id, status, club_id, email')
-        .eq('email', profile.email);
-
-      console.log('🔍 [WAITLIST] ALL enrollments for user:', allEnrollments);
-
-      const { data: enrollments, error: enrollmentError } = await supabase
+      const { data: enrollments } = await supabase
         .from('student_enrollments')
         .select('id, status, club_id')
         .eq('email', profile.email)
         .eq('club_id', classData.club_id)
         .eq('status', 'active');
 
-      console.log('🔍 [WAITLIST] Enrollments found for this club:', enrollments);
-      console.log('🔍 [WAITLIST] Enrollment error:', enrollmentError);
-
       if (!enrollments || enrollments.length === 0) {
-        console.log('❌ [WAITLIST] No active enrollment found');
         return {
           canJoin: false,
           reason: 'no_enrollment',
@@ -203,8 +139,6 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
 
       // 6. Check if class is full (no available spots)
       // Count only active participants who have NOT marked absence
-      console.log('🔍 [WAITLIST] Step 6: Checking available spots');
-
       const { count: participantCount } = await supabase
         .from('class_participants')
         .select('id', { count: 'exact', head: true })
@@ -216,12 +150,7 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       const currentParticipants = participantCount || 0;
       const availableSpots = maxParticipants - currentParticipants;
 
-      console.log('🔍 [WAITLIST] Max participants:', maxParticipants);
-      console.log('🔍 [WAITLIST] Current participants (excluding absences):', currentParticipants);
-      console.log('🔍 [WAITLIST] Available spots:', availableSpots);
-
       if (availableSpots <= 0) {
-        console.log('❌ [WAITLIST] Class is full - no spots available');
         return {
           canJoin: false,
           reason: 'class_full',
@@ -276,7 +205,6 @@ export const useJoinWaitlist = () => {
       toast.success('✓ Te has unido a la lista de espera correctamente');
     },
     onError: (error: any) => {
-      console.error('Error joining waitlist:', error);
       toast.error(error.message || 'Error al unirse a la lista de espera');
     },
   });
@@ -343,10 +271,6 @@ export const useAcceptFromWaitlist = () => {
 
       const maxParticipants = classData.max_participants || 8;
       const currentParticipants = activeCount || 0;
-
-      console.log('🔍 [ACCEPT_WAITLIST] Max participants:', maxParticipants);
-      console.log('🔍 [ACCEPT_WAITLIST] Current participants (excluding absences):', currentParticipants);
-      console.log('🔍 [ACCEPT_WAITLIST] Class date:', classDate);
 
       if (currentParticipants >= maxParticipants) {
         throw new Error('La clase ya está completa. No hay plazas disponibles.');

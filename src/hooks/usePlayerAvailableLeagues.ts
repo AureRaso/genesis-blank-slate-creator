@@ -18,8 +18,6 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
         return { availableLeagues: [], enrolledLeagues: [], pendingLeagues: [] };
       }
 
-      console.log('Fetching available and enrolled leagues for player:', profileId, 'club:', clubId);
-
       // Get all leagues from player's club
       const { data: allClubLeagues, error: clubLeaguesError } = await supabase
         .from('leagues')
@@ -36,7 +34,6 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
         .order('created_at', { ascending: false });
 
       if (clubLeaguesError) {
-        console.error('Error fetching club leagues:', clubLeaguesError);
         throw clubLeaguesError;
       }
 
@@ -47,7 +44,6 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
         .eq('profile_id', profileId);
 
       if (registrationsError) {
-        console.error('Error fetching player registrations:', registrationsError);
         throw registrationsError;
       }
 
@@ -63,11 +59,9 @@ export const usePlayerAvailableLeagues = (profileId?: string, clubId?: string): 
         registrationMap.get(league.id) === 'pending'
       ) || [];
 
-      const availableLeagues = allClubLeagues?.filter(league => 
+      const availableLeagues = allClubLeagues?.filter(league =>
         !registrationMap.has(league.id) && league.status !== 'completed'
       ) || [];
-
-      console.log('Available leagues:', availableLeagues.length, 'Enrolled leagues:', enrolledLeagues.length, 'Pending leagues:', pendingLeagues.length);
 
       return {
         availableLeagues: availableLeagues as League[],

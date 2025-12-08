@@ -171,8 +171,6 @@ const Index = () => {
     return now < oneHourAfterStart;
   });
 
-  console.log('Index page - Auth state:', { user: user?.email, profile, isAdmin, loading });
-
   // Fetch recent activities for admin
   const { data: recentActivities } = useQuery({
     queryKey: ['admin-recent-activities', profile?.club_id],
@@ -191,7 +189,7 @@ const Index = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (playersError) console.error('Error fetching players:', playersError);
+        if (playersError) throw playersError;
 
         if (newPlayers && newPlayers.length > 0) {
           activities.push({
@@ -212,7 +210,7 @@ const Index = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (classesError) console.error('Error fetching classes:', classesError);
+        if (classesError) throw classesError;
 
         if (newClasses && newClasses.length > 0) {
           activities.push({
@@ -234,7 +232,7 @@ const Index = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (trainersError) console.error('Error fetching trainers:', trainersError);
+        if (trainersError) throw trainersError;
 
         if (newTrainers && newTrainers.length > 0) {
           activities.push({
@@ -247,10 +245,8 @@ const Index = () => {
           });
         }
       } catch (error) {
-        console.error('Error fetching activities:', error);
+        // Activities fetching failed silently
       }
-
-      console.log('Activities found:', activities);
 
       // If no real activities, show some example data
       if (activities.length === 0) {
@@ -363,7 +359,6 @@ const Index = () => {
           attendanceRate
         };
       } catch (error) {
-        console.error('Error fetching weekly summary:', error);
         return null;
       }
     },
@@ -802,11 +797,8 @@ const Index = () => {
                     <Button
                       size="sm"
                       onClick={() => {
-                        console.log('📱 WhatsApp groups available:', allWhatsAppGroups?.length);
-
                         // Si hay más de un grupo, mostrar diálogo de selección
                         if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
-                          console.log('📋 Mostrando diálogo de selección de grupo');
                           setWhatsappGroupDialog({
                             open: true,
                             classData: classData
@@ -820,7 +812,6 @@ const Index = () => {
                           return;
                         }
 
-                        console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
                         const waitlistUrl = getWaitlistUrl(classData.id, today);
                         const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
@@ -1113,11 +1104,8 @@ const Index = () => {
                       <Button
                         size="sm"
                         onClick={() => {
-                          console.log('📱 WhatsApp groups available:', allWhatsAppGroups?.length);
-
                           // Si hay más de un grupo, mostrar diálogo de selección
                           if (allWhatsAppGroups && allWhatsAppGroups.length > 1) {
-                            console.log('📋 Mostrando diálogo de selección de grupo');
                             setWhatsappGroupDialog({
                               open: true,
                               classData: classData
@@ -1131,7 +1119,6 @@ const Index = () => {
                             return;
                           }
 
-                          console.log('📤 Enviando directamente al grupo único');
                           const today = format(new Date(), 'yyyy-MM-dd');
                           const waitlistUrl = `${window.location.origin}/waitlist/${classData.id}/${today}`;
                           const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
@@ -1284,8 +1271,6 @@ const Index = () => {
                     const absentCount = whatsappGroupDialog.classData.participants.filter(p => p.absence_confirmed).length;
                     const substituteCount = whatsappGroupDialog.classData.participants.filter(p => p.is_substitute).length;
                     const availableSlots = absentCount - substituteCount;
-
-                    console.log('📤 Enviando notificación al grupo:', group.group_name);
 
                     sendWhatsApp({
                       groupChatId: group.group_chat_id,

@@ -31,13 +31,6 @@ const PlayerDashboard = () => {
     queryClient.invalidateQueries({ queryKey: ['current-user-enrollment'] });
   };
 
-  console.log('🔍 PlayerDashboard - Guardian children:', {
-    isGuardian,
-    childrenCount: children?.length,
-    children,
-    selectedChildId
-  });
-
   const handleLeagueClick = (leagueId: string) => {
     setSelectedLeagueId(leagueId);
   };

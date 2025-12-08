@@ -40,13 +40,6 @@ export const useGuardianChildren = () => {
         throw new Error('No user authenticated');
       }
 
-      console.log('🔍 Fetching children for guardian:', user.id);
-
-      // Verificar auth.uid()
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      console.log('🔍 Auth UID:', authUser?.id);
-      console.log('🔍 User ID match:', user.id === authUser?.id);
-
       // Obtener las relaciones de dependientes
       const { data: dependents, error: dependentsError } = await supabase
         .from('account_dependents')
@@ -60,21 +53,12 @@ export const useGuardianChildren = () => {
         .order('created_at', { ascending: false });
 
       if (dependentsError) {
-        console.error('❌ Error fetching dependents:', dependentsError);
-        console.error('❌ Error code:', dependentsError.code);
-        console.error('❌ Error message:', dependentsError.message);
-        console.error('❌ Error details:', dependentsError.details);
         throw dependentsError;
       }
 
-      console.log('✅ Dependents query successful. Count:', dependents?.length || 0);
-
       if (!dependents || dependents.length === 0) {
-        console.log('⚠️ No children found for guardian');
         return [];
       }
-
-      console.log('✅ Found dependents:', dependents);
 
       // Obtener los perfiles completos de los hijos
       const childrenIds = dependents.map(d => d.dependent_profile_id);
@@ -94,11 +78,8 @@ export const useGuardianChildren = () => {
         .in('id', childrenIds);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
         throw profilesError;
       }
-
-      console.log('Found profiles:', profiles);
 
       // Combinar datos
       const children: GuardianChild[] = profiles.map(profile => {
@@ -116,7 +97,6 @@ export const useGuardianChildren = () => {
         };
       });
 
-      console.log('Processed children:', children);
       return children;
     },
     enabled: !!user?.id,
@@ -134,10 +114,6 @@ export const useGuardianChildren = () => {
         throw new Error('Debes proporcionar un código de club válido');
       }
 
-      console.log('🔍 Adding child:', childData);
-      console.log('🔍 Current user:', user.email, 'ID:', user.id);
-      console.log('🔍 Current profile role:', profile?.role);
-
       // Guardar el ID del guardian antes de crear el hijo
       const guardianId = user.id;
 
@@ -148,8 +124,6 @@ export const useGuardianChildren = () => {
         throw new Error('No hay sesión activa del guardian');
       }
 
-      console.log('💾 Guardian session saved:', guardianSession.user.email);
-
       // Verificar que realmente es un guardian (consultar directamente la DB)
       const { data: guardianProfile, error: guardianCheckError } = await supabase
         .from('profiles')
@@ -158,11 +132,8 @@ export const useGuardianChildren = () => {
         .single();
 
       if (guardianCheckError || guardianProfile?.role !== 'guardian') {
-        console.error('⚠️ WARNING: Current user is not a guardian! Role:', guardianProfile?.role);
         throw new Error('Solo los usuarios con rol guardian pueden añadir hijos');
       }
-
-      console.log('✅ Guardian role verified:', guardianProfile.role);
 
       // 1. Generar email único para el hijo
       const childEmail = `child.${childData.fullName.toLowerCase().replace(/\s/g, '.')}.${Date.now()}@temp.padelock.com`;
@@ -184,15 +155,12 @@ export const useGuardianChildren = () => {
       });
 
       if (authError) {
-        console.error('Error creating auth user:', authError);
         throw authError;
       }
 
       if (!authData.user) {
         throw new Error('No se pudo crear el usuario');
       }
-
-      console.log('✅ Created auth user:', authData.user.id);
 
       // 3. Esperar a que el trigger handle_new_user cree el perfil (250ms debería ser suficiente)
       await new Promise(resolve => setTimeout(resolve, 250));
@@ -205,11 +173,8 @@ export const useGuardianChildren = () => {
         .single();
 
       if (profileError || !newProfile) {
-        console.error('❌ Error fetching created profile:', profileError);
         throw new Error('El perfil del hijo no se creó correctamente');
       }
-
-      console.log('✅ Created child profile:', newProfile.full_name);
 
       // 5. IMPORTANTE: Restaurar la sesión del guardian ANTES de crear la relación
       // Esto es necesario porque las políticas RLS de account_dependents verifican auth.uid()
@@ -219,11 +184,8 @@ export const useGuardianChildren = () => {
       });
 
       if (sessionError) {
-        console.error('❌ Error restoring guardian session:', sessionError);
         throw new Error('Error al restaurar la sesión del guardian');
       }
-
-      console.log('✅ Guardian session restored');
 
       // Pequeña espera para que la sesión se propague
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -241,13 +203,10 @@ export const useGuardianChildren = () => {
         .single();
 
       if (relationshipError) {
-        console.error('❌ Error creating relationship:', relationshipError);
         // Si falla la relación, eliminar el perfil creado
         await supabase.from('profiles').delete().eq('id', newProfile.id);
         throw relationshipError;
       }
-
-      console.log('✅ Created relationship successfully - ready to reload');
 
       return { profile: newProfile, relationship };
     },
@@ -260,7 +219,6 @@ export const useGuardianChildren = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error adding child:', error);
       toast({
         title: 'Error al añadir hijo',
         description: error.message || 'Ocurrió un error inesperado',
@@ -294,7 +252,6 @@ export const useGuardianChildren = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error editing child:', error);
       toast({
         title: 'Error al editar hijo',
         description: error.message || 'Ocurrió un error inesperado',

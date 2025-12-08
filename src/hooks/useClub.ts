@@ -7,8 +7,7 @@ export const useClub = (clubId?: string) => {
     queryKey: ['club', clubId],
     queryFn: async () => {
       if (!clubId) return null;
-      
-      console.log('Fetching club by id:', clubId);
+
       const { data, error } = await supabase
         .from('clubs')
         .select('*')
@@ -16,11 +15,9 @@ export const useClub = (clubId?: string) => {
         .single();
 
       if (error) {
-        console.error('Error fetching club:', error);
         throw error;
       }
-      
-      console.log('Club fetched:', data);
+
       return data;
     },
     enabled: !!clubId,
