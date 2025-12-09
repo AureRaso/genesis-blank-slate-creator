@@ -7,6 +7,8 @@ export interface Profile {
   role: 'admin' | 'player' | 'trainer';
   level?: number;
   club_id?: string;
+  birth_date?: string;
+  shirt_size?: string;
   created_at: string;
   updated_at: string;
 }

@@ -5,15 +5,17 @@ import LeagueRegistrationModal from "./LeagueRegistrationModal";
 import { PlayerClassesTabs } from "./PlayerClassesTabs";
 import DeletedUserMessage from "./DeletedUserMessage";
 import { PhoneRequiredModal } from "./PhoneRequiredModal";
+import { PlayerDetailsModal } from "./PlayerDetailsModal";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const PlayerDashboard = () => {
-  const { profile, isGuardian } = useAuth();
+  const { profile, isGuardian, retryAuth } = useAuth();
   const queryClient = useQueryClient();
   const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
@@ -26,9 +28,39 @@ const PlayerDashboard = () => {
   // Get children if user is guardian
   const { children, isLoading: loadingChildren } = useGuardianChildren();
 
+  // Get club settings to check if player details are required
+  const { data: clubSettings } = useQuery({
+    queryKey: ['club-settings', profile?.club_id],
+    queryFn: async () => {
+      if (!profile?.club_id) return null;
+      const { data, error } = await supabase
+        .from('clubs')
+        .select('require_player_details')
+        .eq('id', profile.club_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.club_id,
+  });
+
+  // Check if player details modal should be shown
+  const needsPlayerDetails =
+    clubSettings?.require_player_details &&
+    (!profile?.birth_date || !profile?.shirt_size);
+
+  // Check if phone modal should be shown (to avoid showing both at once)
+  const needsPhoneUpdate = !enrollment?.phone || enrollment?.phone === '' || enrollment?.phone === '000000000';
+
   // Callback to refresh enrollment data after phone update
   const handlePhoneUpdated = () => {
     queryClient.invalidateQueries({ queryKey: ['current-user-enrollment'] });
+  };
+
+  // Callback to refresh profile data after player details update
+  const handleDetailsUpdated = () => {
+    // Refresh the profile from AuthContext to get updated birth_date and shirt_size
+    retryAuth();
   };
 
   const handleLeagueClick = (leagueId: string) => {
@@ -89,13 +121,23 @@ const PlayerDashboard = () => {
 
   return (
     <>
-      {/* Phone Required Modal - SOLO para usuario de prueba */}
+      {/* Phone Required Modal */}
       {enrollment && profile?.email && (
         <PhoneRequiredModal
           studentEnrollmentId={enrollment.id}
           currentPhone={enrollment.phone}
           studentEmail={profile.email}
           onPhoneUpdated={handlePhoneUpdated}
+        />
+      )}
+
+      {/* Player Details Modal - Only for clubs that require it, and only after phone is complete */}
+      {profile && !needsPhoneUpdate && needsPlayerDetails && (
+        <PlayerDetailsModal
+          profileId={profile.id}
+          currentBirthDate={profile.birth_date}
+          currentShirtSize={profile.shirt_size}
+          onDetailsUpdated={handleDetailsUpdated}
         />
       )}
 
