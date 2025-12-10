@@ -129,17 +129,31 @@ export const useCurrentUserWhatsAppGroup = () => {
 
         if (trainerClubError) throw trainerClubError;
 
-        // Try to get group by trainer profile first, then by club
-        const { data: groupData, error: groupError } = await supabase
+        // First try to get group by trainer profile
+        const { data: trainerGroupData, error: trainerGroupError } = await supabase
           .from("whatsapp_groups")
           .select("*")
           .eq("is_active", true)
-          .or(`trainer_profile_id.eq.${profile.id}${trainerClubData?.club_id ? `,club_id.eq.${trainerClubData.club_id}` : ''}`)
-          .limit(1)
+          .eq("trainer_profile_id", profile.id)
           .maybeSingle();
 
-        if (groupError) throw groupError;
-        return groupData as WhatsAppGroupData | null;
+        if (trainerGroupError) throw trainerGroupError;
+        if (trainerGroupData) return trainerGroupData as WhatsAppGroupData;
+
+        // If no trainer-specific group, try to get by club_id
+        if (trainerClubData?.club_id) {
+          const { data: clubGroupData, error: clubGroupError } = await supabase
+            .from("whatsapp_groups")
+            .select("*")
+            .eq("is_active", true)
+            .eq("club_id", trainerClubData.club_id)
+            .maybeSingle();
+
+          if (clubGroupError) throw clubGroupError;
+          return clubGroupData as WhatsAppGroupData | null;
+        }
+
+        return null;
       }
 
       // If club admin, get their club's WhatsApp group

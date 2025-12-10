@@ -278,6 +278,7 @@ CALL useConfirmAttendance();
 
 **Operaciones**:
 ```javascript
+// 1. Actualizar class_participants
 UPDATE class_participants SET
   attendance_confirmed_for_date = scheduledDate,
   attendance_confirmed_at = NOW(),
@@ -286,13 +287,23 @@ UPDATE class_participants SET
   absence_reason = NULL,
   absence_confirmed_at = NULL
 WHERE id = participantId;
+
+// 2. Crear/actualizar registro en class_attendance_confirmations (para sincronizar con dashboard del jugador)
+UPSERT INTO class_attendance_confirmations
+  (class_participant_id, scheduled_date, attendance_confirmed, confirmed_by_trainer, absence_confirmed, ...)
+VALUES
+  (participantId, scheduledDate, true, true, false, ...)
+ON CONFLICT (class_participant_id, scheduled_date)
+DO UPDATE SET ...;
 ```
 
 **Resultado**:
 - ✅ `class_participants.attendance_confirmed_for_date = scheduledDate`
 - ✅ `class_participants.confirmed_by_trainer = true`
+- ✅ `class_attendance_confirmations` tiene registro con `attendance_confirmed = true`
 - ✅ Limpia cualquier ausencia previa
 - ✅ Trigger crea registro en `attendance_history`
+- ✅ Dashboard del jugador se actualiza en tiempo real
 
 ---
 
@@ -309,6 +320,7 @@ WHERE id = participantId;
 
 **Operaciones**:
 ```javascript
+// 1. Actualizar class_participants
 UPDATE class_participants SET
   absence_confirmed = true,
   absence_reason = reason || 'Marcado por profesor',
@@ -317,13 +329,23 @@ UPDATE class_participants SET
   attendance_confirmed_at = NULL,
   confirmed_by_trainer = true
 WHERE id = participantId;
+
+// 2. Crear/actualizar registro en class_attendance_confirmations (para sincronizar con dashboard del jugador)
+UPSERT INTO class_attendance_confirmations
+  (class_participant_id, scheduled_date, absence_confirmed, absence_reason, confirmed_by_trainer, attendance_confirmed, ...)
+VALUES
+  (participantId, scheduledDate, true, reason, true, false, ...)
+ON CONFLICT (class_participant_id, scheduled_date)
+DO UPDATE SET ...;
 ```
 
 **Resultado**:
 - ✅ `class_participants.absence_confirmed = true`
 - ✅ `class_participants.confirmed_by_trainer = true`
+- ✅ `class_attendance_confirmations` tiene registro con `absence_confirmed = true`
 - ✅ Limpia cualquier confirmación de asistencia previa
 - ✅ Trigger crea registro en `attendance_history`
+- ✅ Dashboard del jugador se actualiza en tiempo real
 
 ---
 
@@ -401,9 +423,11 @@ WHERE class_participant_id = participantId
 
 | Hook | Propósito | Actualiza |
 |------|-----------|-----------|
-| `useTrainerMarkAttendance()` | Marcar asistencia | `class_participants` |
-| `useTrainerMarkAbsence()` | Marcar ausencia | `class_participants` |
+| `useTrainerMarkAttendance()` | Marcar asistencia | `class_participants` + `class_attendance_confirmations` |
+| `useTrainerMarkAbsence()` | Marcar ausencia | `class_participants` + `class_attendance_confirmations` |
 | `useTodayAttendance()` | Obtener asistencia del día | Query |
+
+**IMPORTANTE**: A partir de 2025-12-10, los hooks de profesor actualizan AMBAS tablas para garantizar sincronización con el dashboard del jugador.
 
 ---
 
@@ -816,6 +840,11 @@ WHERE cp.id = 'PARTICIPANT_ID';
 
 ## Changelog
 
+### 2025-12-10
+- ✅ **FIX CRÍTICO**: Hooks de profesor (`useTrainerMarkAttendance`, `useTrainerMarkAbsence`) ahora actualizan AMBAS tablas (`class_participants` + `class_attendance_confirmations`)
+- ✅ Esto resuelve el problema de sincronización donde los cambios del profesor no se reflejaban en el dashboard del jugador
+- ✅ El dashboard del jugador consulta principalmente `class_attendance_confirmations`, por lo que era necesario que los hooks del profesor también actualicen esa tabla
+
 ### 2025-12-05
 - ✅ Actualizado `useConfirmAbsence()` para actualizar `class_participants`
 - ✅ Actualizado `useCancelAbsence()` para actualizar `class_participants`
@@ -834,6 +863,6 @@ WHERE cp.id = 'PARTICIPANT_ID';
 
 ---
 
-**Última actualización**: 2025-12-05
+**Última actualización**: 2025-12-10
 **Mantenedor**: Equipo de desarrollo
-**Versión**: 1.0
+**Versión**: 1.1

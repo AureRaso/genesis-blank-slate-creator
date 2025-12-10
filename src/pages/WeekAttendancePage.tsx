@@ -761,8 +761,8 @@ const WeekAttendancePage = () => {
         </TabsList>
 
         <TabsContent value="attendance" className="space-y-4 sm:space-y-6 mt-0">
-          {/* WhatsApp Group Warning - Solo para administradores */}
-          {isAdmin && !loadingWhatsAppGroup && !whatsappGroup && (
+          {/* WhatsApp Group Warning - Para administradores y trainers */}
+          {(isAdmin || isTrainer) && !loadingWhatsAppGroup && !whatsappGroup && (
             <Alert variant="destructive" className="text-xs sm:text-sm">
               <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
               <AlertDescription className="text-xs sm:text-sm">
@@ -1208,8 +1208,8 @@ const WeekAttendancePage = () => {
                                   Sustituto
                                 </Button>
 
-                                {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
-                                {isAdmin && (
+                                {/* Botones WhatsApp y Lista de Espera - Para administradores y trainers */}
+                                {(isAdmin || isTrainer) && (
                                   <>
                                     {/* Mostrar "Notificar ausencia" si hay ausencias (cubiertas o no) */}
                                     {absentCount > 0 && (() => {
@@ -1278,20 +1278,23 @@ const WeekAttendancePage = () => {
                                         </Button>
                                       );
                                     })()}
-
-                                    <WaitlistButtonWithCount
-                                      classId={classData.id}
-                                      classDate={notificationDate}
-                                      isExpanded={expandedWaitlist === classData.id}
-                                      onToggle={() => toggleWaitlist(classData.id)}
-                                    />
                                   </>
                                 )}
                               </div>
+
+                              {/* Botón Lista de Espera - Debajo de los otros botones */}
+                              {(isAdmin || isTrainer) && (
+                                <WaitlistButtonWithCount
+                                  classId={classData.id}
+                                  classDate={notificationDate}
+                                  isExpanded={expandedWaitlist === classData.id}
+                                  onToggle={() => toggleWaitlist(classData.id)}
+                                />
+                              )}
                             </div>
 
-                            {/* Waitlist Management Panel - Solo para administradores */}
-                            {isAdmin && expandedWaitlist === classData.id && (
+                            {/* Waitlist Management Panel - Para administradores y trainers */}
+                            {(isAdmin || isTrainer) && expandedWaitlist === classData.id && (
                               <WaitlistManagement
                                 classId={classData.id}
                                 classDate={notificationDate}
@@ -1574,19 +1577,19 @@ const WaitlistButtonWithCount = ({
 
   return (
     <Button
-      size="sm"
+      size="default"
       variant="outline"
       onClick={onToggle}
-      className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
+      className="text-sm w-full h-10 font-medium"
     >
       {isExpanded ? (
         <>
-          <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-          Ocultar
+          <ChevronUp className="h-4 w-4 mr-2" />
+          Ocultar lista de espera
         </>
       ) : (
         <>
-          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+          <ChevronDown className="h-4 w-4 mr-2" />
           Lista de espera {pendingCount > 0 && `(${pendingCount})`}
         </>
       )}

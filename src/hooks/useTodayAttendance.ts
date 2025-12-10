@@ -251,22 +251,18 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
 export const useTrainerMarkAttendance = () => {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
     mutationFn: async ({ participantId, scheduledDate }: { participantId: string; scheduledDate: string }) => {
       console.log('👨‍🏫 Trainer marking attendance for:', { participantId, scheduledDate });
 
-      // Update class_participants directly since class_attendance_confirmations doesn't exist
-      console.log('📅 [Trainer] Updating class_participants for participant:', participantId);
-
+      // 1. Update class_participants
       const { data: updatedParticipant, error: updateError } = await supabase
         .from('class_participants')
         .update({
           attendance_confirmed_for_date: scheduledDate,
           attendance_confirmed_at: new Date().toISOString(),
           confirmed_by_trainer: true,
-          // Clear absence if exists
           absence_confirmed: false,
           absence_reason: null,
           absence_confirmed_at: null,
@@ -280,16 +276,32 @@ export const useTrainerMarkAttendance = () => {
         throw updateError;
       }
 
-      console.log('✅ [Trainer] Attendance marked in class_participants:', {
-        participantId,
-        attendance_confirmed_for_date: updatedParticipant?.attendance_confirmed_for_date,
-        confirmed_by_trainer: updatedParticipant?.confirmed_by_trainer,
-      });
+      // 2. Also upsert into class_attendance_confirmations for player dashboard sync
+      const { error: confirmationError } = await supabase
+        .from('class_attendance_confirmations')
+        .upsert({
+          class_participant_id: participantId,
+          scheduled_date: scheduledDate,
+          attendance_confirmed: true,
+          attendance_confirmed_at: new Date().toISOString(),
+          confirmed_by_trainer: true,
+          absence_confirmed: false,
+          absence_reason: null,
+          absence_confirmed_at: null,
+        }, {
+          onConflict: 'class_participant_id,scheduled_date'
+        });
+
+      if (confirmationError) {
+        console.error('⚠️ [Trainer] Error upserting confirmation:', confirmationError);
+        // Don't throw - class_participants was updated successfully
+      }
+
+      console.log('✅ [Trainer] Attendance marked:', { participantId, scheduledDate });
 
       return updatedParticipant;
     },
     onSuccess: () => {
-      // Invalidate all today-attendance queries (including week views with different date ranges)
       queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
       toast.success('✓ Asistencia confirmada por el profesor');
@@ -305,7 +317,6 @@ export const useTrainerMarkAttendance = () => {
 export const useTrainerMarkAbsence = () => {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
 
   return useMutation({
     mutationFn: async ({ participantId, scheduledDate, reason }: { participantId: string; scheduledDate?: string; reason?: string }) => {
@@ -315,16 +326,13 @@ export const useTrainerMarkAbsence = () => {
         throw new Error('scheduledDate is required to mark absence for a specific class occurrence');
       }
 
-      // Update class_participants directly since class_attendance_confirmations doesn't exist
-      console.log('📅 [Trainer] Updating class_participants for participant:', participantId);
-
+      // 1. Update class_participants
       const { data: updatedParticipant, error: updateError } = await supabase
         .from('class_participants')
         .update({
           absence_confirmed: true,
           absence_reason: reason || 'Marcado por profesor',
           absence_confirmed_at: new Date().toISOString(),
-          // Clear attendance confirmation if exists
           attendance_confirmed_for_date: null,
           attendance_confirmed_at: null,
           confirmed_by_trainer: true,
@@ -338,17 +346,32 @@ export const useTrainerMarkAbsence = () => {
         throw updateError;
       }
 
-      console.log('✅ [Trainer] Absence marked in class_participants:', {
-        participantId,
-        absence_confirmed: updatedParticipant?.absence_confirmed,
-        absence_reason: updatedParticipant?.absence_reason,
-        absence_confirmed_at: updatedParticipant?.absence_confirmed_at,
-      });
+      // 2. Also upsert into class_attendance_confirmations for player dashboard sync
+      const { error: confirmationError } = await supabase
+        .from('class_attendance_confirmations')
+        .upsert({
+          class_participant_id: participantId,
+          scheduled_date: scheduledDate,
+          attendance_confirmed: false,
+          attendance_confirmed_at: null,
+          confirmed_by_trainer: true,
+          absence_confirmed: true,
+          absence_reason: reason || 'Marcado por profesor',
+          absence_confirmed_at: new Date().toISOString(),
+        }, {
+          onConflict: 'class_participant_id,scheduled_date'
+        });
+
+      if (confirmationError) {
+        console.error('⚠️ [Trainer] Error upserting confirmation:', confirmationError);
+        // Don't throw - class_participants was updated successfully
+      }
+
+      console.log('✅ [Trainer] Absence marked:', { participantId, scheduledDate });
 
       return updatedParticipant;
     },
     onSuccess: () => {
-      // Invalidate all today-attendance queries (including week views with different date ranges)
       queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
       queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
       toast.success('✓ Ausencia marcada por el profesor');

@@ -46,7 +46,7 @@ const AppSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"}>
                 <Link to="/dashboard">
-                  <GraduationCap />
+                  <SquareTerminal />
                   <span>{t('sidebar.dashboard')}</span>
                 </Link>
                 </SidebarMenuButton>
@@ -55,7 +55,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/students"}>
                 <Link to="/dashboard/students">
                   <Users />
-                  <span>Alumnos</span>
+                  <span>Jugadores</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
