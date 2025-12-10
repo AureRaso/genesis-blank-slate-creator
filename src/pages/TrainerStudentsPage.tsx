@@ -1,85 +1,92 @@
-import { useState } from "react";
-import { Users, UserPlus, ArrowLeft, Search, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useStudentEnrollments, StudentEnrollment, useDeleteStudentEnrollment } from "@/hooks/useStudentEnrollments";
-import { useMyTrainerProfile } from "@/hooks/useTrainers";
-import StudentEnrollmentForm from "@/components/StudentEnrollmentForm";
-import StudentEditModal from "@/components/StudentEditModal";
-import { AssignStudentToClassModal } from "@/components/AssignStudentToClassModal";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Users,
+  Search,
+  Mail,
+  Calendar,
+  Euro,
+  Phone,
+  AlertTriangle,
+  Building2,
+  Edit,
+  Check,
+  X,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Trash2
+} from "lucide-react";
+import { useStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { useArchiveStudent } from "@/hooks/useArchiveStudent";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const ITEMS_PER_PAGE = 25;
 
 const TrainerStudentsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [levelFilter, setLevelFilter] = useState<string>("all");
-  const [showStudentForm, setShowStudentForm] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<StudentEnrollment | undefined>();
-  const [assigningStudent, setAssigningStudent] = useState<StudentEnrollment | undefined>();
-  const [isStudentEditModalOpen, setIsStudentEditModalOpen] = useState(false);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-
-  const { data: trainerProfile } = useMyTrainerProfile();
+  const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<string>("alphabetical");
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [editingLevel, setEditingLevel] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentToArchive, setStudentToArchive] = useState<StudentEnrollment | null>(null);
   const { data: students = [], isLoading } = useStudentEnrollments();
-  const deleteStudentMutation = useDeleteStudentEnrollment();
+  const updateStudentMutation = useUpdateStudentEnrollment();
+  const archiveStudentMutation = useArchiveStudent();
 
-  // Debug: Log students data
-  console.log('Students data:', students);
-
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-    const matchesLevel = levelFilter === "all" || student.level.toString() === levelFilter;
-    
-    return matchesSearch && matchesStatus && matchesLevel;
-  });
-
-  const handleCreateNewStudent = () => {
-    setShowStudentForm(true);
+  // Function to normalize text (remove accents)
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   };
 
-  const handleEditStudent = (student: StudentEnrollment) => {
-    setEditingStudent(student);
-    setIsStudentEditModalOpen(true);
-  };
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, periodFilter, sortOrder]);
 
-  const handleDeleteStudent = (studentId: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este alumno? Esta acción no se puede deshacer.')) {
-      deleteStudentMutation.mutate(studentId);
-    }
-  };
+  const filteredAndSortedStudents = students
+    .filter((student) => {
+      const normalizedSearch = normalizeText(searchTerm);
+      const matchesSearch = normalizeText(student.full_name).includes(normalizedSearch) ||
+                           normalizeText(student.email).includes(normalizedSearch);
+      const matchesStatus = statusFilter === "all" || student.status === statusFilter;
+      const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
 
-  const handleAssignToClass = (student: StudentEnrollment) => {
-    setAssigningStudent(student);
-    setIsAssignModalOpen(true);
-  };
+      return matchesSearch && matchesStatus && matchesPeriod;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "alphabetical") {
+        return a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' });
+      } else {
+        if (!a.created_at || !b.created_at) return 0;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
 
-  const handleCloseStudentForm = () => {
-    setShowStudentForm(false);
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "active": return "default";
-      case "inactive": return "secondary";
-      case "pending": return "outline";
-      default: return "secondary";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "active": return "Activo";
-      case "inactive": return "Inactivo";
-      case "pending": return "Pendiente";
-      default: return status;
-    }
-  };
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedStudents.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedStudents = filteredAndSortedStudents.slice(startIndex, endIndex);
 
   const getPeriodLabel = (period: string) => {
     switch (period) {
@@ -92,286 +99,415 @@ const TrainerStudentsPage = () => {
     }
   };
 
-  // Get club info
-  const clubName = trainerProfile?.trainer_clubs?.[0]?.clubs?.name || 'Club no asignado';
+  const handleLevelChange = (value: string) => {
+    if (value === "" || /^\d+$/.test(value)) {
+      setEditingLevel(value);
+    }
+  };
 
-  if (showStudentForm) {
+  const handleSaveLevel = async (studentId: string) => {
+    const levelNum = parseInt(editingLevel);
+
+    if (editingLevel === "" || isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
+      toast({
+        title: "Error",
+        description: "El nivel debe ser un número entero entre 1 y 10",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateStudentMutation.mutateAsync({
+        id: studentId,
+        data: { level: levelNum }
+      });
+
+      setEditingStudentId(null);
+      setEditingLevel("");
+    } catch (error) {
+      console.error('Error updating level:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStudentId(null);
+    setEditingLevel("");
+  };
+
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <StudentEnrollmentForm 
-          onClose={handleCloseStudentForm} 
-          trainerProfile={trainerProfile} 
-        />
+      <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Jugadores
+            </CardTitle>
+            <CardDescription>Cargando jugadores...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:gap-4">
+      <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
-              Gestión de Alumnos
+              Jugadores
             </h1>
           </div>
-
-          <Button onClick={handleCreateNewStudent} className="bg-gradient-to-r from-primary to-primary/80 flex-shrink-0" size="sm">
-            <UserPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="text-sm sm:text-base">Nuevo Alumno</span>
-          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Alumnos</CardTitle>
-            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">{students.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Activos</CardTitle>
-            <div className="h-2 w-2 sm:h-3 sm:w-3 bg-green-500 rounded-full" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {students.filter(s => s.status === 'active').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Pendientes</CardTitle>
-            <div className="h-2 w-2 sm:h-3 sm:w-3 bg-yellow-500 rounded-full" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {students.filter(s => s.status === 'pending').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Inactivos</CardTitle>
-            <div className="h-2 w-2 sm:h-3 sm:w-3 bg-gray-500 rounded-full" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold">
-              {students.filter(s => s.status === 'inactive').length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nombre o email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 text-xs sm:text-sm h-8 sm:h-10"
-                />
+      {/* Counter */}
+      <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary/20 rounded-full">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total de Jugadores</p>
+                <p className="text-3xl font-bold">
+                  {filteredAndSortedStudents.length}
+                  {filteredAndSortedStudents.length !== students.length && (
+                    <span className="text-lg text-muted-foreground ml-2">
+                      / {students.length}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm h-8 sm:h-10">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="active">Activos</SelectItem>
-                <SelectItem value="inactive">Inactivos</SelectItem>
-                <SelectItem value="pending">Pendientes</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm h-8 sm:h-10">
-                <SelectValue placeholder="Nivel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => (
-                  <SelectItem key={level} value={level.toString()}>
-                    Nivel {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {filteredAndSortedStudents.length !== students.length && (
+              <Badge variant="secondary" className="text-sm">
+                {filteredAndSortedStudents.length} de {students.length} mostrados
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Students List */}
-      {isLoading ? (
-        <div className="space-y-3 sm:space-y-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-3 sm:p-6">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1">
-                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                    <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/3"></div>
-                  </div>
-                  <div className="h-6 sm:h-8 bg-gray-200 rounded w-12 sm:w-16"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre o email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
-      ) : filteredStudents.length === 0 ? (
+
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="active">Activos</SelectItem>
+            <SelectItem value="inactive">Inactivos</SelectItem>
+            <SelectItem value="pending">Pendientes</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={periodFilter} onValueChange={setPeriodFilter}>
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="mensual">Mensual</SelectItem>
+            <SelectItem value="bimensual">Bimensual</SelectItem>
+            <SelectItem value="trimestral">Trimestral</SelectItem>
+            <SelectItem value="semestral">Semestral</SelectItem>
+            <SelectItem value="anual">Anual</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={sortOrder} onValueChange={setSortOrder}>
+          <SelectTrigger className="w-full md:w-48">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4" />
+              <SelectValue placeholder="Ordenar" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="arrival">Orden de llegada</SelectItem>
+            <SelectItem value="alphabetical">Alfabético (A-Z)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Students List */}
+      {filteredAndSortedStudents.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-8 sm:py-12 px-3 sm:px-6">
-            <Users className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg md:text-xl font-medium mb-2">
-              {students.length === 0 ? "No hay alumnos en tu club" : "No se encontraron alumnos"}
+          <CardContent className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-medium mb-2">
+              {students.length === 0 ? "No hay jugadores en tu club" : "No se encontraron jugadores"}
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+            <p className="text-muted-foreground">
               {students.length === 0
-                ? "Los alumnos que se inscriban en tu club aparecerán aquí"
+                ? "Los jugadores que se inscriban en tu club aparecerán aquí"
                 : "Prueba a cambiar los filtros de búsqueda"
               }
             </p>
-            {students.length === 0 && (
-              <Button onClick={handleCreateNewStudent} className="bg-gradient-to-r from-primary to-primary/80" size="sm">
-                <UserPlus className="mr-2 h-4 w-4" />
-                <span className="text-sm sm:text-base">Crear Primer Alumno</span>
-              </Button>
-            )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {filteredStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-lg transition-all duration-300 group">
-              <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm sm:text-base md:text-lg truncate">{student.full_name}</CardTitle>
-                    <CardDescription className="flex items-center gap-1 sm:gap-2 flex-wrap text-xs sm:text-sm">
-                      <span>Nivel {student.level}</span>
-                      <Badge variant={getStatusBadgeVariant(student.status)} className="text-xs">
-                        {getStatusLabel(student.status)}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleAssignToClass(student)}
-                    className="bg-gradient-to-r from-primary to-primary/80 flex-shrink-0 text-xs h-7 sm:h-8 px-2 sm:px-3"
-                  >
-                    <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                    <span className="hidden sm:inline">Asignar</span>
-                  </Button>
-                </div>
-              </CardHeader>
+        <>
+          <Card>
+            <CardContent className="p-0">
+              {/* Table Header - Desktop only */}
+              <div className="hidden md:grid md:grid-cols-11 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+                <div className="col-span-3">Jugador</div>
+                <div className="col-span-3">Contacto</div>
+                <div className="col-span-2">Club</div>
+                <div className="col-span-2">Matrícula</div>
+                <div className="col-span-1">Acciones</div>
+              </div>
 
-              <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0 sm:pt-0">
-                <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground flex-shrink-0">Email:</span>
-                    <span className="truncate">{student.email}</span>
-                  </div>
+              {/* Table Body */}
+              <div className="divide-y">
+                {paginatedStudents.map((student) => {
+                  const initials = student.full_name
+                    .split(' ')
+                    .map(n => n[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase();
 
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground flex-shrink-0">Teléfono:</span>
-                    <span className="truncate">{student.phone}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground flex-shrink-0">Período:</span>
-                    <span className="truncate">{getPeriodLabel(student.enrollment_period)}</span>
-                  </div>
-
-                  {student.weekly_days && student.weekly_days.length > 0 && (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground flex-shrink-0">Días:</span>
-                      <span className="text-right truncate">{student.weekly_days.join(", ")}</span>
-                    </div>
-                  )}
-
-                  {student.first_payment && (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground flex-shrink-0">Pago inicial:</span>
-                      <span className="font-medium">{student.first_payment}€</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2 sm:pt-3 border-t">
-                  <div className="flex gap-1 flex-wrap">
-                    {student.course && (
-                      <Badge variant="outline" className="text-xs">
-                        {student.course}
-                      </Badge>
-                    )}
-                    {student.club_name && (
-                      <Badge variant="secondary" className="text-xs truncate max-w-[150px]">
-                        {student.club_name}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditStudent(student)}
-                      className="flex-1 sm:flex-none text-xs h-7 sm:h-8"
+                  return (
+                    <div
+                      key={student.id}
+                      className="grid grid-cols-1 md:grid-cols-11 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                     >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteStudent(student.id)}
-                      className="text-red-600 hover:text-red-700 flex-1 sm:flex-none text-xs h-7 sm:h-8"
-                    >
-                      Eliminar
-                    </Button>
-                  </div>
+                      {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
+                      <div className="col-span-1 md:col-span-3 flex items-start gap-3">
+                        {/* Avatar con iniciales */}
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
+                          {initials}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base truncate mb-1">
+                            {student.full_name}
+                          </h3>
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Nivel editable */}
+                            {editingStudentId === student.id ? (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  step="1"
+                                  value={editingLevel}
+                                  onChange={(e) => handleLevelChange(e.target.value)}
+                                  className="w-16 h-7 text-xs"
+                                  placeholder="1-10"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveLevel(student.id)}
+                                  disabled={updateStudentMutation.isPending}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEdit}
+                                  disabled={updateStudentMutation.isPending}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs gap-1 cursor-pointer" onClick={() => {
+                                setEditingStudentId(student.id);
+                                setEditingLevel(student.level.toString());
+                              }}>
+                                Nivel {student.level}
+                                <Edit className="h-2.5 w-2.5" />
+                              </Badge>
+                            )}
+                          </div>
+
+                          {student.course && (
+                            <Badge variant="outline" className="text-xs mt-1.5">
+                              {student.course}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Columna 2: Contacto */}
+                      <div className="col-span-1 md:col-span-3 flex flex-col gap-1.5 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{student.email}</span>
+                        </div>
+                        {student.phone && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{student.phone || 'N/A'}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Columna 3: Club */}
+                      <div className="col-span-1 md:col-span-2 flex items-start md:items-center">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{student.club_name}</span>
+                        </div>
+                      </div>
+
+                      {/* Columna 4: Info de Matrícula */}
+                      <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 text-sm">
+                        {student.enrollment_period && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{getPeriodLabel(student.enrollment_period)}</span>
+                          </div>
+                        )}
+                        {student.first_payment && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Euro className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="font-medium text-foreground">{student.first_payment}€</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Columna 5: Acciones */}
+                      <div className="col-span-1 md:col-span-1 flex items-start md:items-center justify-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setStudentToArchive(student)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          title="Eliminar alumno"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Observaciones (si existen) - Mobile only */}
+                      {student.observations && (
+                        <div className="col-span-1 text-xs text-muted-foreground italic border-t pt-2 mt-2 md:hidden">
+                          <AlertTriangle className="h-3 w-3 inline mr-1 text-amber-600" />
+                          {student.observations}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-4">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1} - {Math.min(endIndex, filteredAndSortedStudents.length)} de {filteredAndSortedStudents.length} jugadores
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <div className="text-sm font-medium">
+                  Página {currentPage} de {totalPages}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Modals */}
-      <StudentEditModal
-        student={editingStudent || null}
-        isOpen={isStudentEditModalOpen}
-        onClose={() => {
-          setIsStudentEditModalOpen(false);
-          setEditingStudent(undefined);
-        }}
-      />
-
-      <AssignStudentToClassModal
-        student={assigningStudent || null}
-        isOpen={isAssignModalOpen}
-        onClose={() => {
-          setIsAssignModalOpen(false);
-          setAssigningStudent(undefined);
-        }}
-      />
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!studentToArchive} onOpenChange={(open) => !open && setStudentToArchive(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              ¿Eliminar alumno del club?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-semibold text-foreground text-base">
+                Estás a punto de eliminar a {studentToArchive?.full_name}
+              </p>
+              <p className="text-muted-foreground">
+                ⚠️ <strong>ADVERTENCIA:</strong> Este jugador será eliminado permanentemente del club y no aparecerá en ninguna lista ni opciones.
+              </p>
+              <p className="text-muted-foreground">
+                Los datos se conservarán en la base de datos por motivos legales y de auditoría, pero el jugador quedará inactivo.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (studentToArchive) {
+                  archiveStudentMutation.mutate({
+                    studentId: studentToArchive.id,
+                    archive: true
+                  });
+                  setStudentToArchive(null);
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar jugador
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, CreditCard, Settings, Users, Calendar, ClipboardCheck, Tag, Plus, History, Wallet } from "lucide-react";
+import { Home, CreditCard, Settings, Users, ClipboardCheck, Tag, Plus, History, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
@@ -41,25 +41,20 @@ const MobileTabBar = () => {
     }] : []),
   ];
 
-  // Tabs for trainers
+  // Tabs for trainers (same as admin)
   const trainerTabs = [
     {
-      name: "Inicio",
+      name: "Dashboard",
       path: "/dashboard",
       icon: Home,
     },
     {
-      name: "Alumnos",
-      path: "/dashboard/students",
-      icon: Users,
-    },
-    {
-      name: "Clases",
+      name: "Crear Clase",
       action: () => {
         // Navegar directamente a la página de crear clase
         navigate("/dashboard/scheduled-classes/new");
       },
-      icon: Calendar,
+      icon: Plus,
     },
     {
       name: "Asistencia",
