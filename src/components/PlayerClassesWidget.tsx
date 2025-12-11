@@ -287,10 +287,13 @@ const ClassDetailsModal = ({ programmedClass, isOpen, onClose }: {
                 <span>Pista {programmedClass.court_number}</span>
               </div>
             )}
-            {programmedClass.trainer?.full_name && (
+            {(programmedClass.trainer?.full_name || programmedClass.trainer_2?.full_name) && (
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span>Profesor: {programmedClass.trainer.full_name}</span>
+                <span>
+                  Profesor: {programmedClass.trainer?.full_name}
+                  {programmedClass.trainer_2?.full_name && `, ${programmedClass.trainer_2.full_name}`}
+                </span>
               </div>
             )}
           </div>

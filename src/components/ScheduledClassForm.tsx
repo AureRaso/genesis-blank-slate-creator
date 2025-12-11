@@ -62,6 +62,8 @@ const formSchema = z.object({
   is_open: z.boolean().default(false),
   // Optional trainer assignment for admins
   assigned_trainer_id: z.string().optional(),
+  // Optional secondary trainer (for classes with 8+ students)
+  assigned_trainer_id_2: z.string().optional(),
   // Precio mensual
   monthly_price: z.number().min(0, "El precio debe ser mayor o igual a 0")
 }).refine(data => {
@@ -335,6 +337,8 @@ export default function ScheduledClassForm({
         recurrence_type: data.recurrence_type,
         // Use assigned trainer if admin selected one, otherwise use current trainer
         trainer_profile_id: (isAdmin && data.assigned_trainer_id && data.assigned_trainer_id !== "unassigned") ? data.assigned_trainer_id : data.trainer_profile_id,
+        // Secondary trainer (optional, for classes with 8+ students)
+        trainer_profile_id_2: (isAdmin && data.assigned_trainer_id_2 && data.assigned_trainer_id_2 !== "none") ? data.assigned_trainer_id_2 : undefined,
         club_id: data.club_id,
         court_number: data.court_number,
         // Only include the appropriate field based on selection type
@@ -835,6 +839,51 @@ export default function ScheduledClassForm({
                             <FormMessage />
                             <p className="text-sm text-muted-foreground mt-1">
                                 Selecciona a un profesor de tu club
+                            </p>
+                          </FormItem>} />
+                    </div>
+
+                    {/* Secondary trainer - always available for admins */}
+                    <div className="mt-4 p-4 border rounded-lg bg-muted/30">
+                      <FormField control={form.control} name="assigned_trainer_id_2" render={({
+                        field
+                      }) => <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              Segundo profesor (Opcional)
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sin segundo profesor" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="none">Sin segundo profesor</SelectItem>
+                                {availableTrainers && availableTrainers.length > 0 ? (
+                                  availableTrainers
+                                    .filter(trainer => {
+                                      // Exclude the first assigned trainer (or current user if no trainer assigned)
+                                      const firstTrainerId = watchedValues.assigned_trainer_id && watchedValues.assigned_trainer_id !== "unassigned"
+                                        ? watchedValues.assigned_trainer_id
+                                        : trainerProfileId;
+                                      return trainer.profile_id !== firstTrainerId;
+                                    })
+                                    .map(trainer => (
+                                      <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                                        {trainer.profiles?.full_name} {trainer.specialty && `(${trainer.specialty})`}
+                                      </SelectItem>
+                                    ))
+                                ) : (
+                                  <div className="p-2 text-sm text-muted-foreground">
+                                    No hay otros profesores disponibles
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Para clases con muchos alumnos, puedes asignar un segundo profesor que también podrá gestionar la asistencia.
                             </p>
                           </FormItem>} />
                     </div>

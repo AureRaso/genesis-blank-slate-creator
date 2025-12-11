@@ -16,6 +16,7 @@ export interface ProgrammedClass {
   end_date: string;
   recurrence_type: string;
   trainer_profile_id: string;
+  trainer_profile_id_2?: string; // Optional secondary trainer
   club_id: string;
   court_number?: number;
   group_id?: string;
@@ -51,6 +52,7 @@ export interface CreateProgrammedClassData {
   end_date: string;
   recurrence_type: string;
   trainer_profile_id: string;
+  trainer_profile_id_2?: string; // Optional secondary trainer
   club_id: string;
   court_number?: number;
   is_open?: boolean;
@@ -85,6 +87,9 @@ export const useProgrammedClasses = (clubId?: string) => {
               )
             ),
             trainer:profiles!trainer_profile_id(
+              full_name
+            ),
+            trainer_2:profiles!trainer_profile_id_2(
               full_name
             )
           `)
@@ -435,6 +440,9 @@ export const useAvailableProgrammedClasses = () => {
             )
           ),
           trainer:profiles!trainer_profile_id(
+            full_name
+          ),
+          trainer_2:profiles!trainer_profile_id_2(
             full_name
           ),
           clubs!inner(

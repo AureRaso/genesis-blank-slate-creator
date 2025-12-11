@@ -223,12 +223,14 @@ const WeekAttendancePage = () => {
     return days;
   }, [weekStart]);
 
-  // Extraer lista única de entrenadores de las clases
+  // Extraer lista única de entrenadores de las clases (incluyendo trainers secundarios)
   const availableTrainers = useMemo(() => {
     if (!classes) return [];
-    const trainerNames = classes
-      .map(c => c.trainer?.full_name)
-      .filter((name): name is string => !!name);
+    const trainerNames: string[] = [];
+    classes.forEach(c => {
+      if (c.trainer?.full_name) trainerNames.push(c.trainer.full_name);
+      if (c.trainer_2?.full_name) trainerNames.push(c.trainer_2.full_name);
+    });
     return [...new Set(trainerNames)].sort();
   }, [classes]);
 
@@ -244,9 +246,12 @@ const WeekAttendancePage = () => {
       result = result.filter(cls => cls.days_of_week?.includes(selectedDayName));
     }
 
-    // Filtrar por entrenador seleccionado
+    // Filtrar por entrenador seleccionado (busca en trainer y trainer_2)
     if (selectedTrainer !== 'all') {
-      result = result.filter(cls => cls.trainer?.full_name === selectedTrainer);
+      result = result.filter(cls =>
+        cls.trainer?.full_name === selectedTrainer ||
+        cls.trainer_2?.full_name === selectedTrainer
+      );
     }
 
     return result;
@@ -699,11 +704,13 @@ const WeekAttendancePage = () => {
               const isSelected = selectedDate === dateStr;
               const isToday = format(new Date(), 'yyyy-MM-dd') === dateStr;
 
-              // Count classes for this day (respetando el filtro de entrenador)
+              // Count classes for this day (respetando el filtro de entrenador, incluyendo trainer_2)
               const dayNameSpanish = getDayOfWeekInSpanish(day);
               const classCount = classes?.filter(cls => {
                 const matchesDay = cls.days_of_week?.includes(dayNameSpanish);
-                const matchesTrainer = selectedTrainer === 'all' || cls.trainer?.full_name === selectedTrainer;
+                const matchesTrainer = selectedTrainer === 'all' ||
+                  cls.trainer?.full_name === selectedTrainer ||
+                  cls.trainer_2?.full_name === selectedTrainer;
                 return matchesDay && matchesTrainer;
               }).length || 0;
 
@@ -938,8 +945,11 @@ const WeekAttendancePage = () => {
                                 <Clock className="h-3 w-3 flex-shrink-0" />
                                 <span className="truncate">{classData.start_time} ({classData.duration_minutes} min)</span>
                               </span>
-                              {classData.trainer && (
-                                <span className="truncate">Profesor: {classData.trainer.full_name}</span>
+                              {(classData.trainer || classData.trainer_2) && (
+                                <span className="truncate">
+                                  Profesor: {classData.trainer?.full_name}
+                                  {classData.trainer_2?.full_name && `, ${classData.trainer_2.full_name}`}
+                                </span>
                               )}
                             </CardDescription>
                             {canCancelClass && !isCancelled && !hasEnded && (

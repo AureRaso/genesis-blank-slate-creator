@@ -24,6 +24,9 @@ export interface TodayClassAttendance {
     trainer?: {
       full_name: string;
     };
+    trainer_2?: {
+      full_name: string;
+    };
     club: {
       name: string;
     };
@@ -139,6 +142,7 @@ export const useTodayClassAttendance = () => {
           start_date,
           end_date,
           trainer_profile_id,
+          trainer_profile_id_2,
           club_id,
           is_open
         `)
@@ -152,12 +156,16 @@ export const useTodayClassAttendance = () => {
       }
 
       // STEP 3: Get trainer and club data
-      const trainerIds = programmedClasses?.map(c => c.trainer_profile_id).filter(Boolean) || [];
+      const trainerIds = [
+        ...(programmedClasses?.map(c => c.trainer_profile_id).filter(Boolean) || []),
+        ...(programmedClasses?.map(c => c.trainer_profile_id_2).filter(Boolean) || [])
+      ];
+      const uniqueTrainerIds = [...new Set(trainerIds)];
       const clubIds = programmedClasses?.map(c => c.club_id).filter(Boolean) || [];
 
       const [trainersResult, clubsResult] = await Promise.all([
-        trainerIds.length > 0
-          ? supabase.from('profiles').select('id, full_name').in('id', trainerIds)
+        uniqueTrainerIds.length > 0
+          ? supabase.from('profiles').select('id, full_name').in('id', uniqueTrainerIds)
           : { data: [], error: null },
         clubIds.length > 0
           ? supabase.from('clubs').select('id, name').in('id', clubIds)
@@ -204,6 +212,9 @@ export const useTodayClassAttendance = () => {
             end_date: programmedClass.end_date,
             trainer: programmedClass.trainer_profile_id
               ? trainersMap.get(programmedClass.trainer_profile_id)
+              : undefined,
+            trainer_2: programmedClass.trainer_profile_id_2
+              ? trainersMap.get(programmedClass.trainer_profile_id_2)
               : undefined,
             club: programmedClass.club_id
               ? clubsMap.get(programmedClass.club_id)

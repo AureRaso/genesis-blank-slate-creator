@@ -49,6 +49,8 @@ export interface BulkClassFormData {
     name: string;
     trainer_profile_id: string;
     trainer_name: string;
+    trainer_profile_id_2?: string; // Optional secondary trainer
+    trainer_name_2?: string;
     court_number: number;
     day_of_week: string;
     start_time: string;
@@ -352,6 +354,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
         end_date: cls.specific_date || baseConfig.end_date,
         recurrence_type: cls.specific_date ? "once" : "weekly",
         trainer_profile_id: cls.trainer_profile_id,
+        trainer_profile_id_2: cls.trainer_profile_id_2 || null, // Secondary trainer
         club_id: selectedClubId,
         court_number: cls.court_number,
         monthly_price: cls.monthly_price,

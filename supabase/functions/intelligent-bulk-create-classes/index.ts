@@ -17,6 +17,7 @@ interface ClassToCreate {
   end_date: string;
   recurrence_type: string;
   trainer_profile_id: string;
+  trainer_profile_id_2?: string; // Optional secondary trainer
   club_id: string;
   court_number: number;
   monthly_price: number;
@@ -189,6 +190,7 @@ async function createSingleClass(classData: ClassToCreate, supabaseClient: any, 
         end_date: classData.end_date,
         recurrence_type: classData.recurrence_type,
         trainer_profile_id: classData.trainer_profile_id,
+        trainer_profile_id_2: classData.trainer_profile_id_2 || null, // Secondary trainer
         club_id: classData.club_id,
         court_number: classData.court_number,
         monthly_price: classData.monthly_price,

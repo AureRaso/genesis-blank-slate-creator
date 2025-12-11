@@ -529,10 +529,13 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
                               <Users className="h-4 w-4" />
                               <span>{cls.participants?.length || 0} participantes</span>
                             </div>
-                            {cls.trainer_name && (
+                            {(cls.trainer?.full_name || cls.trainer_2?.full_name) && (
                               <div className="flex items-center gap-1 text-muted-foreground col-span-2">
                                 <UserCheck className="h-4 w-4" />
-                                <span>Profesor: {cls.trainer_name}</span>
+                                <span>
+                                  Profesor: {cls.trainer?.full_name}
+                                  {cls.trainer_2?.full_name && `, ${cls.trainer_2.full_name}`}
+                                </span>
                               </div>
                             )}
                           </div>

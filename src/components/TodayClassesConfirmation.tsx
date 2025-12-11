@@ -111,6 +111,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     const duration = classItem.programmed_class.duration_minutes || 60; // Duración por defecto 60 min
     const className = classItem.programmed_class.name;
     const trainerName = classItem.programmed_class.trainer?.full_name || 'Entrenador';
+    const trainer2Name = classItem.programmed_class.trainer_2?.full_name;
+    const fullTrainerName = trainer2Name ? `${trainerName} y ${trainer2Name}` : trainerName;
 
     // Normalizar tiempos (asegurar formato HH:MM:SS)
     const normalizeTime = (time: string) => {
@@ -154,7 +156,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
     googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
     googleCalendarUrl.searchParams.append('text', `${className}`);
-    googleCalendarUrl.searchParams.append('details', `Clase de pádel con ${trainerName}`);
+    googleCalendarUrl.searchParams.append('details', `Clase de pádel con ${fullTrainerName}`);
     googleCalendarUrl.searchParams.append('dates', `${startFormatted}/${endFormatted}`);
     googleCalendarUrl.searchParams.append('ctz', 'Europe/Madrid');
 
@@ -274,10 +276,13 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                           <Clock className="h-3.5 w-3.5 flex-shrink-0" />
                           <span>{formatTime(request.programmed_class?.start_time || '')}</span>
                         </div>
-                        {request.programmed_class?.trainer?.full_name && (
+                        {(request.programmed_class?.trainer?.full_name || request.programmed_class?.trainer_2?.full_name) && (
                           <div className="flex items-center gap-1.5">
                             <User className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="truncate">{request.programmed_class.trainer.full_name}</span>
+                            <span className="truncate">
+                              {request.programmed_class.trainer?.full_name}
+                              {request.programmed_class.trainer_2?.full_name && `, ${request.programmed_class.trainer_2.full_name}`}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -448,6 +453,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     </div>
                     <span className="text-xs font-medium truncate">
                       {classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}
+                      {classItem.programmed_class.trainer_2?.full_name && `, ${classItem.programmed_class.trainer_2.full_name}`}
                     </span>
                   </div>
                 </div>

@@ -15,6 +15,9 @@ export interface TodayAttendanceClass {
   trainer: {
     full_name: string;
   } | null;
+  trainer_2?: {
+    full_name: string;
+  } | null;
   participants: {
     id: string;
     student_enrollment: {
@@ -82,7 +85,12 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           end_date,
           club_id,
           max_participants,
+          trainer_profile_id,
+          trainer_profile_id_2,
           trainer:profiles!trainer_profile_id(
+            full_name
+          ),
+          trainer_2:profiles!trainer_profile_id_2(
             full_name
           ),
           participants:class_participants(
@@ -106,9 +114,10 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         .lte('start_date', queryEndDate)
         .gte('end_date', queryStartDate);
 
-      // If trainer, filter by classes assigned to them (regardless of club)
+      // If trainer, filter by classes assigned to them (either as primary or secondary trainer)
       if (profile.role === 'trainer') {
-        query = query.eq('trainer_profile_id', profile.id);
+        // Use OR filter to get classes where user is either trainer or trainer_2
+        query = query.or(`trainer_profile_id.eq.${profile.id},trainer_profile_id_2.eq.${profile.id}`);
       } else {
         // For admins, filter by club if they have one assigned
         if (profile.club_id) {
@@ -158,6 +167,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         duration_minutes: classData.duration_minutes,
         max_participants: classData.max_participants,
         trainer: classData.trainer,
+        trainer_2: classData.trainer_2, // Secondary trainer
         days_of_week: classData.days_of_week, // Include days for filtering in component
         participants: (classData.participants || [])
           .filter((p: any) => p.status === 'active')

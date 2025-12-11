@@ -477,20 +477,25 @@ const TodayAttendancePage = () => {
   const formattedDate = format(today, "EEEE, d 'de' MMMM", { locale: es });
   const todayString = today.toISOString().split('T')[0];
 
-  // Extraer lista única de entrenadores de las clases
+  // Extraer lista única de entrenadores de las clases (incluyendo trainers secundarios)
   const availableTrainers = useMemo(() => {
     if (!classes) return [];
-    const trainerNames = classes
-      .map(c => c.trainer?.full_name)
-      .filter((name): name is string => !!name);
+    const trainerNames: string[] = [];
+    classes.forEach(c => {
+      if (c.trainer?.full_name) trainerNames.push(c.trainer.full_name);
+      if (c.trainer_2?.full_name) trainerNames.push(c.trainer_2.full_name);
+    });
     return [...new Set(trainerNames)].sort();
   }, [classes]);
 
-  // Filtrar clases por entrenador seleccionado
+  // Filtrar clases por entrenador seleccionado (busca en trainer y trainer_2)
   const filteredClasses = useMemo(() => {
     if (!classes) return [];
     if (selectedTrainer === 'all') return classes;
-    return classes.filter(c => c.trainer?.full_name === selectedTrainer);
+    return classes.filter(c =>
+      c.trainer?.full_name === selectedTrainer ||
+      c.trainer_2?.full_name === selectedTrainer
+    );
   }, [classes, selectedTrainer]);
 
   // Calculate statistics (usando clases filtradas)
@@ -697,8 +702,11 @@ const TodayAttendancePage = () => {
                           <Clock className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{classData.start_time} ({classData.duration_minutes} min)</span>
                         </span>
-                        {classData.trainer && (
-                          <span className="truncate">Profesor: {classData.trainer.full_name}</span>
+                        {(classData.trainer || classData.trainer_2) && (
+                          <span className="truncate">
+                            Profesor: {classData.trainer?.full_name}
+                            {classData.trainer_2?.full_name && `, ${classData.trainer_2.full_name}`}
+                          </span>
                         )}
                       </CardDescription>
                     </div>

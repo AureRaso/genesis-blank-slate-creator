@@ -282,7 +282,12 @@ export function ClassCard({
               </div>
               <div className="text-xs">{enrolledCount} alumnos inscritos</div>
               <div className="text-xs">{getLevelDisplay()}</div>
-              {isAdmin && cls.trainer && <div className="text-xs">Profesor: {cls.trainer.full_name}</div>}
+              {isAdmin && (cls.trainer || cls.trainer_2) && (
+                <div className="text-xs">
+                  Profesor: {cls.trainer?.full_name}
+                  {cls.trainer_2?.full_name && `, ${cls.trainer_2.full_name}`}
+                </div>
+              )}
               {isAdmin && cls.created_by && <div className="text-xs">Creado por: {cls.created_by === profile?.id ? 'Ti' : 'Otro admin/entrenador'}</div>}
             </div>
           </TooltipContent>

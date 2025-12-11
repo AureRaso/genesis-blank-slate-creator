@@ -659,7 +659,7 @@ export const useMyWaitlistRequests = () => {
       const classIds = waitlistData.map(w => w.class_id);
       const { data: classesData, error: classesError } = await supabase
         .from('programmed_classes')
-        .select('id,name,start_time,duration_minutes,trainer:profiles(full_name)')
+        .select('id,name,start_time,duration_minutes,trainer:profiles!trainer_profile_id(full_name),trainer_2:profiles!trainer_profile_id_2(full_name)')
         .in('id', classIds);
 
       if (classesError) {
