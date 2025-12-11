@@ -264,6 +264,12 @@ CALL useConfirmAttendance();
 
 **Panel**: "Asistencia" (accesible desde menú lateral)
 
+**Soporte Multi-Entrenador**: A partir de Diciembre 2025, las clases pueden tener hasta 2 entrenadores asignados. Ambos entrenadores ven la clase en su panel de asistencia y pueden gestionar la asistencia de los alumnos.
+
+**Filtro de clases**:
+- Los entrenadores ven clases donde son trainer principal (`trainer_profile_id`) O secundario (`trainer_profile_id_2`)
+- Los administradores ven todas las clases del club y pueden filtrar por entrenador (incluyendo segundos entrenadores)
+
 ### Acciones Disponibles
 
 #### 1. Marcar Asistencia
@@ -435,9 +441,9 @@ WHERE class_participant_id = participantId
 
 | Componente | Usuario | Funcionalidad |
 |------------|---------|---------------|
-| `TodayClassesConfirmation.tsx` | Jugador | Ver próximas clases, marcar ausencia/asistencia |
-| `TodayAttendancePage.tsx` | Profesor | Gestionar asistencia del día actual |
-| `WeekAttendancePage.tsx` | Profesor | Gestionar asistencia de la semana, notificar ausencias |
+| `TodayClassesConfirmation.tsx` | Jugador | Ver próximas clases, marcar ausencia/asistencia. Muestra ambos entrenadores si hay 2 asignados. |
+| `TodayAttendancePage.tsx` | Profesor/Admin | Gestionar asistencia del día actual. Filtro por entrenador para admins. |
+| `WeekAttendancePage.tsx` | Profesor/Admin | Gestionar asistencia de la semana, notificar ausencias. Filtro por entrenador para admins. |
 | `AttendanceToggle.tsx` | Ambos | Toggle VOY/NO VOY |
 
 ---
@@ -840,6 +846,13 @@ WHERE cp.id = 'PARTICIPANT_ID';
 
 ## Changelog
 
+### 2025-12-11
+- ✅ **NUEVO**: Soporte para segundo entrenador (`trainer_profile_id_2`) en clases
+- ✅ Entrenadores ven clases donde son trainer principal O secundario
+- ✅ Administradores pueden filtrar por entrenador (incluye segundos entrenadores en lista)
+- ✅ Vista del jugador muestra ambos entrenadores cuando hay 2 asignados
+- ✅ Queries usan notación explícita de FK para evitar error PGRST201
+
 ### 2025-12-10
 - ✅ **FIX CRÍTICO**: Hooks de profesor (`useTrainerMarkAttendance`, `useTrainerMarkAbsence`) ahora actualizan AMBAS tablas (`class_participants` + `class_attendance_confirmations`)
 - ✅ Esto resuelve el problema de sincronización donde los cambios del profesor no se reflejaban en el dashboard del jugador
@@ -863,6 +876,6 @@ WHERE cp.id = 'PARTICIPANT_ID';
 
 ---
 
-**Última actualización**: 2025-12-10
+**Última actualización**: 2025-12-11
 **Mantenedor**: Equipo de desarrollo
-**Versión**: 1.1
+**Versión**: 1.2 (Multi-Trainer Support)

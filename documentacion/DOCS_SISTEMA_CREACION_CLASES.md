@@ -43,7 +43,8 @@ CREATE TABLE programmed_classes (
   start_date DATE NOT NULL,               -- Fecha individual de la clase
   end_date DATE NOT NULL,                 -- Igual a start_date en sistema actual
   recurrence_type TEXT NOT NULL,          -- 'weekly', 'biweekly', 'monthly'
-  trainer_profile_id UUID REFERENCES profiles(id),
+  trainer_profile_id UUID REFERENCES profiles(id),      -- Entrenador principal
+  trainer_profile_id_2 UUID REFERENCES profiles(id),    -- Segundo entrenador (opcional)
   club_id UUID REFERENCES clubs(id),
   court_number INTEGER,
   monthly_price DECIMAL,
@@ -58,6 +59,12 @@ CREATE TABLE programmed_classes (
 **Cambio importante** (Diciembre 2024):
 - **Antes**: Se creaba 1 registro con `start_date` y `end_date` como rango (modelo de recurrencia).
 - **Ahora**: Se crean N registros individuales con `start_date = end_date` (modelo individual).
+
+**Cambio importante** (Diciembre 2025):
+- **Nuevo**: Soporte para segundo entrenador (`trainer_profile_id_2`).
+- Permite asignar hasta 2 entrenadores por clase (útil para clases con muchos alumnos).
+- Ambos entrenadores pueden gestionar la asistencia de la clase.
+- El filtro de clases del entrenador incluye clases donde es trainer principal O secundario.
 
 ### Tabla: `class_participants`
 
@@ -94,7 +101,8 @@ CREATE TABLE class_participants (
    - **Días de la semana** (lunes, martes, etc.)
    - **Fecha de inicio** y **fecha de fin** (rango de recurrencia)
    - Tipo de recurrencia (semanal, quincenal, mensual)
-   - Entrenador
+   - Entrenador principal
+   - **Segundo entrenador (opcional)** - Solo visible para administradores
    - Club y pista
    - Precio mensual
    - Máximo participantes
@@ -123,6 +131,7 @@ const handleSubmit = async (data: CreateClassData) => {
       end_date: data.endDate,         // '2024-12-31'
       recurrence_type: data.recurrenceType,  // 'weekly'
       trainer_profile_id: data.trainerId,
+      trainer_profile_id_2: data.trainerId2,  // Opcional: segundo entrenador
       club_id: data.clubId,
       court_number: data.courtNumber,
       monthly_price: data.monthlyPrice,
@@ -176,6 +185,7 @@ for (const classDate of classDates) {
       end_date: classDate,        // Mismo que start_date
       recurrence_type: classData.recurrence_type,
       trainer_profile_id: classData.trainer_profile_id,
+      trainer_profile_id_2: classData.trainer_profile_id_2 || null,  // Segundo entrenador
       club_id: classData.club_id,
       court_number: classData.court_number,
       monthly_price: classData.monthly_price || 0,
@@ -381,7 +391,8 @@ interface CreateClassData {
   start_date: string;              // '2024-12-05'
   end_date: string;                // '2024-12-31'
   recurrence_type: string;         // 'weekly', 'biweekly', 'monthly'
-  trainer_profile_id: string;
+  trainer_profile_id: string;      // Entrenador principal (requerido)
+  trainer_profile_id_2?: string;   // Segundo entrenador (opcional)
   club_id: string;
   court_number: number;
   monthly_price: number;
@@ -643,6 +654,84 @@ Timeout o límite de ejecución del Edge Function.
 
 ## Historial de Cambios
 
+### Diciembre 2025 - Soporte para Segundo Entrenador
+
+**Cambio**: Añadido campo `trainer_profile_id_2` para asignar un segundo entrenador a las clases.
+
+**Motivación**:
+- Clases con muchos alumnos (8+) pueden beneficiarse de 2 entrenadores.
+- Ambos entrenadores pueden gestionar la asistencia de la clase.
+- El segundo entrenador también ve las clases en su panel de asistencia.
+
+**Archivos modificados**:
+- `supabase/migrations/20251211000000_add_trainer_profile_id_2.sql` - Migración de BD
+- `supabase/functions/create-programmed-classes/index.ts` - Edge Function
+- `supabase/functions/intelligent-bulk-create-classes/index.ts` - Bulk Edge Function
+- `src/components/ScheduledClassForm.tsx` - Formulario de creación
+- `src/components/BulkClassForm.tsx` - Formulario de creación masiva
+- `src/hooks/useProgrammedClasses.ts` - Hook de clases programadas
+- `src/hooks/useTodayAttendance.ts` - Hook de asistencia
+- `src/hooks/useTodayClassAttendance.ts` - Hook de clases del jugador
+- `src/pages/TodayAttendancePage.tsx` - Vista de asistencia (hoy)
+- `src/pages/WeekAttendancePage.tsx` - Vista de asistencia (semana)
+- `src/components/TodayClassesConfirmation.tsx` - Vista del jugador
+
+**Cambios en queries Supabase**:
+
+Para evitar el error `PGRST201` (ambiguous relationship), se usa notación explícita de FK:
+
+```typescript
+// ❌ ANTES (error si hay 2 FK a profiles)
+.select('trainer:profiles(full_name)')
+
+// ✅ AHORA (especifica qué FK usar)
+.select(`
+  trainer:profiles!trainer_profile_id(full_name),
+  trainer_2:profiles!trainer_profile_id_2(full_name)
+`)
+```
+
+**Filtrado de clases por entrenador**:
+
+Los entrenadores ahora ven clases donde son trainer principal O secundario:
+
+```typescript
+// En useTodayAttendance.ts
+if (profile.role === 'trainer') {
+  query = query.or(`trainer_profile_id.eq.${profile.id},trainer_profile_id_2.eq.${profile.id}`);
+}
+```
+
+**UI para selección de segundo entrenador**:
+
+Solo visible para administradores en `ScheduledClassForm.tsx`:
+
+```tsx
+{/* Secondary trainer - always available for admins */}
+<FormField name="assigned_trainer_id_2" render={({ field }) => (
+  <FormItem>
+    <FormLabel>Segundo profesor (Opcional)</FormLabel>
+    <Select onValueChange={field.onChange} value={field.value}>
+      <SelectTrigger>
+        <SelectValue placeholder="Sin segundo profesor" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Sin segundo profesor</SelectItem>
+        {availableTrainers
+          .filter(t => t.profile_id !== firstTrainerId)
+          .map(trainer => (
+            <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+              {trainer.profiles?.full_name}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  </FormItem>
+)} />
+```
+
+---
+
 ### Diciembre 2024 - Migración de Recurrencia a Individual
 
 **Cambio**: De 1 registro con rango a N registros individuales.
@@ -711,6 +800,6 @@ No fue necesario migrar datos existentes, ya que el cambio se aplicó a nuevas c
 
 ---
 
-**Última actualización**: 2025-12-05
+**Última actualización**: 2025-12-11
 **Autor**: Equipo de desarrollo
-**Versión**: 2.0 (Individual Classes System)
+**Versión**: 2.1 (Multi-Trainer Support)
