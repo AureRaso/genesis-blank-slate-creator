@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -62,7 +69,8 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
 
 const TodayAttendancePage = () => {
   const { profile } = useAuth();
-  const { data: classes, isLoading, error, isFetching } = useTodayAttendance();
+  const { data: attendanceData, isLoading, error, isFetching } = useTodayAttendance();
+  const classes = attendanceData?.classes;
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
   const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(profile?.club_id || undefined);
@@ -90,6 +98,9 @@ const TodayAttendancePage = () => {
 
   // Estado para tracking de notificaciones enviadas con cooldown de 10 minutos
   const [notificationCooldowns, setNotificationCooldowns] = useState<Record<string, number>>({});
+
+  // Estado para filtro por entrenador (solo admin)
+  const [selectedTrainer, setSelectedTrainer] = useState<string>('all');
 
   // Solo administradores pueden notificar por WhatsApp
   const isAdmin = profile?.role === 'admin';
@@ -466,43 +477,76 @@ const TodayAttendancePage = () => {
   const formattedDate = format(today, "EEEE, d 'de' MMMM", { locale: es });
   const todayString = today.toISOString().split('T')[0];
 
-  // Calculate statistics
-  const totalClasses = classes?.length || 0;
-  const totalParticipants = classes?.reduce((acc, c) => acc + c.participants.length, 0) || 0;
-  const confirmedParticipants = classes?.reduce(
+  // Extraer lista única de entrenadores de las clases
+  const availableTrainers = useMemo(() => {
+    if (!classes) return [];
+    const trainerNames = classes
+      .map(c => c.trainer?.full_name)
+      .filter((name): name is string => !!name);
+    return [...new Set(trainerNames)].sort();
+  }, [classes]);
+
+  // Filtrar clases por entrenador seleccionado
+  const filteredClasses = useMemo(() => {
+    if (!classes) return [];
+    if (selectedTrainer === 'all') return classes;
+    return classes.filter(c => c.trainer?.full_name === selectedTrainer);
+  }, [classes, selectedTrainer]);
+
+  // Calculate statistics (usando clases filtradas)
+  const totalClasses = filteredClasses.length;
+  const totalParticipants = filteredClasses.reduce((acc, c) => acc + c.participants.length, 0);
+  const confirmedParticipants = filteredClasses.reduce(
     (acc, c) => acc + c.participants.filter(p => p.attendance_confirmed_for_date).length,
     0
-  ) || 0;
-  const absentParticipants = classes?.reduce(
+  );
+  const absentParticipants = filteredClasses.reduce(
     (acc, c) => acc + c.participants.filter(p => p.absence_confirmed).length,
     0
-  ) || 0;
+  );
 
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
       {/* Header */}
       <div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <span className="truncate">Gestión de Clases</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 capitalize truncate">{formattedDate}</p>
-          </div>
-          {/* Live indicator */}
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
+            Gestión de Clases
+          </h1>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Filtro por entrenador - Solo para administradores */}
+            {isAdmin && availableTrainers.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground hidden sm:inline">Filtrar profesor:</span>
+                <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
+                  <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm">
+                    <SelectValue placeholder="Entrenador" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {availableTrainers.map((trainer) => (
+                      <SelectItem key={trainer} value={trainer}>
+                        {trainer}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {/* Live indicator */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
               isFetching
                 ? 'bg-blue-50 text-blue-700'
                 : 'bg-green-50 text-green-700'
             }`}>
               <Wifi className={`h-3 w-3 sm:h-4 sm:w-4 ${isFetching ? 'animate-pulse' : ''}`} />
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium hidden sm:inline">
                 {isFetching ? 'Actualizando...' : 'En vivo'}
               </span>
             </div>
           </div>
         </div>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 capitalize truncate">{formattedDate}</p>
       </div>
 
       {/* Tabs Navigation */}
@@ -595,19 +639,23 @@ const TodayAttendancePage = () => {
       </div>
 
       {/* Classes List */}
-      {!classes || classes.length === 0 ? (
+      {filteredClasses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay clases hoy</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {selectedTrainer !== 'all' ? 'No hay clases de este entrenador' : 'No hay clases hoy'}
+            </h3>
             <p className="text-sm text-muted-foreground text-center">
-              No hay clases programadas para hoy en tu club
+              {selectedTrainer !== 'all'
+                ? `No hay clases programadas para ${selectedTrainer} hoy`
+                : 'No hay clases programadas para hoy en tu club'}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {classes.map((classData) => {
+          {filteredClasses.map((classData) => {
             const validParticipants = classData.participants.filter(p => p.student_enrollment);
             // Apply implicit confirmation logic: if no absence is confirmed, consider as confirmed
             const confirmedCount = validParticipants.filter(

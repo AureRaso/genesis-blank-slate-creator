@@ -23,6 +23,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, X, UserMinus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import WaitlistManagement from "@/components/WaitlistManagement";
@@ -144,6 +151,9 @@ const WeekAttendancePage = () => {
   // Estado para tracking de notificaciones enviadas con cooldown de 10 minutos
   const [notificationCooldowns, setNotificationCooldowns] = useState<Record<string, number>>({});
 
+  // Estado para filtro por entrenador (solo admin)
+  const [selectedTrainer, setSelectedTrainer] = useState<string>('all');
+
   // Solo administradores pueden notificar por WhatsApp
   const isAdmin = profile?.role === 'admin';
   const isTrainer = profile?.role === 'trainer';
@@ -213,13 +223,34 @@ const WeekAttendancePage = () => {
     return days;
   }, [weekStart]);
 
-  // Filter classes by selected date
-  const filteredClasses = useMemo(() => {
-    if (!selectedDate || !classes) return classes || [];
+  // Extraer lista única de entrenadores de las clases
+  const availableTrainers = useMemo(() => {
+    if (!classes) return [];
+    const trainerNames = classes
+      .map(c => c.trainer?.full_name)
+      .filter((name): name is string => !!name);
+    return [...new Set(trainerNames)].sort();
+  }, [classes]);
 
-    const selectedDayName = getDayOfWeekInSpanish(new Date(selectedDate));
-    return classes.filter(cls => cls.days_of_week?.includes(selectedDayName));
-  }, [classes, selectedDate]);
+  // Filter classes by selected date AND selected trainer
+  const filteredClasses = useMemo(() => {
+    if (!classes) return [];
+
+    let result = classes;
+
+    // Filtrar por día seleccionado
+    if (selectedDate) {
+      const selectedDayName = getDayOfWeekInSpanish(new Date(selectedDate));
+      result = result.filter(cls => cls.days_of_week?.includes(selectedDayName));
+    }
+
+    // Filtrar por entrenador seleccionado
+    if (selectedTrainer !== 'all') {
+      result = result.filter(cls => cls.trainer?.full_name === selectedTrainer);
+    }
+
+    return result;
+  }, [classes, selectedDate, selectedTrainer]);
 
   // Sort classes: upcoming/current first, past classes last
   const sortedClasses = useMemo(() => {
@@ -582,20 +613,41 @@ const WeekAttendancePage = () => {
       {/* Header with Week Navigation */}
       <div>
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              <span>Asistencia</span>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+              Asistencia
             </h1>
-            {/* Live indicator */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
-              isFetching
-                ? 'bg-blue-50 text-blue-700'
-                : 'bg-green-50 text-green-700'
-            }`}>
-              <Wifi className={`h-3 w-3 sm:h-4 sm:w-4 ${isFetching ? 'animate-pulse' : ''}`} />
-              <span className="text-xs font-medium">
-                {isFetching ? 'Actualizando...' : 'En vivo'}
-              </span>
+            <div className="flex items-center gap-2">
+              {/* Filtro por entrenador - Solo para administradores */}
+              {isAdmin && availableTrainers.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground hidden sm:inline">Filtrar profesor:</span>
+                  <Select value={selectedTrainer} onValueChange={setSelectedTrainer}>
+                    <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm">
+                      <SelectValue placeholder="Entrenador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {availableTrainers.map((trainer) => (
+                        <SelectItem key={trainer} value={trainer}>
+                          {trainer}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {/* Live indicator */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
+                isFetching
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'bg-green-50 text-green-700'
+              }`}>
+                <Wifi className={`h-3 w-3 sm:h-4 sm:w-4 ${isFetching ? 'animate-pulse' : ''}`} />
+                <span className="text-xs font-medium hidden sm:inline">
+                  {isFetching ? 'Actualizando...' : 'En vivo'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -647,9 +699,13 @@ const WeekAttendancePage = () => {
               const isSelected = selectedDate === dateStr;
               const isToday = format(new Date(), 'yyyy-MM-dd') === dateStr;
 
-              // Count classes for this day
+              // Count classes for this day (respetando el filtro de entrenador)
               const dayNameSpanish = getDayOfWeekInSpanish(day);
-              const classCount = classes?.filter(cls => cls.days_of_week?.includes(dayNameSpanish)).length || 0;
+              const classCount = classes?.filter(cls => {
+                const matchesDay = cls.days_of_week?.includes(dayNameSpanish);
+                const matchesTrainer = selectedTrainer === 'all' || cls.trainer?.full_name === selectedTrainer;
+                return matchesDay && matchesTrainer;
+              }).length || 0;
 
               return (
                 <Button
@@ -673,7 +729,7 @@ const WeekAttendancePage = () => {
             })}
           </div>
 
-          {!selectedDate && (
+          {!selectedDate && selectedTrainer === 'all' && (
             <Alert className="bg-purple-50 border-purple-200">
               <Calendar className="h-4 w-4 text-purple-600" />
               <AlertDescription className="text-purple-900">
@@ -777,10 +833,16 @@ const WeekAttendancePage = () => {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {selectedDate ? 'No hay clases este día' : 'No hay clases esta semana'}
+                  {selectedTrainer !== 'all'
+                    ? 'No hay clases de este entrenador'
+                    : selectedDate
+                    ? 'No hay clases este día'
+                    : 'No hay clases esta semana'}
                 </h3>
                 <p className="text-sm text-muted-foreground text-center">
-                  {selectedDate
+                  {selectedTrainer !== 'all'
+                    ? `No hay clases programadas para ${selectedTrainer}${selectedDate ? ' en este día' : ' esta semana'}`
+                    : selectedDate
                     ? 'No hay clases programadas para el día seleccionado'
                     : 'No hay clases programadas para esta semana en tu club'}
                 </p>
