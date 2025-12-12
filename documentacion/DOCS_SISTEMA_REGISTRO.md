@@ -9,9 +9,10 @@
 6. [Flujo de Registro de Guardian (Padre/Madre)](#flujo-de-registro-de-guardian-padremadre)
 7. [Sistema de Teléfono Internacional](#sistema-de-teléfono-internacional)
 8. [Modal de Completar Teléfono](#modal-de-completar-teléfono)
-9. [Hooks y Componentes](#hooks-y-componentes)
-10. [Casos de Uso Comunes](#casos-de-uso-comunes)
-11. [Troubleshooting](#troubleshooting)
+9. [Modal de Detalles del Jugador (Fecha Nacimiento y Talla)](#modal-de-detalles-del-jugador-fecha-nacimiento-y-talla)
+10. [Hooks y Componentes](#hooks-y-componentes)
+11. [Casos de Uso Comunes](#casos-de-uso-comunes)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -41,6 +42,8 @@ El sistema de registro y autenticación permite a los usuarios crear cuentas y a
 - role: TEXT ('player', 'guardian', 'trainer', 'admin', 'owner')
 - club_id: UUID (Foreign Key a clubs)
 - avatar_url: TEXT
+- birth_date: DATE (nullable, requerido por algunos clubes)
+- shirt_size: TEXT (nullable, 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL')
 - created_at: TIMESTAMPTZ
 - updated_at: TIMESTAMPTZ
 ```
@@ -646,6 +649,146 @@ const showModal = needsPhoneUpdate && !phoneWasUpdated;
 
 ---
 
+## Modal de Detalles del Jugador (Fecha Nacimiento y Talla)
+
+### Componente: `PlayerDetailsModal`
+
+**Archivo**: `src/components/PlayerDetailsModal.tsx`
+
+**Propósito**: Modal bloqueante que aparece para jugadores de clubes que requieren fecha de nacimiento y talla de camiseta.
+
+### Campos de Base de Datos
+
+**Tabla `profiles`** (nuevos campos):
+```sql
+- birth_date: DATE (nullable)
+- shirt_size: TEXT (nullable) -- 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'
+```
+
+**Tabla `clubs`** (campo de configuración):
+```sql
+- require_player_details: BOOLEAN DEFAULT false
+```
+
+### Condiciones para Mostrar
+
+```typescript
+// 1. Obtener configuración del club
+const { data: clubSettings } = useQuery({
+  queryKey: ['club-settings', profile?.club_id],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('clubs')
+      .select('require_player_details')
+      .eq('id', profile.club_id)
+      .single();
+    return data;
+  },
+  enabled: !!profile?.club_id,
+});
+
+// 2. Verificar si necesita completar detalles
+const needsPlayerDetails =
+  clubSettings?.require_player_details &&
+  (!profile?.birth_date || !profile?.shirt_size);
+
+// 3. Solo mostrar después de completar teléfono
+const needsPhoneUpdate = !enrollment?.phone || enrollment?.phone === '' || enrollment?.phone === '000000000';
+
+// 4. Condición final
+{profile && !needsPhoneUpdate && needsPlayerDetails && (
+  <PlayerDetailsModal ... />
+)}
+```
+
+### Características
+
+- **Bloqueante**: No se puede cerrar sin completar ambos campos
+- **Configuración por club**: Solo aparece si `clubs.require_player_details = true`
+- **Secuencial**: Aparece DESPUÉS del modal de teléfono (si aplica)
+- **Validación de edad**: Entre 5 y 100 años
+- **Tallas disponibles**: XS, S, M, L, XL, XXL, 3XL
+
+### Tallas de Camiseta
+
+```typescript
+const SHIRT_SIZES = [
+  { value: "XS", label: "XS" },
+  { value: "S", label: "S" },
+  { value: "M", label: "M" },
+  { value: "L", label: "L" },
+  { value: "XL", label: "XL" },
+  { value: "XXL", label: "XXL" },
+  { value: "3XL", label: "3XL" },
+];
+```
+
+### Integración en PlayerDashboard
+
+```typescript
+// PlayerDashboard.tsx
+{/* Player Details Modal - Only for clubs that require it, and only after phone is complete */}
+{profile && !needsPhoneUpdate && needsPlayerDetails && (
+  <PlayerDetailsModal
+    profileId={profile.id}
+    currentBirthDate={profile.birth_date}
+    currentShirtSize={profile.shirt_size}
+    onDetailsUpdated={handleDetailsUpdated}
+  />
+)}
+```
+
+### Flujo Completo con Ambos Modales
+
+```
+[Jugador accede a PlayerDashboard]
+       ↓
+[¿Tiene teléfono válido?]
+   ├── NO → Mostrar PhoneRequiredModal
+   │        → Completa teléfono
+   │        → Modal se cierra
+   │        ↓
+   └── SÍ ↓
+[¿Club requiere detalles? (require_player_details = true)]
+   ├── NO → Mostrar dashboard normalmente
+   └── SÍ ↓
+[¿Tiene birth_date Y shirt_size?]
+   ├── SÍ → Mostrar dashboard normalmente
+   └── NO → Mostrar PlayerDetailsModal
+            → Completa fecha nacimiento y talla
+            → Modal se cierra
+            → Mostrar dashboard normalmente
+```
+
+### Habilitar para un Club
+
+Para habilitar esta funcionalidad para un club específico:
+
+```sql
+-- Habilitar para el club "La Red 21 Galisport" (GLP)
+UPDATE clubs
+SET require_player_details = true
+WHERE club_code = 'GLP';
+
+-- O por ID
+UPDATE clubs
+SET require_player_details = true
+WHERE id = 'bbc10821-1c94-4b62-97ac-2fde0708cefd';
+```
+
+### Props del Componente
+
+```typescript
+interface PlayerDetailsModalProps {
+  profileId: string;                          // ID del perfil a actualizar
+  currentBirthDate: string | null | undefined; // Fecha actual (si existe)
+  currentShirtSize: string | null | undefined; // Talla actual (si existe)
+  onDetailsUpdated: () => void;               // Callback para refrescar datos
+}
+```
+
+---
+
 ## Hooks y Componentes
 
 ### Contexto de Autenticación
@@ -678,6 +821,7 @@ const showModal = needsPhoneUpdate && !phoneWasUpdated;
 | `GuardianSetupPage.tsx` | `/guardian/setup` | Añadir hijos |
 | `PhoneInput.tsx` | - | Input de teléfono internacional |
 | `PhoneRequiredModal.tsx` | - | Modal bloqueante de teléfono |
+| `PlayerDetailsModal.tsx` | - | Modal bloqueante de fecha nacimiento y talla |
 | `ClubCodeInput.tsx` | - | Input de código de club |
 | `AddChildModal.tsx` | - | Modal para añadir hijo |
 | `LopiviModal.tsx` | - | Modal de consentimiento LOPIVI |
@@ -993,6 +1137,10 @@ console.log('Level:', profile?.level);
 
 ---
 
-**Última actualización**: 2025-12-05
+**Última actualización**: 2025-12-09
 **Mantenedor**: Equipo de desarrollo
-**Versión**: 1.0
+**Versión**: 1.1
+
+### Changelog
+- **v1.1** (2025-12-09): Añadido Modal de Detalles del Jugador (fecha nacimiento y talla de camiseta) con configuración por club
+- **v1.0** (2025-12-05): Documentación inicial del sistema de registro

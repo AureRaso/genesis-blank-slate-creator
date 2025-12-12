@@ -2,20 +2,11 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Shirt, Calendar } from "lucide-react";
+import { AlertCircle, Shirt, Calendar, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const SHIRT_SIZES = [
-  { value: "XS", label: "XS" },
-  { value: "S", label: "S" },
-  { value: "M", label: "M" },
-  { value: "L", label: "L" },
-  { value: "XL", label: "XL" },
-  { value: "XXL", label: "XXL" },
-  { value: "3XL", label: "3XL" },
-];
+const VALID_SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
 interface PlayerDetailsModalProps {
   profileId: string;
@@ -35,6 +26,17 @@ export const PlayerDetailsModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detailsWereUpdated, setDetailsWereUpdated] = useState(false);
   const { toast } = useToast();
+
+  // Validate shirt size
+  const isValidShirtSize = VALID_SHIRT_SIZES.includes(shirtSize.toUpperCase());
+
+  // Handle shirt size input - convert to uppercase and validate
+  const handleShirtSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    // Only allow letters and numbers (for 3XL)
+    const filtered = value.replace(/[^A-Z0-9]/g, '').slice(0, 3);
+    setShirtSize(filtered);
+  };
 
   // Check if details need update
   const needsDetailsUpdate = !currentBirthDate || !currentShirtSize;
@@ -63,10 +65,10 @@ export const PlayerDetailsModal = ({
       return;
     }
 
-    if (!shirtSize) {
+    if (!shirtSize || !isValidShirtSize) {
       toast({
-        title: "Talla requerida",
-        description: "Por favor, selecciona tu talla de camiseta",
+        title: "Talla no valida",
+        description: "Por favor, introduce una talla valida: XS, S, M, L, XL, XXL o 3XL",
         variant: "destructive",
       });
       return;
@@ -79,7 +81,7 @@ export const PlayerDetailsModal = ({
         .from('profiles')
         .update({
           birth_date: birthDate,
-          shirt_size: shirtSize
+          shirt_size: shirtSize.toUpperCase()
         })
         .eq('id', profileId);
 
@@ -104,7 +106,7 @@ export const PlayerDetailsModal = ({
     }
   };
 
-  const canSubmit = validateBirthDate(birthDate) && shirtSize;
+  const canSubmit = validateBirthDate(birthDate) && isValidShirtSize;
 
   if (!showModal) return null;
 
@@ -157,18 +159,31 @@ export const PlayerDetailsModal = ({
                 <Shirt className="h-4 w-4" />
                 Talla de camiseta
               </label>
-              <Select value={shirtSize} onValueChange={setShirtSize}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecciona tu talla" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SHIRT_SIZES.map((size) => (
-                    <SelectItem key={size.value} value={size.value}>
-                      {size.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Input
+                  id="shirtSize"
+                  type="text"
+                  placeholder="Ej: M, L, XL"
+                  value={shirtSize}
+                  onChange={handleShirtSizeChange}
+                  maxLength={3}
+                  className={`text-base uppercase pr-10 ${
+                    shirtSize && !isValidShirtSize ? 'border-red-500 focus-visible:ring-red-500' : ''
+                  } ${shirtSize && isValidShirtSize ? 'border-green-500 focus-visible:ring-green-500' : ''}`}
+                />
+                {shirtSize && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isValidShirtSize ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <X className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tallas validas: XS, S, M, L, XL, XXL, 3XL
+              </p>
             </div>
 
             <Button
