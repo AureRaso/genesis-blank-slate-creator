@@ -460,12 +460,16 @@ const WeekAttendancePage = () => {
       return;
     }
 
-    // Si solo hay un grupo, enviarlo directamente
-    if (!whatsappGroup?.group_chat_id) {
+    // Si solo hay un grupo en allWhatsAppGroups (filtrado por club), usarlo
+    // IMPORTANTE: Usamos allWhatsAppGroups[0] en lugar de whatsappGroup porque
+    // allWhatsAppGroups está filtrado por club_id del perfil
+    const targetGroup = allWhatsAppGroups?.[0]?.group_chat_id || whatsappGroup?.group_chat_id;
+    if (!targetGroup) {
+      toast.error("No hay grupo de WhatsApp configurado para este club");
       return;
     }
 
-    sendNotificationToGroup(whatsappGroup.group_chat_id, classData, dateForNotification);
+    sendNotificationToGroup(targetGroup, classData, dateForNotification);
   };
 
   const handleNotifyFreeSpot = (classData: any, dateForNotification: string) => {
@@ -487,12 +491,16 @@ const WeekAttendancePage = () => {
       return;
     }
 
-    // Si solo hay un grupo, enviarlo directamente
-    if (!whatsappGroup?.group_chat_id) {
+    // Si solo hay un grupo en allWhatsAppGroups (filtrado por club), usarlo
+    // IMPORTANTE: Usamos allWhatsAppGroups[0] en lugar de whatsappGroup porque
+    // allWhatsAppGroups está filtrado por club_id del perfil
+    const targetGroup = allWhatsAppGroups?.[0]?.group_chat_id || whatsappGroup?.group_chat_id;
+    if (!targetGroup) {
+      toast.error("No hay grupo de WhatsApp configurado para este club");
       return;
     }
 
-    sendFreeSpotNotification(whatsappGroup.group_chat_id, classData, dateForNotification);
+    sendFreeSpotNotification(targetGroup, classData, dateForNotification);
   };
 
   const sendNotificationToGroup = (groupChatId: string, classData: any, dateForNotification: string) => {

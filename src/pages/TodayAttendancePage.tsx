@@ -257,13 +257,18 @@ const TodayAttendancePage = () => {
 
     console.log('ℹ️ Un solo grupo o menos, enviando directamente');
 
-    // Si solo hay un grupo, enviarlo directamente
-    if (!whatsappGroup?.group_chat_id) {
-      console.error("No WhatsApp group configured");
+    // Si solo hay un grupo en allWhatsAppGroups (filtrado por club), usarlo
+    // IMPORTANTE: Usamos allWhatsAppGroups[0] en lugar de whatsappGroup porque
+    // allWhatsAppGroups está filtrado por club_id del perfil, mientras que
+    // whatsappGroup (useCurrentUserWhatsAppGroup) para admins retorna el primer grupo global
+    const targetGroup = allWhatsAppGroups?.[0]?.group_chat_id || whatsappGroup?.group_chat_id;
+    if (!targetGroup) {
+      console.error("No WhatsApp group configured for this club");
+      toast.error("No hay grupo de WhatsApp configurado para este club");
       return;
     }
 
-    sendNotificationToGroup(whatsappGroup.group_chat_id, classData);
+    sendNotificationToGroup(targetGroup, classData);
   };
 
   const handleNotifyFreeSpot = (classData: any) => {
@@ -293,13 +298,17 @@ const TodayAttendancePage = () => {
 
     console.log('ℹ️ Un solo grupo o menos, enviando directamente');
 
-    // Si solo hay un grupo, enviarlo directamente
-    if (!whatsappGroup?.group_chat_id) {
-      console.error("No WhatsApp group configured");
+    // Si solo hay un grupo en allWhatsAppGroups (filtrado por club), usarlo
+    // IMPORTANTE: Usamos allWhatsAppGroups[0] en lugar de whatsappGroup porque
+    // allWhatsAppGroups está filtrado por club_id del perfil
+    const targetGroup = allWhatsAppGroups?.[0]?.group_chat_id || whatsappGroup?.group_chat_id;
+    if (!targetGroup) {
+      console.error("No WhatsApp group configured for this club");
+      toast.error("No hay grupo de WhatsApp configurado para este club");
       return;
     }
 
-    sendFreeSpotNotification(whatsappGroup.group_chat_id, classData);
+    sendFreeSpotNotification(targetGroup, classData);
   };
 
   const sendNotificationToGroup = (groupChatId: string, classData: any) => {
