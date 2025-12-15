@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
+import { useSendCancellationNotification } from "@/hooks/useCancellationNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { useBulkEnrollToRecurringClass } from "@/hooks/useClassParticipants";
 import { useClassWaitlist } from "@/hooks/useClassWaitlist";
@@ -10,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { getWaitlistUrl } from "@/utils/url";
 import {
   AlertDialog,
@@ -173,17 +177,21 @@ const WeekAttendancePage = () => {
     participantName: '',
   });
 
-  // Estado para diálogo de cancelación de clase
+  // Estado para diálogo de cancelación de clase (soporta múltiples)
   const [cancelClassDialog, setCancelClassDialog] = useState<{
     open: boolean;
-    classId: string;
-    className: string;
+    selectedClasses: { classId: string; className: string; classTime: string }[];
     classDate: string;
+    notifyParticipants: boolean;
+    availableClasses: { classId: string; className: string; classTime: string }[];
+    reason: string;
   }>({
     open: false,
-    classId: '',
-    className: '',
+    selectedClasses: [],
     classDate: '',
+    notifyParticipants: true,
+    availableClasses: [],
+    reason: '',
   });
 
   // Hooks para acciones del profesor
@@ -193,6 +201,7 @@ const WeekAttendancePage = () => {
   const removeParticipant = useRemoveParticipant();
   const cancelClass = useCancelClass();
   const { data: cancelledClasses = [] } = useCancelledClasses();
+  const sendCancellationNotification = useSendCancellationNotification();
 
   // Navigation functions
   const goToPreviousWeek = () => {
@@ -348,24 +357,149 @@ const WeekAttendancePage = () => {
     });
   };
 
-  // Handler para cancelar clase
-  const handleCancelClass = (classId: string, className: string, classDate: string) => {
+  // Handler para cancelar clase - ahora calcula las clases disponibles del mismo día
+  const handleCancelClass = (classId: string, className: string, classDate: string, classTime: string) => {
+    const now = new Date();
+    const targetDayName = getDayOfWeekInSpanish(new Date(classDate + 'T00:00:00'));
+
+    // Obtener todas las clases del mismo día que aún no hayan empezado y no estén canceladas
+    const availableClasses = (classes || [])
+      .filter((c: any) => {
+        // Verificar que la clase tiene el día de la semana correspondiente
+        const classDays = c.days_of_week || [];
+        if (!classDays.some((d: string) => d.toLowerCase().replace(/[áéíóúü]/g, (m: string) =>
+          ({ 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u' }[m] || m)
+        ) === targetDayName.toLowerCase())) {
+          return false;
+        }
+
+        // Verificar que no esté ya cancelada
+        if (isClassCancelled(c.id, classDate)) {
+          return false;
+        }
+
+        // Verificar que no haya terminado (solo para el día actual)
+        const today = format(now, 'yyyy-MM-dd');
+        if (classDate === today) {
+          const [classHours, classMinutes] = c.start_time.split(':').map(Number);
+          const classStartTime = new Date();
+          classStartTime.setHours(classHours, classMinutes, 0, 0);
+          if (now > classStartTime) {
+            return false; // Ya empezó
+          }
+        }
+
+        return true;
+      })
+      .map((c: any) => ({
+        classId: c.id,
+        className: c.name,
+        classTime: c.start_time,
+      }))
+      .sort((a: any, b: any) => a.classTime.localeCompare(b.classTime));
+
+    // La clase clickeada se selecciona por defecto
+    const initialSelected = availableClasses.filter(
+      (c: any) => c.classId === classId
+    );
+
     setCancelClassDialog({
       open: true,
-      classId,
-      className,
+      selectedClasses: initialSelected,
       classDate,
+      notifyParticipants: true,
+      availableClasses,
+      reason: '',
     });
   };
 
-  // Ejecutar cancelación de clase
-  const executeCancelClass = () => {
-    cancelClass.mutate({
-      classId: cancelClassDialog.classId,
-      cancelledDate: cancelClassDialog.classDate,
-      reason: 'Cancelada por profesor/admin',
+  // Toggle selección de una clase en el diálogo
+  const toggleClassSelection = (classId: string, className: string, classTime: string) => {
+    setCancelClassDialog(prev => {
+      const isSelected = prev.selectedClasses.some(c => c.classId === classId);
+      if (isSelected) {
+        return {
+          ...prev,
+          selectedClasses: prev.selectedClasses.filter(c => c.classId !== classId),
+        };
+      } else {
+        return {
+          ...prev,
+          selectedClasses: [...prev.selectedClasses, { classId, className, classTime }],
+        };
+      }
     });
-    setCancelClassDialog({ open: false, classId: '', className: '', classDate: '' });
+  };
+
+  // Seleccionar/deseleccionar todas las clases
+  const toggleSelectAll = () => {
+    setCancelClassDialog(prev => {
+      if (prev.selectedClasses.length === prev.availableClasses.length) {
+        return { ...prev, selectedClasses: [] };
+      } else {
+        return { ...prev, selectedClasses: [...prev.availableClasses] };
+      }
+    });
+  };
+
+  // Ejecutar cancelación de múltiples clases
+  const executeCancelClass = async () => {
+    const { selectedClasses, classDate, notifyParticipants, reason } = cancelClassDialog;
+
+    if (selectedClasses.length === 0) {
+      toast.error('Selecciona al menos una clase para cancelar');
+      return;
+    }
+
+    const cancelReason = reason.trim() || 'Cancelada por profesor/admin';
+
+    // Cancelar cada clase seleccionada
+    let successCount = 0;
+    for (const classItem of selectedClasses) {
+      try {
+        await new Promise<void>((resolve) => {
+          cancelClass.mutate({
+            classId: classItem.classId,
+            cancelledDate: classDate,
+            reason: cancelReason,
+          }, {
+            onSuccess: () => {
+              successCount++;
+              // Si está marcado notificar, enviar WhatsApp
+              if (notifyParticipants) {
+                sendCancellationNotification.mutate({
+                  classId: classItem.classId,
+                  cancelledDate: classDate,
+                  className: classItem.className,
+                  classTime: classItem.classTime,
+                  reason: cancelReason,
+                });
+              }
+              resolve();
+            },
+            onError: (error) => {
+              console.error('Error cancelling class:', classItem.className, error);
+              resolve(); // Continue with next class
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Error in cancellation:', error);
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} clase${successCount > 1 ? 's' : ''} cancelada${successCount > 1 ? 's' : ''}`);
+    }
+
+    setCancelClassDialog({
+      open: false,
+      selectedClasses: [],
+      classDate: '',
+      notifyParticipants: true,
+      availableClasses: [],
+      reason: ''
+    });
   };
 
   // Verificar si una clase está cancelada en una fecha específica
@@ -1005,7 +1139,7 @@ const WeekAttendancePage = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleCancelClass(classData.id, classData.name, notificationDate)}
+                              onClick={() => handleCancelClass(classData.id, classData.name, notificationDate, classData.start_time)}
                               className="h-8 bg-transparent hover:bg-gray-100 border-0 text-gray-800 p-0 px-2 -mx-2 rounded-md"
                               title="Cancelar clase"
                             >
@@ -1605,17 +1739,92 @@ const WeekAttendancePage = () => {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Cancel Class Dialog */}
+          {/* Cancel Class Dialog - Multiple Selection */}
           <AlertDialog open={cancelClassDialog.open} onOpenChange={(open) => setCancelClassDialog({ ...cancelClassDialog, open })}>
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-md">
               <AlertDialogHeader>
-                <AlertDialogTitle>¿Cancelar clase?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Vas a cancelar la clase <strong>{cancelClassDialog.className}</strong> para la fecha seleccionada.
-                  <br /><br />
-                  La clase seguirá visible, pero aparecerá como "CANCELADA".
-                  <br />
-                  La cancelación solo afecta a esa fecha concreta.
+                <AlertDialogTitle>¿Cancelar clases?</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      Selecciona las clases a cancelar para el {cancelClassDialog.classDate ? format(new Date(cancelClassDialog.classDate + 'T00:00:00'), "EEEE d 'de' MMMM", { locale: es }) : ''}.
+                    </p>
+
+                    {/* Lista de clases disponibles */}
+                    {cancelClassDialog.availableClasses.length > 0 ? (
+                      <div className="space-y-2">
+                        {/* Seleccionar todas */}
+                        <div className="flex items-center space-x-2 pb-2 border-b">
+                          <Checkbox
+                            id="select-all-classes"
+                            checked={cancelClassDialog.selectedClasses.length === cancelClassDialog.availableClasses.length && cancelClassDialog.availableClasses.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                          <Label htmlFor="select-all-classes" className="text-sm font-semibold cursor-pointer">
+                            Seleccionar todas ({cancelClassDialog.availableClasses.length})
+                          </Label>
+                        </div>
+
+                        {/* Lista de clases */}
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {cancelClassDialog.availableClasses.map((classItem) => (
+                            <div
+                              key={classItem.classId}
+                              className="flex items-center gap-2 p-2 rounded hover:bg-gray-50"
+                            >
+                              <Checkbox
+                                id={`class-${classItem.classId}`}
+                                checked={cancelClassDialog.selectedClasses.some(c => c.classId === classItem.classId)}
+                                onCheckedChange={() => toggleClassSelection(classItem.classId, classItem.className, classItem.classTime)}
+                              />
+                              <Label htmlFor={`class-${classItem.classId}`} className="text-sm cursor-pointer flex-1 text-left">
+                                <span className="font-medium">{classItem.classTime.substring(0, 5)}</span>
+                                <span className="mx-1">-</span>
+                                <span>{classItem.className}</span>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No hay clases disponibles para cancelar.</p>
+                    )}
+
+                    {/* Contador de seleccionadas */}
+                    {cancelClassDialog.selectedClasses.length > 0 && (
+                      <p className="text-sm text-blue-600 font-medium">
+                        {cancelClassDialog.selectedClasses.length} clase{cancelClassDialog.selectedClasses.length > 1 ? 's' : ''} seleccionada{cancelClassDialog.selectedClasses.length > 1 ? 's' : ''}
+                      </p>
+                    )}
+
+                    {/* Motivo de cancelación */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cancel-reason" className="text-sm font-medium">
+                        Motivo (opcional)
+                      </Label>
+                      <Input
+                        id="cancel-reason"
+                        placeholder="Ej: Lluvia, profesor enfermo..."
+                        value={cancelClassDialog.reason}
+                        onChange={(e) => setCancelClassDialog({ ...cancelClassDialog, reason: e.target.value })}
+                        className="h-9"
+                      />
+                    </div>
+
+                    {/* Opción de notificar */}
+                    <div className="flex items-center space-x-2 pt-2 border-t">
+                      <Checkbox
+                        id="notify-participants-week"
+                        checked={cancelClassDialog.notifyParticipants}
+                        onCheckedChange={(checked) =>
+                          setCancelClassDialog({ ...cancelClassDialog, notifyParticipants: checked === true })
+                        }
+                      />
+                      <Label htmlFor="notify-participants-week" className="text-sm font-medium cursor-pointer">
+                        Notificar a los alumnos por WhatsApp
+                      </Label>
+                    </div>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -1623,8 +1832,11 @@ const WeekAttendancePage = () => {
                 <AlertDialogAction
                   onClick={executeCancelClass}
                   className="bg-red-600 hover:bg-red-700"
+                  disabled={cancelClass.isPending || sendCancellationNotification.isPending || cancelClassDialog.selectedClasses.length === 0}
                 >
-                  Confirmar cancelación
+                  {cancelClass.isPending || sendCancellationNotification.isPending
+                    ? 'Cancelando...'
+                    : `Confirmar (${cancelClassDialog.selectedClasses.length})`}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
