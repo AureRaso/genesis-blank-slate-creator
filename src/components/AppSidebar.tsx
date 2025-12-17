@@ -75,14 +75,15 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
+              {/* Control de pagos - Temporalmente oculto */}
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
                 <Link to="/dashboard/monthly-payments">
                   <Wallet />
                   <span>Control de pagos</span>
                 </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
               {/* Sistema de Scoring - Temporalmente oculto */}
               {/* {club?.enable_scoring_reports && (
                 <>
@@ -227,11 +228,12 @@ const AppSidebar = () => {
       //   url: "/dashboard/student-scores",
       //   icon: Award
       // },
-      {
-        title: "Control de pagos",
-        url: "/dashboard/monthly-payments",
-        icon: Wallet
-      },
+      // Control de pagos - Temporalmente oculto
+      // {
+      //   title: "Control de pagos",
+      //   url: "/dashboard/monthly-payments",
+      //   icon: Wallet
+      // },
       {
         title: t('sidebar.players'),
         url: "/dashboard/players",
