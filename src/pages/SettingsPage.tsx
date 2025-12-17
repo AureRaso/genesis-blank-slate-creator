@@ -357,6 +357,7 @@ const SettingsPage = () => {
                   )}
                 </div>
 
+                {/* Nivel de juego oculto temporalmente
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="level" className="text-xs sm:text-sm font-medium">
                     Nivel de Juego (Playtomic)
@@ -385,6 +386,7 @@ const SettingsPage = () => {
                     </p>
                   )}
                 </div>
+                */}
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-xs sm:text-sm font-medium">
