@@ -12,6 +12,7 @@ import { Club, CreateClubData, COURT_TYPES } from "@/types/clubs";
 import { ArrowLeft, Building2, Shield } from "lucide-react";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "react-i18next";
 
 interface ClubFormProps {
   club?: Club;
@@ -21,6 +22,7 @@ interface ClubFormProps {
 interface ClubFormData extends CreateClubData {}
 
 const ClubForm = ({ club, onClose }: ClubFormProps) => {
+  const { t } = useTranslation();
   const isEditing = !!club;
   const createClub = useCreateClub();
   const updateClub = useUpdateClub();
@@ -112,7 +114,7 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold text-black">
-          {isEditing ? "Editar Club" : "Nuevo Club"}
+          {isEditing ? t('clubsPage.clubForm.editTitle') : t('clubsPage.clubForm.newTitle')}
         </h1>
       </div>
 
@@ -120,11 +122,11 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
         <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre del Club *</Label>
+            <Label htmlFor="name">{t('clubsPage.clubForm.fields.name')} *</Label>
             <Input
               id="name"
-              {...register("name", { required: "El nombre es obligatorio" })}
-              placeholder="Club Pádel Central"
+              {...register("name", { required: t('clubsPage.clubForm.fields.nameRequired') })}
+              placeholder={t('clubsPage.clubForm.fields.namePlaceholder')}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -132,11 +134,11 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Dirección Completa *</Label>
+            <Label htmlFor="address">{t('clubsPage.clubForm.fields.address')} *</Label>
             <Textarea
               id="address"
-              {...register("address", { required: "La dirección es obligatoria" })}
-              placeholder="Calle Principal 123, 28001 Madrid, España"
+              {...register("address", { required: t('clubsPage.clubForm.fields.addressRequired') })}
+              placeholder={t('clubsPage.clubForm.fields.addressPlaceholder')}
               rows={3}
             />
             {errors.address && (
@@ -145,11 +147,11 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono de Contacto *</Label>
+            <Label htmlFor="phone">{t('clubsPage.clubForm.fields.phone')} *</Label>
             <Input
               id="phone"
-              {...register("phone", { required: "El teléfono es obligatorio" })}
-              placeholder="+34 666 123 456"
+              {...register("phone", { required: t('clubsPage.clubForm.fields.phoneRequired') })}
+              placeholder={t('clubsPage.clubForm.fields.phonePlaceholder')}
             />
             {errors.phone && (
               <p className="text-sm text-destructive">{errors.phone.message}</p>
@@ -157,14 +159,14 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="court_count">Número de Pistas *</Label>
+            <Label htmlFor="court_count">{t('clubsPage.clubForm.fields.courtCount')} *</Label>
             <Input
               id="court_count"
               type="number"
               min="1"
-              {...register("court_count", { 
-                required: "El número de pistas es obligatorio",
-                min: { value: 1, message: "Debe haber al menos 1 pista" }
+              {...register("court_count", {
+                required: t('clubsPage.clubForm.fields.courtCountRequired'),
+                min: { value: 1, message: t('clubsPage.clubForm.fields.courtCountMin') }
               })}
             />
             {errors.court_count && (
@@ -173,19 +175,19 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Tipo de Pistas *</Label>
+            <Label>{t('clubsPage.clubForm.fields.courtTypes')} *</Label>
             <div className="grid grid-cols-2 gap-3">
               {COURT_TYPES.map((courtType) => (
                 <div key={courtType} className="flex items-center space-x-2">
                   <Checkbox
                     id={courtType}
                     checked={courtTypes?.includes(courtType) || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       handleCourtTypeChange(courtType, checked as boolean)
                     }
                   />
-                  <Label 
-                    htmlFor={courtType} 
+                  <Label
+                    htmlFor={courtType}
                     className="text-sm font-normal capitalize"
                   >
                     {courtType}
@@ -194,25 +196,25 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
               ))}
             </div>
             {(!courtTypes || courtTypes.length === 0) && (
-              <p className="text-sm text-destructive">Selecciona al menos un tipo de pista</p>
+              <p className="text-sm text-destructive">{t('clubsPage.clubForm.fields.courtTypesRequired')}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción (Opcional)</Label>
+            <Label htmlFor="description">{t('clubsPage.clubForm.fields.description')}</Label>
             <Textarea
               id="description"
               {...register("description", {
-                maxLength: { value: 200, message: "La descripción no puede exceder 200 caracteres" }
+                maxLength: { value: 200, message: t('clubsPage.clubForm.fields.descriptionMaxLength') }
               })}
-              placeholder="Describe las instalaciones, servicios, etc. (máximo 200 caracteres)"
+              placeholder={t('clubsPage.clubForm.fields.descriptionPlaceholder')}
               rows={3}
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>
             )}
             <p className="text-sm text-muted-foreground">
-              {watch("description")?.length || 0}/200 caracteres
+              {watch("description")?.length || 0}/200 {t('clubsPage.clubForm.fields.characters')}
             </p>
           </div>
 
@@ -223,67 +225,67 @@ const ClubForm = ({ club, onClose }: ClubFormProps) => {
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">Delegado de Protección LOPIVI</h3>
+                <h3 className="text-lg font-semibold text-slate-800">{t('clubsPage.clubForm.lopivi.title')}</h3>
                 <p className="text-sm text-slate-500">
-                  Persona responsable del cumplimiento de la Ley de Protección a la Infancia y Adolescencia
+                  {t('clubsPage.clubForm.lopivi.description')}
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lopivi_delegate_name">Nombre del Delegado (Opcional)</Label>
+              <Label htmlFor="lopivi_delegate_name">{t('clubsPage.clubForm.lopivi.delegateName')}</Label>
               <Input
                 id="lopivi_delegate_name"
                 {...register("lopivi_delegate_name")}
-                placeholder="Nombre completo del delegado"
+                placeholder={t('clubsPage.clubForm.lopivi.delegateNamePlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lopivi_delegate_email">Email del Delegado (Opcional)</Label>
+              <Label htmlFor="lopivi_delegate_email">{t('clubsPage.clubForm.lopivi.delegateEmail')}</Label>
               <Input
                 id="lopivi_delegate_email"
                 type="email"
                 {...register("lopivi_delegate_email", {
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Email inválido"
+                    message: t('clubsPage.clubForm.lopivi.delegateEmailInvalid')
                   }
                 })}
-                placeholder="delegado@ejemplo.com"
+                placeholder={t('clubsPage.clubForm.lopivi.delegateEmailPlaceholder')}
               />
               {errors.lopivi_delegate_email && (
                 <p className="text-sm text-destructive">{errors.lopivi_delegate_email.message}</p>
               )}
               <p className="text-xs text-slate-500">
-                Se enviará notificación a este email cuando se reciba un reporte LOPIVI
+                {t('clubsPage.clubForm.lopivi.delegateEmailHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lopivi_delegate_phone">Teléfono del Delegado (Opcional)</Label>
+              <Label htmlFor="lopivi_delegate_phone">{t('clubsPage.clubForm.lopivi.delegatePhone')}</Label>
               <Input
                 id="lopivi_delegate_phone"
                 {...register("lopivi_delegate_phone")}
-                placeholder="+34 666 123 456"
+                placeholder={t('clubsPage.clubForm.lopivi.delegatePhonePlaceholder')}
               />
             </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancelar
+              {t('clubsPage.clubForm.buttons.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={createClub.isPending || updateClub.isPending || !courtTypes?.length}
               className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
             >
-              {(createClub.isPending || updateClub.isPending) 
-                ? "Guardando..." 
-                : isEditing 
-                  ? "Actualizar Club" 
-                  : "Crear Club"
+              {(createClub.isPending || updateClub.isPending)
+                ? t('clubsPage.clubForm.buttons.saving')
+                : isEditing
+                  ? t('clubsPage.clubForm.buttons.updateClub')
+                  : t('clubsPage.clubForm.buttons.createClub')
               }
             </Button>
           </div>

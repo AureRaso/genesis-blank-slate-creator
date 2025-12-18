@@ -231,6 +231,83 @@
     "english": "Inglese",
     "italian": "Italiano"
   },
+  "clubsPage": {
+    "title": {
+      "admin": "Gestione Club",
+      "player": "Il Mio Club"
+    },
+    "newClub": "Nuovo Club",
+    "readOnlyAccess": {
+      "title": "Accesso in Sola Lettura",
+      "titlePlayer": "Informazioni in Sola Lettura",
+      "description": "Solo gli amministratori possono creare e modificare i club.",
+      "descriptionPlayer": "Qui puoi visualizzare le informazioni del tuo club."
+    },
+    "clubsList": {
+      "noClubs": {
+        "admin": "Nessun club registrato",
+        "player": "Non sei assegnato a nessun club"
+      },
+      "noClubsHint": {
+        "admin": "I club che crei appariranno qui.",
+        "player": "Contatta un amministratore per essere assegnato a un club."
+      },
+      "status": {
+        "active": "Attivo"
+      },
+      "court": "campo",
+      "courts": "campi",
+      "createdAt": "Creato il",
+      "deleteDialog": {
+        "title": "Eliminare club?",
+        "description": "Questa azione non può essere annullata. Il club \"{{name}}\" verrà eliminato permanentemente.",
+        "cancel": "Annulla",
+        "confirm": "Elimina"
+      }
+    },
+    "clubForm": {
+      "editTitle": "Modifica Club",
+      "newTitle": "Nuovo Club",
+      "fields": {
+        "name": "Nome del Club",
+        "nameRequired": "Il nome è obbligatorio",
+        "namePlaceholder": "Club Padel Centrale",
+        "address": "Indirizzo Completo",
+        "addressRequired": "L'indirizzo è obbligatorio",
+        "addressPlaceholder": "Via Principale 123, 28001 Madrid, Spagna",
+        "phone": "Telefono di Contatto",
+        "phoneRequired": "Il telefono è obbligatorio",
+        "phonePlaceholder": "+39 333 123 4567",
+        "courtCount": "Numero di Campi",
+        "courtCountRequired": "Il numero di campi è obbligatorio",
+        "courtCountMin": "Deve esserci almeno 1 campo",
+        "courtTypes": "Tipo di Campi",
+        "courtTypesRequired": "Seleziona almeno un tipo di campo",
+        "description": "Descrizione (Opzionale)",
+        "descriptionPlaceholder": "Descrivi le strutture, i servizi, ecc. (massimo 200 caratteri)",
+        "descriptionMaxLength": "La descrizione non può superare i 200 caratteri",
+        "characters": "caratteri"
+      },
+      "lopivi": {
+        "title": "Delegato alla Protezione LOPIVI",
+        "description": "Persona responsabile del rispetto della Legge sulla Protezione dell'Infanzia e dell'Adolescenza",
+        "delegateName": "Nome del Delegato (Opzionale)",
+        "delegateNamePlaceholder": "Nome completo del delegato",
+        "delegateEmail": "Email del Delegato (Opzionale)",
+        "delegateEmailPlaceholder": "delegato@esempio.com",
+        "delegateEmailInvalid": "Email non valida",
+        "delegateEmailHint": "Le notifiche verranno inviate a questa email quando viene ricevuto un rapporto LOPIVI",
+        "delegatePhone": "Telefono del Delegato (Opzionale)",
+        "delegatePhonePlaceholder": "+39 333 123 4567"
+      },
+      "buttons": {
+        "cancel": "Annulla",
+        "saving": "Salvataggio...",
+        "updateClub": "Aggiorna Club",
+        "createClub": "Crea Club"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Gestione Allenatori",
     "newTrainer": "Nuovo Allenatore",

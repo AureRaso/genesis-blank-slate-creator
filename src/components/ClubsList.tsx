@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useClubs, usePlayerClubs, useDeleteClub, useAdminClubs } from "@/hooks/useClubs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Club } from "@/types/clubs";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +26,17 @@ interface ClubsListProps {
 
 const ClubsList = ({ onEditClub }: ClubsListProps) => {
   const { isAdmin, isPlayer, profile } = useAuth();
-  
+  const { t } = useTranslation();
+
   // Use different hooks based on user role
   const { data: adminClubs, isLoading: isLoadingAdmin } = useAdminClubs();
   const { data: playerClubs, isLoading: isLoadingPlayer } = usePlayerClubs(
     isPlayer ? profile?.club_id : undefined
   );
-  
+
   const clubs = isPlayer ? playerClubs : adminClubs;
   const isLoading = isPlayer ? isLoadingPlayer : isLoadingAdmin;
-  
+
   const deleteClub = useDeleteClub();
   const [deletingClub, setDeletingClub] = useState<string | null>(null);
 
@@ -75,12 +77,12 @@ const ClubsList = ({ onEditClub }: ClubsListProps) => {
           <div className="text-center py-8">
             <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">
-              {isPlayer ? "No estás asignado a ningún club" : "No hay clubs registrados"}
+              {isPlayer ? t('clubsPage.clubsList.noClubs.player') : t('clubsPage.clubsList.noClubs.admin')}
             </h3>
             <p className="text-muted-foreground">
-              {isPlayer 
-                ? "Contacta con un administrador para ser asignado a un club."
-                : "Los clubs que crees aparecerán aquí."
+              {isPlayer
+                ? t('clubsPage.clubsList.noClubsHint.player')
+                : t('clubsPage.clubsList.noClubsHint.admin')
               }
             </p>
           </div>
@@ -99,10 +101,10 @@ const ClubsList = ({ onEditClub }: ClubsListProps) => {
                 <CardTitle className="text-lg line-clamp-2 mb-2">{club.name}</CardTitle>
                 <div className="flex items-center space-x-2">
                   <Badge className="bg-green-100 text-green-800">
-                    {club.status === 'active' ? 'Activo' : club.status || 'Activo'}
+                    {club.status === 'active' ? t('clubsPage.clubsList.status.active') : club.status || t('clubsPage.clubsList.status.active')}
                   </Badge>
                   <Badge variant="outline">
-                    {club.court_count} {club.court_count === 1 ? 'pista' : 'pistas'}
+                    {club.court_count} {club.court_count === 1 ? t('clubsPage.clubsList.court') : t('clubsPage.clubsList.courts')}
                   </Badge>
                 </div>
               </div>
@@ -129,18 +131,18 @@ const ClubsList = ({ onEditClub }: ClubsListProps) => {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar club?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('clubsPage.clubsList.deleteDialog.title')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta acción no se puede deshacer. Se eliminará permanentemente el club "{club.name}".
+                          {t('clubsPage.clubsList.deleteDialog.description', { name: club.name })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>{t('clubsPage.clubsList.deleteDialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteClub(club.id)}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          Eliminar
+                          {t('clubsPage.clubsList.deleteDialog.confirm')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -176,7 +178,7 @@ const ClubsList = ({ onEditClub }: ClubsListProps) => {
             )}
 
             <div className="text-xs text-gray-500 pt-2 border-t">
-              Creado el {new Date(club.created_at).toLocaleDateString()}
+              {t('clubsPage.clubsList.createdAt')} {new Date(club.created_at).toLocaleDateString()}
             </div>
           </CardContent>
         </Card>

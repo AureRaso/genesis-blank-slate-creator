@@ -231,6 +231,83 @@
     "english": "English",
     "italian": "Italian"
   },
+  "clubsPage": {
+    "title": {
+      "admin": "Club Management",
+      "player": "My Club"
+    },
+    "newClub": "New Club",
+    "readOnlyAccess": {
+      "title": "Read-Only Access",
+      "titlePlayer": "Read-Only Information",
+      "description": "Only administrators can create and edit clubs.",
+      "descriptionPlayer": "Here you can view your club's information."
+    },
+    "clubsList": {
+      "noClubs": {
+        "admin": "No registered clubs",
+        "player": "You are not assigned to any club"
+      },
+      "noClubsHint": {
+        "admin": "Clubs you create will appear here.",
+        "player": "Contact an administrator to be assigned to a club."
+      },
+      "status": {
+        "active": "Active"
+      },
+      "court": "court",
+      "courts": "courts",
+      "createdAt": "Created on",
+      "deleteDialog": {
+        "title": "Delete club?",
+        "description": "This action cannot be undone. The club \"{{name}}\" will be permanently deleted.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
+      }
+    },
+    "clubForm": {
+      "editTitle": "Edit Club",
+      "newTitle": "New Club",
+      "fields": {
+        "name": "Club Name",
+        "nameRequired": "Name is required",
+        "namePlaceholder": "Padel Central Club",
+        "address": "Full Address",
+        "addressRequired": "Address is required",
+        "addressPlaceholder": "123 Main Street, 28001 Madrid, Spain",
+        "phone": "Contact Phone",
+        "phoneRequired": "Phone is required",
+        "phonePlaceholder": "+34 666 123 456",
+        "courtCount": "Number of Courts",
+        "courtCountRequired": "Number of courts is required",
+        "courtCountMin": "There must be at least 1 court",
+        "courtTypes": "Court Types",
+        "courtTypesRequired": "Select at least one court type",
+        "description": "Description (Optional)",
+        "descriptionPlaceholder": "Describe the facilities, services, etc. (maximum 200 characters)",
+        "descriptionMaxLength": "Description cannot exceed 200 characters",
+        "characters": "characters"
+      },
+      "lopivi": {
+        "title": "LOPIVI Protection Delegate",
+        "description": "Person responsible for compliance with the Child and Adolescent Protection Law",
+        "delegateName": "Delegate Name (Optional)",
+        "delegateNamePlaceholder": "Full name of the delegate",
+        "delegateEmail": "Delegate Email (Optional)",
+        "delegateEmailPlaceholder": "delegate@example.com",
+        "delegateEmailInvalid": "Invalid email",
+        "delegateEmailHint": "Notifications will be sent to this email when a LOPIVI report is received",
+        "delegatePhone": "Delegate Phone (Optional)",
+        "delegatePhonePlaceholder": "+34 666 123 456"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "updateClub": "Update Club",
+        "createClub": "Create Club"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Trainer Management",
     "newTrainer": "New Trainer",

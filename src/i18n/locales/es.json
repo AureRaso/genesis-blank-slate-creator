@@ -231,6 +231,83 @@
     "english": "Inglés",
     "italian": "Italiano"
   },
+  "clubsPage": {
+    "title": {
+      "admin": "Gestión de Clubs",
+      "player": "Mi Club"
+    },
+    "newClub": "Nuevo Club",
+    "readOnlyAccess": {
+      "title": "Acceso de Solo Lectura",
+      "titlePlayer": "Información de Solo Lectura",
+      "description": "Solo los administradores pueden crear y editar clubs.",
+      "descriptionPlayer": "Aquí puedes ver la información de tu club."
+    },
+    "clubsList": {
+      "noClubs": {
+        "admin": "No hay clubs registrados",
+        "player": "No estás asignado a ningún club"
+      },
+      "noClubsHint": {
+        "admin": "Los clubs que crees aparecerán aquí.",
+        "player": "Contacta con un administrador para ser asignado a un club."
+      },
+      "status": {
+        "active": "Activo"
+      },
+      "court": "pista",
+      "courts": "pistas",
+      "createdAt": "Creado el",
+      "deleteDialog": {
+        "title": "¿Eliminar club?",
+        "description": "Esta acción no se puede deshacer. Se eliminará permanentemente el club \"{{name}}\".",
+        "cancel": "Cancelar",
+        "confirm": "Eliminar"
+      }
+    },
+    "clubForm": {
+      "editTitle": "Editar Club",
+      "newTitle": "Nuevo Club",
+      "fields": {
+        "name": "Nombre del Club",
+        "nameRequired": "El nombre es obligatorio",
+        "namePlaceholder": "Club Pádel Central",
+        "address": "Dirección Completa",
+        "addressRequired": "La dirección es obligatoria",
+        "addressPlaceholder": "Calle Principal 123, 28001 Madrid, España",
+        "phone": "Teléfono de Contacto",
+        "phoneRequired": "El teléfono es obligatorio",
+        "phonePlaceholder": "+34 666 123 456",
+        "courtCount": "Número de Pistas",
+        "courtCountRequired": "El número de pistas es obligatorio",
+        "courtCountMin": "Debe haber al menos 1 pista",
+        "courtTypes": "Tipo de Pistas",
+        "courtTypesRequired": "Selecciona al menos un tipo de pista",
+        "description": "Descripción (Opcional)",
+        "descriptionPlaceholder": "Describe las instalaciones, servicios, etc. (máximo 200 caracteres)",
+        "descriptionMaxLength": "La descripción no puede exceder 200 caracteres",
+        "characters": "caracteres"
+      },
+      "lopivi": {
+        "title": "Delegado de Protección LOPIVI",
+        "description": "Persona responsable del cumplimiento de la Ley de Protección a la Infancia y Adolescencia",
+        "delegateName": "Nombre del Delegado (Opcional)",
+        "delegateNamePlaceholder": "Nombre completo del delegado",
+        "delegateEmail": "Email del Delegado (Opcional)",
+        "delegateEmailPlaceholder": "delegado@ejemplo.com",
+        "delegateEmailInvalid": "Email inválido",
+        "delegateEmailHint": "Se enviará notificación a este email cuando se reciba un reporte LOPIVI",
+        "delegatePhone": "Teléfono del Delegado (Opcional)",
+        "delegatePhonePlaceholder": "+34 666 123 456"
+      },
+      "buttons": {
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "updateClub": "Actualizar Club",
+        "createClub": "Crear Club"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Gestión de Profesores",
     "newTrainer": "Nuevo Profesor",
