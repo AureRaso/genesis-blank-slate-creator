@@ -351,6 +351,60 @@
       }
     }
   },
+  "trainerStudentsPage": {
+    "title": "Players",
+    "loading": "Loading players...",
+    "counter": {
+      "totalPlayers": "Total Players",
+      "showingOf": "{{count}} of {{total}} shown"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by name or email...",
+      "status": "Status",
+      "period": "Period",
+      "sort": "Sort"
+    },
+    "statusOptions": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending"
+    },
+    "sortOptions": {
+      "arrival": "Arrival order",
+      "alphabetical": "Alphabetical (A-Z)"
+    },
+    "tableHeaders": {
+      "player": "Player",
+      "contact": "Contact",
+      "club": "Club",
+      "enrollment": "Enrollment",
+      "actions": "Actions"
+    },
+    "level": "Level {{level}}",
+    "levelError": "Level must be an integer between 1 and 10",
+    "deleteStudent": "Delete student",
+    "emptyState": {
+      "noStudentsInClub": "No players in your club",
+      "noStudentsFound": "No players found",
+      "noStudentsDescription": "Players who enroll in your club will appear here",
+      "changeFilters": "Try changing the search filters"
+    },
+    "pagination": {
+      "showing": "Showing {{start}} - {{end}} of {{total}} players",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{current}} of {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Delete student from club?",
+      "aboutToDelete": "You are about to delete {{playerName}}",
+      "warning": "⚠️ WARNING: This player will be permanently removed from the club and will not appear in any lists or options.",
+      "dataRetention": "Data will be retained in the database for legal and audit purposes, but the player will become inactive.",
+      "cancel": "Cancel",
+      "confirm": "Delete player"
+    }
+  },
   "trainersPage": {
     "title": "Trainer Management",
     "newTrainer": "New Trainer",

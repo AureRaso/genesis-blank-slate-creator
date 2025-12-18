@@ -351,6 +351,60 @@
       }
     }
   },
+  "trainerStudentsPage": {
+    "title": "Jugadores",
+    "loading": "Cargando jugadores...",
+    "counter": {
+      "totalPlayers": "Total de Jugadores",
+      "showingOf": "{{count}} de {{total}} mostrados"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por nombre o email...",
+      "status": "Estado",
+      "period": "Período",
+      "sort": "Ordenar"
+    },
+    "statusOptions": {
+      "all": "Todos",
+      "active": "Activos",
+      "inactive": "Inactivos",
+      "pending": "Pendientes"
+    },
+    "sortOptions": {
+      "arrival": "Orden de llegada",
+      "alphabetical": "Alfabético (A-Z)"
+    },
+    "tableHeaders": {
+      "player": "Jugador",
+      "contact": "Contacto",
+      "club": "Club",
+      "enrollment": "Matrícula",
+      "actions": "Acciones"
+    },
+    "level": "Nivel {{level}}",
+    "levelError": "El nivel debe ser un número entero entre 1 y 10",
+    "deleteStudent": "Eliminar alumno",
+    "emptyState": {
+      "noStudentsInClub": "No hay jugadores en tu club",
+      "noStudentsFound": "No se encontraron jugadores",
+      "noStudentsDescription": "Los jugadores que se inscriban en tu club aparecerán aquí",
+      "changeFilters": "Prueba a cambiar los filtros de búsqueda"
+    },
+    "pagination": {
+      "showing": "Mostrando {{start}} - {{end}} de {{total}} jugadores",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página {{current}} de {{total}}"
+    },
+    "deleteDialog": {
+      "title": "¿Eliminar alumno del club?",
+      "aboutToDelete": "Estás a punto de eliminar a {{playerName}}",
+      "warning": "⚠️ ADVERTENCIA: Este jugador será eliminado permanentemente del club y no aparecerá en ninguna lista ni opciones.",
+      "dataRetention": "Los datos se conservarán en la base de datos por motivos legales y de auditoría, pero el jugador quedará inactivo.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar jugador"
+    }
+  },
   "trainersPage": {
     "title": "Gestión de Profesores",
     "newTrainer": "Nuevo Profesor",

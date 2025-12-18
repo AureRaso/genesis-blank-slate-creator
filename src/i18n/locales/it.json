@@ -351,6 +351,60 @@
       }
     }
   },
+  "trainerStudentsPage": {
+    "title": "Giocatori",
+    "loading": "Caricamento giocatori...",
+    "counter": {
+      "totalPlayers": "Giocatori Totali",
+      "showingOf": "{{count}} di {{total}} mostrati"
+    },
+    "filters": {
+      "searchPlaceholder": "Cerca per nome o email...",
+      "status": "Stato",
+      "period": "Periodo",
+      "sort": "Ordina"
+    },
+    "statusOptions": {
+      "all": "Tutti",
+      "active": "Attivi",
+      "inactive": "Inattivi",
+      "pending": "In Attesa"
+    },
+    "sortOptions": {
+      "arrival": "Ordine di arrivo",
+      "alphabetical": "Alfabetico (A-Z)"
+    },
+    "tableHeaders": {
+      "player": "Giocatore",
+      "contact": "Contatto",
+      "club": "Club",
+      "enrollment": "Iscrizione",
+      "actions": "Azioni"
+    },
+    "level": "Livello {{level}}",
+    "levelError": "Il livello deve essere un numero intero tra 1 e 10",
+    "deleteStudent": "Elimina studente",
+    "emptyState": {
+      "noStudentsInClub": "Nessun giocatore nel tuo club",
+      "noStudentsFound": "Nessun giocatore trovato",
+      "noStudentsDescription": "I giocatori che si iscrivono al tuo club appariranno qui",
+      "changeFilters": "Prova a cambiare i filtri di ricerca"
+    },
+    "pagination": {
+      "showing": "Mostrando {{start}} - {{end}} di {{total}} giocatori",
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina {{current}} di {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Eliminare studente dal club?",
+      "aboutToDelete": "Stai per eliminare {{playerName}}",
+      "warning": "⚠️ ATTENZIONE: Questo giocatore verrà rimosso permanentemente dal club e non apparirà in nessuna lista o opzione.",
+      "dataRetention": "I dati saranno conservati nel database per motivi legali e di audit, ma il giocatore diventerà inattivo.",
+      "cancel": "Annulla",
+      "confirm": "Elimina giocatore"
+    }
+  },
   "trainersPage": {
     "title": "Gestione Allenatori",
     "newTrainer": "Nuovo Allenatore",
