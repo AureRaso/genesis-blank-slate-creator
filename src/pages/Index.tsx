@@ -41,6 +41,7 @@ import {
 // Component to display student behavior metrics (compact version for dashboard)
 const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: string }) => {
   const PLACEHOLDER_CLASS_ID = "00000000-0000-0000-0000-000000000000";
+  const { t } = useTranslation();
 
   const { data: metrics, isLoading } = useStudentBehaviorMetrics(
     studentEnrollmentId,
@@ -53,7 +54,7 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
       <div className="mt-2 pt-2 border-t border-gray-200">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Cargando historial...</span>
+          <span>{t('common.loadingHistory')}</span>
         </div>
       </div>
     );
@@ -64,7 +65,7 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
   return (
     <div className="mt-2 pt-2 border-t border-gray-200">
       <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-xs font-semibold text-gray-700">📊 Historial:</span>
+        <span className="text-xs font-semibold text-gray-700">📊 {t('common.history')}:</span>
         <Badge
           variant="outline"
           className={`text-[10px] px-1.5 py-0 h-4 ${
@@ -82,25 +83,25 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
         <div className="flex items-center gap-1">
           <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
-          <span className="text-gray-600">Asistió:</span>
+          <span className="text-gray-600">{t('common.attended')}:</span>
           <span className="font-semibold">{metrics.total_attended}</span>
         </div>
 
         <div className="flex items-center gap-1">
           <X className="h-3 w-3 text-red-600 flex-shrink-0" />
-          <span className="text-gray-600">Tardíos:</span>
+          <span className="text-gray-600">{t('common.late')}:</span>
           <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1">
           <Circle className="h-3 w-3 text-red-600 flex-shrink-0" />
-          <span className="text-gray-600">Anticipados:</span>
+          <span className="text-gray-600">{t('common.early')}:</span>
           <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1">
           <X className="h-3 w-3 text-gray-500 flex-shrink-0" />
-          <span className="text-gray-600">Canceladas:</span>
+          <span className="text-gray-600">{t('common.cancelled')}:</span>
           <span className="font-semibold">{metrics.club_cancelled_classes}</span>
         </div>
       </div>
@@ -195,8 +196,8 @@ const Index = () => {
           activities.push({
             type: 'new_player',
             icon: UserPlus,
-            title: 'Nuevo jugador registrado',
-            description: `${newPlayers[0].full_name} se registró en el club`,
+            title: t('adminDashboard.newPlayerRegistered'),
+            description: t('adminDashboard.playerRegisteredInClub', { name: newPlayers[0].full_name }),
             timestamp: newPlayers[0].created_at,
             color: 'primary'
           });
@@ -216,8 +217,8 @@ const Index = () => {
           activities.push({
             type: 'new_class',
             icon: CalendarPlus,
-            title: 'Nueva clase programada',
-            description: `Se creó la clase "${newClasses[0].name}"`,
+            title: t('trainerDashboard.activity.newClassScheduled'),
+            description: t('trainerDashboard.activity.classCreated', { name: newClasses[0].name }),
             timestamp: newClasses[0].created_at,
             color: 'gray'
           });
@@ -238,8 +239,8 @@ const Index = () => {
           activities.push({
             type: 'new_trainer',
             icon: UserCheck,
-            title: 'Nuevo entrenador añadido',
-            description: `${newTrainers[0].full_name} se unió como entrenador`,
+            title: t('adminDashboard.activity.newTrainerAdded'),
+            description: t('adminDashboard.activity.trainerJoined', { name: newTrainers[0].full_name }),
             timestamp: newTrainers[0].created_at,
             color: 'primary'
           });
@@ -258,24 +259,24 @@ const Index = () => {
           {
             type: 'new_player',
             icon: UserPlus,
-            title: 'Nuevos jugadores registrados',
-            description: '3 jugadores se registraron esta semana',
+            title: t('adminDashboard.activity.newPlayersRegistered'),
+            description: t('adminDashboard.activity.playersThisWeek', { count: 3 }),
             timestamp: twoHoursAgo.toISOString(),
             color: 'primary'
           },
           {
             type: 'new_class',
             icon: CalendarPlus,
-            title: 'Clases programadas actualizadas',
-            description: 'Se añadieron 5 nuevas clases para noviembre',
+            title: t('adminDashboard.activity.classesUpdated'),
+            description: t('adminDashboard.activity.newClassesAdded', { count: 5 }),
             timestamp: yesterday.toISOString(),
             color: 'gray'
           },
           {
             type: 'new_trainer',
             icon: UserCheck,
-            title: 'Nuevo entrenador añadido',
-            description: 'Juan Pérez se unió como entrenador',
+            title: t('adminDashboard.activity.newTrainerAdded'),
+            description: t('adminDashboard.activity.trainerJoined', { name: 'Juan Pérez' }),
             timestamp: yesterday.toISOString(),
             color: 'primary'
           }
@@ -373,10 +374,10 @@ const Index = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffMins < 60) return t('common.timeAgo.minutes', { count: diffMins });
+    if (diffHours < 24) return t('common.timeAgo.hours', { count: diffHours });
+    if (diffDays === 1) return t('common.timeAgo.yesterday');
+    if (diffDays < 7) return t('common.timeAgo.days', { count: diffDays });
     return past.toLocaleDateString();
   };
 
@@ -396,25 +397,25 @@ const Index = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Bienvenido</h1>
+          <h1 className="text-3xl font-bold">{t('adminDashboard.noProfile.welcome')}</h1>
           <p className="text-muted-foreground">
-            Hola, {user.email}
+            {t('adminDashboard.noProfile.hello')} {user.email}
             <Badge className="ml-2" variant="outline">
-              Usuario
+              {t('adminDashboard.noProfile.user')}
             </Badge>
           </p>
         </div>
-        
+
         <Card>
           <CardHeader>
-            <CardTitle>Configuración de Perfil</CardTitle>
+            <CardTitle>{t('adminDashboard.noProfile.title')}</CardTitle>
             <CardDescription>
-              Tu cuenta está activa pero necesitas completar tu perfil
+              {t('adminDashboard.noProfile.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Contacta con el administrador para configurar tu rol y permisos.
+              {t('adminDashboard.noProfile.contactAdmin')}
             </p>
           </CardContent>
         </Card>
@@ -427,28 +428,27 @@ const Index = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Bienvenido, {profile.full_name}</h1>
+          <h1 className="text-3xl font-bold">{t('adminDashboard.playerNoClub.welcome')} {profile.full_name}</h1>
           <p className="text-muted-foreground">
             <Badge className="ml-2" variant="secondary">
-              Jugador
+              {t('adminDashboard.playerNoClub.player')}
             </Badge>
           </p>
         </div>
-        
+
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <CardTitle className="flex items-center text-amber-800">
               <AlertTriangle className="h-5 w-5 mr-2" />
-              Club no asignado
+              {t('adminDashboard.playerNoClub.title')}
             </CardTitle>
             <CardDescription className="text-amber-700">
-              Necesitas estar asociado a un club para acceder a todas las funcionalidades
+              {t('adminDashboard.playerNoClub.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-amber-800">
-              Contacta con el administrador del sistema para que te asigne a un club. 
-              Una vez asignado, podrás ver las ligas, clases y entrenadores de tu club.
+              {t('adminDashboard.playerNoClub.contactAdmin')}
             </p>
           </CardContent>
         </Card>
@@ -472,10 +472,10 @@ const Index = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#10172a]">
-              ¡Hola, {profile?.full_name?.split(' ')[0] || 'Admin'}! 👋
+              {t('adminDashboard.welcome.greeting', { name: profile?.full_name?.split(' ')[0] || t('adminDashboard.welcome.defaultName') })} 👋
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              Bienvenido a tu panel de administración
+              {t('adminDashboard.welcome.subtitle')}
             </p>
           </div>
         </div>
@@ -503,7 +503,7 @@ const Index = () => {
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a] flex items-center gap-2">
               <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              Pagos en Revisión
+              {t('adminDashboard.payments.title')}
             </h3>
             {paymentsInReview && paymentsInReview.length > 0 && (
               <Badge variant="secondary" className="text-xs">
@@ -516,10 +516,11 @@ const Index = () => {
               <>
                 {paymentsInReview && paymentsInReview.length > 0 ? (
                   paymentsInReview.slice(0, showAllActivities ? undefined : 3).map((payment) => {
-                    const monthNames = [
-                      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+                    const monthKeys = [
+                      'january', 'february', 'march', 'april', 'may', 'june',
+                      'july', 'august', 'september', 'october', 'november', 'december'
                     ];
+                    const monthName = t(`adminDashboard.months.${monthKeys[payment.month - 1]}`);
 
                     return (
                       <div
@@ -534,11 +535,11 @@ const Index = () => {
                             {payment.student_enrollment.full_name}
                           </p>
                           <p className="text-xs text-gray-600 mt-0.5 sm:mt-1">
-                            {monthNames[payment.month - 1]} {payment.year} • {payment.total_classes} clases • {payment.total_amount.toFixed(2)}€
+                            {monthName} {payment.year} • {payment.total_classes} {t('adminDashboard.payments.classes')} • {payment.total_amount.toFixed(2)}€
                           </p>
                           {payment.payment_method && (
                             <p className="text-xs text-gray-500 mt-0.5">
-                              Método: {payment.payment_method}
+                              {t('adminDashboard.payments.method')} {payment.payment_method}
                             </p>
                           )}
                         </div>
@@ -569,7 +570,7 @@ const Index = () => {
                               verifyPayment({
                                 paymentId: payment.id,
                                 status: 'pendiente',
-                                rejectionReason: 'Pago rechazado. Por favor, verifica los datos e inténtalo nuevamente.'
+                                rejectionReason: t('adminDashboard.payments.rejected')
                               });
                             }}
                             disabled={isVerifyingPayment}
@@ -582,7 +583,7 @@ const Index = () => {
                   })
                 ) : (
                   <div className="text-center py-6 sm:py-8 text-gray-500">
-                    <p className="text-xs sm:text-sm">No hay pagos en revisión</p>
+                    <p className="text-xs sm:text-sm">{t('adminDashboard.payments.noPayments')}</p>
                   </div>
                 )}
                 {paymentsInReview && paymentsInReview.length > 3 && (
@@ -594,11 +595,11 @@ const Index = () => {
                   >
                     {showAllActivities ? (
                       <>
-                        Ver menos <ChevronUp className="h-3 w-3 ml-1" />
+                        {t('adminDashboard.payments.showLess')} <ChevronUp className="h-3 w-3 ml-1" />
                       </>
                     ) : (
                       <>
-                        Ver todos ({paymentsInReview.length}) <ChevronDown className="h-3 w-3 ml-1" />
+                        {t('adminDashboard.payments.showAll')} ({paymentsInReview.length}) <ChevronDown className="h-3 w-3 ml-1" />
                       </>
                     )}
                   </Button>
@@ -612,7 +613,7 @@ const Index = () => {
         <div>
           <div className="mb-3 sm:mb-4">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              Notificaciones de hoy
+              {t('adminDashboard.notifications.title')}
             </h3>
           </div>
         <div className="space-y-3">
@@ -661,7 +662,7 @@ const Index = () => {
             if (notifications.length === 0) {
               return (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No hay notificaciones pendientes</p>
+                  <p className="text-sm">{t('adminDashboard.notifications.noNotifications')}</p>
                 </div>
               );
             }
@@ -701,7 +702,7 @@ const Index = () => {
                           </p>
                           {isLocked && (
                             <Badge variant="outline" className="text-[10px] bg-gray-200 text-gray-700 border-gray-300">
-                              Bloqueada
+                              {t('adminDashboard.notifications.locked')}
                             </Badge>
                           )}
                         </div>
@@ -730,14 +731,14 @@ const Index = () => {
                       {/* Absent Students */}
                       {absentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.absences')}</p>
                           {absentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <X className="h-3 w-3 text-red-600 flex-shrink-0" />
                               <span className="text-gray-700">{participant.student_enrollment?.full_name}</span>
                               {participant.absence_locked && (
                                 <Badge variant="outline" className="text-[10px] bg-gray-100">
-                                  Bloqueada
+                                  {t('adminDashboard.notifications.locked')}
                                 </Badge>
                               )}
                             </div>
@@ -748,7 +749,7 @@ const Index = () => {
                       {/* Present Students */}
                       {presentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.willAttend')}</p>
                           {presentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
@@ -761,7 +762,7 @@ const Index = () => {
                       {/* Substitute Students */}
                       {substituteStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.substitutes')}</p>
                           {substituteStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
@@ -792,7 +793,7 @@ const Index = () => {
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
-                      Añadir sustituto
+                      {t('adminDashboard.notifications.addSubstitute')}
                     </Button>
                     <Button
                       size="sm"
@@ -808,7 +809,7 @@ const Index = () => {
 
                         // Si solo hay un grupo o ninguno, usar el grupo actual
                         if (!whatsappGroup?.group_chat_id) {
-                          alert('No hay grupo de WhatsApp configurado');
+                          alert(t('adminDashboard.notifications.noWhatsAppGroup'));
                           return;
                         }
 
@@ -823,7 +824,7 @@ const Index = () => {
                           className: classData.name,
                           classDate: today,
                           classTime: classData.start_time,
-                          trainerName: classData.trainer?.full_name || 'Profesor',
+                          trainerName: classData.trainer?.full_name || t('adminDashboard.notifications.teacher'),
                           waitlistUrl,
                           availableSlots,
                           classId: classData.id,
@@ -869,7 +870,7 @@ const Index = () => {
                           {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                          {t('adminDashboard.notifications.request')} {format(new Date(request.joined_at), 'HH:mm')}
                         </p>
                         {/* Historial de asistencia del alumno */}
                         <StudentMetricsCompact studentEnrollmentId={request.student_enrollment_id} />
@@ -919,7 +920,7 @@ const Index = () => {
       <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
-            Notificaciones de hoy
+            {t('adminDashboard.notifications.title')}
           </h3>
         </div>
         <div className="space-y-3">
@@ -968,7 +969,7 @@ const Index = () => {
             if (notifications.length === 0) {
               return (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No hay notificaciones pendientes</p>
+                  <p className="text-sm">{t('adminDashboard.notifications.noNotifications')}</p>
                 </div>
               );
             }
@@ -1037,7 +1038,7 @@ const Index = () => {
                         {/* Absent Students */}
                         {absentStudents.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                            <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.absences')}</p>
                             {absentStudents.map((participant) => (
                               <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                                 <X className="h-3 w-3 text-red-600 flex-shrink-0" />
@@ -1055,7 +1056,7 @@ const Index = () => {
                         {/* Present Students */}
                         {presentStudents.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                            <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.willAttend')}</p>
                             {presentStudents.map((participant) => (
                               <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                                 <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
@@ -1068,7 +1069,7 @@ const Index = () => {
                         {/* Substitute Students */}
                         {substituteStudents.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                            <p className="text-xs font-semibold text-gray-700 mb-1">{t('adminDashboard.notifications.substitutes')}</p>
                             {substituteStudents.map((participant) => (
                               <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                                 <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
@@ -1115,7 +1116,7 @@ const Index = () => {
 
                           // Si solo hay un grupo o ninguno, usar el grupo actual
                           if (!whatsappGroup?.group_chat_id) {
-                            alert('No hay grupo de WhatsApp configurado');
+                            alert(t('adminDashboard.notifications.noWhatsAppGroup'));
                             return;
                           }
 
@@ -1130,7 +1131,7 @@ const Index = () => {
                             className: classData.name,
                             classDate: today,
                             classTime: classData.start_time,
-                            trainerName: classData.trainer?.full_name || 'Profesor',
+                            trainerName: classData.trainer?.full_name || t('adminDashboard.notifications.teacher'),
                             waitlistUrl,
                             availableSlots,
                             classId: classData.id,
@@ -1177,7 +1178,7 @@ const Index = () => {
                             {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                            {t('adminDashboard.notifications.request')} {format(new Date(request.joined_at), 'HH:mm')}
                           </p>
                         </div>
                       </div>
@@ -1227,9 +1228,9 @@ const Index = () => {
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
         <SheetContent side="bottom" className="max-h-[80vh] h-auto rounded-t-[30px]">
           <SheetHeader>
-            <SheetTitle>Buscar Sustituto</SheetTitle>
+            <SheetTitle>{t('adminDashboard.dialogs.searchSubstitute')}</SheetTitle>
             <SheetDescription>
-              Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
+              {t('adminDashboard.dialogs.searchSubstituteDesc')} <strong>{substituteDialog.className}</strong>
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto max-h-[calc(80vh-120px)]">
@@ -1251,9 +1252,9 @@ const Index = () => {
       <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Seleccionar Grupo de WhatsApp</DialogTitle>
+            <DialogTitle>{t('adminDashboard.dialogs.selectWhatsAppGroup')}</DialogTitle>
             <DialogDescription>
-              Elige el grupo al que quieres enviar la notificación de ausencia para la clase <strong>{whatsappGroupDialog.classData?.name}</strong>
+              {t('adminDashboard.dialogs.selectWhatsAppGroupDesc')} <strong>{whatsappGroupDialog.classData?.name}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 mt-4">
@@ -1294,14 +1295,14 @@ const Index = () => {
                   <div>
                     <div className="font-semibold">{group.group_name}</div>
                     {group.trainer_profile_id && (
-                      <div className="text-xs text-muted-foreground mt-1">Grupo del profesor</div>
+                      <div className="text-xs text-muted-foreground mt-1">{t('adminDashboard.dialogs.teacherGroup')}</div>
                     )}
                   </div>
                 </Button>
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No hay grupos de WhatsApp configurados
+                {t('adminDashboard.dialogs.noWhatsAppGroups')}
               </p>
             )}
           </div>

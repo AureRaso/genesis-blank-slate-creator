@@ -12,7 +12,174 @@
     "filter": "Filter",
     "yes": "Yes",
     "no": "No",
-    "selectDate": "Select date"
+    "selectDate": "Select date",
+    "timeAgo": {
+      "minutes_one": "{{count}} minute ago",
+      "minutes_other": "{{count}} minutes ago",
+      "hours_one": "{{count}} hour ago",
+      "hours_other": "{{count}} hours ago",
+      "yesterday": "Yesterday",
+      "days": "{{count}} days ago"
+    },
+    "loadingHistory": "Loading history...",
+    "history": "History",
+    "attended": "Attended",
+    "late": "Late",
+    "early": "Early",
+    "cancelled": "Cancelled"
+  },
+  "trainerDashboard": {
+    "welcome": {
+      "greeting": "Hello, {{name}}!",
+      "defaultName": "Trainer",
+      "subtitle": "Manage your classes and students from here"
+    },
+    "stats": {
+      "totalStudents": "Total Students",
+      "scheduledClasses": "Scheduled Classes",
+      "todayTrainings": "Today's Trainings"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "students": "Students",
+      "manageStudents": "Manage students",
+      "scheduleClasses": "Schedule Classes",
+      "configureClasses": "Configure classes",
+      "todayAttendance": "Today's Attendance",
+      "viewAttendance": "View attendance"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "showLess": "Show less",
+      "showAll": "Show all",
+      "noActivity": "No recent activities",
+      "newStudentEnrolled": "New student enrolled",
+      "studentEnrolledIn": "{{name}} enrolled in your classes",
+      "newClassScheduled": "New class scheduled",
+      "classCreated": "Class \"{{name}}\" was created",
+      "newStudentsEnrolled": "New students enrolled",
+      "newStudentsThisWeek": "{{count}} new students this week",
+      "classesScheduled": "Classes scheduled",
+      "allClassesActive": "All your classes are active"
+    },
+    "notifications": {
+      "title": "Today's notifications",
+      "noNotifications": "No pending notifications",
+      "locked": "Locked",
+      "absences": "Absences:",
+      "willAttend": "Will attend:",
+      "substitutes": "Substitutes:",
+      "addSubstitute": "Add substitute",
+      "request": "Request:",
+      "noWhatsAppGroup": "No WhatsApp group configured",
+      "teacher": "Teacher"
+    },
+    "dialogs": {
+      "searchSubstitute": "Search Substitute",
+      "searchSubstituteDesc": "Search and add a substitute student for the class",
+      "selectWhatsAppGroup": "Select WhatsApp Group",
+      "selectWhatsAppGroupDesc": "Choose the group you want to send the absence notification for the class",
+      "teacherGroup": "Teacher's group",
+      "noWhatsAppGroups": "No WhatsApp groups configured"
+    }
+  },
+  "adminDashboard": {
+    "welcome": {
+      "greeting": "Hello, {{name}}!",
+      "subtitle": "Welcome to your administration panel",
+      "defaultName": "Admin"
+    },
+    "noProfile": {
+      "welcome": "Welcome",
+      "hello": "Hello,",
+      "user": "User",
+      "title": "Profile Configuration",
+      "description": "Your account is active but you need to complete your profile",
+      "contactAdmin": "Contact the administrator to configure your role and permissions."
+    },
+    "playerNoClub": {
+      "welcome": "Welcome,",
+      "player": "Player",
+      "title": "No club assigned",
+      "description": "You need to be associated with a club to access all features",
+      "contactAdmin": "Contact the system administrator to be assigned to a club. Once assigned, you will be able to see the leagues, classes, and trainers of your club."
+    },
+    "payments": {
+      "title": "Payments in Review",
+      "noPayments": "No payments in review",
+      "classes": "classes",
+      "method": "Method:",
+      "rejected": "Payment rejected. Please verify the data and try again.",
+      "showLess": "Show less",
+      "showAll": "Show all"
+    },
+    "notifications": {
+      "title": "Today's notifications",
+      "noNotifications": "No pending notifications",
+      "locked": "Locked",
+      "absences": "Absences:",
+      "willAttend": "Will attend:",
+      "substitutes": "Substitutes:",
+      "addSubstitute": "Add substitute",
+      "noWhatsAppGroup": "No WhatsApp group configured",
+      "teacher": "Teacher",
+      "request": "Request:"
+    },
+    "dialogs": {
+      "searchSubstitute": "Search Substitute",
+      "searchSubstituteDesc": "Search and add a substitute student for the class",
+      "selectWhatsAppGroup": "Select WhatsApp Group",
+      "selectWhatsAppGroupDesc": "Choose the group you want to send the absence notification for the class",
+      "teacherGroup": "Teacher's group",
+      "noWhatsAppGroups": "No WhatsApp groups configured"
+    },
+    "activity": {
+      "newTrainerAdded": "New trainer added",
+      "trainerJoined": "{{name}} joined as a trainer",
+      "newPlayersRegistered": "New players registered",
+      "playersThisWeek": "{{count}} players registered this week",
+      "classesUpdated": "Scheduled classes updated",
+      "newClassesAdded": "{{count}} new classes added for November"
+    },
+    "newPlayerRegistered": "New player registered",
+    "playerRegisteredInClub": "{{name}} registered in the club",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "stats": {
+      "activeClubs": "Active Clubs",
+      "estimatedRevenue": "Estimated Revenue",
+      "pendingMatches": "Pending Matches",
+      "totalPlayers": "Total Players",
+      "scheduledClasses": "Scheduled Classes",
+      "todayTrainings": "Today's Trainings"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createLeague": "Create League",
+      "createLeagueDesc": "Set up a new padel league",
+      "players": "Players",
+      "playersDesc": "View and manage registered players",
+      "viewPlayers": "View Players",
+      "viewPlayersDesc": "View club players",
+      "trainers": "Trainers",
+      "trainersDesc": "View and manage club trainers",
+      "scheduleClasses": "Schedule Classes",
+      "scheduleClassesDesc": "Configure training classes",
+      "myClasses": "My Classes",
+      "myClassesDesc": "View my scheduled classes"
+    }
   },
   "auth": {
     "signIn": "Sign In",

@@ -12,7 +12,21 @@
     "filter": "Filtrar",
     "yes": "Sí",
     "no": "No",
-    "selectDate": "Selecciona fecha"
+    "selectDate": "Selecciona fecha",
+    "timeAgo": {
+      "minutes_one": "Hace {{count}} minuto",
+      "minutes_other": "Hace {{count}} minutos",
+      "hours_one": "Hace {{count}} hora",
+      "hours_other": "Hace {{count}} horas",
+      "yesterday": "Ayer",
+      "days": "Hace {{count}} días"
+    },
+    "loadingHistory": "Cargando historial...",
+    "history": "Historial",
+    "attended": "Asistió",
+    "late": "Tardíos",
+    "early": "Anticipados",
+    "cancelled": "Canceladas"
   },
   "auth": {
     "signIn": "Iniciar Sesión",
@@ -56,6 +70,159 @@
     "waitlistNotifications": {
       "title": "Lista de Espera",
       "description": "Gestiona las notificaciones de estudiantes en lista de espera"
+    }
+  },
+  "trainerDashboard": {
+    "welcome": {
+      "greeting": "¡Hola, {{name}}!",
+      "defaultName": "Entrenador",
+      "subtitle": "Gestiona tus clases y alumnos desde aquí"
+    },
+    "stats": {
+      "totalStudents": "Alumnos Totales",
+      "scheduledClasses": "Clases Programadas",
+      "todayTrainings": "Entrenamientos Hoy"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "students": "Alumnos",
+      "manageStudents": "Gestionar alumnos",
+      "scheduleClasses": "Programar Clases",
+      "configureClasses": "Configurar clases",
+      "todayAttendance": "Asistencia Hoy",
+      "viewAttendance": "Ver asistencia"
+    },
+    "activity": {
+      "title": "Actividad Reciente",
+      "showLess": "Ver menos",
+      "showAll": "Ver todas",
+      "noActivity": "No hay actividades recientes",
+      "newStudentEnrolled": "Nuevo alumno inscrito",
+      "studentEnrolledIn": "{{name}} se inscribió en tus clases",
+      "newClassScheduled": "Nueva clase programada",
+      "classCreated": "Se creó la clase \"{{name}}\"",
+      "newStudentsEnrolled": "Nuevos alumnos inscritos",
+      "newStudentsThisWeek": "{{count}} alumnos nuevos esta semana",
+      "classesScheduled": "Clases programadas",
+      "allClassesActive": "Todas tus clases están activas"
+    },
+    "notifications": {
+      "title": "Notificaciones de hoy",
+      "noNotifications": "No hay notificaciones pendientes",
+      "locked": "Bloqueada",
+      "absences": "Ausencias:",
+      "willAttend": "Asistirán:",
+      "substitutes": "Sustitutos:",
+      "addSubstitute": "Añadir sustituto",
+      "request": "Solicitud:",
+      "noWhatsAppGroup": "No hay grupo de WhatsApp configurado",
+      "teacher": "Profesor"
+    },
+    "dialogs": {
+      "searchSubstitute": "Buscar Sustituto",
+      "searchSubstituteDesc": "Busca y añade un alumno sustituto para la clase",
+      "selectWhatsAppGroup": "Seleccionar Grupo de WhatsApp",
+      "selectWhatsAppGroupDesc": "Elige el grupo al que quieres enviar la notificación de ausencia para la clase",
+      "teacherGroup": "Grupo del profesor",
+      "noWhatsAppGroups": "No hay grupos de WhatsApp configurados"
+    }
+  },
+  "adminDashboard": {
+    "welcome": {
+      "greeting": "¡Hola, {{name}}!",
+      "subtitle": "Bienvenido a tu panel de administración",
+      "defaultName": "Admin"
+    },
+    "noProfile": {
+      "welcome": "Bienvenido",
+      "hello": "Hola,",
+      "user": "Usuario",
+      "title": "Configuración de Perfil",
+      "description": "Tu cuenta está activa pero necesitas completar tu perfil",
+      "contactAdmin": "Contacta con el administrador para configurar tu rol y permisos."
+    },
+    "playerNoClub": {
+      "welcome": "Bienvenido,",
+      "player": "Jugador",
+      "title": "Club no asignado",
+      "description": "Necesitas estar asociado a un club para acceder a todas las funcionalidades",
+      "contactAdmin": "Contacta con el administrador del sistema para que te asigne a un club. Una vez asignado, podrás ver las ligas, clases y entrenadores de tu club."
+    },
+    "payments": {
+      "title": "Pagos en Revisión",
+      "noPayments": "No hay pagos en revisión",
+      "classes": "clases",
+      "method": "Método:",
+      "rejected": "Pago rechazado. Por favor, verifica los datos e inténtalo nuevamente.",
+      "showLess": "Ver menos",
+      "showAll": "Ver todos"
+    },
+    "notifications": {
+      "title": "Notificaciones de hoy",
+      "noNotifications": "No hay notificaciones pendientes",
+      "locked": "Bloqueada",
+      "absences": "Ausencias:",
+      "willAttend": "Asistirán:",
+      "substitutes": "Sustitutos:",
+      "addSubstitute": "Añadir sustituto",
+      "noWhatsAppGroup": "No hay grupo de WhatsApp configurado",
+      "teacher": "Profesor",
+      "request": "Solicitud:"
+    },
+    "dialogs": {
+      "searchSubstitute": "Buscar Sustituto",
+      "searchSubstituteDesc": "Busca y añade un alumno sustituto para la clase",
+      "selectWhatsAppGroup": "Seleccionar Grupo de WhatsApp",
+      "selectWhatsAppGroupDesc": "Elige el grupo al que quieres enviar la notificación de ausencia para la clase",
+      "teacherGroup": "Grupo del profesor",
+      "noWhatsAppGroups": "No hay grupos de WhatsApp configurados"
+    },
+    "activity": {
+      "newTrainerAdded": "Nuevo entrenador añadido",
+      "trainerJoined": "{{name}} se unió como entrenador",
+      "newPlayersRegistered": "Nuevos jugadores registrados",
+      "playersThisWeek": "{{count}} jugadores se registraron esta semana",
+      "classesUpdated": "Clases programadas actualizadas",
+      "newClassesAdded": "Se añadieron {{count}} nuevas clases para noviembre"
+    },
+    "newPlayerRegistered": "Nuevo jugador registrado",
+    "playerRegisteredInClub": "{{name}} se registró en el club",
+    "months": {
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
+    "stats": {
+      "activeClubs": "Clubes Activos",
+      "estimatedRevenue": "Ingresos Estimados",
+      "pendingMatches": "Partidos Pendientes",
+      "totalPlayers": "Jugadores Totales",
+      "scheduledClasses": "Clases Programadas",
+      "todayTrainings": "Entrenamientos Hoy"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "createLeague": "Crear Liga",
+      "createLeagueDesc": "Configura una nueva liga de pádel",
+      "players": "Jugadores",
+      "playersDesc": "Ver y administrar jugadores registrados",
+      "viewPlayers": "Ver Jugadores",
+      "viewPlayersDesc": "Ver jugadores del club",
+      "trainers": "Entrenadores",
+      "trainersDesc": "Ver y administrar entrenadores del club",
+      "scheduleClasses": "Programar Clases",
+      "scheduleClassesDesc": "Configurar clases de entrenamiento",
+      "myClasses": "Mis Clases",
+      "myClassesDesc": "Ver mis clases programadas"
     }
   },
   "language": {

@@ -10,9 +10,11 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useTodayAttendance } from "@/hooks/useTodayAttendance";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const DashboardStats = () => {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const { data: leagues } = useLeagues();
   const { data: players } = usePlayers();
   const { data: matches } = useMatches();
@@ -42,7 +44,7 @@ const DashboardStats = () => {
   // Using only orange (primary) and neutral grays for brand consistency
   const clubStats = [
     {
-      title: "Clubes Activos",
+      title: t('adminDashboard.stats.activeClubs'),
       value: activeClubs,
       icon: Building2,
       color: "text-primary",
@@ -53,7 +55,7 @@ const DashboardStats = () => {
 
   const leagueStats = leaguesEnabled ? [
     {
-      title: "Ingresos Estimados",
+      title: t('adminDashboard.stats.estimatedRevenue'),
       value: `€${totalRevenue}`,
       icon: Euro,
       color: "text-primary",
@@ -64,7 +66,7 @@ const DashboardStats = () => {
 
   const matchStats = matchesEnabled ? [
     {
-      title: "Partidos Pendientes",
+      title: t('adminDashboard.stats.pendingMatches'),
       value: pendingMatches,
       icon: Calendar,
       color: "text-primary",
@@ -75,7 +77,7 @@ const DashboardStats = () => {
 
   const coreStats = [
     {
-      title: "Jugadores Totales",
+      title: t('adminDashboard.stats.totalPlayers'),
       value: totalPlayers,
       icon: Users,
       color: "text-primary",
@@ -83,7 +85,7 @@ const DashboardStats = () => {
       border: "border-primary/20"
     },
     {
-      title: "Clases Programadas",
+      title: t('adminDashboard.stats.scheduledClasses'),
       value: totalProgrammedClasses,
       icon: GraduationCap,
       color: "text-primary",
@@ -91,7 +93,7 @@ const DashboardStats = () => {
       border: "border-primary/20"
     },
     {
-      title: "Entrenamientos Hoy",
+      title: t('adminDashboard.stats.todayTrainings'),
       value: totalTodayClasses,
       icon: Clock,
       color: "text-primary",

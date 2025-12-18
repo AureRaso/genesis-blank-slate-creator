@@ -1,5 +1,5 @@
 
-import { LogOut, Settings, ChevronDown, Wallet } from "lucide-react";
+import { LogOut, Settings, ChevronDown, Wallet, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,13 +8,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
 
 const UserMenu = () => {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
+  const { language, changeLanguage } = useLanguage();
+
+  const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
 
   if (!profile) return null;
 
@@ -87,6 +100,31 @@ const UserMenu = () => {
             <span>{t('userMenu.settings')}</span>
           </a>
         </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Globe className="mr-2 h-4 w-4" />
+            <span className="flex items-center gap-2">
+              Idioma
+              <span className="text-base">{currentLang.flag}</span>
+            </span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {LANGUAGES.map((lang) => (
+              <DropdownMenuItem
+                key={lang.code}
+                onClick={() => changeLanguage(lang.code)}
+                className={language === lang.code ? 'bg-accent' : ''}
+              >
+                <span className="text-base mr-2">{lang.flag}</span>
+                <span>{lang.name}</span>
+                {language === lang.code && (
+                  <span className="ml-auto text-muted-foreground">✓</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
           <span>{t('userMenu.signOut')}</span>

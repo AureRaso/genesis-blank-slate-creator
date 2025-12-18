@@ -3,6 +3,7 @@ import { Plus, Users, Calendar, GraduationCap, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useTranslation } from "react-i18next";
 
 interface QuickActionsProps {
   showTitle?: boolean;
@@ -13,52 +14,60 @@ const QuickActions = ({ showTitle = true, hideScheduleClass = false }: QuickActi
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const { leagues: leaguesEnabled } = useFeatureFlags();
+  const { t } = useTranslation();
 
   const adminActions = [
     ...(leaguesEnabled ? [{
-      title: "Crear Liga",
-      description: "Configura una nueva liga de pádel",
+      title: t('adminDashboard.quickActions.createLeague'),
+      description: t('adminDashboard.quickActions.createLeagueDesc'),
       icon: Plus,
-      action: () => navigate("/dashboard/leagues")
+      action: () => navigate("/dashboard/leagues"),
+      key: "createLeague"
     }] : []),
     {
-      title: "Jugadores",
-      description: "Ver y administrar jugadores registrados",
+      title: t('adminDashboard.quickActions.players'),
+      description: t('adminDashboard.quickActions.playersDesc'),
       icon: Users,
-      action: () => navigate("/dashboard/players")
+      action: () => navigate("/dashboard/players"),
+      key: "players"
     },
     {
-      title: "Entrenadores",
-      description: "Ver y administrar entrenadores del club",
+      title: t('adminDashboard.quickActions.trainers'),
+      description: t('adminDashboard.quickActions.trainersDesc'),
       icon: UserCheck,
-      action: () => navigate("/dashboard/trainers")
+      action: () => navigate("/dashboard/trainers"),
+      key: "trainers"
     },
     {
-      title: "Programar Clases",
-      description: "Configurar clases de entrenamiento",
+      title: t('adminDashboard.quickActions.scheduleClasses'),
+      description: t('adminDashboard.quickActions.scheduleClassesDesc'),
       icon: GraduationCap,
-      action: () => navigate("/dashboard/scheduled-classes")
+      action: () => navigate("/dashboard/scheduled-classes"),
+      key: "scheduleClasses"
     }
   ];
 
   const playerActions = [
     ...(leaguesEnabled ? [{
-      title: "Crear Liga",
-      description: "Configura una nueva liga de pádel",
+      title: t('adminDashboard.quickActions.createLeague'),
+      description: t('adminDashboard.quickActions.createLeagueDesc'),
       icon: Plus,
-      action: () => navigate("/dashboard/leagues")
+      action: () => navigate("/dashboard/leagues"),
+      key: "createLeague"
     }] : []),
     {
-      title: "Ver Jugadores",
-      description: "Ver jugadores del club",
+      title: t('adminDashboard.quickActions.viewPlayers'),
+      description: t('adminDashboard.quickActions.viewPlayersDesc'),
       icon: Users,
-      action: () => navigate("/dashboard/players")
+      action: () => navigate("/dashboard/players"),
+      key: "viewPlayers"
     },
     {
-      title: "Mis Clases",
-      description: "Ver mis clases programadas",
+      title: t('adminDashboard.quickActions.myClasses'),
+      description: t('adminDashboard.quickActions.myClassesDesc'),
       icon: GraduationCap,
-      action: () => navigate("/dashboard/scheduled-classes")
+      action: () => navigate("/dashboard/scheduled-classes"),
+      key: "myClasses"
     }
   ];
 
@@ -66,7 +75,7 @@ const QuickActions = ({ showTitle = true, hideScheduleClass = false }: QuickActi
 
   // Filter out "Programar Clases" if hideScheduleClass is true
   if (hideScheduleClass) {
-    actions = actions.filter(action => action.title !== "Programar Clases");
+    actions = actions.filter(action => action.key !== "scheduleClasses");
   }
 
   return (
@@ -74,7 +83,7 @@ const QuickActions = ({ showTitle = true, hideScheduleClass = false }: QuickActi
       {showTitle && (
         <div className="mb-3 sm:mb-4">
           <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-            Acciones Rápidas
+            {t('adminDashboard.quickActions.title')}
           </h3>
         </div>
       )}

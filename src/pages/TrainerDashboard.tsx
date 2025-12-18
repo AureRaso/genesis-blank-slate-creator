@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp, Check, X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ import {
 
 const TrainerDashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
@@ -166,8 +168,8 @@ const TrainerDashboard = () => {
             activities.push({
               type: 'new_student',
               icon: UserPlus,
-              title: 'Nuevo alumno inscrito',
-              description: `${studentProfile?.full_name || 'Un alumno'} se inscribió en tus clases`,
+              title: t('trainerDashboard.activity.newStudentEnrolled'),
+              description: t('trainerDashboard.activity.studentEnrolledIn', { name: studentProfile?.full_name || t('trainerDashboard.welcome.defaultName') }),
               timestamp: newStudents[0].created_at,
               color: 'primary'
             });
@@ -188,8 +190,8 @@ const TrainerDashboard = () => {
           activities.push({
             type: 'new_class',
             icon: CalendarPlus,
-            title: 'Nueva clase programada',
-            description: `Se creó la clase "${newClasses[0].name}"`,
+            title: t('trainerDashboard.activity.newClassScheduled'),
+            description: t('trainerDashboard.activity.classCreated', { name: newClasses[0].name }),
             timestamp: newClasses[0].created_at,
             color: 'gray'
           });
@@ -207,16 +209,16 @@ const TrainerDashboard = () => {
           {
             type: 'new_student',
             icon: UserPlus,
-            title: 'Nuevos alumnos inscritos',
-            description: '2 alumnos nuevos esta semana',
+            title: t('trainerDashboard.activity.newStudentsEnrolled'),
+            description: t('trainerDashboard.activity.newStudentsThisWeek', { count: 2 }),
             timestamp: twoHoursAgo.toISOString(),
             color: 'primary'
           },
           {
             type: 'new_class',
             icon: CalendarPlus,
-            title: 'Clases programadas',
-            description: 'Todas tus clases están activas',
+            title: t('trainerDashboard.activity.classesScheduled'),
+            description: t('trainerDashboard.activity.allClassesActive'),
             timestamp: twoHoursAgo.toISOString(),
             color: 'gray'
           }
@@ -317,10 +319,10 @@ const TrainerDashboard = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffMins < 60) return t('common.timeAgo.minutes', { count: diffMins });
+    if (diffHours < 24) return t('common.timeAgo.hours', { count: diffHours });
+    if (diffDays === 1) return t('common.timeAgo.yesterday');
+    if (diffDays < 7) return t('common.timeAgo.days', { count: diffDays });
     return past.toLocaleDateString();
   };
 
@@ -329,7 +331,7 @@ const TrainerDashboard = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -346,7 +348,7 @@ const TrainerDashboard = () => {
   // Top 3 stats for full width
   const topStats = [
     {
-      title: "Alumnos Totales",
+      title: t('trainerDashboard.stats.totalStudents'),
       value: totalStudentsCount,
       icon: Users,
       color: "text-primary",
@@ -354,7 +356,7 @@ const TrainerDashboard = () => {
       border: "border-primary/20"
     },
     {
-      title: "Clases Programadas",
+      title: t('trainerDashboard.stats.scheduledClasses'),
       value: totalProgrammedClasses,
       icon: GraduationCap,
       color: "text-primary",
@@ -362,7 +364,7 @@ const TrainerDashboard = () => {
       border: "border-primary/20"
     },
     {
-      title: "Entrenamientos Hoy",
+      title: t('trainerDashboard.stats.todayTrainings'),
       value: totalTodayClasses,
       icon: Clock,
       color: "text-primary",
@@ -374,27 +376,27 @@ const TrainerDashboard = () => {
   // Quick actions
   const quickActions = [
     {
-      title: "Alumnos",
-      description: "Gestionar alumnos",
+      title: t('trainerDashboard.quickActions.students'),
+      description: t('trainerDashboard.quickActions.manageStudents'),
       icon: Users,
       action: () => navigate("/dashboard/students")
     },
     {
-      title: "Programar Clases",
-      description: "Configurar clases",
+      title: t('trainerDashboard.quickActions.scheduleClasses'),
+      description: t('trainerDashboard.quickActions.configureClasses'),
       icon: GraduationCap,
       action: () => navigate("/dashboard/scheduled-classes")
     },
     {
-      title: "Asistencia Hoy",
-      description: "Ver asistencia",
+      title: t('trainerDashboard.quickActions.todayAttendance'),
+      description: t('trainerDashboard.quickActions.viewAttendance'),
       icon: Clock,
       action: () => navigate("/dashboard/today-attendance")
     }
   ];
 
-  // Filter quick actions for mobile (remove "Programar Clases")
-  const mobileQuickActions = quickActions.filter(action => action.title !== "Programar Clases");
+  // Filter quick actions for mobile (remove "Schedule Classes")
+  const mobileQuickActions = quickActions.filter(action => action.title !== t('trainerDashboard.quickActions.scheduleClasses'));
 
   return (
     <div className="min-h-screen overflow-y-auto flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 lg:p-6">
@@ -406,10 +408,10 @@ const TrainerDashboard = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#10172a]">
-              ¡Hola, {profile?.full_name?.split(' ')[0] || 'Entrenador'}! 👋
+              {t('trainerDashboard.welcome.greeting', { name: profile?.full_name?.split(' ')[0] || t('trainerDashboard.welcome.defaultName') })} 👋
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              Gestiona tus clases y alumnos desde aquí
+              {t('trainerDashboard.welcome.subtitle')}
             </p>
           </div>
         </div>
@@ -451,7 +453,7 @@ const TrainerDashboard = () => {
       <div className="hidden md:block">
         <div className="mb-3 sm:mb-4">
           <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-            Acciones Rápidas
+            {t('trainerDashboard.quickActions.title')}
           </h3>
         </div>
         <div className="flex-1">
@@ -522,7 +524,7 @@ const TrainerDashboard = () => {
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              Actividad Reciente
+              {t('trainerDashboard.activity.title')}
             </h3>
             {recentActivities && recentActivities.length > 3 && (
               <Button
@@ -533,11 +535,11 @@ const TrainerDashboard = () => {
               >
                 {showAllActivities ? (
                   <>
-                    Ver menos <ChevronUp className="h-3 w-3 ml-1" />
+                    {t('trainerDashboard.activity.showLess')} <ChevronUp className="h-3 w-3 ml-1" />
                   </>
                 ) : (
                   <>
-                    Ver todas ({recentActivities.length}) <ChevronDown className="h-3 w-3 ml-1" />
+                    {t('trainerDashboard.activity.showAll')} ({recentActivities.length}) <ChevronDown className="h-3 w-3 ml-1" />
                   </>
                 )}
               </Button>
@@ -565,7 +567,7 @@ const TrainerDashboard = () => {
               })
             ) : (
               <div className="text-center py-6 sm:py-8 text-gray-500">
-                <p className="text-xs sm:text-sm">No hay actividades recientes</p>
+                <p className="text-xs sm:text-sm">{t('trainerDashboard.activity.noActivity')}</p>
               </div>
             )}
           </div>
@@ -575,7 +577,7 @@ const TrainerDashboard = () => {
         <div>
           <div className="mb-3 sm:mb-4">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              Notificaciones de hoy
+              {t('trainerDashboard.notifications.title')}
             </h3>
           </div>
         <div className="space-y-3">
@@ -620,7 +622,7 @@ const TrainerDashboard = () => {
             if (notifications.length === 0) {
               return (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No hay notificaciones pendientes</p>
+                  <p className="text-sm">{t('trainerDashboard.notifications.noNotifications')}</p>
                 </div>
               );
             }
@@ -660,7 +662,7 @@ const TrainerDashboard = () => {
                           </p>
                           {isLocked && (
                             <Badge variant="outline" className="text-[10px] bg-gray-200 text-gray-700 border-gray-300">
-                              Bloqueada
+                              {t('trainerDashboard.notifications.locked')}
                             </Badge>
                           )}
                         </div>
@@ -689,7 +691,7 @@ const TrainerDashboard = () => {
                       {/* Absent Students */}
                       {absentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.absences')}</p>
                           {absentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <X className="h-3 w-3 text-red-600 flex-shrink-0" />
@@ -707,7 +709,7 @@ const TrainerDashboard = () => {
                       {/* Present Students */}
                       {presentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.willAttend')}</p>
                           {presentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
@@ -720,7 +722,7 @@ const TrainerDashboard = () => {
                       {/* Substitute Students */}
                       {substituteStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.substitutes')}</p>
                           {substituteStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
@@ -751,7 +753,7 @@ const TrainerDashboard = () => {
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
-                      Añadir sustituto
+                      {t('trainerDashboard.notifications.addSubstitute')}
                     </Button>
                     <Button
                       size="sm"
@@ -770,7 +772,7 @@ const TrainerDashboard = () => {
 
                         // Si solo hay un grupo o ninguno, usar el grupo actual
                         if (!whatsappGroup?.group_chat_id) {
-                          alert('No hay grupo de WhatsApp configurado');
+                          alert(t('trainerDashboard.notifications.noWhatsAppGroup'));
                           return;
                         }
 
@@ -786,7 +788,7 @@ const TrainerDashboard = () => {
                           className: classData.name,
                           classDate: today,
                           classTime: classData.start_time,
-                          trainerName: classData.trainer?.full_name || 'Profesor',
+                          trainerName: classData.trainer?.full_name || t('trainerDashboard.notifications.teacher'),
                           waitlistUrl,
                           availableSlots,
                           classId: classData.id,
@@ -832,7 +834,7 @@ const TrainerDashboard = () => {
                           {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                          {t('trainerDashboard.notifications.request')} {format(new Date(request.joined_at), 'HH:mm')}
                         </p>
                       </div>
                     </div>
@@ -880,7 +882,7 @@ const TrainerDashboard = () => {
       <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
-            Notificaciones de hoy
+            {t('trainerDashboard.notifications.title')}
           </h3>
         </div>
         <div className="space-y-3">
@@ -925,7 +927,7 @@ const TrainerDashboard = () => {
             if (notifications.length === 0) {
               return (
                 <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">No hay notificaciones pendientes</p>
+                  <p className="text-sm">{t('trainerDashboard.notifications.noNotifications')}</p>
                 </div>
               );
             }
@@ -965,7 +967,7 @@ const TrainerDashboard = () => {
                           </p>
                           {isLocked && (
                             <Badge variant="outline" className="text-[10px] bg-gray-200 text-gray-700 border-gray-300">
-                              Bloqueada
+                              {t('trainerDashboard.notifications.locked')}
                             </Badge>
                           )}
                         </div>
@@ -994,7 +996,7 @@ const TrainerDashboard = () => {
                       {/* Absent Students */}
                       {absentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Ausencias:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.absences')}</p>
                           {absentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <X className="h-3 w-3 text-red-600 flex-shrink-0" />
@@ -1012,7 +1014,7 @@ const TrainerDashboard = () => {
                       {/* Present Students */}
                       {presentStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Asistirán:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.willAttend')}</p>
                           {presentStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
@@ -1025,7 +1027,7 @@ const TrainerDashboard = () => {
                       {/* Substitute Students */}
                       {substituteStudents.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-gray-700 mb-1">Sustitutos:</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">{t('trainerDashboard.notifications.substitutes')}</p>
                           {substituteStudents.map((participant) => (
                             <div key={participant.id} className="flex items-center gap-2 text-xs py-1">
                               <UserPlus className="h-3 w-3 text-blue-600 flex-shrink-0" />
@@ -1056,7 +1058,7 @@ const TrainerDashboard = () => {
                       className="flex-1"
                     >
                       <UserPlus className="h-3 w-3 mr-1" />
-                      Añadir sustituto
+                      {t('trainerDashboard.notifications.addSubstitute')}
                     </Button>
                     <Button
                       size="sm"
@@ -1075,7 +1077,7 @@ const TrainerDashboard = () => {
 
                         // Si solo hay un grupo o ninguno, usar el grupo actual
                         if (!whatsappGroup?.group_chat_id) {
-                          alert('No hay grupo de WhatsApp configurado');
+                          alert(t('trainerDashboard.notifications.noWhatsAppGroup'));
                           return;
                         }
 
@@ -1091,7 +1093,7 @@ const TrainerDashboard = () => {
                           className: classData.name,
                           classDate: today,
                           classTime: classData.start_time,
-                          trainerName: classData.trainer?.full_name || 'Profesor',
+                          trainerName: classData.trainer?.full_name || t('trainerDashboard.notifications.teacher'),
                           waitlistUrl,
                           availableSlots,
                           classId: classData.id,
@@ -1137,7 +1139,7 @@ const TrainerDashboard = () => {
                           {request.programmed_class.name} · {request.programmed_class.start_time.substring(0, 5)}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Solicitud: {format(new Date(request.joined_at), 'HH:mm')}
+                          {t('trainerDashboard.notifications.request')} {format(new Date(request.joined_at), 'HH:mm')}
                         </p>
                       </div>
                     </div>
@@ -1184,9 +1186,9 @@ const TrainerDashboard = () => {
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
         <SheetContent side="bottom" className="max-h-[80vh] h-auto rounded-t-[30px]">
           <SheetHeader>
-            <SheetTitle>Buscar Sustituto</SheetTitle>
+            <SheetTitle>{t('trainerDashboard.dialogs.searchSubstitute')}</SheetTitle>
             <SheetDescription>
-              Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
+              {t('trainerDashboard.dialogs.searchSubstituteDesc')} <strong>{substituteDialog.className}</strong>
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto max-h-[calc(80vh-120px)]">
@@ -1208,9 +1210,9 @@ const TrainerDashboard = () => {
       <Dialog open={whatsappGroupDialog.open} onOpenChange={(open) => setWhatsappGroupDialog({ ...whatsappGroupDialog, open })}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Seleccionar Grupo de WhatsApp</DialogTitle>
+            <DialogTitle>{t('trainerDashboard.dialogs.selectWhatsAppGroup')}</DialogTitle>
             <DialogDescription>
-              Elige el grupo al que quieres enviar la notificación de ausencia para la clase <strong>{whatsappGroupDialog.classData?.name}</strong>
+              {t('trainerDashboard.dialogs.selectWhatsAppGroupDesc')} <strong>{whatsappGroupDialog.classData?.name}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 mt-4">
@@ -1253,14 +1255,14 @@ const TrainerDashboard = () => {
                   <div>
                     <div className="font-semibold">{group.group_name}</div>
                     {group.trainer_profile_id && (
-                      <div className="text-xs text-muted-foreground mt-1">Grupo del profesor</div>
+                      <div className="text-xs text-muted-foreground mt-1">{t('trainerDashboard.dialogs.teacherGroup')}</div>
                     )}
                   </div>
                 </Button>
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No hay grupos de WhatsApp configurados
+                {t('trainerDashboard.dialogs.noWhatsAppGroups')}
               </p>
             )}
           </div>
