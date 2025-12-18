@@ -11,6 +11,7 @@ import { ArrowLeft, UserCheck } from "lucide-react";
 import { useClubs, useAdminClubs } from "@/hooks/useClubs";
 import { useCreateTrainer, useUpdateTrainer, Trainer } from "@/hooks/useTrainers";
 import { PhoneInput } from "@/components/PhoneInput";
+import { useTranslation } from "react-i18next";
 
 const createFormSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
@@ -37,6 +38,7 @@ interface TrainerFormProps {
 }
 
 const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
+  const { t } = useTranslation();
   const { data: clubs } = useAdminClubs();
   const createMutation = useCreateTrainer();
   const updateMutation = useUpdateTrainer();
@@ -101,7 +103,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold text-black">
-            Editar Profesor
+            {t('trainersPage.trainerForm.editTitle')}
           </h1>
         </div>
 
@@ -109,7 +111,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <UserCheck className="h-5 w-5" />
-              <span>Datos del Profesor</span>
+              <span>{t('trainersPage.trainerForm.cardTitle')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -117,12 +119,12 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
               <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-medium text-gray-900">Información del perfil</h3>
+                    <h3 className="font-medium text-gray-900">{t('trainersPage.trainerForm.profileInfo.title')}</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Nombre: {trainer.profiles?.full_name || 'No disponible'}
+                      {t('trainersPage.trainerForm.profileInfo.name')} {trainer.profiles?.full_name || t('trainersPage.trainerForm.profileInfo.notAvailable')}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Email: {trainer.profiles?.email || 'No disponible'}
+                      {t('trainersPage.trainerForm.profileInfo.email')} {trainer.profiles?.email || t('trainersPage.trainerForm.profileInfo.notAvailable')}
                     </p>
                   </div>
 
@@ -131,9 +133,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                     name="specialty"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Especialidad (opcional)</FormLabel>
+                        <FormLabel>{t('trainersPage.trainerForm.fields.specialty')}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Iniciación, Técnica avanzada..." {...field} />
+                          <Input placeholder={t('trainersPage.trainerForm.fields.specialtyPlaceholder')} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -166,7 +168,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>Profesor activo</FormLabel>
+                          <FormLabel>{t('trainersPage.trainerForm.fields.isActive')}</FormLabel>
                         </div>
                       </FormItem>
                     )}
@@ -175,20 +177,20 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
 
                 <div className="flex justify-end space-x-4">
                   <Button type="button" variant="outline" onClick={onClose}>
-                    Cancelar
+                    {t('trainersPage.trainerForm.buttons.cancel')}
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? (
                       <div className="flex items-center gap-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Actualizando...
+                        {t('trainersPage.trainerForm.buttons.updating')}
                       </div>
                     ) : (
-                      'Actualizar Profesor'
+                      t('trainersPage.trainerForm.buttons.updateTrainer')
                     )}
                   </Button>
                 </div>
@@ -207,7 +209,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold text-black">
-          Nuevo Profesor
+          {t('trainersPage.trainerForm.newTitle')}
         </h1>
       </div>
 
@@ -215,10 +217,10 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <UserCheck className="h-5 w-5" />
-            <span>Datos del Profesor</span>
+            <span>{t('trainersPage.trainerForm.cardTitle')}</span>
           </CardTitle>
           <CardDescription>
-            Crea un nuevo profesor en el sistema. Se creará automáticamente un usuario con contraseña temporal: 123456
+            {t('trainersPage.trainerForm.cardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -230,9 +232,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="full_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre Completo</FormLabel>
+                      <FormLabel>{t('trainersPage.trainerForm.fields.fullName')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Juan Pérez García" {...field} />
+                        <Input placeholder={t('trainersPage.trainerForm.fields.fullNamePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,12 +246,12 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t('trainersPage.trainerForm.fields.email')}</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="juan@example.com" {...field} />
+                        <Input type="email" placeholder={t('trainersPage.trainerForm.fields.emailPlaceholder')} {...field} />
                       </FormControl>
                       <FormDescription>
-                        Este será el email de acceso al sistema
+                        {t('trainersPage.trainerForm.fields.emailDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -265,7 +267,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                         <PhoneInput
                           value={field.value}
                           onChange={field.onChange}
-                          label="Teléfono"
+                          label={t('trainersPage.trainerForm.fields.phone')}
                           required={true}
                         />
                       </FormControl>
@@ -279,9 +281,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Especialidad (opcional)</FormLabel>
+                      <FormLabel>{t('trainersPage.trainerForm.fields.specialty')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Iniciación, Técnica avanzada..." {...field} />
+                        <Input placeholder={t('trainersPage.trainerForm.fields.specialtyPlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -307,13 +309,13 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   name="club_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Club Asignado</FormLabel>
+                      <FormLabel>{t('trainersPage.trainerForm.fields.club')}</FormLabel>
                       <FormControl>
                         <select
                           {...field}
                           className="w-full p-2 border border-gray-300 rounded-md"
                         >
-                          <option value="">Selecciona un club</option>
+                          <option value="">{t('trainersPage.trainerForm.fields.clubPlaceholder')}</option>
                           {clubs?.map((club) => (
                             <option key={club.id} value={club.id}>
                               {club.name}
@@ -322,7 +324,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                         </select>
                       </FormControl>
                       <FormDescription>
-                        Selecciona el club donde podrá dar clases este profesor
+                        {t('trainersPage.trainerForm.fields.clubDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -341,7 +343,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Profesor activo</FormLabel>
+                        <FormLabel>{t('trainersPage.trainerForm.fields.isActive')}</FormLabel>
                       </div>
                     </FormItem>
                   )}
@@ -350,20 +352,20 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
 
               <div className="flex justify-end space-x-4">
                 <Button type="button" variant="outline" onClick={onClose}>
-                  Cancelar
+                  {t('trainersPage.trainerForm.buttons.cancel')}
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Creando...
+                      {t('trainersPage.trainerForm.buttons.creating')}
                     </div>
                   ) : (
-                    'Crear Profesor'
+                    t('trainersPage.trainerForm.buttons.createTrainer')
                   )}
                 </Button>
               </div>

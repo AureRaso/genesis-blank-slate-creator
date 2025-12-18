@@ -231,6 +231,70 @@
     "english": "Inglés",
     "italian": "Italiano"
   },
+  "trainersPage": {
+    "title": "Gestión de Profesores",
+    "newTrainer": "Nuevo Profesor",
+    "readOnlyAccess": {
+      "title": "Acceso de Solo Lectura",
+      "description": "Solo los administradores pueden crear y editar profesores."
+    },
+    "trainersList": {
+      "errorLoading": "Error al cargar los profesores",
+      "noTrainers": "No hay profesores registrados",
+      "noTrainersHint": "Crea el primer profesor para poder gestionar clases",
+      "createFirstTrainer": "Crear Primer Profesor",
+      "fallback": {
+        "nameNotAvailable": "Nombre no disponible",
+        "emailNotAvailable": "Email no disponible",
+        "clubNotAssigned": "Club no asignado"
+      },
+      "specialty": "Especialidad:",
+      "assignedClub": "Club asignado:",
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "deactivateDialog": {
+        "title": "¿Desactivar profesor?",
+        "description": "Esta acción desactivará al profesor \"{{name}}\". Podrás reactivarlo más tarde.",
+        "cancel": "Cancelar",
+        "confirm": "Desactivar"
+      }
+    },
+    "trainerForm": {
+      "editTitle": "Editar Profesor",
+      "newTitle": "Nuevo Profesor",
+      "cardTitle": "Datos del Profesor",
+      "cardDescription": "Crea un nuevo profesor en el sistema. Se creará automáticamente un usuario con contraseña temporal: 123456",
+      "profileInfo": {
+        "title": "Información del perfil",
+        "name": "Nombre:",
+        "email": "Email:",
+        "notAvailable": "No disponible"
+      },
+      "fields": {
+        "fullName": "Nombre Completo",
+        "fullNamePlaceholder": "Juan Pérez García",
+        "email": "Email",
+        "emailPlaceholder": "juan@example.com",
+        "emailDescription": "Este será el email de acceso al sistema",
+        "phone": "Teléfono",
+        "specialty": "Especialidad (opcional)",
+        "specialtyPlaceholder": "Iniciación, Técnica avanzada...",
+        "club": "Club Asignado",
+        "clubPlaceholder": "Selecciona un club",
+        "clubDescription": "Selecciona el club donde podrá dar clases este profesor",
+        "isActive": "Profesor activo"
+      },
+      "buttons": {
+        "cancel": "Cancelar",
+        "updating": "Actualizando...",
+        "updateTrainer": "Actualizar Profesor",
+        "creating": "Creando...",
+        "createTrainer": "Crear Profesor"
+      }
+    }
+  },
   "playersPage": {
     "title": {
       "admin": "Alumnos disponibles",

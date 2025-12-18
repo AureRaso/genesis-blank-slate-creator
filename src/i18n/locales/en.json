@@ -231,6 +231,70 @@
     "english": "English",
     "italian": "Italian"
   },
+  "trainersPage": {
+    "title": "Trainer Management",
+    "newTrainer": "New Trainer",
+    "readOnlyAccess": {
+      "title": "Read-Only Access",
+      "description": "Only administrators can create and edit trainers."
+    },
+    "trainersList": {
+      "errorLoading": "Error loading trainers",
+      "noTrainers": "No registered trainers",
+      "noTrainersHint": "Create the first trainer to be able to manage classes",
+      "createFirstTrainer": "Create First Trainer",
+      "fallback": {
+        "nameNotAvailable": "Name not available",
+        "emailNotAvailable": "Email not available",
+        "clubNotAssigned": "Club not assigned"
+      },
+      "specialty": "Specialty:",
+      "assignedClub": "Assigned club:",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "deactivateDialog": {
+        "title": "Deactivate trainer?",
+        "description": "This action will deactivate trainer \"{{name}}\". You can reactivate them later.",
+        "cancel": "Cancel",
+        "confirm": "Deactivate"
+      }
+    },
+    "trainerForm": {
+      "editTitle": "Edit Trainer",
+      "newTitle": "New Trainer",
+      "cardTitle": "Trainer Details",
+      "cardDescription": "Create a new trainer in the system. A user will be automatically created with temporary password: 123456",
+      "profileInfo": {
+        "title": "Profile information",
+        "name": "Name:",
+        "email": "Email:",
+        "notAvailable": "Not available"
+      },
+      "fields": {
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "John Smith",
+        "email": "Email",
+        "emailPlaceholder": "john@example.com",
+        "emailDescription": "This will be the email to access the system",
+        "phone": "Phone",
+        "specialty": "Specialty (optional)",
+        "specialtyPlaceholder": "Beginner, Advanced technique...",
+        "club": "Assigned Club",
+        "clubPlaceholder": "Select a club",
+        "clubDescription": "Select the club where this trainer can teach classes",
+        "isActive": "Active trainer"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "updating": "Updating...",
+        "updateTrainer": "Update Trainer",
+        "creating": "Creating...",
+        "createTrainer": "Create Trainer"
+      }
+    }
+  },
   "playersPage": {
     "title": {
       "admin": "Available Students",

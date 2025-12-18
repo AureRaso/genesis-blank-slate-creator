@@ -231,6 +231,70 @@
     "english": "Inglese",
     "italian": "Italiano"
   },
+  "trainersPage": {
+    "title": "Gestione Allenatori",
+    "newTrainer": "Nuovo Allenatore",
+    "readOnlyAccess": {
+      "title": "Accesso in Sola Lettura",
+      "description": "Solo gli amministratori possono creare e modificare gli allenatori."
+    },
+    "trainersList": {
+      "errorLoading": "Errore nel caricamento degli allenatori",
+      "noTrainers": "Nessun allenatore registrato",
+      "noTrainersHint": "Crea il primo allenatore per poter gestire le lezioni",
+      "createFirstTrainer": "Crea Primo Allenatore",
+      "fallback": {
+        "nameNotAvailable": "Nome non disponibile",
+        "emailNotAvailable": "Email non disponibile",
+        "clubNotAssigned": "Club non assegnato"
+      },
+      "specialty": "Specialità:",
+      "assignedClub": "Club assegnato:",
+      "status": {
+        "active": "Attivo",
+        "inactive": "Inattivo"
+      },
+      "deactivateDialog": {
+        "title": "Disattivare allenatore?",
+        "description": "Questa azione disattiverà l'allenatore \"{{name}}\". Potrai riattivarlo in seguito.",
+        "cancel": "Annulla",
+        "confirm": "Disattiva"
+      }
+    },
+    "trainerForm": {
+      "editTitle": "Modifica Allenatore",
+      "newTitle": "Nuovo Allenatore",
+      "cardTitle": "Dati dell'Allenatore",
+      "cardDescription": "Crea un nuovo allenatore nel sistema. Verrà creato automaticamente un utente con password temporanea: 123456",
+      "profileInfo": {
+        "title": "Informazioni profilo",
+        "name": "Nome:",
+        "email": "Email:",
+        "notAvailable": "Non disponibile"
+      },
+      "fields": {
+        "fullName": "Nome Completo",
+        "fullNamePlaceholder": "Mario Rossi",
+        "email": "Email",
+        "emailPlaceholder": "mario@example.com",
+        "emailDescription": "Questa sarà l'email per accedere al sistema",
+        "phone": "Telefono",
+        "specialty": "Specialità (opzionale)",
+        "specialtyPlaceholder": "Principianti, Tecnica avanzata...",
+        "club": "Club Assegnato",
+        "clubPlaceholder": "Seleziona un club",
+        "clubDescription": "Seleziona il club dove questo allenatore potrà tenere lezioni",
+        "isActive": "Allenatore attivo"
+      },
+      "buttons": {
+        "cancel": "Annulla",
+        "updating": "Aggiornamento...",
+        "updateTrainer": "Aggiorna Allenatore",
+        "creating": "Creazione...",
+        "createTrainer": "Crea Allenatore"
+      }
+    }
+  },
   "playersPage": {
     "title": {
       "admin": "Studenti Disponibili",

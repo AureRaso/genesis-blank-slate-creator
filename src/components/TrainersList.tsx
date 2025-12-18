@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useTrainers, useDeleteTrainer, Trainer, useAdminTrainers } from "@/hooks/useTrainers";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface TrainersListProps {
   onEditTrainer: (trainer: Trainer) => void;
@@ -16,6 +17,7 @@ interface TrainersListProps {
 const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrainer: (trainer: Trainer) => void }) => {
   const deleteTrainer = useDeleteTrainer();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const handleDelete = async () => {
     await deleteTrainer.mutateAsync(trainer.id);
@@ -26,11 +28,11 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
   };
 
   // Get trainer info from the profiles join
-  const trainerName = trainer.profiles?.full_name || 'Nombre no disponible';
-  const trainerEmail = trainer.profiles?.email || 'Email no disponible';
-  
+  const trainerName = trainer.profiles?.full_name || t('trainersPage.trainersList.fallback.nameNotAvailable');
+  const trainerEmail = trainer.profiles?.email || t('trainersPage.trainersList.fallback.emailNotAvailable');
+
   // Get club info from trainer_clubs join
-  const clubName = trainer.trainer_clubs?.[0]?.clubs?.name || 'Club no asignado';
+  const clubName = trainer.trainer_clubs?.[0]?.clubs?.name || t('trainersPage.trainersList.fallback.clubNotAssigned');
 
   return (
     <Card className="hover:shadow-lg transition-all duration-300">
@@ -63,18 +65,18 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Desactivar profesor?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('trainersPage.trainersList.deactivateDialog.title')}</AlertDialogTitle>
                      <AlertDialogDescription>
-                       Esta acción desactivará al profesor "{trainerName}". Podrás reactivarlo más tarde.
+                       {t('trainersPage.trainersList.deactivateDialog.description', { name: trainerName })}
                      </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel>{t('trainersPage.trainersList.deactivateDialog.cancel')}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-red-600 hover:bg-red-700"
                     >
-                      Desactivar
+                      {t('trainersPage.trainersList.deactivateDialog.confirm')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -87,7 +89,7 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
       <CardContent className="space-y-3">
         {trainer.specialty && (
           <div className="space-y-1">
-            <p className="text-sm font-medium">Especialidad:</p>
+            <p className="text-sm font-medium">{t('trainersPage.trainersList.specialty')}</p>
             <Badge variant="outline" className="text-xs">
               {trainer.specialty}
             </Badge>
@@ -95,7 +97,7 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         )}
 
         <div className="space-y-1">
-          <p className="text-sm font-medium">Club asignado:</p>
+          <p className="text-sm font-medium">{t('trainersPage.trainersList.assignedClub')}</p>
           <Badge variant="secondary" className="text-xs">
             {clubName}
           </Badge>
@@ -103,7 +105,7 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
 
         <div className="flex items-center justify-between pt-2 border-t">
           <Badge variant={trainer.is_active ? "default" : "secondary"}>
-            {trainer.is_active ? "Activo" : "Inactivo"}
+            {trainer.is_active ? t('trainersPage.trainersList.status.active') : t('trainersPage.trainersList.status.inactive')}
           </Badge>
         </div>
       </CardContent>
@@ -114,6 +116,7 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
 const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => {
   const { data: adminTrainers, isLoading: isLoadingAdmin, error: adminError } = useAdminTrainers();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   // For admins, use filtered trainers; for other roles, we could extend this logic
   const trainers = adminTrainers;
@@ -145,7 +148,7 @@ const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => 
     return (
       <Card>
         <CardContent className="text-center py-8">
-          <p className="text-red-600">Error al cargar los profesores</p>
+          <p className="text-red-600">{t('trainersPage.trainersList.errorLoading')}</p>
         </CardContent>
       </Card>
     );
@@ -156,14 +159,14 @@ const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => 
       <Card>
         <CardContent className="text-center py-8">
           <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">No hay profesores registrados</h3>
+          <h3 className="text-lg font-medium mb-2">{t('trainersPage.trainersList.noTrainers')}</h3>
           <p className="text-muted-foreground mb-4">
-            Crea el primer profesor para poder gestionar clases
+            {t('trainersPage.trainersList.noTrainersHint')}
           </p>
           {isAdmin && (
             <Button onClick={onCreateTrainer} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
               <Plus className="mr-2 h-4 w-4" />
-              Crear Primer Profesor
+              {t('trainersPage.trainersList.createFirstTrainer')}
             </Button>
           )}
         </CardContent>
