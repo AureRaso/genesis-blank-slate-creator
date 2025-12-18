@@ -17,9 +17,11 @@ import PromotionModal from "@/components/PromotionModal";
 import { usePromotionsByClub, useDeletePromotion } from "@/hooks/usePromotions";
 import { Promotion } from "@/types/promotions";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const PromotionsPage = () => {
   const { isAdmin, profile } = useAuth();
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
   const [promotionToDelete, setPromotionToDelete] = useState<string | null>(null);
@@ -59,11 +61,11 @@ const PromotionsPage = () => {
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-black">Promociones</h1>
+          <h1 className="text-3xl font-bold text-black">{t('promotionsPage.title')}</h1>
           <p className="text-muted-foreground mt-1">
             {isAdmin
-              ? "Gestiona las promociones y descuentos de tus clubs"
-              : "Descuentos y ofertas exclusivas para ti"
+              ? t('promotionsPage.subtitle.admin')
+              : t('promotionsPage.subtitle.player')
             }
           </p>
         </div>
@@ -73,14 +75,14 @@ const PromotionsPage = () => {
             className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Nueva Promoción
+            {t('promotionsPage.newPromotion')}
           </Button>
         )}
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground">Cargando promociones...</div>
+          <div className="text-muted-foreground">{t('promotionsPage.loading')}</div>
         </div>
       ) : promotions && promotions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -114,7 +116,7 @@ const PromotionsPage = () => {
                   )}
                 </div>
                 <CardDescription className="flex items-center gap-2">
-                  {promotion.clubs?.name || "Club no disponible"}
+                  {promotion.clubs?.name || t('promotionsPage.clubNotAvailable')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -135,7 +137,7 @@ const PromotionsPage = () => {
                   className="w-full"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  Ir a la promoción
+                  {t('promotionsPage.goToPromotion')}
                 </Button>
               </CardContent>
             </Card>
@@ -146,7 +148,7 @@ const PromotionsPage = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Tag className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              No hay promociones disponibles
+              {t('promotionsPage.noPromotions')}
             </p>
             {isAdmin && (
               <Button
@@ -155,7 +157,7 @@ const PromotionsPage = () => {
                 className="mt-4"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Crear Primera Promoción
+                {t('promotionsPage.createFirstPromotion')}
               </Button>
             )}
           </CardContent>
@@ -176,18 +178,18 @@ const PromotionsPage = () => {
       <AlertDialog open={!!promotionToDelete} onOpenChange={() => setPromotionToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('promotionsPage.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. La promoción será eliminada permanentemente.
+              {t('promotionsPage.deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('promotionsPage.deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Eliminar
+              {t('promotionsPage.deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

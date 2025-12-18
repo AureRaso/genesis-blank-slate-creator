@@ -308,6 +308,49 @@
       }
     }
   },
+  "promotionsPage": {
+    "title": "Promociones",
+    "subtitle": {
+      "admin": "Gestiona las promociones y descuentos de tus clubs",
+      "player": "Descuentos y ofertas exclusivas para ti"
+    },
+    "newPromotion": "Nueva Promoción",
+    "loading": "Cargando promociones...",
+    "clubNotAvailable": "Club no disponible",
+    "goToPromotion": "Ir a la promoción",
+    "noPromotions": "No hay promociones disponibles",
+    "createFirstPromotion": "Crear Primera Promoción",
+    "deleteDialog": {
+      "title": "¿Estás seguro?",
+      "description": "Esta acción no se puede deshacer. La promoción será eliminada permanentemente.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "modal": {
+      "editTitle": "Editar Promoción",
+      "newTitle": "Nueva Promoción",
+      "editDescription": "Modifica los datos de la promoción de {{brandName}}",
+      "newDescription": "Añade una nueva promoción para tu club",
+      "fields": {
+        "club": "Club",
+        "clubPlaceholder": "Selecciona un club",
+        "brandName": "Nombre de Marca",
+        "brandNamePlaceholder": "Ej: Nike, Adidas, Head...",
+        "discountCode": "Código de Descuento",
+        "discountCodePlaceholder": "Ej: PADEL20, VERANO2024...",
+        "link": "Enlace",
+        "linkPlaceholder": "https://ejemplo.com/promo",
+        "description": "Descripción (Opcional)",
+        "descriptionPlaceholder": "Detalles sobre la promoción, condiciones, etc..."
+      },
+      "buttons": {
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "saveChanges": "Guardar Cambios",
+        "createPromotion": "Crear Promoción"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Gestión de Profesores",
     "newTrainer": "Nuevo Profesor",

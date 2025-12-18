@@ -308,6 +308,49 @@
       }
     }
   },
+  "promotionsPage": {
+    "title": "Promotions",
+    "subtitle": {
+      "admin": "Manage promotions and discounts for your clubs",
+      "player": "Exclusive discounts and offers for you"
+    },
+    "newPromotion": "New Promotion",
+    "loading": "Loading promotions...",
+    "clubNotAvailable": "Club not available",
+    "goToPromotion": "Go to promotion",
+    "noPromotions": "No promotions available",
+    "createFirstPromotion": "Create First Promotion",
+    "deleteDialog": {
+      "title": "Are you sure?",
+      "description": "This action cannot be undone. The promotion will be permanently deleted.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "modal": {
+      "editTitle": "Edit Promotion",
+      "newTitle": "New Promotion",
+      "editDescription": "Modify the promotion details for {{brandName}}",
+      "newDescription": "Add a new promotion for your club",
+      "fields": {
+        "club": "Club",
+        "clubPlaceholder": "Select a club",
+        "brandName": "Brand Name",
+        "brandNamePlaceholder": "E.g: Nike, Adidas, Head...",
+        "discountCode": "Discount Code",
+        "discountCodePlaceholder": "E.g: PADEL20, SUMMER2024...",
+        "link": "Link",
+        "linkPlaceholder": "https://example.com/promo",
+        "description": "Description (Optional)",
+        "descriptionPlaceholder": "Details about the promotion, conditions, etc..."
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "saveChanges": "Save Changes",
+        "createPromotion": "Create Promotion"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Trainer Management",
     "newTrainer": "New Trainer",

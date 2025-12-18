@@ -9,6 +9,7 @@ import { useCreatePromotion, useUpdatePromotion } from "@/hooks/usePromotions";
 import { useAdminClubs } from "@/hooks/useClubs";
 import { Promotion } from "@/types/promotions";
 import { Tag, FileText, Link2, Building2, Percent } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PromotionModalProps {
   promotion?: Promotion | null;
@@ -17,6 +18,7 @@ interface PromotionModalProps {
 }
 
 const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     club_id: "",
     brand_name: "",
@@ -95,12 +97,12 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
-            {promotion ? "Editar Promoción" : "Nueva Promoción"}
+            {promotion ? t('promotionsPage.modal.editTitle') : t('promotionsPage.modal.newTitle')}
           </DialogTitle>
           <DialogDescription>
             {promotion
-              ? `Modifica los datos de la promoción de ${promotion.brand_name}`
-              : "Añade una nueva promoción para tu club"
+              ? t('promotionsPage.modal.editDescription', { brandName: promotion.brand_name })
+              : t('promotionsPage.modal.newDescription')
             }
           </DialogDescription>
         </DialogHeader>
@@ -111,7 +113,7 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
             <div className="space-y-2">
               <Label htmlFor="club_id" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Club
+                {t('promotionsPage.modal.fields.club')}
               </Label>
               <Select
                 value={formData.club_id}
@@ -119,7 +121,7 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
                 disabled={clubsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un club" />
+                  <SelectValue placeholder={t('promotionsPage.modal.fields.clubPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {clubs?.map(club => (
@@ -136,13 +138,13 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
           <div className="space-y-2">
             <Label htmlFor="brand_name" className="flex items-center gap-2">
               <Tag className="h-4 w-4" />
-              Nombre de Marca
+              {t('promotionsPage.modal.fields.brandName')}
             </Label>
             <Input
               id="brand_name"
               value={formData.brand_name}
               onChange={(e) => setFormData(prev => ({ ...prev, brand_name: e.target.value }))}
-              placeholder="Ej: Nike, Adidas, Head..."
+              placeholder={t('promotionsPage.modal.fields.brandNamePlaceholder')}
               required
             />
           </div>
@@ -151,13 +153,13 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
           <div className="space-y-2">
             <Label htmlFor="discount_code" className="flex items-center gap-2">
               <Percent className="h-4 w-4" />
-              Código de Descuento
+              {t('promotionsPage.modal.fields.discountCode')}
             </Label>
             <Input
               id="discount_code"
               value={formData.discount_code}
               onChange={(e) => setFormData(prev => ({ ...prev, discount_code: e.target.value }))}
-              placeholder="Ej: PADEL20, VERANO2024..."
+              placeholder={t('promotionsPage.modal.fields.discountCodePlaceholder')}
               required
             />
           </div>
@@ -166,14 +168,14 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
           <div className="space-y-2">
             <Label htmlFor="link" className="flex items-center gap-2">
               <Link2 className="h-4 w-4" />
-              Enlace
+              {t('promotionsPage.modal.fields.link')}
             </Label>
             <Input
               id="link"
               type="url"
               value={formData.link}
               onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
-              placeholder="https://ejemplo.com/promo"
+              placeholder={t('promotionsPage.modal.fields.linkPlaceholder')}
               required
             />
           </div>
@@ -182,13 +184,13 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
           <div className="space-y-2">
             <Label htmlFor="description" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Descripción (Opcional)
+              {t('promotionsPage.modal.fields.description')}
             </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Detalles sobre la promoción, condiciones, etc..."
+              placeholder={t('promotionsPage.modal.fields.descriptionPlaceholder')}
               rows={3}
             />
           </div>
@@ -196,7 +198,7 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
           {/* Buttons */}
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Cancelar
+              {t('promotionsPage.modal.buttons.cancel')}
             </Button>
             <Button
               type="submit"
@@ -204,10 +206,10 @@ const PromotionModal = ({ promotion, isOpen, onClose }: PromotionModalProps) => 
               className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark"
             >
               {isSubmitting
-                ? "Guardando..."
+                ? t('promotionsPage.modal.buttons.saving')
                 : promotion
-                  ? "Guardar Cambios"
-                  : "Crear Promoción"
+                  ? t('promotionsPage.modal.buttons.saveChanges')
+                  : t('promotionsPage.modal.buttons.createPromotion')
               }
             </Button>
           </div>

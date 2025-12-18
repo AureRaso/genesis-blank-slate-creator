@@ -308,6 +308,49 @@
       }
     }
   },
+  "promotionsPage": {
+    "title": "Promozioni",
+    "subtitle": {
+      "admin": "Gestisci promozioni e sconti per i tuoi club",
+      "player": "Sconti e offerte esclusive per te"
+    },
+    "newPromotion": "Nuova Promozione",
+    "loading": "Caricamento promozioni...",
+    "clubNotAvailable": "Club non disponibile",
+    "goToPromotion": "Vai alla promozione",
+    "noPromotions": "Nessuna promozione disponibile",
+    "createFirstPromotion": "Crea Prima Promozione",
+    "deleteDialog": {
+      "title": "Sei sicuro?",
+      "description": "Questa azione non può essere annullata. La promozione verrà eliminata permanentemente.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    },
+    "modal": {
+      "editTitle": "Modifica Promozione",
+      "newTitle": "Nuova Promozione",
+      "editDescription": "Modifica i dettagli della promozione di {{brandName}}",
+      "newDescription": "Aggiungi una nuova promozione per il tuo club",
+      "fields": {
+        "club": "Club",
+        "clubPlaceholder": "Seleziona un club",
+        "brandName": "Nome del Marchio",
+        "brandNamePlaceholder": "Es: Nike, Adidas, Head...",
+        "discountCode": "Codice Sconto",
+        "discountCodePlaceholder": "Es: PADEL20, ESTATE2024...",
+        "link": "Link",
+        "linkPlaceholder": "https://esempio.com/promo",
+        "description": "Descrizione (Opzionale)",
+        "descriptionPlaceholder": "Dettagli sulla promozione, condizioni, ecc..."
+      },
+      "buttons": {
+        "cancel": "Annulla",
+        "saving": "Salvataggio...",
+        "saveChanges": "Salva Modifiche",
+        "createPromotion": "Crea Promozione"
+      }
+    }
+  },
   "trainersPage": {
     "title": "Gestione Allenatori",
     "newTrainer": "Nuovo Allenatore",
