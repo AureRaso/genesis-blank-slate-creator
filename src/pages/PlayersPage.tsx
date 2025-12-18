@@ -2,9 +2,11 @@
 import PlayersList from "@/components/PlayersList";
 import AdminStudentsList from "@/components/AdminStudentsList";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const PlayersPage = () => {
   const { isAdmin, loading } = useAuth();
+  const { t } = useTranslation();
 
   if (loading) {
     return (
@@ -20,7 +22,7 @@ const PlayersPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black truncate">
-              {isAdmin ? 'Alumnos disponibles' : 'Jugadores'}
+              {isAdmin ? t('playersPage.title.admin') : t('playersPage.title.player')}
             </h1>
           </div>
         </div>

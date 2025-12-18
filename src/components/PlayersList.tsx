@@ -5,11 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Trash2, Users, Building2 } from "lucide-react";
 import { usePlayers, useDeletePlayer } from "@/hooks/usePlayers";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const PlayersList = () => {
   const { isAdmin, profile } = useAuth();
   const { data: players, isLoading, error } = usePlayers();
   const deletePlayerMutation = useDeletePlayer();
+  const { t } = useTranslation();
 
   console.log('👥 PlayersList Debug:', {
     isAdmin,
@@ -27,13 +29,13 @@ const PlayersList = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Jugadores Registrados
+            {t('playersPage.playersList.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange"></div>
-            <span className="ml-2 text-muted-foreground">Cargando jugadores...</span>
+            <span className="ml-2 text-muted-foreground">{t('playersPage.playersList.loading')}</span>
           </div>
         </CardContent>
       </Card>
@@ -46,12 +48,12 @@ const PlayersList = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Jugadores Registrados
+            {t('playersPage.playersList.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <p className="text-center text-red-600">
-            Error al cargar los jugadores: {error.message}
+            {t('playersPage.playersList.errorLoading')} {error.message}
           </p>
         </CardContent>
       </Card>
@@ -70,14 +72,15 @@ const PlayersList = () => {
   };
 
   const getLevelText = (level: number) => {
-    const texts = {
-      1: "Principiante",
-      2: "Básico",
-      3: "Intermedio",
-      4: "Avanzado",
-      5: "Experto",
+    const levelKeys: { [key: number]: string } = {
+      1: 'beginner',
+      2: 'basic',
+      3: 'intermediate',
+      4: 'advanced',
+      5: 'expert',
     };
-    return texts[level as keyof typeof texts] || "Desconocido";
+    const key = levelKeys[level] || 'unknown';
+    return t(`playersPage.playersList.levels.${key}`);
   };
 
   return (
@@ -85,16 +88,16 @@ const PlayersList = () => {
       <CardHeader className="p-3 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Users className="h-4 w-4 sm:h-5 sm:w-5" />
-          Jugadores Registrados
+          {t('playersPage.playersList.title')}
         </CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          {players?.length || 0} jugadores en el sistema
+          {t('playersPage.playersList.playersInSystem', { count: players?.length || 0 })}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
         {!players || players.length === 0 ? (
           <p className="text-center text-muted-foreground text-sm py-8">
-            No hay jugadores registrados
+            {t('playersPage.playersList.noPlayers')}
           </p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -118,8 +121,8 @@ const PlayersList = () => {
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                   <Badge className={`${getLevelColor(player.level)} text-xs`}>
-                    <span className="hidden sm:inline">Nivel {player.level} - {getLevelText(player.level)}</span>
-                    <span className="sm:hidden">Nv. {player.level}</span>
+                    <span className="hidden sm:inline">{t('playersPage.playersList.level')} {player.level} - {getLevelText(player.level)}</span>
+                    <span className="sm:hidden">{t('playersPage.playersList.levelShort')} {player.level}</span>
                   </Badge>
                   {isAdmin && (
                     <Button

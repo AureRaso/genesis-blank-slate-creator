@@ -231,6 +231,91 @@
     "english": "English",
     "italian": "Italian"
   },
+  "playersPage": {
+    "title": {
+      "admin": "Available Students",
+      "player": "Players"
+    },
+    "playersList": {
+      "title": "Registered Players",
+      "loading": "Loading players...",
+      "errorLoading": "Error loading players:",
+      "playersInSystem": "{{count}} players in the system",
+      "noPlayers": "No registered players",
+      "level": "Level",
+      "levelShort": "Lv.",
+      "levels": {
+        "beginner": "Beginner",
+        "basic": "Basic",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert",
+        "unknown": "Unknown"
+      }
+    },
+    "adminStudentsList": {
+      "title": "Available Students",
+      "loading": "Loading students...",
+      "totalStudents": "Total Students",
+      "showingOf": "{{shown}} of {{total}} shown",
+      "searchPlaceholder": "Search by name or email...",
+      "status": {
+        "label": "Status",
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending",
+        "activeFilter": "Active",
+        "inactiveFilter": "Inactive",
+        "pendingFilter": "Pending"
+      },
+      "period": {
+        "label": "Period",
+        "all": "All",
+        "monthly": "Monthly",
+        "bimonthly": "Bimonthly",
+        "quarterly": "Quarterly",
+        "semiannual": "Semiannual",
+        "annual": "Annual"
+      },
+      "sort": {
+        "label": "Sort",
+        "arrival": "Arrival order",
+        "alphabetical": "Alphabetical (A-Z)"
+      },
+      "tableHeaders": {
+        "student": "Student",
+        "contact": "Contact",
+        "club": "Club",
+        "enrollment": "Enrollment",
+        "actions": "Actions"
+      },
+      "emptyState": {
+        "noStudents": "No enrolled students",
+        "noResults": "No students found",
+        "noStudentsHint": "Students enrolled in your clubs will appear here",
+        "noResultsHint": "Try changing the search filters"
+      },
+      "pagination": {
+        "showing": "Showing {{start}} - {{end}} of {{total}} students",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {{current}} of {{total}}"
+      },
+      "level": "Level",
+      "levelError": "Level must be an integer between 1 and 10",
+      "deleteStudent": "Delete student",
+      "deleteDialog": {
+        "title": "Delete student from club?",
+        "aboutToDelete": "You are about to delete {{name}}",
+        "warning": "WARNING:",
+        "warningText": "This player will be permanently removed from the club and will not appear in any lists or options.",
+        "dataRetention": "Data will be retained in the database for legal and audit purposes, but the player will become inactive.",
+        "cancel": "Cancel",
+        "confirm": "Delete player"
+      }
+    }
+  },
   "classes": {
     "availableClasses": "Available Classes",
     "availableClassesDescription": "All scheduled classes in your club - Sign up or join waitlist",

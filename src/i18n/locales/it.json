@@ -231,6 +231,91 @@
     "english": "Inglese",
     "italian": "Italiano"
   },
+  "playersPage": {
+    "title": {
+      "admin": "Studenti Disponibili",
+      "player": "Giocatori"
+    },
+    "playersList": {
+      "title": "Giocatori Registrati",
+      "loading": "Caricamento giocatori...",
+      "errorLoading": "Errore nel caricamento dei giocatori:",
+      "playersInSystem": "{{count}} giocatori nel sistema",
+      "noPlayers": "Nessun giocatore registrato",
+      "level": "Livello",
+      "levelShort": "Lv.",
+      "levels": {
+        "beginner": "Principiante",
+        "basic": "Base",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzato",
+        "expert": "Esperto",
+        "unknown": "Sconosciuto"
+      }
+    },
+    "adminStudentsList": {
+      "title": "Studenti Disponibili",
+      "loading": "Caricamento studenti...",
+      "totalStudents": "Totale Studenti",
+      "showingOf": "{{shown}} di {{total}} mostrati",
+      "searchPlaceholder": "Cerca per nome o email...",
+      "status": {
+        "label": "Stato",
+        "all": "Tutti",
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "pending": "In Attesa",
+        "activeFilter": "Attivi",
+        "inactiveFilter": "Inattivi",
+        "pendingFilter": "In Attesa"
+      },
+      "period": {
+        "label": "Periodo",
+        "all": "Tutti",
+        "monthly": "Mensile",
+        "bimonthly": "Bimestrale",
+        "quarterly": "Trimestrale",
+        "semiannual": "Semestrale",
+        "annual": "Annuale"
+      },
+      "sort": {
+        "label": "Ordina",
+        "arrival": "Ordine di arrivo",
+        "alphabetical": "Alfabetico (A-Z)"
+      },
+      "tableHeaders": {
+        "student": "Studente",
+        "contact": "Contatto",
+        "club": "Club",
+        "enrollment": "Iscrizione",
+        "actions": "Azioni"
+      },
+      "emptyState": {
+        "noStudents": "Nessuno studente iscritto",
+        "noResults": "Nessuno studente trovato",
+        "noStudentsHint": "Gli studenti iscritti ai tuoi club appariranno qui",
+        "noResultsHint": "Prova a cambiare i filtri di ricerca"
+      },
+      "pagination": {
+        "showing": "Mostrando {{start}} - {{end}} di {{total}} studenti",
+        "previous": "Precedente",
+        "next": "Successivo",
+        "pageOf": "Pagina {{current}} di {{total}}"
+      },
+      "level": "Livello",
+      "levelError": "Il livello deve essere un numero intero tra 1 e 10",
+      "deleteStudent": "Elimina studente",
+      "deleteDialog": {
+        "title": "Eliminare studente dal club?",
+        "aboutToDelete": "Stai per eliminare {{name}}",
+        "warning": "ATTENZIONE:",
+        "warningText": "Questo giocatore verrà rimosso permanentemente dal club e non apparirà in nessuna lista o opzione.",
+        "dataRetention": "I dati saranno conservati nel database per motivi legali e di audit, ma il giocatore diventerà inattivo.",
+        "cancel": "Annulla",
+        "confirm": "Elimina giocatore"
+      }
+    }
+  },
   "classes": {
     "availableClasses": "Lezioni Disponibili",
     "availableClassesDescription": "Tutte le lezioni programmate nel tuo club - Iscriviti o unisciti alla lista d'attesa",

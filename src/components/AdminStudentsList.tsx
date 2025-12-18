@@ -26,6 +26,7 @@ import {
 import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
 import { useArchiveStudent } from "@/hooks/useArchiveStudent";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ import {
 const ITEMS_PER_PAGE = 25;
 
 const AdminStudentsList = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
@@ -111,23 +113,25 @@ const AdminStudentsList = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "active": return "Activo";
-      case "inactive": return "Inactivo";
-      case "pending": return "Pendiente";
-      default: return status;
-    }
+    const statusKeys: { [key: string]: string } = {
+      active: 'active',
+      inactive: 'inactive',
+      pending: 'pending'
+    };
+    const key = statusKeys[status];
+    return key ? t(`playersPage.adminStudentsList.status.${key}`) : status;
   };
 
   const getPeriodLabel = (period: string) => {
-    switch (period) {
-      case "mensual": return "Mensual";
-      case "bimensual": return "Bimensual";
-      case "trimestral": return "Trimestral";
-      case "semestral": return "Semestral";
-      case "anual": return "Anual";
-      default: return period;
-    }
+    const periodKeys: { [key: string]: string } = {
+      mensual: 'monthly',
+      bimensual: 'bimonthly',
+      trimestral: 'quarterly',
+      semestral: 'semiannual',
+      anual: 'annual'
+    };
+    const key = periodKeys[period];
+    return key ? t(`playersPage.adminStudentsList.period.${key}`) : period;
   };
 
   const handleLevelChange = (value: string) => {
@@ -151,8 +155,8 @@ const AdminStudentsList = () => {
 
     if (editingLevel === "" || isNaN(levelNum) || levelNum < 1 || levelNum > 10) {
       toast({
-        title: "Error",
-        description: "El nivel debe ser un número entero entre 1 y 10",
+        title: t('common.error'),
+        description: t('playersPage.adminStudentsList.levelError'),
         variant: "destructive",
       });
       return;
@@ -185,9 +189,9 @@ const AdminStudentsList = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Alumnos disponibles
+            {t('playersPage.adminStudentsList.title')}
           </CardTitle>
-          <CardDescription>Cargando alumnos...</CardDescription>
+          <CardDescription>{t('playersPage.adminStudentsList.loading')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -219,7 +223,7 @@ const AdminStudentsList = () => {
                 <Users className="h-6 w-6 text-playtomic-orange" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total de Alumnos</p>
+                <p className="text-sm text-muted-foreground">{t('playersPage.adminStudentsList.totalStudents')}</p>
                 <p className="text-3xl font-bold text-playtomic-dark">
                   {filteredAndSortedStudents.length}
                   {filteredAndSortedStudents.length !== students.length && (
@@ -232,7 +236,7 @@ const AdminStudentsList = () => {
             </div>
             {filteredAndSortedStudents.length !== students.length && (
               <Badge variant="secondary" className="text-sm">
-                {filteredAndSortedStudents.length} de {students.length} mostrados
+                {t('playersPage.adminStudentsList.showingOf', { shown: filteredAndSortedStudents.length, total: students.length })}
               </Badge>
             )}
           </div>
@@ -245,7 +249,7 @@ const AdminStudentsList = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre o email..."
+                placeholder={t('playersPage.adminStudentsList.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -255,27 +259,27 @@ const AdminStudentsList = () => {
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder={t('playersPage.adminStudentsList.status.label')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Activos</SelectItem>
-              <SelectItem value="inactive">Inactivos</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
+              <SelectItem value="all">{t('playersPage.adminStudentsList.status.all')}</SelectItem>
+              <SelectItem value="active">{t('playersPage.adminStudentsList.status.activeFilter')}</SelectItem>
+              <SelectItem value="inactive">{t('playersPage.adminStudentsList.status.inactiveFilter')}</SelectItem>
+              <SelectItem value="pending">{t('playersPage.adminStudentsList.status.pendingFilter')}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
             <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Período" />
+              <SelectValue placeholder={t('playersPage.adminStudentsList.period.label')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="mensual">Mensual</SelectItem>
-              <SelectItem value="bimensual">Bimensual</SelectItem>
-              <SelectItem value="trimestral">Trimestral</SelectItem>
-              <SelectItem value="semestral">Semestral</SelectItem>
-              <SelectItem value="anual">Anual</SelectItem>
+              <SelectItem value="all">{t('playersPage.adminStudentsList.period.all')}</SelectItem>
+              <SelectItem value="mensual">{t('playersPage.adminStudentsList.period.monthly')}</SelectItem>
+              <SelectItem value="bimensual">{t('playersPage.adminStudentsList.period.bimonthly')}</SelectItem>
+              <SelectItem value="trimestral">{t('playersPage.adminStudentsList.period.quarterly')}</SelectItem>
+              <SelectItem value="semestral">{t('playersPage.adminStudentsList.period.semiannual')}</SelectItem>
+              <SelectItem value="anual">{t('playersPage.adminStudentsList.period.annual')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -283,12 +287,12 @@ const AdminStudentsList = () => {
             <SelectTrigger className="w-full md:w-48">
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="h-4 w-4" />
-                <SelectValue placeholder="Ordenar" />
+                <SelectValue placeholder={t('playersPage.adminStudentsList.sort.label')} />
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="arrival">Orden de llegada</SelectItem>
-              <SelectItem value="alphabetical">Alfabético (A-Z)</SelectItem>
+              <SelectItem value="arrival">{t('playersPage.adminStudentsList.sort.arrival')}</SelectItem>
+              <SelectItem value="alphabetical">{t('playersPage.adminStudentsList.sort.alphabetical')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -298,12 +302,12 @@ const AdminStudentsList = () => {
           <div className="text-center py-12">
             <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">
-              {students.length === 0 ? "No hay alumnos inscritos" : "No se encontraron alumnos"}
+              {students.length === 0 ? t('playersPage.adminStudentsList.emptyState.noStudents') : t('playersPage.adminStudentsList.emptyState.noResults')}
             </h3>
             <p className="text-muted-foreground">
               {students.length === 0
-                ? "Los alumnos inscritos en tus clubes aparecerán aquí"
-                : "Prueba a cambiar los filtros de búsqueda"
+                ? t('playersPage.adminStudentsList.emptyState.noStudentsHint')
+                : t('playersPage.adminStudentsList.emptyState.noResultsHint')
               }
             </p>
           </div>
@@ -313,11 +317,11 @@ const AdminStudentsList = () => {
               <CardContent className="p-0">
                 {/* Table Header - Desktop only */}
                 <div className="hidden md:grid md:grid-cols-11 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
-                  <div className="col-span-3">Alumno</div>
-                  <div className="col-span-3">Contacto</div>
-                  <div className="col-span-2">Club</div>
-                  <div className="col-span-2">Matrícula</div>
-                  <div className="col-span-1">Acciones</div>
+                  <div className="col-span-3">{t('playersPage.adminStudentsList.tableHeaders.student')}</div>
+                  <div className="col-span-3">{t('playersPage.adminStudentsList.tableHeaders.contact')}</div>
+                  <div className="col-span-2">{t('playersPage.adminStudentsList.tableHeaders.club')}</div>
+                  <div className="col-span-2">{t('playersPage.adminStudentsList.tableHeaders.enrollment')}</div>
+                  <div className="col-span-1">{t('playersPage.adminStudentsList.tableHeaders.actions')}</div>
                 </div>
 
                 {/* Table Body */}
@@ -384,7 +388,7 @@ const AdminStudentsList = () => {
                                   setEditingStudentId(student.id);
                                   setEditingLevel(student.level.toString());
                                 }}>
-                                  Nivel {student.level}
+                                  {t('playersPage.adminStudentsList.level')} {student.level}
                                   <Edit className="h-2.5 w-2.5" />
                                 </Badge>
                               )}
@@ -443,7 +447,7 @@ const AdminStudentsList = () => {
                             size="sm"
                             onClick={() => setStudentToArchive(student)}
                             className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            title="Eliminar alumno"
+                            title={t('playersPage.adminStudentsList.deleteStudent')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -467,7 +471,7 @@ const AdminStudentsList = () => {
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t pt-4">
                 <div className="text-sm text-muted-foreground">
-                  Mostrando {startIndex + 1} - {Math.min(endIndex, filteredAndSortedStudents.length)} de {filteredAndSortedStudents.length} alumnos
+                  {t('playersPage.adminStudentsList.pagination.showing', { start: startIndex + 1, end: Math.min(endIndex, filteredAndSortedStudents.length), total: filteredAndSortedStudents.length })}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -477,10 +481,10 @@ const AdminStudentsList = () => {
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Anterior
+                    {t('playersPage.adminStudentsList.pagination.previous')}
                   </Button>
                   <div className="text-sm font-medium">
-                    Página {currentPage} de {totalPages}
+                    {t('playersPage.adminStudentsList.pagination.pageOf', { current: currentPage, total: totalPages })}
                   </div>
                   <Button
                     variant="outline"
@@ -488,7 +492,7 @@ const AdminStudentsList = () => {
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                   >
-                    Siguiente
+                    {t('playersPage.adminStudentsList.pagination.next')}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -503,22 +507,22 @@ const AdminStudentsList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="h-5 w-5" />
-              ¿Eliminar alumno del club?
+              {t('playersPage.adminStudentsList.deleteDialog.title')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p className="font-semibold text-foreground text-base">
-                Estás a punto de eliminar a {studentToArchive?.full_name}
+                {t('playersPage.adminStudentsList.deleteDialog.aboutToDelete', { name: studentToArchive?.full_name })}
               </p>
               <p className="text-muted-foreground">
-                ⚠️ <strong>ADVERTENCIA:</strong> Este jugador será eliminado permanentemente del club y no aparecerá en ninguna lista ni opciones.
+                ⚠️ <strong>{t('playersPage.adminStudentsList.deleteDialog.warning')}</strong> {t('playersPage.adminStudentsList.deleteDialog.warningText')}
               </p>
               <p className="text-muted-foreground">
-                Los datos se conservarán en la base de datos por motivos legales y de auditoría, pero el jugador quedará inactivo.
+                {t('playersPage.adminStudentsList.deleteDialog.dataRetention')}
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('playersPage.adminStudentsList.deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (studentToArchive) {
@@ -532,7 +536,7 @@ const AdminStudentsList = () => {
               className="bg-destructive hover:bg-destructive/90"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Eliminar jugador
+              {t('playersPage.adminStudentsList.deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
