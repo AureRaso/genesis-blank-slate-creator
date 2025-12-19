@@ -74,6 +74,7 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
 
 const TodayAttendancePage = () => {
   const { profile } = useAuth();
+  const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format for queries
   const { data: attendanceData, isLoading, error, isFetching } = useTodayAttendance();
   const classes = attendanceData?.classes;
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
@@ -132,7 +133,7 @@ const TodayAttendancePage = () => {
   const clearStatus = useTrainerClearStatus();
   const removeParticipant = useRemoveParticipant();
   const cancelClass = useCancelClass();
-  const { data: cancelledClasses = [] } = useCancelledClasses();
+  const { data: cancelledClasses = [] } = useCancelledClasses(todayStr, todayStr);
   const sendCancellationNotification = useSendCancellationNotification();
 
   // Estado para diálogo de cancelación de clase (soporta múltiples)

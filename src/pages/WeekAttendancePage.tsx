@@ -200,7 +200,7 @@ const WeekAttendancePage = () => {
   const clearStatus = useTrainerClearStatus();
   const removeParticipant = useRemoveParticipant();
   const cancelClass = useCancelClass();
-  const { data: cancelledClasses = [] } = useCancelledClasses();
+  const { data: cancelledClasses = [] } = useCancelledClasses(startDateStr, endDateStr);
   const sendCancellationNotification = useSendCancellationNotification();
 
   // Navigation functions
