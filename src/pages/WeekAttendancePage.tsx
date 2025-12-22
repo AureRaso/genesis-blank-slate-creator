@@ -1394,22 +1394,22 @@ const WeekAttendancePage = () => {
                         // Total available slots is the maximum of both
                         const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
 
-                        // FIX-2025-12-22: Mostrar sección si hay plazas disponibles O si hay ausencias (aunque estén cubiertas)
-                        // Esto permite notificar ausencias incluso cuando ya hay sustituto
-                        const showNotificationSection = totalAvailableSlots > 0 || absentCount > 0;
+                        // FIX-2025-12-22-v2: Mostrar sección si hay plazas disponibles O si hay ausencias NO cubiertas
+                        // slotsByAbsence > 0 significa que hay ausencias sin cubrir por sustitutos
+                        const showNotificationSection = totalAvailableSlots > 0 || slotsByAbsence > 0;
 
                         return showNotificationSection && (
                           <div className="mt-4 space-y-3">
                             <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                              {/* Badge de plazas disponibles o ausencias cubiertas - FIX-2025-12-22 */}
+                              {/* Badge de plazas disponibles o ausencias sin cubrir - FIX-2025-12-22-v2 */}
                               <div className="flex items-center gap-2">
                                 {totalAvailableSlots > 0 ? (
                                   <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
                                     {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
                                   </Badge>
-                                ) : absentCount > 0 && (
+                                ) : slotsByAbsence > 0 && (
                                   <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
-                                    {absentCount} {absentCount === 1 ? 'ausencia cubierta' : 'ausencias cubiertas'}
+                                    {slotsByAbsence} {slotsByAbsence === 1 ? 'ausencia sin cubrir' : 'ausencias sin cubrir'}
                                   </Badge>
                                 )}
                               </div>
@@ -1435,8 +1435,8 @@ const WeekAttendancePage = () => {
                                 {/* Botones WhatsApp y Lista de Espera - Para administradores y trainers */}
                                 {(isAdmin || isTrainer) && (
                                   <>
-                                    {/* Mostrar "Notificar ausencia" si hay ausencias (cubiertas o no) */}
-                                    {absentCount > 0 && (() => {
+                                    {/* Mostrar "Notificar ausencia" solo si hay ausencias NO cubiertas - FIX-2025-12-22-v2 */}
+                                    {slotsByAbsence > 0 && (() => {
                                       const inCooldown = isInCooldown(classData.id);
                                       const minutesRemaining = getCooldownMinutesRemaining(classData.id);
 
