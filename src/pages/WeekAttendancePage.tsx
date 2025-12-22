@@ -1394,14 +1394,24 @@ const WeekAttendancePage = () => {
                         // Total available slots is the maximum of both
                         const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
 
-                        return totalAvailableSlots > 0 && (
+                        // FIX-2025-12-22: Mostrar sección si hay plazas disponibles O si hay ausencias (aunque estén cubiertas)
+                        // Esto permite notificar ausencias incluso cuando ya hay sustituto
+                        const showNotificationSection = totalAvailableSlots > 0 || absentCount > 0;
+
+                        return showNotificationSection && (
                           <div className="mt-4 space-y-3">
                             <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                              {/* Badge de plazas disponibles */}
+                              {/* Badge de plazas disponibles o ausencias cubiertas - FIX-2025-12-22 */}
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
-                                  {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
-                                </Badge>
+                                {totalAvailableSlots > 0 ? (
+                                  <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                                    {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                                  </Badge>
+                                ) : absentCount > 0 && (
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
+                                    {absentCount} {absentCount === 1 ? 'ausencia cubierta' : 'ausencias cubiertas'}
+                                  </Badge>
+                                )}
                               </div>
 
                               {/* Botones en columna para mobile, fila para desktop */}
