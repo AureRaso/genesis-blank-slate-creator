@@ -508,6 +508,81 @@ export const useCancelClass = () => {
   });
 };
 
+// Hook para eliminar clase completamente (attendance records, participants, y la clase)
+export const useDeleteClass = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ classId }: { classId: string }) => {
+      console.log('🗑️ Deleting class completely:', { classId });
+
+      if (!profile?.id) throw new Error('Usuario no autenticado');
+
+      // 1. Eliminar registros de asistencia
+      const { error: attendanceError } = await supabase
+        .from('class_attendance_records')
+        .delete()
+        .eq('programmed_class_id', classId);
+
+      if (attendanceError) {
+        console.error('Error deleting attendance records:', attendanceError);
+        throw attendanceError;
+      }
+      console.log('✅ Attendance records deleted');
+
+      // 2. Eliminar participantes
+      const { error: participantsError } = await supabase
+        .from('class_participants')
+        .delete()
+        .eq('class_id', classId);
+
+      if (participantsError) {
+        console.error('Error deleting participants:', participantsError);
+        throw participantsError;
+      }
+      console.log('✅ Participants deleted');
+
+      // 3. Eliminar registros de cancelación si existen
+      const { error: cancelledError } = await supabase
+        .from('cancelled_classes')
+        .delete()
+        .eq('programmed_class_id', classId);
+
+      if (cancelledError) {
+        console.error('Error deleting cancelled records:', cancelledError);
+        // No lanzamos error aquí porque puede que no haya registros de cancelación
+      }
+      console.log('✅ Cancelled records deleted (if any)');
+
+      // 4. Eliminar la clase programada
+      const { error: classError } = await supabase
+        .from('programmed_classes')
+        .delete()
+        .eq('id', classId);
+
+      if (classError) {
+        console.error('Error deleting class:', classError);
+        throw classError;
+      }
+      console.log('✅ Class deleted');
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['cancelled-classes'] });
+      queryClient.invalidateQueries({ queryKey: ['programmed-classes'] });
+      toast.success('✓ Clase eliminada correctamente');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting class:', error);
+      toast.error('Error al eliminar la clase');
+    },
+  });
+};
+
 // Hook para obtener clases canceladas
 export const useCancelledClasses = (startDate?: string, endDate?: string) => {
   const { profile } = useAuth();

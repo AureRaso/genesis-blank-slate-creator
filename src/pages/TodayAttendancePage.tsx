@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses } from "@/hooks/useTodayAttendance";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses, useDeleteClass } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useSendCancellationNotification } from "@/hooks/useCancellationNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
@@ -25,7 +25,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -133,6 +139,7 @@ const TodayAttendancePage = () => {
   const clearStatus = useTrainerClearStatus();
   const removeParticipant = useRemoveParticipant();
   const cancelClass = useCancelClass();
+  const deleteClass = useDeleteClass();
   const { data: cancelledClasses = [] } = useCancelledClasses(todayStr, todayStr);
   const sendCancellationNotification = useSendCancellationNotification();
 
@@ -151,6 +158,23 @@ const TodayAttendancePage = () => {
     notifyParticipants: true,
     availableClasses: [],
     reason: '',
+  });
+
+  // Estado para diálogo de eliminación de clase
+  const [deleteClassDialog, setDeleteClassDialog] = useState<{
+    open: boolean;
+    classId: string;
+    className: string;
+    classTime: string;
+    classDate: string;
+    isDeleting: boolean;
+  }>({
+    open: false,
+    classId: '',
+    className: '',
+    classTime: '',
+    classDate: '',
+    isDeleting: false,
   });
 
 
@@ -256,6 +280,38 @@ const TodayAttendancePage = () => {
       availableClasses,
       reason: '',
     });
+  };
+
+  // Handler para eliminar clase - abre el diálogo de confirmación
+  const handleDeleteClass = (classId: string, className: string, classTime: string) => {
+    setDeleteClassDialog({
+      open: true,
+      classId,
+      className,
+      classTime,
+      classDate: todayStr,
+      isDeleting: false,
+    });
+  };
+
+  // Ejecutar eliminación de clase
+  const executeDeleteClass = async () => {
+    setDeleteClassDialog(prev => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteClass.mutateAsync({ classId: deleteClassDialog.classId });
+      setDeleteClassDialog({
+        open: false,
+        classId: '',
+        className: '',
+        classTime: '',
+        classDate: '',
+        isDeleting: false,
+      });
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      setDeleteClassDialog(prev => ({ ...prev, isDeleting: false }));
+    }
   };
 
   // Toggle selección de una clase en el diálogo
@@ -851,21 +907,35 @@ const TodayAttendancePage = () => {
                       >
                         {confirmedCount}/{maxParticipants}
                       </Badge>
-                      {(() => {
-                        console.log('🚨 Button render check:', { canCancelClass, isCancelled, shouldShow: canCancelClass && !isCancelled });
-                        return canCancelClass && !isCancelled && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time)}
-                            className="h-8 px-3 gap-1.5 text-xs"
-                            title="Cancelar clase de hoy"
-                          >
-                            <Ban className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">Cancelar</span>
-                          </Button>
-                        );
-                      })()}
+                      {canCancelClass && !isCancelled && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time)}
+                              className="text-amber-600 focus:text-amber-700"
+                            >
+                              <Ban className="h-4 w-4 mr-2" />
+                              Cancelar clase
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClass(classData.id, classData.name, classData.start_time)}
+                              className="text-red-600 focus:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar clase
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -1545,6 +1615,38 @@ const TodayAttendancePage = () => {
               {cancelClass.isPending || sendCancellationNotification.isPending
                 ? 'Cancelando...'
                 : `Confirmar (${cancelClassDialog.selectedClasses.length})`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Class Dialog */}
+      <AlertDialog open={deleteClassDialog.open} onOpenChange={(open) => setDeleteClassDialog({ ...deleteClassDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar clase permanentemente?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Estás a punto de eliminar la clase <strong>{deleteClassDialog.className}</strong> ({deleteClassDialog.classTime?.substring(0, 5)}).
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="text-sm text-red-800 font-medium">⚠️ Esta acción es irreversible</p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Se eliminarán todos los registros de asistencia, participantes y la clase programada permanentemente.
+                  </p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteClassDialog.isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeDeleteClass}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteClassDialog.isDeleting}
+            >
+              {deleteClassDialog.isDeleting ? 'Eliminando...' : 'Eliminar permanentemente'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
