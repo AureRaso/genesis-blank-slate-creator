@@ -136,7 +136,18 @@ export const useGuardianChildren = () => {
       }
 
       // 1. Generar email único para el hijo
-      const childEmail = `child.${childData.fullName.toLowerCase().replace(/\s/g, '.')}.${Date.now()}@temp.padelock.com`;
+      // Normalizar el nombre: quitar tildes, caracteres especiales y espacios
+      const normalizedName = childData.fullName
+        .toLowerCase()
+        .normalize('NFD') // Descompone caracteres acentuados (é -> e + ́)
+        .replace(/[\u0300-\u036f]/g, '') // Elimina los diacríticos (tildes, acentos)
+        .replace(/ñ/g, 'n') // Reemplazar ñ por n (por si acaso)
+        .replace(/[^a-z0-9\s]/g, '') // Eliminar cualquier carácter que no sea letra, número o espacio
+        .replace(/\s+/g, '.') // Reemplazar espacios por puntos
+        .replace(/\.+/g, '.') // Eliminar puntos duplicados
+        .replace(/^\.+|\.+$/g, ''); // Eliminar puntos al inicio y final
+
+      const childEmail = `child.${normalizedName}.${Date.now()}@temp.padelock.com`;
       const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!'; // Contraseña temporal aleatoria
 
       // 2. Crear el usuario en auth.users usando signUp
