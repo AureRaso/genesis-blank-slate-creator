@@ -1179,34 +1179,25 @@ const TodayAttendancePage = () => {
 
                   {/* Substitute Search and WhatsApp Notification */}
                   {(() => {
-                    const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
-                    const substituteCount = validParticipants.filter(p => p.is_substitute).length;
-                    const slotsByAbsence = absentCount - substituteCount;
-
-                    // Calculate available slots by capacity
-                    const maxParticipants = classData.max_participants || 8;
-                    const enrolledCount = validParticipants.length;
-                    const slotsByCapacity = maxParticipants - enrolledCount;
-
-                    // Total available slots is the maximum of both
-                    const totalAvailableSlots = Math.max(slotsByAbsence, slotsByCapacity);
+                    // FIX-2025-12-23: Simplificar cálculo usando confirmedCount (los que VAN a ir)
+                    // confirmedCount ya se calcula arriba como: participantes que NO tienen ausencia confirmada
+                    // availableSlots = maxParticipants - confirmedCount = plazas realmente libres
+                    // Esto soluciona el caso donde hay ausencias DESPUÉS de añadir sustitutos
+                    const availableSlots = maxParticipants - confirmedCount;
                     const today = new Date().toISOString().split('T')[0];
 
-                    // FIX-2025-12-22-v2: Mostrar sección si hay plazas disponibles O si hay ausencias NO cubiertas
-                    // slotsByAbsence > 0 significa que hay ausencias sin cubrir por sustitutos
-                    const showNotificationSection = totalAvailableSlots > 0 || slotsByAbsence > 0;
+                    // Mostrar sección si hay plazas disponibles (confirmedCount < maxParticipants)
+                    const showNotificationSection = availableSlots > 0;
+
+                    // Mantener absentCount para el botón de "Notificar ausencia"
+                    const absentCount = validParticipants.filter(p => p.absence_confirmed).length;
 
                     console.log('🔍 DEBUG - Clase:', classData.name, {
-                      totalParticipants: validParticipants.length,
                       maxParticipants,
-                      enrolledCount,
+                      confirmedCount,
+                      availableSlots,
                       absentCount,
-                      substituteCount,
-                      slotsByAbsence,
-                      slotsByCapacity,
-                      totalAvailableSlots,
                       showSection: showNotificationSection,
-                      showNotifyButton: absentCount > 0,
                       participants: validParticipants.map(p => ({
                         name: p.student_enrollment?.full_name,
                         isSubstitute: p.is_substitute,
@@ -1217,17 +1208,11 @@ const TodayAttendancePage = () => {
                     return showNotificationSection && (
                       <div className="mt-4 space-y-3">
                         <div className="flex flex-col gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          {/* Badge de plazas disponibles o ausencias sin cubrir - FIX-2025-12-22-v2 */}
+                          {/* Badge de plazas disponibles - FIX-2025-12-23 */}
                           <div className="flex items-center gap-2">
-                            {totalAvailableSlots > 0 ? (
-                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
-                                {totalAvailableSlots} {totalAvailableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
-                              </Badge>
-                            ) : slotsByAbsence > 0 && (
-                              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
-                                {slotsByAbsence} {slotsByAbsence === 1 ? 'ausencia sin cubrir' : 'ausencias sin cubrir'}
-                              </Badge>
-                            )}
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                              {availableSlots} {availableSlots === 1 ? 'plaza disponible' : 'plazas disponibles'}
+                            </Badge>
                           </div>
 
                           {/* Botones en columna para mobile, fila para desktop */}
@@ -1235,8 +1220,8 @@ const TodayAttendancePage = () => {
                             {/* Botones WhatsApp y Lista de Espera - Solo para administradores */}
                             {isAdmin && (
                               <>
-                                {/* Mostrar "Notificar ausencia" solo si hay ausencias NO cubiertas - FIX-2025-12-22-v2 */}
-                                {slotsByAbsence > 0 && (() => {
+                                {/* Mostrar "Notificar ausencia" si hay al menos 1 ausencia - FIX-2025-12-23 */}
+                                {absentCount > 0 && (() => {
                                   const inCooldown = isInCooldown(classData.id);
                                   const minutesRemaining = getCooldownMinutesRemaining(classData.id);
 
@@ -1269,8 +1254,8 @@ const TodayAttendancePage = () => {
                                   );
                                 })()}
 
-                                {/* Botón "Comunicar hueco libre": Solo si hay plazas por CAPACIDAD, no por ausencias */}
-                                {slotsByCapacity > 0 && (() => {
+                                {/* Botón "Comunicar hueco libre": Solo si NO hay ausencias - FIX-2025-12-23 */}
+                                {absentCount === 0 && (() => {
                                   const inCooldown = isInCooldown(classData.id);
                                   const minutesRemaining = getCooldownMinutesRemaining(classData.id);
 
