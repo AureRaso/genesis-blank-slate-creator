@@ -119,6 +119,8 @@ const VideoUploader = ({
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-video?action=create-video`;
+      console.log("[VideoUploader] Function URL:", functionUrl);
+      console.log("[VideoUploader] Has access token:", !!session.session.access_token);
 
       const response = await fetch(functionUrl, {
         method: "POST",
@@ -134,8 +136,13 @@ const VideoUploader = ({
 
       // Verificar que la respuesta sea JSON
       const contentType = response.headers.get("content-type");
+      console.log("[VideoUploader] Response status:", response.status);
+      console.log("[VideoUploader] Response content-type:", contentType);
+
       if (!contentType || !contentType.includes("application/json")) {
-        console.error("Response is not JSON:", await response.text());
+        const responseText = await response.text();
+        console.error("[VideoUploader] Response is not JSON. URL:", functionUrl);
+        console.error("[VideoUploader] Response body:", responseText.substring(0, 500));
         throw new Error("Error del servidor. Por favor, inténtalo de nuevo.");
       }
 
