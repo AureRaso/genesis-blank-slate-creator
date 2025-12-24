@@ -1,7 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
-import { encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
+
+// Helper function to convert bytes to hex
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -103,9 +108,9 @@ serve(async (req) => {
         const expirationTime = Math.floor(Date.now() / 1000) + 7200; // 2 horas
         const signatureString = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoData.guid}`;
         const encoder = new TextEncoder();
-        const data = encoder.encode(signatureString);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const authSignature = encodeHex(new Uint8Array(hashBuffer));
+        const signatureData = encoder.encode(signatureString);
+        const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", signatureData);
+        const authSignature = bytesToHex(new Uint8Array(hashBuffer));
 
         return new Response(
           JSON.stringify({
