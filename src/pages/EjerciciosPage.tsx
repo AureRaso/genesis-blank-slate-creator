@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, BookOpen, Pencil, Trash2, Clock, Users, ArrowLeft, Play, MoreVertical } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, BookOpen, Pencil, Trash2, Clock, Users, ArrowLeft, Play, MoreVertical, X, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -26,6 +32,7 @@ import { Ejercicio, EjercicioFilters as FiltersType } from "@/types/ejercicios";
 import EjercicioFilters from "@/components/ejercicios/EjercicioFilters";
 import EjercicioFormInline from "@/components/ejercicios/EjercicioFormInline";
 import PistaMiniatura from "@/components/ejercicios/PistaMiniatura";
+import Hls from "hls.js";
 
 // Colores para las categorías
 const getCategoriaColor = (categoria: string): string => {
@@ -75,6 +82,54 @@ const EjerciciosPage = () => {
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [ejercicioToDelete, setEjercicioToDelete] = useState<string | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // Video player refs
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+
+  // Setup HLS when video modal opens
+  useEffect(() => {
+    if (!showVideoModal || !viewOnlyEjercicio?.video_url) {
+      // Cleanup when modal closes
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      return;
+    }
+
+    const videoElement = videoRef.current;
+    const videoSrc = viewOnlyEjercicio.video_url;
+
+    if (!videoElement || !videoSrc) return;
+
+    // Si es un stream HLS (m3u8)
+    if (videoSrc.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hlsRef.current = hls;
+        hls.loadSource(videoSrc);
+        hls.attachMedia(videoElement);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          videoElement.play().catch(() => {});
+        });
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari nativo soporta HLS
+        videoElement.src = videoSrc;
+      }
+    } else {
+      // Video normal (mp4)
+      videoElement.src = videoSrc;
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [showVideoModal, viewOnlyEjercicio?.video_url]);
 
   const { data: ejercicios, isLoading } = useEjercicios(filters);
   const deleteMutation = useDeleteEjercicio();
@@ -181,14 +236,21 @@ const EjerciciosPage = () => {
               </div>
               {/* Datos básicos - solo desktop */}
               <div className="hidden lg:flex items-center gap-2">
-                <Button
-                  variant="default"
-                  className="bg-sidebar hover:bg-sidebar/90"
-                  disabled
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  {t('ejerciciosPage.watchVideo', 'Ver Video')}
-                </Button>
+                {viewOnlyEjercicio.video_status === 'ready' && viewOnlyEjercicio.video_url ? (
+                  <Button
+                    variant="default"
+                    className="bg-sidebar hover:bg-sidebar/90"
+                    onClick={() => setShowVideoModal(true)}
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    {t('ejerciciosPage.watchVideo', 'Ver Video')}
+                  </Button>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground py-2 px-3">
+                    <Video className="mr-2 h-4 w-4" />
+                    {t('ejerciciosPage.noVideo', 'Sin video')}
+                  </Badge>
+                )}
                 <div className="flex items-center divide-x border rounded-lg px-2 py-2 bg-card">
                   <div className="text-center px-4">
                     <div className="text-muted-foreground text-xs">
@@ -262,14 +324,21 @@ const EjerciciosPage = () => {
               <p className="font-semibold">{viewOnlyEjercicio.intensidad}</p>
             </div>
           </div>
-          <Button
-            variant="default"
-            className="w-full bg-sidebar hover:bg-sidebar/90"
-            disabled
-          >
-            <Play className="mr-2 h-4 w-4" />
-            {t('ejerciciosPage.watchVideo', 'Ver Video')}
-          </Button>
+          {viewOnlyEjercicio.video_status === 'ready' && viewOnlyEjercicio.video_url ? (
+            <Button
+              variant="default"
+              className="w-full bg-sidebar hover:bg-sidebar/90"
+              onClick={() => setShowVideoModal(true)}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {t('ejerciciosPage.watchVideo', 'Ver Video')}
+            </Button>
+          ) : (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground py-2">
+              <Video className="h-4 w-4" />
+              <span className="text-sm">{t('ejerciciosPage.noVideo', 'Sin video')}</span>
+            </div>
+          )}
         </div>
 
         {/* Contenido del ejercicio - dos columnas iguales */}
@@ -289,6 +358,18 @@ const EjerciciosPage = () => {
                 <div className="flex flex-wrap gap-2">
                   {viewOnlyEjercicio.tags.map((tag, i) => (
                     <Badge key={i} variant="secondary">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Materiales */}
+            {viewOnlyEjercicio.materiales && viewOnlyEjercicio.materiales.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">{t('ejerciciosPage.form.materiales', 'Materiales necesarios')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {viewOnlyEjercicio.materiales.map((material, i) => (
+                    <Badge key={i} variant="outline">{material}</Badge>
                   ))}
                 </div>
               </div>
@@ -420,6 +501,24 @@ const EjerciciosPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Modal de video */}
+        <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
+          <DialogContent className="max-w-3xl p-0 overflow-hidden">
+            <DialogHeader className="p-4 pb-0">
+              <DialogTitle>{viewOnlyEjercicio.nombre}</DialogTitle>
+            </DialogHeader>
+            <div className="relative bg-black aspect-video">
+              <video
+                ref={videoRef}
+                poster={viewOnlyEjercicio.video_thumbnail || undefined}
+                controls
+                className="w-full h-full"
+                playsInline
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -481,6 +580,12 @@ const EjerciciosPage = () => {
                   <Badge className={`${getIntensidadColor(ejercicio.intensidad)} text-xs`}>
                     {t(`ejerciciosPage.intensities.${ejercicio.intensidad.toLowerCase()}`, ejercicio.intensidad)}
                   </Badge>
+                  {ejercicio.video_status === 'ready' && (
+                    <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 text-xs">
+                      <Video className="h-3 w-3 mr-1" />
+                      Video
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">

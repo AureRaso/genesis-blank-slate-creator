@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, Zap, Target, Pencil, Trash2, Eye } from "lucide-react";
+import { Clock, Users, Zap, Target, Pencil, Trash2, Eye, Video } from "lucide-react";
 import { Ejercicio } from "@/types/ejercicios";
 import { useTranslation } from "react-i18next";
 
@@ -71,6 +71,12 @@ const EjercicioCard = ({
               <Badge className={getNivelColor(ejercicio.nivel)}>
                 {t(`ejerciciosPage.levels.${ejercicio.nivel.toLowerCase()}`, ejercicio.nivel)}
               </Badge>
+              {ejercicio.video_status === 'ready' && (
+                <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200">
+                  <Video className="h-3 w-3 mr-1" />
+                  Video
+                </Badge>
+              )}
             </div>
           </div>
           <div className="flex gap-1 flex-shrink-0">

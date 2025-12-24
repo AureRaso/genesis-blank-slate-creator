@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import Hls from "hls.js";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -21,17 +22,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft, ChevronDown, Upload, Play, Trash2 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreateEjercicio, useUpdateEjercicio } from "@/hooks/useEjercicios";
 import EditorPista from "./EditorPista";
+import VideoUploader from "./VideoUploader";
 import {
   Ejercicio,
   CATEGORIAS,
   NIVELES,
   INTENSIDADES,
   JUGADORES_OPTIONS,
+  MATERIALES_EJERCICIO,
   PosicionJugador,
   Movimiento
 } from "@/types/ejercicios";
@@ -65,8 +79,66 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
 
   const [tags, setTags] = useState<string[]>(ejercicio?.tags || []);
   const [tagInput, setTagInput] = useState('');
+  const [materiales, setMateriales] = useState<string[]>(ejercicio?.materiales || []);
   const [posiciones, setPosiciones] = useState<PosicionJugador[]>(ejercicio?.posiciones || []);
   const [movimientos, setMovimientos] = useState<Movimiento[]>(ejercicio?.movimientos || []);
+
+  // Estado para video pendiente (cuando se sube antes de crear el ejercicio)
+  const [pendingVideo, setPendingVideo] = useState<{
+    videoId: string;
+    videoUrl: string;
+    thumbnailUrl: string;
+  } | null>(null);
+
+  // Estados para modales de video
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // Refs para video HLS
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+
+  // Obtener URL y thumbnail del video actual
+  const currentVideoUrl = ejercicio?.video_url || pendingVideo?.videoUrl;
+  const currentThumbnail = ejercicio?.video_thumbnail || pendingVideo?.thumbnailUrl;
+  const hasVideo = !!(currentVideoUrl && (ejercicio?.video_status === 'ready' || pendingVideo));
+
+  // Setup HLS cuando se abre el modal de video
+  useEffect(() => {
+    if (!showVideoModal || !currentVideoUrl) {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      return;
+    }
+
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    if (currentVideoUrl.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hlsRef.current = hls;
+        hls.loadSource(currentVideoUrl);
+        hls.attachMedia(videoElement);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          videoElement.play().catch(() => {});
+        });
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        videoElement.src = currentVideoUrl;
+      }
+    } else {
+      videoElement.src = currentVideoUrl;
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [showVideoModal, currentVideoUrl]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -96,6 +168,7 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
         descripcion: ejercicio.descripcion || '',
       });
       setTags(ejercicio.tags || []);
+      setMateriales(ejercicio.materiales || []);
       setPosiciones(ejercicio.posiciones || []);
       setMovimientos(ejercicio.movimientos || []);
     }
@@ -121,6 +194,15 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
     }
   };
 
+  // Manejar materiales
+  const handleToggleMaterial = (material: string) => {
+    if (materiales.includes(material)) {
+      setMateriales(materiales.filter(m => m !== material));
+    } else {
+      setMateriales([...materiales, material]);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!profile?.club_id) return;
 
@@ -128,8 +210,16 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
       ...data,
       club_id: profile.club_id,
       tags,
+      materiales,
       posiciones,
       movimientos,
+      // Incluir datos de video pendiente si existe
+      ...(pendingVideo && {
+        video_id: pendingVideo.videoId,
+        video_url: pendingVideo.videoUrl,
+        video_thumbnail: pendingVideo.thumbnailUrl,
+        video_status: 'ready' as const,
+      }),
     };
 
     try {
@@ -372,6 +462,45 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
                 )}
               />
 
+              {/* Materiales - Desplegable */}
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="flex items-center gap-2">
+                      {t('ejerciciosPage.form.materiales', 'Materiales necesarios')}
+                      {materiales.length > 0 && (
+                        <Badge variant="secondary" className="ml-1">
+                          {materiales.length}
+                        </Badge>
+                      )}
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 border rounded-md">
+                    {MATERIALES_EJERCICIO.map((material) => (
+                      <Badge
+                        key={material}
+                        variant={materiales.includes(material) ? "default" : "outline"}
+                        className={`cursor-pointer transition-colors ${
+                          materiales.includes(material)
+                            ? "bg-primary hover:bg-primary/80"
+                            : "hover:bg-muted"
+                        }`}
+                        onClick={() => handleToggleMaterial(material)}
+                      >
+                        {material}
+                      </Badge>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               {/* Tags */}
               <div>
                 <FormLabel>{t('ejerciciosPage.form.tags', 'Etiquetas')}</FormLabel>
@@ -406,14 +535,73 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
               </div>
             </div>
 
-            {/* Columna derecha - Editor de pista horizontal (3/5 = 60%) */}
-            <div className="lg:col-span-3">
+            {/* Columna derecha - Editor de pista y Video (3/5 = 60%) */}
+            <div className="lg:col-span-3 space-y-4">
               <EditorPista
                 posiciones={posiciones}
                 movimientos={movimientos}
                 onPosicionesChange={setPosiciones}
                 onMovimientosChange={setMovimientos}
               />
+
+              {/* Video del ejercicio - Botón centrado debajo de la pista */}
+              <div className="flex flex-col items-center">
+                {hasVideo ? (
+                  // Estado: hay video - mostrar miniatura y botón ver video
+                  <div className="relative w-full max-w-xs">
+                    <div
+                      className="relative rounded-lg overflow-hidden bg-black aspect-video cursor-pointer group"
+                      onClick={() => setShowVideoModal(true)}
+                    >
+                      {currentThumbnail && (
+                        <img
+                          src={currentThumbnail}
+                          alt="Video thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-white/90 rounded-full p-3">
+                          <Play className="h-6 w-6 text-black" />
+                        </div>
+                      </div>
+                      {/* Botón eliminar */}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPendingVideo(null);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full mt-2"
+                      onClick={() => setShowVideoModal(true)}
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      {t('ejerciciosPage.watchVideo', 'Ver Video')}
+                    </Button>
+                  </div>
+                ) : (
+                  // Estado: no hay video - botón subir video
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="max-w-xs"
+                    onClick={() => setShowUploadModal(true)}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t('ejerciciosPage.form.uploadVideo', 'Subir video')}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -437,6 +625,46 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
           </div>
         </form>
       </Form>
+
+      {/* Modal de subir video */}
+      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('ejerciciosPage.form.uploadVideo', 'Subir video')}</DialogTitle>
+          </DialogHeader>
+          <VideoUploader
+            ejercicioId={ejercicio?.id}
+            currentVideoUrl={currentVideoUrl}
+            currentThumbnail={currentThumbnail}
+            videoStatus={ejercicio?.video_status || (pendingVideo ? 'ready' : undefined)}
+            onVideoReady={(videoData) => {
+              setPendingVideo(videoData);
+              setShowUploadModal(false);
+            }}
+            onVideoDeleted={() => {
+              setPendingVideo(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de ver video */}
+      <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>{form.watch('nombre') || t('ejerciciosPage.form.video', 'Video del ejercicio')}</DialogTitle>
+          </DialogHeader>
+          <div className="relative bg-black aspect-video">
+            <video
+              ref={videoRef}
+              poster={currentThumbnail || undefined}
+              controls
+              className="w-full h-full"
+              playsInline
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

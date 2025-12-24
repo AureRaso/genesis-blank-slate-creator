@@ -20,6 +20,8 @@ export interface Movimiento {
   color?: string;
 }
 
+export type VideoStatus = 'none' | 'uploading' | 'processing' | 'ready' | 'error';
+
 export interface Ejercicio {
   id: string;
   club_id: string;
@@ -32,12 +34,18 @@ export interface Ejercicio {
   objetivo: string;
   descripcion?: string;
   tags: string[];
+  materiales: string[];
   posiciones: PosicionJugador[];
   movimientos: Movimiento[];
   created_by?: string;
   activo: boolean;
   created_at: string;
   updated_at: string;
+  // Campos de video
+  video_id?: string | null;
+  video_url?: string | null;
+  video_thumbnail?: string | null;
+  video_status?: VideoStatus;
   clubs?: {
     name: string;
   };
@@ -54,6 +62,7 @@ export interface CreateEjercicioData {
   objetivo: string;
   descripcion?: string;
   tags?: string[];
+  materiales?: string[];
   posiciones?: PosicionJugador[];
   movimientos?: Movimiento[];
 }
@@ -68,9 +77,15 @@ export interface UpdateEjercicioData {
   objetivo?: string;
   descripcion?: string;
   tags?: string[];
+  materiales?: string[];
   posiciones?: PosicionJugador[];
   movimientos?: Movimiento[];
   activo?: boolean;
+  // Campos de video
+  video_id?: string | null;
+  video_url?: string | null;
+  video_thumbnail?: string | null;
+  video_status?: VideoStatus;
 }
 
 export interface EjercicioFilters {
@@ -111,6 +126,39 @@ export const INTENSIDADES: IntensidadEjercicio[] = [
 ];
 
 export const JUGADORES_OPTIONS = [2, 3, 4];
+
+// Materiales disponibles para ejercicios
+export const MATERIALES_EJERCICIO = [
+  // Pelotas y equipamiento básico
+  'Pelotas de pádel',
+  'Cesta de pelotas',
+  'Lanzapelotas automático',
+  // Conos y marcadores
+  'Conos',
+  'Conos chinos',
+  'Marcadores de suelo',
+  'Aros de agilidad',
+  // Redes y obstáculos
+  'Mini redes portátiles',
+  'Vallas de salto',
+  'Escalera de agilidad',
+  'Picas/postes',
+  // Targets y precisión
+  'Dianas/targets',
+  'Aros colgantes',
+  'Cubos/recipientes',
+  // Entrenamiento físico
+  'Bandas elásticas',
+  'Pesas ligeras',
+  'Balón medicinal',
+  'Bosu',
+  // Otros
+  'Muro de rebote portátil',
+  'Cuerda de saltar',
+  'Cronómetro/temporizador',
+] as const;
+
+export type MaterialEjercicio = typeof MATERIALES_EJERCICIO[number];
 
 // Colores por defecto para jugadores
 export const COLORES_JUGADORES = [
