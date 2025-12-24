@@ -6,6 +6,7 @@ import { encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 const BUNNY_API_KEY = Deno.env.get("BUNNY_API_KEY")!;
@@ -31,7 +32,7 @@ interface VideoStatusResponse {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
