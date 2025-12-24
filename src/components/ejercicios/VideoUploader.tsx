@@ -1,14 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Upload, X, Video, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, X, Video, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-// URL de Supabase - usar la misma que el cliente
-const SUPABASE_URL = "https://hwwvtxyezhgmhyxjpnvl.supabase.co";
+import * as tus from "tus-js-client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import Hls from "hls.js";
+
+// URL de Supabase - usar la misma que el cliente
+const SUPABASE_URL = "https://hwwvtxyezhgmhyxjpnvl.supabase.co";
 
 interface VideoUploaderProps {
   ejercicioId?: string;
@@ -122,8 +123,6 @@ const VideoUploader = ({
       }
 
       const functionUrl = `${SUPABASE_URL}/functions/v1/bunny-video?action=create-video`;
-      console.log("[VideoUploader] Function URL:", functionUrl);
-      console.log("[VideoUploader] Has access token:", !!session.session.access_token);
 
       const response = await fetch(functionUrl, {
         method: "POST",
@@ -139,13 +138,7 @@ const VideoUploader = ({
 
       // Verificar que la respuesta sea JSON
       const contentType = response.headers.get("content-type");
-      console.log("[VideoUploader] Response status:", response.status);
-      console.log("[VideoUploader] Response content-type:", contentType);
-
       if (!contentType || !contentType.includes("application/json")) {
-        const responseText = await response.text();
-        console.error("[VideoUploader] Response is not JSON. URL:", functionUrl);
-        console.error("[VideoUploader] Response body:", responseText.substring(0, 500));
         throw new Error("Error del servidor. Por favor, inténtalo de nuevo.");
       }
 
@@ -154,44 +147,49 @@ const VideoUploader = ({
         throw new Error(errorData.error || "Error al crear video");
       }
 
-      const { videoId, uploadUrl, apiKey } = await response.json();
+      const { videoId, libraryId, tusEndpoint, authSignature, authExpire } = await response.json();
       setCurrentVideoId(videoId);
 
-      // 2. Subir video directamente a Bunny
+      // 2. Subir video usando TUS protocol (más rápido, soporta resume)
       setStatus("uploading");
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", uploadUrl);
-      xhr.setRequestHeader("AccessKey", apiKey);
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
+      const upload = new tus.Upload(file, {
+        endpoint: tusEndpoint,
+        retryDelays: [0, 1000, 3000, 5000],
+        chunkSize: 10 * 1024 * 1024, // 10MB chunks para upload más rápido
+        metadata: {
+          filetype: file.type,
+          title: file.name,
+        },
+        headers: {
+          AuthorizationSignature: authSignature,
+          AuthorizationExpire: String(authExpire),
+          VideoId: videoId,
+          LibraryId: libraryId,
+        },
+        onError: (error) => {
+          console.error("TUS upload error:", error);
+          setStatus("error");
+          toast({
+            title: t("ejerciciosPage.video.uploadError", "Error al subir"),
+            description: t("ejerciciosPage.video.tryAgain", "Por favor, inténtalo de nuevo"),
+            variant: "destructive",
+          });
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const percent = Math.round((bytesUploaded / bytesTotal) * 100);
           setUploadProgress(percent);
-        }
-      };
-
-      xhr.onload = async () => {
-        if (xhr.status === 200) {
+        },
+        onSuccess: () => {
           setStatus("processing");
           onVideoUploaded?.(videoId);
           // Iniciar polling del estado
           pollVideoStatus(videoId);
-        } else {
-          throw new Error("Upload failed");
-        }
-      };
+        },
+      });
 
-      xhr.onerror = () => {
-        setStatus("error");
-        toast({
-          title: t("ejerciciosPage.video.uploadError", "Error al subir"),
-          description: t("ejerciciosPage.video.tryAgain", "Por favor, inténtalo de nuevo"),
-          variant: "destructive",
-        });
-      };
-
-      xhr.send(file);
+      // Iniciar upload directamente (TUS maneja el resume automáticamente)
+      upload.start();
     } catch (error) {
       console.error("Upload error:", error);
       setStatus("error");

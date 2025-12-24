@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
+import { encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -95,14 +97,22 @@ serve(async (req) => {
             .eq("id", ejercicioId);
         }
 
-        // Construir URL de upload directo
-        const uploadUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoData.guid}`;
+        // Generar firma para TUS upload
+        // Bunny requiere: SHA256(library_id + api_key + expiration_time + video_id)
+        const expirationTime = Math.floor(Date.now() / 1000) + 7200; // 2 horas
+        const signatureString = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoData.guid}`;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(signatureString);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const authSignature = encodeHex(new Uint8Array(hashBuffer));
 
         return new Response(
           JSON.stringify({
             videoId: videoData.guid,
-            uploadUrl,
-            apiKey: BUNNY_API_KEY, // El frontend necesita esto para el upload directo
+            libraryId: BUNNY_LIBRARY_ID,
+            tusEndpoint: "https://video.bunnycdn.com/tusupload",
+            authSignature,
+            authExpire: expirationTime,
           }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
