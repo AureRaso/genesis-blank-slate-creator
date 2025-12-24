@@ -504,7 +504,11 @@ const EjerciciosPage = () => {
 
         {/* Modal de video */}
         <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-          <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <DialogContent
+            className="max-w-3xl p-0 overflow-hidden"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader className="p-4 pb-0">
               <DialogTitle>{viewOnlyEjercicio.nombre}</DialogTitle>
             </DialogHeader>
@@ -513,8 +517,9 @@ const EjerciciosPage = () => {
                 ref={videoRef}
                 poster={viewOnlyEjercicio.video_thumbnail || undefined}
                 controls
-                className="w-full h-full"
+                className="w-full h-full relative z-50"
                 playsInline
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
           </DialogContent>

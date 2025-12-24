@@ -650,7 +650,11 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
 
       {/* Modal de ver video */}
       <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+        <DialogContent
+          className="max-w-3xl p-0 overflow-hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader className="p-4 pb-0">
             <DialogTitle>{form.watch('nombre') || t('ejerciciosPage.form.video', 'Video del ejercicio')}</DialogTitle>
           </DialogHeader>
@@ -659,8 +663,9 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
               ref={videoRef}
               poster={currentThumbnail || undefined}
               controls
-              className="w-full h-full"
+              className="w-full h-full relative z-50"
               playsInline
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </DialogContent>
