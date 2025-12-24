@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Video, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+// URL de Supabase - usar la misma que el cliente
+const SUPABASE_URL = "https://hwwvtxyezhgmhyxjpnvl.supabase.co";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import Hls from "hls.js";
@@ -118,7 +121,7 @@ const VideoUploader = ({
         throw new Error("No hay sesión activa. Por favor, vuelve a iniciar sesión.");
       }
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-video?action=create-video`;
+      const functionUrl = `${SUPABASE_URL}/functions/v1/bunny-video?action=create-video`;
       console.log("[VideoUploader] Function URL:", functionUrl);
       console.log("[VideoUploader] Has access token:", !!session.session.access_token);
 
@@ -207,7 +210,7 @@ const VideoUploader = ({
       try {
         // Si no hay ejercicioId, no lo pasamos - el video se subirá sin asociar
         const ejercicioParam = ejercicioId ? `&ejercicioId=${ejercicioId}` : '';
-        const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-video?action=check-status&videoId=${videoId}${ejercicioParam}`;
+        const functionUrl = `${SUPABASE_URL}/functions/v1/bunny-video?action=check-status&videoId=${videoId}${ejercicioParam}`;
         const statusResponse = await fetch(functionUrl, {
           headers: {
             Authorization: `Bearer ${session?.session?.access_token}`,
@@ -273,7 +276,7 @@ const VideoUploader = ({
       const urlToCheck = currentVideoUrl || pendingVideoUrl;
       const videoId = currentVideoId || urlToCheck?.split("/").find((part) => part.length === 36);
 
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-video?action=delete-video`;
+      const functionUrl = `${SUPABASE_URL}/functions/v1/bunny-video?action=delete-video`;
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
