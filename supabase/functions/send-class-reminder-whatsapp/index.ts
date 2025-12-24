@@ -61,13 +61,14 @@ function getSpanishDayNames(date: Date): string[] {
  */
 function formatClassMessage(studentName: string, classes: TodayClass[]): string {
   if (classes.length === 0) {
-    return `Hola ${studentName}! 👋\n\nNo tienes clases programadas para mañana.\n\n¡Que tengas un buen día! 🎾`;
+    return `Hola, ${studentName}! 👋\n\nNo tienes clases programadas para mañana.\n\n¡Que tengas un buen día! 🎾`;
   }
 
-  let message = `Hola ${studentName}! 👋\n\nRecordatorio de tus clases de mañana:\n\n`;
+  const classWord = classes.length === 1 ? 'tu clase' : 'tus clases';
+  let message = `Hola, ${studentName}! 👋\nRecordatorio de ${classWord} de mañana:\n\n`;
 
-  classes.forEach((cls, index) => {
-    message += `📍 Clase ${index + 1}: ${cls.class_name}\n`;
+  classes.forEach((cls) => {
+    message += `📍 ${cls.class_name}\n`;
 
     // Calculate end time from start_time + duration_minutes
     const [hours, minutes] = cls.start_time.substring(0, 5).split(':').map(Number);
@@ -77,25 +78,11 @@ function formatClassMessage(studentName: string, classes: TodayClass[]): string 
     const endMins = endMinutes % 60;
     const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
 
-    message += `⏰ Horario: ${cls.start_time.substring(0, 5)} - ${endTime}\n`;
-
-    if (cls.court_number) {
-      message += `🎾 Pista: ${cls.court_number}\n`;
-    }
-
-    if (cls.attendance_confirmed_at) {
-      message += `✅ Asistencia confirmada\n`;
-    } else if (cls.absence_confirmed) {
-      message += `❌ Ausencia confirmada\n`;
-    } else {
-      message += `⚠️ Pendiente de confirmar\n`;
-    }
-
-    message += `\n`;
+    message += `⏰ ${cls.start_time.substring(0, 5)} - ${endTime}\n`;
+    message += `✅ Tu asistencia está confirmada.\n\n`;
   });
 
-  message += `⚠️ Recuerda: Si no puedes asistir, márcalo en la web antes de 5 horas del inicio de la clase.\n\n`;
-  message += `🔗 Accede aquí: https://www.padelock.com/auth\n\n`;
+  message += `⚠️ ¿No puedes ir? Pulsa el botón de abajo o márcalo en https://www.padelock.com/auth antes de 5 horas del inicio de tu clase.\n\n`;
   message += `¡Nos vemos en la pista! 🎾`;
 
   return message;
@@ -143,9 +130,28 @@ serve(async (req) => {
 
     console.log('✓ Student found:', studentData.email);
 
-    if (!studentData.phone) {
+    // If no phone in student_enrollments, try to get it from profiles table
+    let phoneNumber = studentData.phone;
+    if (!phoneNumber) {
+      console.log('⚠️ No phone in student_enrollments, checking profiles table...');
+      const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('phone')
+        .eq('email', userEmail)
+        .single();
+
+      if (profileData?.phone) {
+        phoneNumber = profileData.phone;
+        console.log('✓ Phone found in profiles table:', phoneNumber);
+      }
+    }
+
+    if (!phoneNumber) {
       throw new Error(`No phone number for user: ${userEmail}`);
     }
+
+    // Use phoneNumber instead of studentData.phone from here on
+    const studentPhone = phoneNumber;
 
     // Get tomorrow's date and day names in Spanish (for 24h advance reminder)
     // Using Spain timezone for accurate date calculation
@@ -175,7 +181,7 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           userEmail: userEmail,
-          phone: studentData.phone,
+          phone: studentPhone,
           classesCount: 0,
           classes: [],
           message: 'No classes tomorrow - message not sent',
@@ -241,7 +247,7 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           userEmail: userEmail,
-          phone: studentData.phone,
+          phone: studentPhone,
           classesCount: 0,
           classes: [],
           message: 'No classes tomorrow - message not sent',
@@ -258,7 +264,7 @@ serve(async (req) => {
     console.log('✓ Message formatted');
 
     // Format phone and send WhatsApp
-    const formattedPhone = formatPhoneNumber(studentData.phone);
+    const formattedPhone = formatPhoneNumber(studentPhone);
     console.log('✓ Phone formatted:', formattedPhone);
 
     const whapiToken = Deno.env.get('WHAPI_TOKEN');
@@ -313,7 +319,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         userEmail: userEmail,
-        phone: studentData.phone,
+        phone: studentPhone,
         formattedPhone: formattedPhone,
         classesCount: tomorrowClasses.length,
         classes: tomorrowClasses,

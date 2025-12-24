@@ -2,12 +2,14 @@ name: Weekly Attendance Reminder
 
 # Se ejecuta automáticamente todos los LUNES a las 8:00 AM Madrid
 # También puede ejecutarse manualmente desde la pestaña "Actions" en GitHub
+# TEMPORAL: Semana del 9-13 dic 2024, ejecutar MARTES porque lunes 8 es festivo
+# TODO: Volver a cambiar a '0 7 * * 1' después del 10 de diciembre
 on:
   schedule:
-    # Cron sintaxis: minuto hora día mes día-de-semana (1 = Monday)
-    # 0 7 * * 1 = 7:00 AM UTC on Mondays = 8:00 AM Madrid (horario de invierno UTC+1)
-    # Para horario de verano (UTC+2), cambiar a: 0 6 * * 1
-    - cron: '0 7 * * 1'
+    # Cron sintaxis: minuto hora día mes día-de-semana (1 = Monday, 2 = Tuesday)
+    # 0 7 * * 2 = 7:00 AM UTC on Tuesdays = 8:00 AM Madrid (horario de invierno UTC+1)
+    # Para horario de verano (UTC+2), cambiar a: 0 6 * * 2
+    - cron: '0 7 * * 2'
 
   # Permite ejecutar manualmente para testing
   workflow_dispatch:

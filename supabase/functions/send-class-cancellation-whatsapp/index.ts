@@ -150,6 +150,33 @@ serve(async (req) => {
       );
     }
 
+    // Get phone numbers from profiles table as fallback for participants without phone in student_enrollments
+    const participantsWithoutPhone = participants.filter((p: any) => !p.student_enrollments?.phone);
+    const emailsWithoutPhone = participantsWithoutPhone
+      .map((p: any) => p.student_enrollments?.email)
+      .filter(Boolean);
+
+    let profilePhones: Record<string, string> = {};
+
+    if (emailsWithoutPhone.length > 0) {
+      console.log(`📱 Looking up phones in profiles table for ${emailsWithoutPhone.length} participants...`);
+
+      const { data: profiles } = await supabaseClient
+        .from('profiles')
+        .select('email, phone')
+        .in('email', emailsWithoutPhone);
+
+      if (profiles) {
+        profilePhones = profiles.reduce((acc: Record<string, string>, p: any) => {
+          if (p.email && p.phone) {
+            acc[p.email] = p.phone;
+          }
+          return acc;
+        }, {});
+        console.log(`✓ Found ${Object.keys(profilePhones).length} phone numbers in profiles table`);
+      }
+    }
+
     // Get Whapi credentials
     const whapiToken = Deno.env.get('WHAPI_TOKEN');
     const whapiEndpoint = Deno.env.get('WHAPI_ENDPOINT') || 'https://gate.whapi.cloud';
@@ -166,8 +193,11 @@ serve(async (req) => {
     for (const participant of participants) {
       const student = (participant as any).student_enrollments;
 
-      if (!student?.phone) {
-        console.log(`⚠ Skipping ${student?.email || 'unknown'}: no phone number`);
+      // Use phone from student_enrollments, fallback to profiles table
+      const studentPhone = student?.phone || profilePhones[student?.email];
+
+      if (!studentPhone) {
+        console.log(`⚠ Skipping ${student?.email || 'unknown'}: no phone number in student_enrollments or profiles`);
         results.push({
           email: student?.email,
           success: false,
@@ -175,6 +205,11 @@ serve(async (req) => {
         });
         failureCount++;
         continue;
+      }
+
+      // Log if we used fallback
+      if (!student?.phone && profilePhones[student?.email]) {
+        console.log(`📱 Using phone from profiles table for ${student.email}`);
       }
 
       try {
@@ -186,7 +221,7 @@ serve(async (req) => {
           reason
         );
 
-        const formattedPhone = formatPhoneNumber(student.phone);
+        const formattedPhone = formatPhoneNumber(studentPhone);
         console.log(`📤 Sending cancellation to ${student.email} (${formattedPhone})...`);
 
         const response = await fetch(`${whapiEndpoint}/messages/text`, {

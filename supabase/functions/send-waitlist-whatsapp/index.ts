@@ -18,7 +18,14 @@ interface SendWaitlistWhatsAppRequest {
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-const GALI_CLUB_ID = 'cc0a5265-99c5-4b99-a479-5334280d0c6d'; // Only send WhatsApp to Gali club students
+
+// Club IDs with WhatsApp notifications enabled
+const WHATSAPP_ENABLED_CLUBS = [
+  'cc0a5265-99c5-4b99-a479-5334280d0c6d', // Gali
+  'bbc10821-1c94-4b62-97ac-2fde0708cefd', // La Red 21 Galisport
+  '09e8aa4e-69fa-4432-aedb-e7f831b3ebcc', // SVQ Academy
+  'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
+];
 
 /**
  * Format phone number for Whapi
@@ -161,12 +168,12 @@ serve(async (req) => {
       throw new Error(`Student not found: ${request.studentEmail}`);
     }
 
-    // Only send WhatsApp to Gali club students (for testing)
-    if (studentData.club_id !== GALI_CLUB_ID) {
-      console.log(`Student ${request.studentEmail} is not from Gali club - WhatsApp not sent`);
+    // Only send WhatsApp to clubs with WhatsApp enabled
+    if (!WHATSAPP_ENABLED_CLUBS.includes(studentData.club_id)) {
+      console.log(`Student ${request.studentEmail} is not from a WhatsApp-enabled club - WhatsApp not sent`);
       return new Response(JSON.stringify({
         success: true,
-        message: `Student not from Gali club - WhatsApp not sent`,
+        message: `Student not from WhatsApp-enabled club - WhatsApp not sent`,
         whatsappSent: false
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

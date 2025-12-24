@@ -113,19 +113,31 @@ const VideoUploader = ({
 
       // 1. Crear video en Bunny via Edge Function
       const { data: session } = await supabase.auth.getSession();
+
+      if (!session?.session?.access_token) {
+        throw new Error("No hay sesión activa. Por favor, vuelve a iniciar sesión.");
+      }
+
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bunny-video?action=create-video`;
 
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.session?.access_token}`,
+          Authorization: `Bearer ${session.session.access_token}`,
         },
         body: JSON.stringify({
           title: file.name,
           ejercicioId,
         }),
       });
+
+      // Verificar que la respuesta sea JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Response is not JSON:", await response.text());
+        throw new Error("Error del servidor. Por favor, inténtalo de nuevo.");
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

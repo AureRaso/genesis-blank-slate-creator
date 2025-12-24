@@ -12,7 +12,14 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const WHATSAPP_REMINDER_URL = Deno.env.get('WHATSAPP_REMINDER_URL') ||
   'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/send-class-reminder-whatsapp';
 const TEST_SECRET = Deno.env.get('TEST_SECRET') || 'whatsapp-test-2025';
-const GALI_CLUB_ID = 'cc0a5265-99c5-4b99-a479-5334280d0c6d'; // Gali club ID for WhatsApp testing
+
+// Club IDs with WhatsApp reminders enabled
+const WHATSAPP_ENABLED_CLUBS = [
+  'cc0a5265-99c5-4b99-a479-5334280d0c6d', // Gali
+  'bbc10821-1c94-4b62-97ac-2fde0708cefd', // La Red 21 Galisport
+  '09e8aa4e-69fa-4432-aedb-e7f831b3ebcc', // SVQ Academy
+  'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
+];
 
 // Create Supabase client with service role (bypasses RLS)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -367,9 +374,9 @@ serve(async (req) => {
           totalRemindersSent++;
         }
 
-        // Send WhatsApp reminder for Gali club students
-        if (classInfo.club_id === GALI_CLUB_ID) {
-          console.log(`📱 Sending WhatsApp to Gali club student: ${enrollment.email}`);
+        // Send WhatsApp reminder for clubs with WhatsApp enabled
+        if (WHATSAPP_ENABLED_CLUBS.includes(classInfo.club_id)) {
+          console.log(`📱 Sending WhatsApp to student: ${enrollment.email} (club: ${(classInfo.clubs as any)?.name})`);
           const whatsappSent = await sendWhatsAppReminder(enrollment.email);
           if (whatsappSent) {
             totalWhatsAppSent++;
