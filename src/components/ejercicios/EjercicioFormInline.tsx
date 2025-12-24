@@ -354,7 +354,7 @@ const EjercicioFormInline = ({ ejercicio, onClose, onSaveSuccess }: EjercicioFor
                   name="duracion"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('ejerciciosPage.form.duracion', 'Duración')} (min)</FormLabel>
+                      <FormLabel>{t('ejerciciosPage.form.duracion', 'Duración (min)')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

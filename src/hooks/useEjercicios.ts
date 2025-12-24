@@ -69,6 +69,17 @@ export const useEjercicios = (filters?: EjercicioFilters) => {
         );
       }
 
+      // Filtrar por video
+      if (filters?.tieneVideo !== undefined) {
+        if (filters.tieneVideo) {
+          // Con video: video_status === 'ready'
+          result = result.filter(ej => ej.video_status === 'ready');
+        } else {
+          // Sin video: video_status no es 'ready' o no existe
+          result = result.filter(ej => ej.video_status !== 'ready');
+        }
+      }
+
       return result;
     },
     enabled: !!profile?.club_id,

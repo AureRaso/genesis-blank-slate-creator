@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, BookOpen, Pencil, Trash2, Clock, Users, ArrowLeft, Play, MoreVertical, X, Video } from "lucide-react";
+import { Plus, BookOpen, Pencil, Trash2, Clock, Users, ArrowLeft, Play, MoreVertical, X, Video, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +77,8 @@ const EjerciciosPage = () => {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [ejercicioToDelete, setEjercicioToDelete] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
 
   // Video player refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -127,6 +129,19 @@ const EjerciciosPage = () => {
 
   const { data: ejercicios, isLoading } = useEjercicios(filters);
   const deleteMutation = useDeleteEjercicio();
+
+  // Calcular paginación
+  const totalEjercicios = ejercicios?.length || 0;
+  const totalPages = Math.ceil(totalEjercicios / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const ejerciciosPaginados = ejercicios?.slice(startIndex, endIndex) || [];
+
+  // Resetear página cuando cambien los filtros
+  const handleFiltersChange = (newFilters: FiltersType) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
 
   const canEdit = isAdmin || isTrainer;
   const canDelete = isAdmin;
@@ -556,7 +571,7 @@ const EjerciciosPage = () => {
       </div>
 
       {/* Filtros */}
-      <EjercicioFilters filters={filters} onFiltersChange={setFilters} />
+      <EjercicioFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
       {/* Lista de ejercicios */}
       {isLoading ? (
@@ -567,7 +582,7 @@ const EjerciciosPage = () => {
         </div>
       ) : ejercicios && ejercicios.length > 0 ? (
         <div className="flex flex-col gap-3">
-          {ejercicios.map((ejercicio) => (
+          {ejerciciosPaginados.map((ejercicio) => (
             <div
               key={ejercicio.id}
               className="flex items-center gap-3 p-3 bg-card border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
@@ -608,20 +623,6 @@ const EjerciciosPage = () => {
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                {canEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEdit(ejercicio);
-                    }}
-                    className="h-8 w-8"
-                    title={t('common.edit', 'Editar')}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                )}
                 {canDelete && (
                   <Button
                     variant="ghost"
@@ -639,13 +640,43 @@ const EjerciciosPage = () => {
               </div>
             </div>
           ))}
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                {t('ejerciciosPage.pagination.showing', 'Mostrando')} {startIndex + 1}-{Math.min(endIndex, totalEjercicios)} {t('ejerciciosPage.pagination.of', 'de')} {totalEjercicios}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm px-2">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              {filters.search || filters.categoria || filters.nivel || filters.intensidad || filters.jugadores
+              {filters.search || filters.categoria || filters.nivel || filters.intensidad || filters.jugadores || filters.tieneVideo !== undefined
                 ? t('ejerciciosPage.noExercisesFiltered', 'No se encontraron ejercicios con los filtros aplicados')
                 : t('ejerciciosPage.noExercises', 'No hay ejercicios en tu biblioteca')
               }
