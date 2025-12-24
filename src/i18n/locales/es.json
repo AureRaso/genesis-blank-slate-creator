@@ -49,7 +49,8 @@
     "clubs": "Clubes",
     "standings": "Clasificación",
     "waitlistNotifications": "Lista de Espera",
-    "payment": "Pago"
+    "payment": "Pago",
+    "biblioteca": "Biblioteca"
   },
   "userMenu": {
     "admin": "Administrador",
@@ -995,6 +996,104 @@
         "cookies": "Cookies",
         "backToTop": "Volver arriba"
       }
+    }
+  },
+  "ejerciciosPage": {
+    "title": "Biblioteca de Ejercicios",
+    "subtitle": "Gestiona los ejercicios de entrenamiento de tu club",
+    "newExercise": "Nuevo Ejercicio",
+    "loading": "Cargando ejercicios...",
+    "noExercises": "No hay ejercicios en tu biblioteca",
+    "noExercisesFiltered": "No se encontraron ejercicios con los filtros aplicados",
+    "createFirstExercise": "Crear Primer Ejercicio",
+    "table": {
+      "nombre": "Nombre",
+      "categoria": "Categoría",
+      "nivel": "Nivel",
+      "intensidad": "Intensidad",
+      "objetivo": "Objetivo",
+      "acciones": "Acciones"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar ejercicio...",
+      "categoria": "Categoría",
+      "nivel": "Nivel",
+      "intensidad": "Intensidad",
+      "jugadores": "Jugadores",
+      "allCategories": "Todas las categorías",
+      "allLevels": "Todos los niveles",
+      "allIntensities": "Todas las intensidades",
+      "allPlayers": "Cualquier cantidad",
+      "players": "jugadores",
+      "clearFilters": "Limpiar filtros",
+      "advancedFilters": "Filtros",
+      "advancedFiltersTitle": "Filtros avanzados",
+      "applyFilters": "Aplicar filtros"
+    },
+    "categories": {
+      "volea": "Volea",
+      "bandeja": "Bandeja",
+      "defensa": "Defensa",
+      "táctica": "Táctica",
+      "calentamiento": "Calentamiento",
+      "remate": "Remate",
+      "saque": "Saque",
+      "globo": "Globo",
+      "dejada": "Dejada",
+      "víbora": "Víbora",
+      "ataque": "Ataque",
+      "transiciones": "Transiciones"
+    },
+    "levels": {
+      "iniciación": "Iniciación",
+      "intermedio": "Intermedio",
+      "avanzado": "Avanzado"
+    },
+    "intensities": {
+      "baja": "Baja",
+      "media": "Media",
+      "alta": "Alta"
+    },
+    "form": {
+      "nombre": "Nombre del ejercicio",
+      "nombrePlaceholder": "Ej: Volea cruzada en red",
+      "categoria": "Categoría",
+      "nivel": "Nivel",
+      "duracion": "Duración (min)",
+      "jugadores": "Jugadores",
+      "intensidad": "Intensidad",
+      "objetivo": "Objetivo",
+      "objetivoPlaceholder": "Ej: Mejorar precisión y timing",
+      "descripcion": "Descripción (opcional)",
+      "descripcionPlaceholder": "Describe el ejercicio en detalle...",
+      "tags": "Etiquetas",
+      "tagsPlaceholder": "Añadir etiqueta...",
+      "addTag": "Añadir",
+      "noTags": "Sin etiquetas"
+    },
+    "modal": {
+      "editTitle": "Editar Ejercicio",
+      "newTitle": "Nuevo Ejercicio",
+      "viewDescription": "Detalles del ejercicio",
+      "editDescription": "Modifica los datos del ejercicio",
+      "newDescription": "Crea un nuevo ejercicio para tu biblioteca",
+      "saveChanges": "Guardar Cambios",
+      "createExercise": "Crear Ejercicio"
+    },
+    "deleteDialog": {
+      "title": "¿Eliminar ejercicio?",
+      "description": "Esta acción no se puede deshacer. El ejercicio será eliminado permanentemente."
+    },
+    "editor": {
+      "title": "Editor de Pista",
+      "select": "Seleccionar",
+      "player": "Jugador",
+      "ball": "Bola",
+      "deletePlayer": "Eliminar",
+      "undo": "Deshacer",
+      "clear": "Limpiar",
+      "playersCount": "Jugadores",
+      "movementsCount": "Movimientos"
     }
   }
 }

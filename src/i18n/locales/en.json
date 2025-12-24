@@ -202,7 +202,8 @@
     "clubs": "Clubs",
     "standings": "Standings",
     "waitlistNotifications": "Waitlist",
-    "payment": "Payment"
+    "payment": "Payment",
+    "biblioteca": "Library"
   },
   "userMenu": {
     "admin": "Administrator",
@@ -995,6 +996,104 @@
         "cookies": "Cookies",
         "backToTop": "Back to top"
       }
+    }
+  },
+  "ejerciciosPage": {
+    "title": "Exercise Library",
+    "subtitle": "Manage your club's training exercises",
+    "newExercise": "New Exercise",
+    "loading": "Loading exercises...",
+    "noExercises": "No exercises in your library",
+    "noExercisesFiltered": "No exercises found with the applied filters",
+    "createFirstExercise": "Create First Exercise",
+    "table": {
+      "nombre": "Name",
+      "categoria": "Category",
+      "nivel": "Level",
+      "intensidad": "Intensity",
+      "objetivo": "Objective",
+      "acciones": "Actions"
+    },
+    "filters": {
+      "searchPlaceholder": "Search exercise...",
+      "categoria": "Category",
+      "nivel": "Level",
+      "intensidad": "Intensity",
+      "jugadores": "Players",
+      "allCategories": "All categories",
+      "allLevels": "All levels",
+      "allIntensities": "All intensities",
+      "allPlayers": "Any amount",
+      "players": "players",
+      "clearFilters": "Clear filters",
+      "advancedFilters": "Filters",
+      "advancedFiltersTitle": "Advanced filters",
+      "applyFilters": "Apply filters"
+    },
+    "categories": {
+      "volea": "Volley",
+      "bandeja": "Tray shot",
+      "defensa": "Defense",
+      "táctica": "Tactics",
+      "calentamiento": "Warm-up",
+      "remate": "Smash",
+      "saque": "Serve",
+      "globo": "Lob",
+      "dejada": "Drop shot",
+      "víbora": "Vibora",
+      "ataque": "Attack",
+      "transiciones": "Transitions"
+    },
+    "levels": {
+      "iniciación": "Beginner",
+      "intermedio": "Intermediate",
+      "avanzado": "Advanced"
+    },
+    "intensities": {
+      "baja": "Low",
+      "media": "Medium",
+      "alta": "High"
+    },
+    "form": {
+      "nombre": "Exercise name",
+      "nombrePlaceholder": "E.g.: Cross volley at net",
+      "categoria": "Category",
+      "nivel": "Level",
+      "duracion": "Duration (min)",
+      "jugadores": "Players",
+      "intensidad": "Intensity",
+      "objetivo": "Objective",
+      "objetivoPlaceholder": "E.g.: Improve precision and timing",
+      "descripcion": "Description (optional)",
+      "descripcionPlaceholder": "Describe the exercise in detail...",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add tag...",
+      "addTag": "Add",
+      "noTags": "No tags"
+    },
+    "modal": {
+      "editTitle": "Edit Exercise",
+      "newTitle": "New Exercise",
+      "viewDescription": "Exercise details",
+      "editDescription": "Modify exercise data",
+      "newDescription": "Create a new exercise for your library",
+      "saveChanges": "Save Changes",
+      "createExercise": "Create Exercise"
+    },
+    "deleteDialog": {
+      "title": "Delete exercise?",
+      "description": "This action cannot be undone. The exercise will be permanently deleted."
+    },
+    "editor": {
+      "title": "Court Editor",
+      "select": "Select",
+      "player": "Player",
+      "ball": "Ball",
+      "deletePlayer": "Delete",
+      "undo": "Undo",
+      "clear": "Clear",
+      "playersCount": "Players",
+      "movementsCount": "Movements"
     }
   }
 }

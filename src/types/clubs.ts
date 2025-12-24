@@ -14,6 +14,7 @@ export interface Club {
   lopivi_delegate_email?: string;
   lopivi_delegate_phone?: string;
   lopivi_delegate_updated_at?: string;
+  enable_ejercicios?: boolean;
 }
 
 export interface CreateClubData {

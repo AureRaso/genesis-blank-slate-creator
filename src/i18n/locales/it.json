@@ -202,7 +202,8 @@
     "clubs": "Club",
     "standings": "Classifica",
     "waitlistNotifications": "Lista d'Attesa",
-    "payment": "Pagamento"
+    "payment": "Pagamento",
+    "biblioteca": "Libreria"
   },
   "userMenu": {
     "admin": "Amministratore",
@@ -986,6 +987,104 @@
         "cookies": "Cookie",
         "backToTop": "Torna su"
       }
+    }
+  },
+  "ejerciciosPage": {
+    "title": "Libreria Esercizi",
+    "subtitle": "Gestisci gli esercizi di allenamento del tuo club",
+    "newExercise": "Nuovo Esercizio",
+    "loading": "Caricamento esercizi...",
+    "noExercises": "Nessun esercizio nella tua libreria",
+    "noExercisesFiltered": "Nessun esercizio trovato con i filtri applicati",
+    "createFirstExercise": "Crea Primo Esercizio",
+    "table": {
+      "nombre": "Nome",
+      "categoria": "Categoria",
+      "nivel": "Livello",
+      "intensidad": "Intensità",
+      "objetivo": "Obiettivo",
+      "acciones": "Azioni"
+    },
+    "filters": {
+      "searchPlaceholder": "Cerca esercizio...",
+      "categoria": "Categoria",
+      "nivel": "Livello",
+      "intensidad": "Intensità",
+      "jugadores": "Giocatori",
+      "allCategories": "Tutte le categorie",
+      "allLevels": "Tutti i livelli",
+      "allIntensities": "Tutte le intensità",
+      "allPlayers": "Qualsiasi quantità",
+      "players": "giocatori",
+      "clearFilters": "Cancella filtri",
+      "advancedFilters": "Filtri",
+      "advancedFiltersTitle": "Filtri avanzati",
+      "applyFilters": "Applica filtri"
+    },
+    "categories": {
+      "volea": "Volée",
+      "bandeja": "Bandeja",
+      "defensa": "Difesa",
+      "táctica": "Tattica",
+      "calentamiento": "Riscaldamento",
+      "remate": "Smash",
+      "saque": "Servizio",
+      "globo": "Pallonetto",
+      "dejada": "Palla corta",
+      "víbora": "Vibora",
+      "ataque": "Attacco",
+      "transiciones": "Transizioni"
+    },
+    "levels": {
+      "iniciación": "Principiante",
+      "intermedio": "Intermedio",
+      "avanzado": "Avanzato"
+    },
+    "intensities": {
+      "baja": "Bassa",
+      "media": "Media",
+      "alta": "Alta"
+    },
+    "form": {
+      "nombre": "Nome dell'esercizio",
+      "nombrePlaceholder": "Es.: Volée incrociata a rete",
+      "categoria": "Categoria",
+      "nivel": "Livello",
+      "duracion": "Durata (min)",
+      "jugadores": "Giocatori",
+      "intensidad": "Intensità",
+      "objetivo": "Obiettivo",
+      "objetivoPlaceholder": "Es.: Migliorare precisione e timing",
+      "descripcion": "Descrizione (opzionale)",
+      "descripcionPlaceholder": "Descrivi l'esercizio in dettaglio...",
+      "tags": "Tag",
+      "tagsPlaceholder": "Aggiungi tag...",
+      "addTag": "Aggiungi",
+      "noTags": "Nessun tag"
+    },
+    "modal": {
+      "editTitle": "Modifica Esercizio",
+      "newTitle": "Nuovo Esercizio",
+      "viewDescription": "Dettagli dell'esercizio",
+      "editDescription": "Modifica i dati dell'esercizio",
+      "newDescription": "Crea un nuovo esercizio per la tua libreria",
+      "saveChanges": "Salva Modifiche",
+      "createExercise": "Crea Esercizio"
+    },
+    "deleteDialog": {
+      "title": "Eliminare esercizio?",
+      "description": "Questa azione non può essere annullata. L'esercizio verrà eliminato permanentemente."
+    },
+    "editor": {
+      "title": "Editor Campo",
+      "select": "Seleziona",
+      "player": "Giocatore",
+      "ball": "Palla",
+      "deletePlayer": "Elimina",
+      "undo": "Annulla",
+      "clear": "Pulisci",
+      "playersCount": "Giocatori",
+      "movementsCount": "Movimenti"
     }
   }
 }

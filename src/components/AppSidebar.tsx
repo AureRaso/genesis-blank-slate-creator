@@ -26,7 +26,7 @@ const AppSidebar = () => {
     profile
   } = authContext || {};
 
-  // Fetch club data for players
+  // Fetch club data for feature flags (ejercicios, scoring, etc.)
   const { data: club } = useClub(profile?.club_id);
 
   // Check if club has promotions (for players and guardians)
@@ -75,6 +75,16 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {club?.enable_ejercicios && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/ejercicios"}>
+                  <Link to="/dashboard/ejercicios">
+                    <BookOpen />
+                    <span>{t('sidebar.biblioteca')}</span>
+                  </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {/* Control de pagos - Temporalmente oculto */}
               {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
@@ -253,7 +263,12 @@ const AppSidebar = () => {
         title: "Promociones",
         url: "/dashboard/promotions",
         icon: Tag
-      }
+      },
+      ...(club?.enable_ejercicios ? [{
+        title: t('sidebar.biblioteca'),
+        url: "/dashboard/ejercicios",
+        icon: BookOpen
+      }] : [])
     ]
   };
   return <Sidebar variant="inset" className="w-64">
