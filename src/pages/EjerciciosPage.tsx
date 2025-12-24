@@ -14,12 +14,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -502,28 +496,38 @@ const EjerciciosPage = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Modal de video */}
-        <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-          <DialogContent
-            className="max-w-3xl p-0 overflow-hidden"
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
-            <DialogHeader className="p-4 pb-0">
-              <DialogTitle>{viewOnlyEjercicio.nombre}</DialogTitle>
-            </DialogHeader>
-            <div className="relative bg-black aspect-video">
-              <video
-                ref={videoRef}
-                poster={viewOnlyEjercicio.video_thumbnail || undefined}
-                controls
-                className="w-full h-full relative z-50"
-                playsInline
-                onClick={(e) => e.stopPropagation()}
-              />
+        {/* Modal de video - usando portal directo para evitar problemas con Dialog */}
+        {showVideoModal && (
+          <div className="fixed inset-0 z-[100]" onClick={() => setShowVideoModal(false)}>
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/80" />
+            {/* Content */}
+            <div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl mx-4 bg-background rounded-lg overflow-hidden shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 pb-2">
+                <h2 className="text-lg font-semibold">{viewOnlyEjercicio.nombre}</h2>
+                <button
+                  onClick={() => setShowVideoModal(false)}
+                  className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="relative bg-black aspect-video">
+                <video
+                  ref={videoRef}
+                  poster={viewOnlyEjercicio.video_thumbnail || undefined}
+                  controls
+                  className="w-full h-full"
+                  playsInline
+                  autoPlay
+                />
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
       </div>
     );
   }
