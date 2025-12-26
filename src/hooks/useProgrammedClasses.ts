@@ -66,6 +66,54 @@ export const useProgrammedClasses = (clubId?: string) => {
   return useQuery({
     queryKey: ["programmed-classes", clubId],
     queryFn: async () => {
+      // Get user profile to check role for filtering when no clubId provided
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Determine which club IDs to filter by
+      let clubIds: string[] = [];
+
+      if (clubId) {
+        clubIds = [clubId];
+      } else if (userProfile.role === 'superadmin') {
+        // Superadmin with no specific club - get ALL their assigned clubs
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = superadminClubs.map(ac => ac.club_id);
+      } else if (userProfile.role === 'admin') {
+        // Regular admin - get clubs created by this admin
+        const { data: adminClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', userData.user.id);
+
+        if (clubsError) throw clubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = adminClubs.map(club => club.id);
+      }
+
       // Fetch all data in batches to avoid server-side limits
       let allData: any[] = [];
       let page = 0;
@@ -97,8 +145,9 @@ export const useProgrammedClasses = (clubId?: string) => {
           .order("created_at", { ascending: false })
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-        if (clubId) {
-          query = query.eq("club_id", clubId);
+        // Filter by club IDs if we have any
+        if (clubIds.length > 0) {
+          query = query.in("club_id", clubIds);
         }
 
         const { data, error } = await query;

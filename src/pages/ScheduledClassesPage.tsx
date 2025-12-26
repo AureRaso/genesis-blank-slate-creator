@@ -26,7 +26,11 @@ function ScheduledClassesContent() {
   } = useTranslation();
   const {
     profile,
-    user
+    user,
+    effectiveClubId,
+    isSuperAdmin,
+    isAdmin,
+    superAdminClubs
   } = useAuth();
   const {
     data: clubs
@@ -36,16 +40,27 @@ function ScheduledClassesContent() {
     setFilters
   } = useClassFilters();
 
-  // Get the current club based on user profile
-  // If user has a club_id, use that club. Otherwise for admins, use the first available club
-  const currentClub = profile?.club_id ? clubs?.find(c => c.id === profile.club_id) : clubs?.[0];
+  // For superadmin: use effectiveClubId (selected club or undefined for all)
+  // For others: use their profile.club_id or first available club
+  const currentClub = effectiveClubId
+    ? clubs?.find(c => c.id === effectiveClubId)
+    : (profile?.club_id ? clubs?.find(c => c.id === profile.club_id) : clubs?.[0]);
 
-  // Only show multiple clubs if admin has NO specific club assigned
-  const adminClubs = profile?.role === 'admin' && !profile?.club_id ? clubs : [];
+  // For superadmin viewing "all clubs": pass all their club IDs
+  // For admin without specific club: pass all their clubs
+  // Otherwise: single club mode
+  const adminClubs = isSuperAdmin && !effectiveClubId
+    ? clubs
+    : (profile?.role === 'admin' && !profile?.club_id ? clubs : []);
+
   const {
     data: groups
   } = useClassGroups(currentClub?.id);
-  if (!currentClub) {
+
+  // For superadmin viewing "all clubs", we don't need a specific currentClub
+  const isViewingAllClubs = isSuperAdmin && !effectiveClubId;
+
+  if (!currentClub && !isViewingAllClubs) {
     return <div className="container mx-auto py-8">
         <Card>
           <CardContent className="py-8">
@@ -63,7 +78,9 @@ function ScheduledClassesContent() {
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{t('pages.scheduledClasses.title')}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
-              {adminClubs && adminClubs.length > 1 ? `${t('pages.scheduledClasses.description')} todos tus clubes` : `${t('pages.scheduledClasses.description')} ${currentClub.name}`}
+              {isViewingAllClubs || (adminClubs && adminClubs.length > 1)
+                ? `${t('pages.scheduledClasses.description')} todos tus clubes`
+                : `${t('pages.scheduledClasses.description')} ${currentClub?.name || ''}`}
             </p>
           </div>
 
@@ -79,10 +96,10 @@ function ScheduledClassesContent() {
               </Button>
             </div>
 
-            {(profile?.role === 'admin' || profile?.role === 'trainer') && (
+            {(isAdmin || profile?.role === 'trainer') && (
               <>
-                {/* Bulk creation - Only for admins */}
-                {profile?.role === 'admin' && (
+                {/* Bulk creation - Only for admins (including superadmin) */}
+                {isAdmin && (
                   <Button
                     variant="secondary"
                     onClick={() => navigate('/dashboard/scheduled-classes/bulk/new')}
@@ -130,8 +147,8 @@ function ScheduledClassesContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Floating Action Button - Only for admins and trainers on mobile */}
-      {(profile?.role === 'admin' || profile?.role === 'trainer') && <FloatingCreateButton />}
+      {/* Floating Action Button - Only for admins (including superadmin) and trainers on mobile */}
+      {(isAdmin || profile?.role === 'trainer') && <FloatingCreateButton />}
     </div>;
 }
 export default function ScheduledClassesPage() {

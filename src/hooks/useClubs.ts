@@ -29,8 +29,6 @@ export const useClubs = (clubId?: string) => {
   return useQuery({
     queryKey: ['clubs', clubId],
     queryFn: async () => {
-      console.log('Fetching clubs with clubId:', clubId);
-
       // If specific clubId provided, filter by it
       if (clubId) {
         const { data, error } = await supabase
@@ -44,7 +42,6 @@ export const useClubs = (clubId?: string) => {
           throw error;
         }
 
-        console.log('Clubs fetched (filtered by clubId):', data);
         return data as Club[];
       }
 
@@ -86,7 +83,6 @@ export const useClubs = (clubId?: string) => {
           throw error;
         }
 
-        console.log('Clubs fetched (superadmin):', data);
         return data as Club[];
       }
 
@@ -103,7 +99,6 @@ export const useClubs = (clubId?: string) => {
           throw error;
         }
 
-        console.log('Clubs fetched (admin):', data);
         return data as Club[];
       }
 
@@ -118,7 +113,6 @@ export const useClubs = (clubId?: string) => {
         throw error;
       }
 
-      console.log('Clubs fetched:', data);
       return data as Club[];
     },
   });

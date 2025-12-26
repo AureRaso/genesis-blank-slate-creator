@@ -8,8 +8,6 @@ export const usePlayers = (clubId?: string) => {
   return useQuery({
     queryKey: ['players', clubId],
     queryFn: async () => {
-      console.log('usePlayers - Starting query with clubId:', clubId);
-
       // Get current user to check if they're an admin
       const { data: currentUser } = await supabase.auth.getUser();
       if (!currentUser.user) throw new Error('No authenticated user');
@@ -80,11 +78,6 @@ export const usePlayers = (clubId?: string) => {
 
       const { data, error } = await query;
 
-      console.log('usePlayers - Query result:', {
-        dataCount: data?.length || 0,
-        error: error?.message
-      });
-
       if (error) {
         console.error('Error fetching players:', error);
         throw error;
@@ -106,7 +99,6 @@ export const usePlayers = (clubId?: string) => {
         club_status?: string;
       })[];
 
-      console.log('usePlayers - Transformed players:', players.length);
       return players;
     },
   });

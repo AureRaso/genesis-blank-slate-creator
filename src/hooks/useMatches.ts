@@ -7,8 +7,6 @@ export const useMatches = (leagueId?: string, clubId?: string) => {
   return useQuery({
     queryKey: ['matches', leagueId, clubId],
     queryFn: async () => {
-      console.log('Fetching matches for league:', leagueId, 'clubId:', clubId);
-
       // Get user profile to check role for filtering
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -99,7 +97,6 @@ export const useMatches = (leagueId?: string, clubId?: string) => {
       }
 
       if (!matches || matches.length === 0) {
-        console.log('No matches found');
         return [];
       }
 
@@ -203,7 +200,6 @@ export const useMatches = (leagueId?: string, clubId?: string) => {
         };
       });
 
-      console.log('Matches fetched and enriched:', enrichedMatches);
       return enrichedMatches;
     },
     enabled: !!leagueId || leagueId === undefined,

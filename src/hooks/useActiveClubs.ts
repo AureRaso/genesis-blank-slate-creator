@@ -6,25 +6,84 @@ export const useActiveClubs = () => {
   return useQuery({
     queryKey: ['active-clubs'],
     queryFn: async () => {
-      console.log('useActiveClubs - Starting query...');
-      
-      const { data, error } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('status', 'active')
-        .order('name', { ascending: true });
-      
-      console.log('useActiveClubs - Query result:', { 
-        dataCount: data?.length || 0, 
-        error: error?.message 
-      });
-      
-      if (error) {
-        console.error('Error fetching active clubs:', error);
-        throw error;
+      // Get user profile to check role
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, club_id')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Superadmin: get only their assigned clubs from admin_clubs
+      if (userProfile.role === 'superadmin') {
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        const clubIds = superadminClubs.map(ac => ac.club_id);
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .in('id', clubIds)
+          .eq('status', 'active')
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching superadmin active clubs:', error);
+          throw error;
+        }
+
+        return data || [];
       }
-      
-      return data || [];
+
+      // Admin: get clubs created by them
+      if (userProfile.role === 'admin') {
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .eq('created_by_profile_id', userData.user.id)
+          .eq('status', 'active')
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching admin active clubs:', error);
+          throw error;
+        }
+
+        return data || [];
+      }
+
+      // Trainer/Player: get their assigned club
+      if (userProfile.club_id) {
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .eq('id', userProfile.club_id)
+          .eq('status', 'active')
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching user club:', error);
+          throw error;
+        }
+
+        return data || [];
+      }
+
+      // Fallback: return empty array (user has no club access)
+      return [];
     },
   });
 };

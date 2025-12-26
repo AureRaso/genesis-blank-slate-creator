@@ -7,8 +7,6 @@ export const useLeagues = (clubId?: string) => {
   return useQuery({
     queryKey: ['leagues', clubId],
     queryFn: async () => {
-      console.log('Fetching leagues with clubId:', clubId);
-
       // Get user profile to check role
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -82,7 +80,6 @@ export const useLeagues = (clubId?: string) => {
         throw error;
       }
 
-      console.log('Leagues fetched:', data);
       return data as League[];
     },
   });
