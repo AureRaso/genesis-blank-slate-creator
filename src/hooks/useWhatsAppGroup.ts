@@ -177,12 +177,41 @@ export const useCurrentUserWhatsAppGroup = () => {
         return groupData as WhatsAppGroupData | null;
       }
 
-      // Super admin - return first active group (or implement selection logic)
+      // Admin - return first active group (or implement selection logic)
       if (profile.role === "admin") {
         const { data: groupData, error: groupError } = await supabase
           .from("whatsapp_groups")
           .select("*")
           .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+
+        if (groupError) throw groupError;
+        return groupData as WhatsAppGroupData | null;
+      }
+
+      // Superadmin - get groups from their assigned clubs via admin_clubs table
+      if (profile.role === "superadmin") {
+        // Get superadmin's assigned clubs
+        const { data: adminClubs, error: adminClubsError } = await supabase
+          .from("admin_clubs")
+          .select("club_id")
+          .eq("admin_profile_id", profile.id);
+
+        if (adminClubsError) throw adminClubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return null;
+        }
+
+        const clubIds = adminClubs.map(ac => ac.club_id);
+
+        // Get first active WhatsApp group from their clubs
+        const { data: groupData, error: groupError } = await supabase
+          .from("whatsapp_groups")
+          .select("*")
+          .eq("is_active", true)
+          .in("club_id", clubIds)
           .limit(1)
           .maybeSingle();
 

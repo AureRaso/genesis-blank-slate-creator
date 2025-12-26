@@ -79,13 +79,13 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
 };
 
 const TodayAttendancePage = () => {
-  const { profile } = useAuth();
+  const { profile, isAdmin, effectiveClubId } = useAuth();
   const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format for queries
   const { data: attendanceData, isLoading, error, isFetching } = useTodayAttendance();
   const classes = attendanceData?.classes;
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(profile?.club_id || undefined);
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(effectiveClubId);
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;
@@ -114,8 +114,7 @@ const TodayAttendancePage = () => {
   // Estado para filtro por entrenador (solo admin)
   const [selectedTrainer, setSelectedTrainer] = useState<string>('all');
 
-  // Solo administradores pueden notificar por WhatsApp
-  const isAdmin = profile?.role === 'admin';
+  // Solo administradores pueden notificar por WhatsApp (isAdmin includes superadmin from AuthContext)
   const isTrainer = profile?.role === 'trainer';
   const canCancelClass = isAdmin || isTrainer;
 
