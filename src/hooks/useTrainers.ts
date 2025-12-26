@@ -89,28 +89,34 @@ export const useTrainers = () => {
   });
 };
 
-export const useAdminTrainers = () => {
+export const useAdminTrainers = (clubId?: string) => {
   return useQuery({
-    queryKey: ['admin-trainers'],
+    queryKey: ['admin-trainers', clubId],
     queryFn: async () => {
-      console.log('Fetching admin trainers...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // First, get clubs created by this admin
-      const { data: adminClubs, error: clubsError } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('created_by_profile_id', userData.user.id);
+      let clubIds: string[] = [];
 
-      if (clubsError) throw clubsError;
-      
-      if (!adminClubs || adminClubs.length === 0) {
-        return [];
+      // If clubId is provided directly (e.g., from superadmin selector), use it
+      if (clubId) {
+        clubIds = [clubId];
+      } else {
+        // Otherwise, get clubs created by this admin (original behavior)
+        const { data: adminClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', userData.user.id);
+
+        if (clubsError) throw clubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = adminClubs.map(club => club.id);
       }
-
-      const clubIds = adminClubs.map(club => club.id);
 
       // Get trainers associated with these clubs
       const { data: trainerClubsData, error: trainerClubsError } = await supabase
@@ -157,7 +163,6 @@ export const useAdminTrainers = () => {
         return { ...trainer, trainer_clubs: trainerClubs };
       });
 
-      console.log('Admin trainers fetched:', trainersWithClubs);
       return trainersWithClubs;
     },
   });

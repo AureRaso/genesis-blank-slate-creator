@@ -114,8 +114,8 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
 };
 
 const TrainersList = ({ onEditTrainer, onCreateTrainer }: TrainersListProps) => {
-  const { data: adminTrainers, isLoading: isLoadingAdmin, error: adminError } = useAdminTrainers();
-  const { isAdmin } = useAuth();
+  const { isAdmin, effectiveClubId } = useAuth();
+  const { data: adminTrainers, isLoading: isLoadingAdmin, error: adminError } = useAdminTrainers(effectiveClubId);
   const { t } = useTranslation();
 
   // For admins, use filtered trainers; for other roles, we could extend this logic
