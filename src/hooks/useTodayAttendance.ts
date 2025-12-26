@@ -45,7 +45,7 @@ const getDayOfWeekInSpanish = (date: Date): string => {
 // Hook for admins/trainers to see classes in a date range with attendance confirmations
 // If no startDate/endDate provided, defaults to today
 export const useTodayAttendance = (startDate?: string, endDate?: string) => {
-  const { profile } = useAuth();
+  const { profile, effectiveClubId } = useAuth();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
@@ -67,7 +67,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   const uniqueDays = Array.from(new Set(daysInRange));
 
   const query = useQuery({
-    queryKey: ['today-attendance', profile?.id, queryStartDate, queryEndDate],
+    queryKey: ['today-attendance', profile?.id, effectiveClubId, queryStartDate, queryEndDate],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
@@ -119,9 +119,9 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         // Use OR filter to get classes where user is either trainer or trainer_2
         query = query.or(`trainer_profile_id.eq.${profile.id},trainer_profile_id_2.eq.${profile.id}`);
       } else {
-        // For admins, filter by club if they have one assigned
-        if (profile.club_id) {
-          query = query.eq('club_id', profile.club_id);
+        // For admins/superadmins, filter by effectiveClubId
+        if (effectiveClubId) {
+          query = query.eq('club_id', effectiveClubId);
         }
       }
 

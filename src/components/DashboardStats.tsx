@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 
 const DashboardStats = () => {
-  const { profile } = useAuth();
+  const { profile, effectiveClubId } = useAuth();
   const { t } = useTranslation();
   const { data: leagues } = useLeagues();
   const { data: players } = usePlayers();
@@ -21,9 +21,14 @@ const DashboardStats = () => {
   const { data: clubs } = useClubs();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
-  // Get real data for classes
-  const { data: programmedClasses } = useProgrammedClasses(profile?.club_id);
+  // Get real data for classes - use effectiveClubId for superadmin support
+  const { data: programmedClasses } = useProgrammedClasses(effectiveClubId);
   const { data: todayClasses } = useTodayAttendance();
+
+  // Filter players by effectiveClubId for superadmin support
+  const clubPlayers = effectiveClubId
+    ? players?.filter(p => p.club_id === effectiveClubId)
+    : players;
 
   const activeLeagues = leagues?.filter(league => league.status === 'active').length || 0;
 
@@ -36,7 +41,7 @@ const DashboardStats = () => {
 
   const totalRevenue = leagues?.reduce((sum, league) => sum + (league.registration_price || 0), 0) || 0;
   const pendingMatches = matches?.filter(match => match.status === 'pending').length || 0;
-  const totalPlayers = players?.length || 0;
+  const totalPlayers = clubPlayers?.length || 0;
   const totalProgrammedClasses = programmedClasses?.length || 0;
   const totalTodayClasses = todayClasses?.length || 0;
 

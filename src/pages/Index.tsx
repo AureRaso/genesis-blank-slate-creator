@@ -110,8 +110,18 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
 };
 
 const Index = () => {
-  const { user, profile, isAdmin, loading } = useAuth();
+  const { user, profile, isAdmin, loading, effectiveClubId, isSuperAdmin, selectedClubId } = useAuth();
   const { t } = useTranslation();
+
+  // DEBUG: Log effectiveClubId for superadmin testing
+  console.log('🔍 [Index] Auth state:', {
+    isSuperAdmin,
+    isAdmin,
+    selectedClubId,
+    effectiveClubId,
+    profileClubId: profile?.club_id,
+    profileRole: profile?.role
+  });
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
@@ -144,13 +154,13 @@ const Index = () => {
   const [processedRequests, setProcessedRequests] = useState<Map<string, 'approved' | 'rejected'>>(new Map());
 
   // Fetch classes with absences
-  const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
+  const { data: classesWithAbsences } = useClassesWithAbsences(effectiveClubId);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups } = useAllWhatsAppGroups(profile?.club_id);
+  const { data: allWhatsAppGroups } = useAllWhatsAppGroups(effectiveClubId);
 
   // Fetch pending waitlist requests
-  const { data: waitlistRequests } = usePendingWaitlistRequests(profile?.club_id);
+  const { data: waitlistRequests } = usePendingWaitlistRequests(effectiveClubId);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
 
@@ -174,9 +184,9 @@ const Index = () => {
 
   // Fetch recent activities for admin
   const { data: recentActivities } = useQuery({
-    queryKey: ['admin-recent-activities', profile?.club_id],
+    queryKey: ['admin-recent-activities', effectiveClubId],
     queryFn: async () => {
-      if (!profile?.club_id) return [];
+      if (!effectiveClubId) return [];
 
       const activities: any[] = [];
 
@@ -185,7 +195,7 @@ const Index = () => {
         const { data: newPlayers, error: playersError } = await supabase
           .from('profiles')
           .select('id, full_name, created_at')
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .eq('role', 'player')
           .order('created_at', { ascending: false })
           .limit(1);
@@ -207,7 +217,7 @@ const Index = () => {
         const { data: newClasses, error: classesError } = await supabase
           .from('programmed_classes')
           .select('id, name, created_at')
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .order('created_at', { ascending: false })
           .limit(1);
 
@@ -228,7 +238,7 @@ const Index = () => {
         const { data: newTrainers, error: trainersError } = await supabase
           .from('profiles')
           .select('id, full_name, created_at')
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .eq('role', 'trainer')
           .order('created_at', { ascending: false })
           .limit(1);
@@ -286,14 +296,14 @@ const Index = () => {
       // Sort by timestamp
       return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     },
-    enabled: isAdmin && !!profile?.club_id
+    enabled: isAdmin && !!effectiveClubId
   });
 
   // Fetch weekly summary stats for admin
   const { data: weeklySummary } = useQuery({
-    queryKey: ['admin-weekly-summary', profile?.club_id],
+    queryKey: ['admin-weekly-summary', effectiveClubId],
     queryFn: async () => {
-      if (!profile?.club_id) return null;
+      if (!effectiveClubId) return null;
 
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -304,14 +314,14 @@ const Index = () => {
         const { data: playersThisWeek } = await supabase
           .from('profiles')
           .select('id', { count: 'exact' })
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .eq('role', 'player')
           .gte('created_at', oneWeekAgo.toISOString());
 
         const { data: playersLastWeek } = await supabase
           .from('profiles')
           .select('id', { count: 'exact' })
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .eq('role', 'player')
           .gte('created_at', twoWeeksAgo.toISOString())
           .lt('created_at', oneWeekAgo.toISOString());
@@ -320,13 +330,13 @@ const Index = () => {
         const { data: classesThisWeek } = await supabase
           .from('programmed_classes')
           .select('id', { count: 'exact' })
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .gte('created_at', oneWeekAgo.toISOString());
 
         const { data: classesLastWeek } = await supabase
           .from('programmed_classes')
           .select('id', { count: 'exact' })
-          .eq('club_id', profile.club_id)
+          .eq('club_id', effectiveClubId)
           .gte('created_at', twoWeeksAgo.toISOString())
           .lt('created_at', oneWeekAgo.toISOString());
 
@@ -363,7 +373,7 @@ const Index = () => {
         return null;
       }
     },
-    enabled: isAdmin && !!profile?.club_id
+    enabled: isAdmin && !!effectiveClubId
   });
 
   const getTimeAgo = (timestamp: string) => {
@@ -1234,10 +1244,10 @@ const Index = () => {
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto max-h-[calc(80vh-120px)]">
-            {profile?.club_id && (
+            {effectiveClubId && (
               <SubstituteStudentSearch
                 classId={substituteDialog.classId}
-                clubId={profile.club_id}
+                clubId={effectiveClubId}
                 className={substituteDialog.className}
                 classTime={substituteDialog.classTime}
                 classDate={substituteDialog.classDate}

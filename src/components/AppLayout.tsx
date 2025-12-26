@@ -31,6 +31,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isTrainer = authContext?.isTrainer || false;
   const isGuardian = authContext?.isGuardian || false;
   const isAdmin = authContext?.isAdmin || false;
+  const isSuperAdmin = authContext?.isSuperAdmin || false;
   const { profile, signOut } = useAuth();
 
   const getBreadcrumbInfo = () => {
@@ -79,8 +80,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   const breadcrumbInfo = getBreadcrumbInfo();
 
-  // Layout for players, trainers, guardians, and admins - Mobile-first with tab bar
-  if (isPlayer || isTrainer || isGuardian || isAdmin) {
+  // Layout for players, trainers, guardians, admins, and superadmins - Mobile-first with tab bar
+  if (isPlayer || isTrainer || isGuardian || isAdmin || isSuperAdmin) {
     return (
       <>
         <div className="flex min-h-screen w-full flex-col">

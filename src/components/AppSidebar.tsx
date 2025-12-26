@@ -10,6 +10,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useClub } from "@/hooks/useClub";
 import { useHasPromotions } from "@/hooks/usePromotions";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
+import SuperAdminClubSelector from "@/components/SuperAdminClubSelector";
 const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
@@ -23,14 +24,17 @@ const AppSidebar = () => {
     isTrainer = false,
     isPlayer = false,
     isGuardian = false,
+    isSuperAdmin = false,
+    effectiveClubId,
     profile
   } = authContext || {};
 
   // Fetch club data for feature flags (ejercicios, scoring, etc.)
-  const { data: club } = useClub(profile?.club_id);
+  // Use effectiveClubId for superadmin, falls back to profile.club_id for others
+  const { data: club } = useClub(effectiveClubId);
 
   // Check if club has promotions (for players and guardians)
-  const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
+  const { data: hasPromotions = false } = useHasPromotions(effectiveClubId);
 
   // Si es trainer, mostrar panel personalizado con clases programadas
   if (isTrainer) {
@@ -299,6 +303,17 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-0">
+        {/* Club selector for superadmin, or club info for regular admin */}
+        {isSuperAdmin ? (
+          <SuperAdminClubSelector />
+        ) : club && (
+          <div className="border-t border-sidebar-border p-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              <span className="font-semibold text-sm">{club.name}</span>
+            </div>
+          </div>
+        )}
         <UserMenu />
       </SidebarFooter>
     </Sidebar>;

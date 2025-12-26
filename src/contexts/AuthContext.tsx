@@ -1,9 +1,15 @@
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import { Profile } from '@/types/auth';
+import { Profile, UserRole } from '@/types/auth';
 import { useWindowVisibility } from '@/hooks/useWindowVisibility';
+
+// Club info for superadmin selector
+interface SuperAdminClub {
+  id: string;
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -20,9 +26,18 @@ interface AuthContextType {
   isTrainer: boolean;
   isOwner: boolean;
   isGuardian: boolean;
+  // Superadmin support
+  isSuperAdmin: boolean;
+  superAdminClubs: SuperAdminClub[];
+  selectedClubId: string | null;
+  setSelectedClubId: (clubId: string) => void;
+  effectiveClubId: string | undefined;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// LocalStorage key for persisting selected club
+const SELECTED_CLUB_KEY = 'padelock_selected_club_id';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Superadmin state
+  const [superAdminClubs, setSuperAdminClubs] = useState<SuperAdminClub[]>([]);
+  const [selectedClubId, setSelectedClubIdState] = useState<string | null>(() => {
+    // Initialize from localStorage
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(SELECTED_CLUB_KEY);
+    }
+    return null;
+  });
 
   // Use refs to track state without causing re-renders
   const currentUserIdRef = useRef<string | null>(null);
@@ -176,6 +201,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [profile, isWindowVisible]);
 
+  // Fetch superadmin clubs from admin_clubs table
+  const fetchSuperAdminClubs = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_clubs')
+        .select('club_id, clubs(id, name)')
+        .eq('admin_profile_id', userId);
+
+      if (error) {
+        console.error('AuthContext - Error fetching superadmin clubs:', error);
+        return [];
+      }
+
+      const clubs: SuperAdminClub[] = (data || [])
+        .filter((item: any) => item.clubs)
+        .map((item: any) => ({
+          id: item.clubs.id,
+          name: item.clubs.name
+        }));
+
+      return clubs;
+    } catch (error) {
+      console.error('AuthContext - Exception fetching superadmin clubs:', error);
+      return [];
+    }
+  };
+
   const fetchProfile = async (userId: string) => {
     // Prevent multiple concurrent requests
     if (isCurrentlyFetching.current) {
@@ -216,9 +268,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const validProfile: Profile = {
           ...data,
-          role: data.role as 'admin' | 'player' | 'trainer'
+          role: data.role as UserRole
         };
         setProfile(validProfile);
+
+        // If superadmin, fetch their assigned clubs
+        if (data.role === 'superadmin') {
+          const clubs = await fetchSuperAdminClubs(userId);
+          setSuperAdminClubs(clubs);
+
+          // If no club selected yet, or selected club is not in the list, select first one
+          const savedClubId = localStorage.getItem(SELECTED_CLUB_KEY);
+          const isValidSavedClub = clubs.some(c => c.id === savedClubId);
+
+          if (!savedClubId || !isValidSavedClub) {
+            if (clubs.length > 0) {
+              setSelectedClubIdState(clubs[0].id);
+              localStorage.setItem(SELECTED_CLUB_KEY, clubs[0].id);
+            }
+          }
+        } else {
+          // Not a superadmin, clear superadmin state
+          setSuperAdminClubs([]);
+        }
       }
     } catch (error: any) {
       console.error('AuthContext - Exception in fetchProfile:', error);
@@ -329,11 +401,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAdmin = profile?.role === 'admin';
+  const isSuperAdmin = profile?.role === 'superadmin';
+  const isAdmin = profile?.role === 'admin' || isSuperAdmin; // superadmin has admin privileges
   const isPlayer = profile?.role === 'player';
   const isTrainer = profile?.role === 'trainer';
   const isOwner = profile?.role === 'owner';
   const isGuardian = profile?.role === 'guardian';
+
+  // Setter for selected club with localStorage persistence
+  const setSelectedClubId = useCallback((clubId: string) => {
+    setSelectedClubIdState(clubId);
+    localStorage.setItem(SELECTED_CLUB_KEY, clubId);
+  }, []);
+
+  // effectiveClubId: for superadmin use selected club, for others use profile.club_id
+  const effectiveClubId = isSuperAdmin ? (selectedClubId ?? undefined) : profile?.club_id;
 
   const value = {
     user,
@@ -350,6 +432,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isTrainer,
     isOwner,
     isGuardian,
+    // Superadmin support
+    isSuperAdmin,
+    superAdminClubs,
+    selectedClubId,
+    setSelectedClubId,
+    effectiveClubId,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

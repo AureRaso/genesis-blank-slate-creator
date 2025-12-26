@@ -1,16 +1,25 @@
 
+export type UserRole = 'owner' | 'superadmin' | 'admin' | 'trainer' | 'player' | 'guardian';
+
 export interface Profile {
   id: string;
   email: string;
   full_name: string;
   phone?: string;
-  role: 'admin' | 'player' | 'trainer';
+  role: UserRole;
   level?: number;
   club_id?: string;
   birth_date?: string;
   shirt_size?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface AdminClub {
+  id: string;
+  admin_profile_id: string;
+  club_id: string;
+  created_at: string;
 }
 
 export interface AuthContextType {
