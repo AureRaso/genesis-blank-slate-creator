@@ -68,24 +68,50 @@ export const useAdminClassGroups = () => {
   return useQuery({
     queryKey: ["admin-class-groups"],
     queryFn: async () => {
-      console.log('Fetching admin class groups...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // First, get clubs created by this admin
-      const { data: adminClubs, error: clubsError } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('created_by_profile_id', userData.user.id);
+      // Get user profile to check role
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
 
-      if (clubsError) throw clubsError;
-      
-      if (!adminClubs || adminClubs.length === 0) {
-        return [];
+      if (profileError) throw profileError;
+
+      let clubIds: string[] = [];
+
+      // Superadmin: get clubs from admin_clubs table
+      if (userProfile.role === 'superadmin') {
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = superadminClubs.map(ac => ac.club_id);
+      } else {
+        // Regular admin: get clubs created by them
+        const { data: adminClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', userData.user.id);
+
+        if (clubsError) throw clubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = adminClubs.map(club => club.id);
       }
-
-      const clubIds = adminClubs.map(club => club.id);
 
       // Get class groups from these clubs
       const { data: groups, error: groupsError } = await supabase
@@ -108,7 +134,6 @@ export const useAdminClassGroups = () => {
 
       if (groupsError) throw groupsError;
 
-      console.log('Admin class groups fetched:', groups);
       return groups as ClassGroupWithMembers[];
     },
   });

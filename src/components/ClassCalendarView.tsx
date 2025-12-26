@@ -123,8 +123,8 @@ export default function ClassCalendarView({ clubId, clubIds, filters, viewModeTo
   };
 
   const handleTimeSlotClick = (day: Date, timeSlot: string) => {
-    // Only admins and trainers can create classes
-    if (profile?.role !== 'admin' && profile?.role !== 'trainer') {
+    // Only admins (including superadmin) and trainers can create classes
+    if (!isAdmin && profile?.role !== 'trainer') {
       return;
     }
 

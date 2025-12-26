@@ -54,11 +54,11 @@ const DAY_MAPPING: { [key: string]: string } = {
 export function CalendarGrid({ weekStart, weekEnd, classes, onTimeSlotClick, onClassDrop, timeRangeStart = "08:00", timeRangeEnd = "22:00", viewMode = 'week', onDayClick }: CalendarGridProps) {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Check if user can create classes
-  const canCreateClasses = profile?.role === 'admin' || profile?.role === 'trainer';
+  // Check if user can create classes (isAdmin includes superadmin)
+  const canCreateClasses = isAdmin || profile?.role === 'trainer';
 
   // Determine column count based on view mode
   const getGridColumns = () => {

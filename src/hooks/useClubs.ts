@@ -122,11 +122,48 @@ export const useAdminClubs = () => {
   return useQuery({
     queryKey: ['admin-clubs'],
     queryFn: async () => {
-      console.log('Fetching admin clubs...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
+      // Get user profile to check role
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Superadmin: get clubs from admin_clubs table
+      if (userProfile.role === 'superadmin') {
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        const clubIds = superadminClubs.map(ac => ac.club_id);
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .in('id', clubIds)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching superadmin clubs:', error);
+          throw error;
+        }
+
+        return data as Club[];
+      }
+
+      // Regular admin: get clubs created by them
       const { data, error } = await supabase
         .from('clubs')
         .select('*')
@@ -137,8 +174,7 @@ export const useAdminClubs = () => {
         console.error('Error fetching admin clubs:', error);
         throw error;
       }
-      
-      console.log('Admin clubs fetched:', data);
+
       return data as Club[];
     },
   });
