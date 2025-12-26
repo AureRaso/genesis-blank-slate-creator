@@ -110,18 +110,8 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
 };
 
 const Index = () => {
-  const { user, profile, isAdmin, loading, effectiveClubId, isSuperAdmin, selectedClubId } = useAuth();
+  const { user, profile, isAdmin, loading, effectiveClubId } = useAuth();
   const { t } = useTranslation();
-
-  // DEBUG: Log effectiveClubId for superadmin testing
-  console.log('🔍 [Index] Auth state:', {
-    isSuperAdmin,
-    isAdmin,
-    selectedClubId,
-    effectiveClubId,
-    profileClubId: profile?.club_id,
-    profileRole: profile?.role
-  });
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [expandedClass, setExpandedClass] = useState<string | null>(null);

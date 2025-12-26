@@ -125,31 +125,30 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
   return useQuery({
     queryKey: ["admin-student-enrollments", clubId],
     queryFn: async () => {
-      console.log('Fetching admin student enrollments...');
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // First, get clubs created by this admin
-      let clubQuery = supabase
-        .from('clubs')
-        .select('id')
-        .eq('created_by_profile_id', userData.user.id);
+      let clubIds: string[] = [];
 
-      // If clubId is provided, filter by it
+      // If clubId is provided directly (e.g., from superadmin selector), use it
       if (clubId) {
-        clubQuery = clubQuery.eq('id', clubId);
+        clubIds = [clubId];
+      } else {
+        // Otherwise, get clubs created by this admin (original behavior)
+        const { data: adminClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', userData.user.id);
+
+        if (clubsError) throw clubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = adminClubs.map(club => club.id);
       }
-
-      const { data: adminClubs, error: clubsError } = await clubQuery;
-
-      if (clubsError) throw clubsError;
-      
-      if (!adminClubs || adminClubs.length === 0) {
-        return [];
-      }
-
-      const clubIds = adminClubs.map(club => club.id);
 
       // Get trainers associated with these clubs
       const { data: trainerClubsData, error: trainerClubsError } = await supabase
@@ -209,7 +208,6 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
         club_status: student.clubs?.status || null,
       }));
 
-      console.log('Admin student enrollments fetched:', studentsWithClubs);
       return studentsWithClubs as StudentEnrollment[];
     },
   });

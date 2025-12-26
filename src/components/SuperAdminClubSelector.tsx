@@ -56,10 +56,7 @@ export function SuperAdminClubSelector() {
           {superAdminClubs.map((club) => (
             <DropdownMenuItem
               key={club.id}
-              onClick={() => {
-                console.log('🔄 [SuperAdminClubSelector] Changing club to:', club.id, club.name);
-                setSelectedClubId(club.id);
-              }}
+              onClick={() => setSelectedClubId(club.id)}
               className={selectedClubId === club.id ? 'bg-accent' : ''}
             >
               <Building2 className="h-4 w-4 mr-2" />

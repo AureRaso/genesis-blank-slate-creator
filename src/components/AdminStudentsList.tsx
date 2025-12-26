@@ -27,6 +27,7 @@ import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollme
 import { useArchiveStudent } from "@/hooks/useArchiveStudent";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,7 @@ const ITEMS_PER_PAGE = 25;
 
 const AdminStudentsList = () => {
   const { t } = useTranslation();
+  const { effectiveClubId } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
@@ -51,7 +53,7 @@ const AdminStudentsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [studentToArchive, setStudentToArchive] = useState<StudentEnrollment | null>(null);
 
-  const { data: students = [], isLoading, error } = useAdminStudentEnrollments(); // No club filtering needed here
+  const { data: students = [], isLoading, error } = useAdminStudentEnrollments(effectiveClubId);
   const updateStudentMutation = useUpdateStudentEnrollment();
   const archiveStudentMutation = useArchiveStudent();
 
@@ -62,13 +64,6 @@ const AdminStudentsList = () => {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
   };
-  
-  console.log('📋 AdminStudentsList Data:', {
-    studentsCount: students.length,
-    isLoading,
-    error: error?.message,
-    firstFewStudents: students.slice(0, 3).map(s => ({ id: s.id, name: s.full_name, club_id: s.club_id }))
-  });
 
   // Reset page when filters change
   useEffect(() => {
