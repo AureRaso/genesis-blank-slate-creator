@@ -109,10 +109,10 @@ export const useCurrentUserWhatsAppGroup = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Get user profile
+      // Get user profile (including club_id for trainers)
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role")
+        .select("id, role, club_id")
         .eq("id", user.id)
         .single();
 
@@ -120,15 +120,6 @@ export const useCurrentUserWhatsAppGroup = () => {
 
       // If trainer, get their WhatsApp group
       if (profile.role === "trainer") {
-        // Get trainer's club through trainer_clubs junction table
-        const { data: trainerClubData, error: trainerClubError } = await supabase
-          .from("trainer_clubs")
-          .select("club_id")
-          .eq("trainer_profile_id", profile.id)
-          .maybeSingle();
-
-        if (trainerClubError) throw trainerClubError;
-
         // First try to get group by trainer profile
         const { data: trainerGroupData, error: trainerGroupError } = await supabase
           .from("whatsapp_groups")
@@ -140,13 +131,28 @@ export const useCurrentUserWhatsAppGroup = () => {
         if (trainerGroupError) throw trainerGroupError;
         if (trainerGroupData) return trainerGroupData as WhatsAppGroupData;
 
-        // If no trainer-specific group, try to get by club_id
-        if (trainerClubData?.club_id) {
+        // Determine trainer's club_id - first from profile, then from trainer_clubs
+        let trainerClubId = profile.club_id;
+
+        if (!trainerClubId) {
+          // Fallback: Get trainer's club through trainer_clubs junction table
+          const { data: trainerClubData, error: trainerClubError } = await supabase
+            .from("trainer_clubs")
+            .select("club_id")
+            .eq("trainer_profile_id", profile.id)
+            .maybeSingle();
+
+          if (trainerClubError) throw trainerClubError;
+          trainerClubId = trainerClubData?.club_id;
+        }
+
+        // If we have a club_id, try to get group by club_id
+        if (trainerClubId) {
           const { data: clubGroupData, error: clubGroupError } = await supabase
             .from("whatsapp_groups")
             .select("*")
             .eq("is_active", true)
-            .eq("club_id", trainerClubData.club_id)
+            .eq("club_id", trainerClubId)
             .maybeSingle();
 
           if (clubGroupError) throw clubGroupError;
