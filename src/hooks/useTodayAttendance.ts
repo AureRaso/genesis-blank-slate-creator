@@ -45,7 +45,7 @@ const getDayOfWeekInSpanish = (date: Date): string => {
 // Hook for admins/trainers to see classes in a date range with attendance confirmations
 // If no startDate/endDate provided, defaults to today
 export const useTodayAttendance = (startDate?: string, endDate?: string) => {
-  const { profile, effectiveClubId } = useAuth();
+  const { profile, effectiveClubId, isSuperAdmin, superAdminClubs } = useAuth();
   const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
@@ -66,8 +66,11 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
   // Remove duplicates
   const uniqueDays = Array.from(new Set(daysInRange));
 
+  // Get superadmin club IDs for query key (for cache invalidation)
+  const superAdminClubIds = isSuperAdmin ? superAdminClubs.map(c => c.id) : [];
+
   const query = useQuery({
-    queryKey: ['today-attendance', profile?.id, effectiveClubId, queryStartDate, queryEndDate],
+    queryKey: ['today-attendance', profile?.id, effectiveClubId, superAdminClubIds, queryStartDate, queryEndDate],
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
@@ -119,10 +122,16 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         // Use OR filter to get classes where user is either trainer or trainer_2
         query = query.or(`trainer_profile_id.eq.${profile.id},trainer_profile_id_2.eq.${profile.id}`);
       } else {
-        // For admins/superadmins, filter by effectiveClubId
+        // For admins/superadmins, filter by club(s)
         if (effectiveClubId) {
+          // Specific club selected
           query = query.eq('club_id', effectiveClubId);
+        } else if (isSuperAdmin && superAdminClubs.length > 0) {
+          // Superadmin with "All clubs" selected - filter by their assigned clubs
+          const clubIds = superAdminClubs.map(c => c.id);
+          query = query.in('club_id', clubIds);
         }
+        // For regular admin without effectiveClubId, no additional filter (shows their club's classes)
       }
 
       query = query.order('start_time', { ascending: true });

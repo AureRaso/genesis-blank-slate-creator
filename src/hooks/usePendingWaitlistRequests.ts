@@ -34,16 +34,19 @@ const getDayOfWeekInSpanish = (date: Date): string => {
  * Hook to get pending waitlist requests for today's classes
  * Only shows 'waiting' status entries for classes happening today
  */
-export const usePendingWaitlistRequests = (clubId?: string) => {
+export const usePendingWaitlistRequests = (clubId?: string, clubIds?: string[]) => {
   return useQuery({
-    queryKey: ['pending-waitlist-requests', clubId, format(new Date(), 'yyyy-MM-dd')],
+    queryKey: ['pending-waitlist-requests', clubId, clubIds, format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!clubId) return [];
+      // Determine which club IDs to query
+      const targetClubIds = clubIds && clubIds.length > 0 ? clubIds : (clubId ? [clubId] : []);
+
+      if (targetClubIds.length === 0) return [];
 
       const today = format(new Date(), 'yyyy-MM-dd');
 
       // Get all pending waitlist entries with class details
-      const { data: waitlistData, error: waitlistError } = await supabase
+      let query = supabase
         .from('class_waitlist')
         .select(`
           id,
@@ -64,8 +67,11 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
           )
         `)
         .eq('status', 'pending')
-        .eq('programmed_classes.club_id', clubId)
         .order('requested_at', { ascending: true });
+
+      // Note: Supabase doesn't support .in() on joined tables directly
+      // So we filter in JS after fetching
+      const { data: waitlistData, error: waitlistError } = await query;
 
       if (waitlistError) {
         throw waitlistError;
@@ -75,9 +81,10 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
         return [];
       }
 
-      // Filter entries for classes happening today
+      // Filter entries for classes happening today AND matching club IDs
       const todayWaitlistEntries = waitlistData.filter((entry: any) => {
-        return entry.class_date === today;
+        const matchesClub = targetClubIds.includes(entry.programmed_classes.club_id);
+        return entry.class_date === today && matchesClub;
       });
 
       if (todayWaitlistEntries.length === 0) {
@@ -122,7 +129,7 @@ export const usePendingWaitlistRequests = (clubId?: string) => {
 
       return requests;
     },
-    enabled: !!clubId,
+    enabled: !!clubId || (clubIds && clubIds.length > 0),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 };

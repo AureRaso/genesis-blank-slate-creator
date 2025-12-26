@@ -110,7 +110,7 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
 };
 
 const Index = () => {
-  const { user, profile, isAdmin, loading, effectiveClubId } = useAuth();
+  const { user, profile, isAdmin, loading, effectiveClubId, isSuperAdmin, superAdminClubs } = useAuth();
   const { t } = useTranslation();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const [showAllActivities, setShowAllActivities] = useState(false);
@@ -143,14 +143,19 @@ const Index = () => {
   const [notificationSentClasses, setNotificationSentClasses] = useState<Set<string>>(new Set());
   const [processedRequests, setProcessedRequests] = useState<Map<string, 'approved' | 'rejected'>>(new Map());
 
+  // For superadmin without specific club selected, use all their clubs
+  const superAdminClubIds = isSuperAdmin && !effectiveClubId && superAdminClubs.length > 0
+    ? superAdminClubs.map(c => c.id)
+    : undefined;
+
   // Fetch classes with absences
-  const { data: classesWithAbsences } = useClassesWithAbsences(effectiveClubId);
+  const { data: classesWithAbsences } = useClassesWithAbsences(effectiveClubId, superAdminClubIds);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
   const { data: allWhatsAppGroups } = useAllWhatsAppGroups(effectiveClubId);
 
   // Fetch pending waitlist requests
-  const { data: waitlistRequests } = usePendingWaitlistRequests(effectiveClubId);
+  const { data: waitlistRequests } = usePendingWaitlistRequests(effectiveClubId, superAdminClubIds);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
 

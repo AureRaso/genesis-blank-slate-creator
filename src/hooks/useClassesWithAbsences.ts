@@ -35,17 +35,20 @@ const getDayOfWeekInSpanish = (date: Date): string => {
   return days[date.getDay()];
 };
 
-export const useClassesWithAbsences = (clubId?: string) => {
+export const useClassesWithAbsences = (clubId?: string, clubIds?: string[]) => {
   return useQuery({
-    queryKey: ['classes-with-absences', clubId, format(new Date(), 'yyyy-MM-dd')],
+    queryKey: ['classes-with-absences', clubId, clubIds, format(new Date(), 'yyyy-MM-dd')],
     queryFn: async () => {
-      if (!clubId) return [];
+      // Determine which club IDs to query
+      const targetClubIds = clubIds && clubIds.length > 0 ? clubIds : (clubId ? [clubId] : []);
+
+      if (targetClubIds.length === 0) return [];
 
       const today = format(new Date(), 'yyyy-MM-dd');
       const todayDayName = getDayOfWeekInSpanish(new Date(today));
 
-      // Get all active classes for this club
-      const { data: classes, error: classesError } = await supabase
+      // Get all active classes for the club(s)
+      let query = supabase
         .from('programmed_classes')
         .select(`
           id,
@@ -61,10 +64,18 @@ export const useClassesWithAbsences = (clubId?: string) => {
             full_name
           )
         `)
-        .eq('club_id', clubId)
         .eq('is_active', true)
         .lte('start_date', today)
         .gte('end_date', today);
+
+      // Filter by club(s)
+      if (targetClubIds.length === 1) {
+        query = query.eq('club_id', targetClubIds[0]);
+      } else {
+        query = query.in('club_id', targetClubIds);
+      }
+
+      const { data: classes, error: classesError } = await query;
 
       if (classesError) {
         throw classesError;
@@ -189,7 +200,7 @@ export const useClassesWithAbsences = (clubId?: string) => {
 
       return classesWithParticipants;
     },
-    enabled: !!clubId,
+    enabled: !!clubId || (clubIds && clubIds.length > 0),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 };
