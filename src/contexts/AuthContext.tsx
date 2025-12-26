@@ -30,7 +30,7 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   superAdminClubs: SuperAdminClub[];
   selectedClubId: string | null;
-  setSelectedClubId: (clubId: string) => void;
+  setSelectedClubId: (clubId: string | null) => void;
   effectiveClubId: string | undefined;
 }
 
@@ -409,9 +409,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isGuardian = profile?.role === 'guardian';
 
   // Setter for selected club with localStorage persistence
-  const setSelectedClubId = useCallback((clubId: string) => {
+  const setSelectedClubId = useCallback((clubId: string | null) => {
     setSelectedClubIdState(clubId);
-    localStorage.setItem(SELECTED_CLUB_KEY, clubId);
+    if (clubId === null) {
+      localStorage.removeItem(SELECTED_CLUB_KEY);
+    } else {
+      localStorage.setItem(SELECTED_CLUB_KEY, clubId);
+    }
   }, []);
 
   // effectiveClubId: for superadmin use selected club, for others use profile.club_id

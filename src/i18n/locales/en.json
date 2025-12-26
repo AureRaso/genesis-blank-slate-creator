@@ -1122,5 +1122,9 @@
       "playersCount": "Players",
       "movementsCount": "Movements"
     }
+  },
+  "superadmin": {
+    "allClubs": "All clubs",
+    "selectClub": "Select club"
   }
 }

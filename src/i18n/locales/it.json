@@ -1113,5 +1113,9 @@
       "playersCount": "Giocatori",
       "movementsCount": "Movimenti"
     }
+  },
+  "superadmin": {
+    "allClubs": "Tutti i club",
+    "selectClub": "Seleziona club"
   }
 }

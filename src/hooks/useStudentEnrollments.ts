@@ -129,13 +129,36 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
+      // Get user profile to check role
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       let clubIds: string[] = [];
 
       // If clubId is provided directly (e.g., from superadmin selector), use it
       if (clubId) {
         clubIds = [clubId];
+      } else if (userProfile.role === 'superadmin') {
+        // Superadmin with no specific club selected - get ALL their assigned clubs
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = superadminClubs.map(ac => ac.club_id);
       } else {
-        // Otherwise, get clubs created by this admin (original behavior)
+        // Regular admin - get clubs created by this admin (original behavior)
         const { data: adminClubs, error: clubsError } = await supabase
           .from('clubs')
           .select('id')
