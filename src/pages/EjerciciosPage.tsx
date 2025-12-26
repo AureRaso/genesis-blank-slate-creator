@@ -511,26 +511,17 @@ const EjerciciosPage = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Modal de video - usando portal directo para evitar problemas con Dialog */}
+        {/* Modal de video renovado */}
         {showVideoModal && (
-          <div className="fixed inset-0 z-[100]" onClick={() => setShowVideoModal(false)}>
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/80" />
-            {/* Content */}
-            <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl mx-4 bg-background rounded-lg overflow-hidden shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 pb-2">
-                <h2 className="text-lg font-semibold">{viewOnlyEjercicio.nombre}</h2>
-                <button
-                  onClick={() => setShowVideoModal(false)}
-                  className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-5 w-5" />
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 md:p-12 lg:p-16" onClick={() => setShowVideoModal(false)}>
+            <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm" />
+            <div className="relative w-full max-w-4xl bg-black rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute top-4 right-4 z-10">
+                <button onClick={() => setShowVideoModal(false)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-colors">
+                  <X className="h-6 w-6" />
                 </button>
               </div>
-              <div className="relative bg-black aspect-video">
+              <div className="aspect-video bg-black">
                 <video
                   ref={videoRef}
                   poster={viewOnlyEjercicio.video_thumbnail || undefined}
@@ -539,6 +530,9 @@ const EjerciciosPage = () => {
                   playsInline
                   autoPlay
                 />
+              </div>
+              <div className="bg-white p-4">
+                <h2 className="text-lg font-bold text-slate-900">{viewOnlyEjercicio.nombre}</h2>
               </div>
             </div>
           </div>
