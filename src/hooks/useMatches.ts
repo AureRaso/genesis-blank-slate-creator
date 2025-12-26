@@ -3,12 +3,83 @@ import { supabase } from '@/integrations/supabase/client';
 import { Match } from '@/types/padel';
 import { useToast } from '@/hooks/use-toast';
 
-export const useMatches = (leagueId?: string) => {
+export const useMatches = (leagueId?: string, clubId?: string) => {
   return useQuery({
-    queryKey: ['matches', leagueId],
+    queryKey: ['matches', leagueId, clubId],
     queryFn: async () => {
-      console.log('Fetching matches for league:', leagueId);
-      
+      console.log('Fetching matches for league:', leagueId, 'clubId:', clubId);
+
+      // Get user profile to check role for filtering
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // If no leagueId provided, get leagues filtered by club first
+      let leagueIds: string[] = [];
+
+      if (leagueId) {
+        leagueIds = [leagueId];
+      } else {
+        // Need to filter matches by clubs
+        let clubIds: string[] = [];
+
+        if (clubId) {
+          clubIds = [clubId];
+        } else if (userProfile.role === 'superadmin') {
+          // Superadmin with no specific club - get ALL their assigned clubs
+          const { data: superadminClubs, error: superadminClubsError } = await supabase
+            .from('admin_clubs')
+            .select('club_id')
+            .eq('admin_profile_id', userData.user.id);
+
+          if (superadminClubsError) throw superadminClubsError;
+
+          if (!superadminClubs || superadminClubs.length === 0) {
+            return [];
+          }
+
+          clubIds = superadminClubs.map(ac => ac.club_id);
+        } else if (userProfile.role === 'admin') {
+          // Regular admin - get clubs created by this admin
+          const { data: adminClubs, error: clubsError } = await supabase
+            .from('clubs')
+            .select('id')
+            .eq('created_by_profile_id', userData.user.id);
+
+          if (clubsError) throw clubsError;
+
+          if (!adminClubs || adminClubs.length === 0) {
+            return [];
+          }
+
+          clubIds = adminClubs.map(club => club.id);
+        }
+
+        // Get leagues from these clubs
+        if (clubIds.length > 0) {
+          const { data: clubLeagues, error: leaguesError } = await supabase
+            .from('leagues')
+            .select('id')
+            .in('club_id', clubIds);
+
+          if (leaguesError) throw leaguesError;
+
+          if (!clubLeagues || clubLeagues.length === 0) {
+            return [];
+          }
+
+          leagueIds = clubLeagues.map(l => l.id);
+        }
+      }
+
       // Primero obtener los matches básicos
       let matchQuery = supabase
         .from('matches')
@@ -16,8 +87,8 @@ export const useMatches = (leagueId?: string) => {
         .order('round', { ascending: true })
         .order('created_at', { ascending: true });
 
-      if (leagueId) {
-        matchQuery = matchQuery.eq('league_id', leagueId);
+      if (leagueIds.length > 0) {
+        matchQuery = matchQuery.in('league_id', leagueIds);
       }
 
       const { data: matches, error: matchError } = await matchQuery;
@@ -69,11 +140,11 @@ export const useMatches = (leagueId?: string) => {
       }
 
       // Obtener las ligas
-      const leagueIds = [...new Set(matches.map(match => match.league_id))];
+      const matchLeagueIds = [...new Set(matches.map(match => match.league_id))];
       const { data: leagues, error: leaguesError } = await supabase
         .from('leagues')
         .select('id, name')
-        .in('id', leagueIds);
+        .in('id', matchLeagueIds);
 
       if (leaguesError) {
         console.error('Error fetching leagues:', leaguesError);

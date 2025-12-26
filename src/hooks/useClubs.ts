@@ -25,11 +25,89 @@ export type CreateClubData = {
   description?: string;
 };
 
-export const useClubs = () => {
+export const useClubs = (clubId?: string) => {
   return useQuery({
-    queryKey: ['clubs'],
+    queryKey: ['clubs', clubId],
     queryFn: async () => {
-      console.log('Fetching clubs...');
+      console.log('Fetching clubs with clubId:', clubId);
+
+      // If specific clubId provided, filter by it
+      if (clubId) {
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .eq('id', clubId)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching clubs:', error);
+          throw error;
+        }
+
+        console.log('Clubs fetched (filtered by clubId):', data);
+        return data as Club[];
+      }
+
+      // Check if user is superadmin to get their assigned clubs
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Superadmin: get ALL their assigned clubs from admin_clubs
+      if (userProfile.role === 'superadmin') {
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        const clubIds = superadminClubs.map(ac => ac.club_id);
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .in('id', clubIds)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching superadmin clubs:', error);
+          throw error;
+        }
+
+        console.log('Clubs fetched (superadmin):', data);
+        return data as Club[];
+      }
+
+      // Regular admin: get clubs created by them
+      if (userProfile.role === 'admin') {
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .eq('created_by_profile_id', userData.user.id)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching admin clubs:', error);
+          throw error;
+        }
+
+        console.log('Clubs fetched (admin):', data);
+        return data as Club[];
+      }
+
+      // Default: fetch all clubs (for other roles or fallback)
       const { data, error } = await supabase
         .from('clubs')
         .select('*')
@@ -39,7 +117,7 @@ export const useClubs = () => {
         console.error('Error fetching clubs:', error);
         throw error;
       }
-      
+
       console.log('Clubs fetched:', data);
       return data as Club[];
     },

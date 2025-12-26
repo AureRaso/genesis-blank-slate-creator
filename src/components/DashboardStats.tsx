@@ -15,29 +15,24 @@ import { useTranslation } from "react-i18next";
 const DashboardStats = () => {
   const { profile, effectiveClubId } = useAuth();
   const { t } = useTranslation();
-  const { data: leagues } = useLeagues();
-  const { data: players } = usePlayers();
-  const { data: matches } = useMatches();
-  const { data: clubs } = useClubs();
+  // Pass effectiveClubId to hooks for superadmin filtering support
+  const { data: leagues } = useLeagues(effectiveClubId);
+  const { data: players } = usePlayers(effectiveClubId);
+  const { data: matches } = useMatches(undefined, effectiveClubId);
+  const { data: clubs } = useClubs(effectiveClubId);
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
 
   // Get real data for classes - use effectiveClubId for superadmin support
   const { data: programmedClasses } = useProgrammedClasses(effectiveClubId);
   const { data: todayClasses } = useTodayAttendance();
 
-  // Filter players by effectiveClubId for superadmin support
-  const clubPlayers = effectiveClubId
-    ? players?.filter(p => p.club_id === effectiveClubId)
-    : players;
+  // Players are already filtered by effectiveClubId via the hook
+  const clubPlayers = players;
 
   const activeLeagues = leagues?.filter(league => league.status === 'active').length || 0;
 
-  // Filter clubs to show only those belonging to this admin
-  const activeClubs = clubs?.filter(club => {
-    if (club.status !== 'active') return false;
-    // Check if admin created this club or is assigned to it
-    return club.created_by_profile_id === profile?.id || club.id === profile?.club_id;
-  }).length || 0;
+  // Clubs are already filtered by effectiveClubId via the hook
+  const activeClubs = clubs?.filter(club => club.status === 'active').length || 0;
 
   const totalRevenue = leagues?.reduce((sum, league) => sum + (league.registration_price || 0), 0) || 0;
   const pendingMatches = matches?.filter(match => match.status === 'pending').length || 0;
