@@ -147,13 +147,15 @@ export const useCurrentUserWhatsAppGroup = () => {
         }
 
         // If we have a club_id, try to get group by club_id
+        // FIX-2025-12-23: Un club puede tener múltiples grupos, tomamos el primero
         if (trainerClubId) {
           const { data: clubGroupData, error: clubGroupError } = await supabase
             .from("whatsapp_groups")
             .select("*")
             .eq("is_active", true)
             .eq("club_id", trainerClubId)
-            .maybeSingle();
+            .limit(1)
+            .single();
 
           if (clubGroupError) throw clubGroupError;
           return clubGroupData as WhatsAppGroupData | null;
