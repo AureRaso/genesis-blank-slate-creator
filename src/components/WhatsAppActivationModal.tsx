@@ -136,9 +136,18 @@ export const WhatsAppActivationModal = ({
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>Recibe avisos de plazas libres en otras clases de tu academia entiempo real</span>
+                <span>Recibe avisos de plazas libres en otras clases de tu academia en tiempo real</span>
               </li>
             </ul>
+          </div>
+
+          {/* Instrucción importante */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+            <p className="text-sm text-amber-800 font-medium">
+              ⚠️ Pulsa el botón y <strong>envía el mensaje</strong> que se abrirá en WhatsApp.
+              <br />
+              <span className="text-amber-700">Hasta que no lo envíes, no se activarán las notificaciones.</span>
+            </p>
           </div>
 
           {/* Botón principal */}
