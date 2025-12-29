@@ -6,6 +6,7 @@ import { PlayerClassesTabs } from "./PlayerClassesTabs";
 import DeletedUserMessage from "./DeletedUserMessage";
 import { PhoneRequiredModal } from "./PhoneRequiredModal";
 import { PlayerDetailsModal } from "./PlayerDetailsModal";
+import { WhatsAppActivationModal } from "./WhatsAppActivationModal";
 import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
@@ -21,6 +22,7 @@ const PlayerDashboard = () => {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
   const [selectedChildId, setSelectedChildId] = useState<string>("all");
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(true);
 
   // Get current user enrollment status
   const { data: enrollment, isLoading: loadingEnrollment } = useCurrentUserEnrollment(profile?.id);
@@ -52,6 +54,19 @@ const PlayerDashboard = () => {
   // Check if phone modal should be shown (to avoid showing both at once)
   const needsPhoneUpdate = !enrollment?.phone || enrollment?.phone === '' || enrollment?.phone === '000000000';
 
+  // Check if WhatsApp activation modal should be shown
+  // Only show after phone and player details are complete
+  // Cast profile fields to boolean since they may not exist in the type yet
+  const whatsappOptInCompleted = (profile as any)?.whatsapp_opt_in_completed === true;
+  const whatsappOptInDismissed = (profile as any)?.whatsapp_opt_in_dismissed === true;
+  const shouldShowWhatsAppModal =
+    showWhatsAppModal &&
+    profile &&
+    !needsPhoneUpdate &&
+    !needsPlayerDetails &&
+    !whatsappOptInCompleted &&
+    !whatsappOptInDismissed;
+
   // Callback to refresh enrollment data after phone update
   const handlePhoneUpdated = () => {
     queryClient.invalidateQueries({ queryKey: ['current-user-enrollment'] });
@@ -61,6 +76,17 @@ const PlayerDashboard = () => {
   const handleDetailsUpdated = () => {
     // Refresh the profile from AuthContext to get updated birth_date and shirt_size
     retryAuth();
+  };
+
+  // Callbacks for WhatsApp activation modal
+  const handleWhatsAppCompleted = () => {
+    setShowWhatsAppModal(false);
+    retryAuth(); // Refresh profile to get updated whatsapp_opt_in fields
+  };
+
+  const handleWhatsAppDismissed = () => {
+    setShowWhatsAppModal(false);
+    retryAuth(); // Refresh profile to get updated whatsapp_opt_in fields
   };
 
   const handleLeagueClick = (leagueId: string) => {
@@ -138,6 +164,16 @@ const PlayerDashboard = () => {
           currentBirthDate={profile.birth_date}
           currentShirtSize={profile.shirt_size}
           onDetailsUpdated={handleDetailsUpdated}
+        />
+      )}
+
+      {/* WhatsApp Activation Modal - Show after phone and details are complete */}
+      {shouldShowWhatsAppModal && profile && (
+        <WhatsAppActivationModal
+          userName={profile.full_name || 'Usuario'}
+          profileId={profile.id}
+          onCompleted={handleWhatsAppCompleted}
+          onDismissed={handleWhatsAppDismissed}
         />
       )}
 
