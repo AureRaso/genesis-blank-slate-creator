@@ -436,10 +436,10 @@ const EjerciciosPage = () => {
               {(viewOnlyEjercicio.movimientos || []).map((mov, i) => (
                 <line
                   key={i}
-                  x1={mov.from.y * 2}
-                  y1={mov.from.x}
-                  x2={mov.to.y * 2}
-                  y2={mov.to.x}
+                  x1={mov.from.x * 2}
+                  y1={mov.from.y}
+                  x2={mov.to.x * 2}
+                  y2={mov.to.y}
                   stroke={mov.color || '#F59E0B'}
                   strokeWidth="1.5"
                   markerEnd="url(#arrowhead-detail)"
@@ -449,7 +449,7 @@ const EjerciciosPage = () => {
 
               {/* Jugadores */}
               {(viewOnlyEjercicio.posiciones || []).map((pos, i) => (
-                <g key={i} transform={`translate(${pos.y * 2}, ${pos.x})`}>
+                <g key={i} transform={`translate(${pos.x * 2}, ${pos.y})`}>
                   <circle r="6" fill={pos.color} />
                   <text
                     textAnchor="middle"

@@ -43,7 +43,7 @@ const PistaMiniatura = ({ posiciones, movimientos, className = "" }: PistaMiniat
       <rect x="0" y="0" width="5" height="100" fill="rgba(200,200,200,0.2)" />
       <rect x="195" y="0" width="5" height="100" fill="rgba(200,200,200,0.2)" />
 
-      {/* Movimientos (flechas) - Coordenadas rotadas */}
+      {/* Movimientos (flechas) */}
       <defs>
         <marker id="arrowhead-mini" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
           <polygon points="0 0, 6 2, 0 4" fill="#F59E0B" />
@@ -53,10 +53,10 @@ const PistaMiniatura = ({ posiciones, movimientos, className = "" }: PistaMiniat
       {movimientos.map((mov, i) => (
         <line
           key={i}
-          x1={mov.from.y * 2}
-          y1={mov.from.x}
-          x2={mov.to.y * 2}
-          y2={mov.to.x}
+          x1={mov.from.x * 2}
+          y1={mov.from.y}
+          x2={mov.to.x * 2}
+          y2={mov.to.y}
           stroke={mov.color || '#F59E0B'}
           strokeWidth="1.5"
           markerEnd="url(#arrowhead-mini)"
@@ -64,9 +64,9 @@ const PistaMiniatura = ({ posiciones, movimientos, className = "" }: PistaMiniat
         />
       ))}
 
-      {/* Jugadores - Coordenadas rotadas */}
+      {/* Jugadores */}
       {posiciones.map((pos, i) => (
-        <g key={i} transform={`translate(${pos.y * 2}, ${pos.x})`}>
+        <g key={i} transform={`translate(${pos.x * 2}, ${pos.y})`}>
           <circle r="6" fill={pos.color} />
           <text
             textAnchor="middle"
