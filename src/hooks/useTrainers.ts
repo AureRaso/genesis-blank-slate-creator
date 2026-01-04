@@ -97,10 +97,10 @@ export const useAdminTrainers = (clubId?: string) => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // Get user profile to check role
+      // Get user profile to check role and club_id
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, club_id')
         .eq('id', userData.user.id)
         .single();
 
@@ -126,19 +126,24 @@ export const useAdminTrainers = (clubId?: string) => {
 
         clubIds = superadminClubs.map(ac => ac.club_id);
       } else {
-        // Regular admin - get clubs created by this admin (original behavior)
-        const { data: adminClubs, error: clubsError } = await supabase
-          .from('clubs')
-          .select('id')
-          .eq('created_by_profile_id', userData.user.id);
+        // Regular admin - primero verificar si tiene club_id asignado
+        if (userProfile.club_id) {
+          clubIds = [userProfile.club_id];
+        } else {
+          // Fallback: clubs creados por este admin (para admins legacy)
+          const { data: adminClubs, error: clubsError } = await supabase
+            .from('clubs')
+            .select('id')
+            .eq('created_by_profile_id', userData.user.id);
 
-        if (clubsError) throw clubsError;
+          if (clubsError) throw clubsError;
 
-        if (!adminClubs || adminClubs.length === 0) {
-          return [];
+          if (!adminClubs || adminClubs.length === 0) {
+            return [];
+          }
+
+          clubIds = adminClubs.map(club => club.id);
         }
-
-        clubIds = adminClubs.map(club => club.id);
       }
 
       // Get trainers associated with these clubs

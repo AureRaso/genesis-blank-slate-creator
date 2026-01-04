@@ -52,7 +52,7 @@ export const useClubs = (clubId?: string) => {
 
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, club_id')
         .eq('id', userData.user.id)
         .single();
 
@@ -86,8 +86,25 @@ export const useClubs = (clubId?: string) => {
         return data as Club[];
       }
 
-      // Regular admin: get clubs created by them
+      // Regular admin: get their assigned club by club_id, or fallback to created clubs
       if (userProfile.role === 'admin') {
+        // Primero: si tiene club_id asignado, usar ese
+        if (userProfile.club_id) {
+          const { data, error } = await supabase
+            .from('clubs')
+            .select('*')
+            .eq('id', userProfile.club_id)
+            .order('name');
+
+          if (error) {
+            console.error('Error fetching admin club by club_id:', error);
+            throw error;
+          }
+
+          return data as Club[];
+        }
+
+        // Fallback: clubs creados por el admin (para admins legacy sin club_id)
         const { data, error } = await supabase
           .from('clubs')
           .select('*')
@@ -95,7 +112,7 @@ export const useClubs = (clubId?: string) => {
           .order('name');
 
         if (error) {
-          console.error('Error fetching admin clubs:', error);
+          console.error('Error fetching admin created clubs:', error);
           throw error;
         }
 
@@ -126,10 +143,10 @@ export const useAdminClubs = () => {
       if (userError) throw userError;
       if (!userData.user) throw new Error('Usuario no autenticado');
 
-      // Get user profile to check role
+      // Get user profile to check role and club_id
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, club_id')
         .eq('id', userData.user.id)
         .single();
 
@@ -163,7 +180,24 @@ export const useAdminClubs = () => {
         return data as Club[];
       }
 
-      // Regular admin: get clubs created by them
+      // Regular admin: get their assigned club by club_id, or fallback to created clubs
+      // Primero: si tiene club_id asignado, usar ese
+      if (userProfile.club_id) {
+        const { data, error } = await supabase
+          .from('clubs')
+          .select('*')
+          .eq('id', userProfile.club_id)
+          .order('name');
+
+        if (error) {
+          console.error('Error fetching admin club by club_id:', error);
+          throw error;
+        }
+
+        return data as Club[];
+      }
+
+      // Fallback: clubs creados por el admin (para admins legacy sin club_id)
       const { data, error } = await supabase
         .from('clubs')
         .select('*')
@@ -171,7 +205,7 @@ export const useAdminClubs = () => {
         .order('name');
 
       if (error) {
-        console.error('Error fetching admin clubs:', error);
+        console.error('Error fetching admin created clubs:', error);
         throw error;
       }
 

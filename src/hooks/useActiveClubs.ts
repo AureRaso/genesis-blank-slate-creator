@@ -48,8 +48,26 @@ export const useActiveClubs = () => {
         return data || [];
       }
 
-      // Admin: get clubs created by them
+      // Admin: get their assigned club by club_id, or fallback to created clubs
       if (userProfile.role === 'admin') {
+        // Primero: si tiene club_id asignado, usar ese
+        if (userProfile.club_id) {
+          const { data, error } = await supabase
+            .from('clubs')
+            .select('*')
+            .eq('id', userProfile.club_id)
+            .eq('status', 'active')
+            .order('name', { ascending: true });
+
+          if (error) {
+            console.error('Error fetching admin club by club_id:', error);
+            throw error;
+          }
+
+          return data || [];
+        }
+
+        // Fallback: clubs creados por el admin (para admins legacy sin club_id)
         const { data, error } = await supabase
           .from('clubs')
           .select('*')
@@ -58,7 +76,7 @@ export const useActiveClubs = () => {
           .order('name', { ascending: true });
 
         if (error) {
-          console.error('Error fetching admin active clubs:', error);
+          console.error('Error fetching admin created clubs:', error);
           throw error;
         }
 
