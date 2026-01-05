@@ -621,19 +621,19 @@ export const AuthPage = () => {
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                ¿Cómo vas a usar PadeLock? *
+                {t('authPage.signUp.userTypeLabel')} *
               </Label>
               <RadioGroup value={userType} onValueChange={(value) => setUserType(value as 'player' | 'guardian')}>
                 <div className="flex items-center space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:border-playtomic-orange/50 transition-all cursor-pointer">
                   <RadioGroupItem value="player" id="player" />
                   <Label htmlFor="player" className="flex-1 cursor-pointer font-normal">
-                    Soy jugador/a
+                    {t('authPage.signUp.userTypePlayer')}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 p-3 border-2 border-slate-200 rounded-lg hover:border-playtomic-orange/50 transition-all cursor-pointer">
                   <RadioGroupItem value="guardian" id="guardian" />
                   <Label htmlFor="guardian" className="flex-1 cursor-pointer font-normal">
-                    Soy padre/madre (voy a inscribir a mis hijos)
+                    {t('authPage.signUp.userTypeGuardian')}
                   </Label>
                 </div>
               </RadioGroup>
@@ -660,7 +660,7 @@ export const AuthPage = () => {
             <PhoneInput
               value={phone}
               onChange={setPhone}
-              label="Teléfono"
+              label={t('authPage.signUp.phoneLabel')}
               required
             />
 
@@ -685,7 +685,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-confirm-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  {t('authPage.signUp.confirmPasswordLabel').replace('Password', 'Email')} *
+                  {t('authPage.signUp.confirmEmailLabel')} *
                 </Label>
                 <Input
                   id="signup-confirm-email"
@@ -801,8 +801,8 @@ export const AuthPage = () => {
                   setSelectedClubName(clubName);
                   if (clubError) setClubError("");
                 }}
-                label="Código de Club"
-                placeholder="ABC"
+                label={t('authPage.signUp.clubCodeLabel')}
+                placeholder={t('authPage.signUp.clubCodePlaceholder')}
                 required
                 error={clubError}
               />
@@ -818,13 +818,13 @@ export const AuthPage = () => {
                   className="mt-1 w-4 h-4 text-playtomic-orange bg-white border-slate-300 rounded focus:ring-playtomic-orange focus:ring-2"
                 />
                 <label htmlFor="terms" className="text-sm text-slate-700 leading-tight">
-                  Acepto los{' '}
+                  {t('authPage.signUp.termsCheckbox')}{' '}
                   <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:text-orange-600 font-medium underline">
-                    Términos y Condiciones
+                    {t('authPage.signUp.termsLink')}
                   </a>{' '}
-                  y la{' '}
+                  {t('authPage.signUp.andThe')}{' '}
                   <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:text-orange-600 font-medium underline">
-                    Política de Privacidad
+                    {t('authPage.signUp.privacyLink')}
                   </a>
                 </label>
               </div>
@@ -841,12 +841,12 @@ export const AuthPage = () => {
                     className="mt-1 w-4 h-4 text-playtomic-orange bg-white border-slate-300 rounded focus:ring-playtomic-orange focus:ring-2"
                   />
                   <label htmlFor="lopivi" className="text-sm text-slate-700 leading-tight">
-                    He leído y acepto el{' '}
+                    {t('authPage.signUp.lopiviCheckbox')}{' '}
                     <span
                       onClick={() => setShowLopiviModal(true)}
                       className="text-playtomic-orange hover:text-orange-600 font-medium underline cursor-pointer"
                     >
-                      Protocolo de Protección a la Infancia y Adolescencia (LOPIVI)
+                      {t('authPage.signUp.lopiviLink')}
                     </span>
                   </label>
                 </div>
