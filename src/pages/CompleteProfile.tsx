@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { PhoneInput } from "@/components/PhoneInput";
 
 export const CompleteProfile = () => {
+  const { t } = useTranslation();
   const [level, setLevel] = useState("5"); // Nivel por defecto: 5
   const [phone, setPhone] = useState("");
   const [clubCode, setClubCode] = useState("");
@@ -287,10 +289,10 @@ export const CompleteProfile = () => {
               <CheckCircle2 className="h-8 w-8 text-playtomic-orange" />
             </div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-playtomic-dark to-slate-700 bg-clip-text text-transparent">
-              Completa tu Perfil
+              {t('authPage.completeProfile.title')}
             </CardTitle>
             <CardDescription className="text-base text-slate-600">
-              Solo necesitamos algunos datos más para personalizar tu experiencia
+              {t('authPage.completeProfile.subtitle')}
             </CardDescription>
           </CardHeader>
 
@@ -319,7 +321,7 @@ export const CompleteProfile = () => {
               <PhoneInput
                 value={phone}
                 onChange={setPhone}
-                label="Teléfono"
+                label={t('authPage.completeProfile.phoneLabel')}
                 required
               />
 
@@ -329,11 +331,9 @@ export const CompleteProfile = () => {
                   <Target className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-blue-900 mb-1">
-                      Nivel de juego
+                      {t('authPage.completeProfile.levelTitle')}
                     </p>
-                    <p className="text-sm text-blue-800">
-                      Tu nivel inicial se establecerá en <strong>5 (intermedio)</strong>. Podrás ajustarlo más adelante desde tu perfil o tu entrenador podrá modificarlo según tu progreso.
-                    </p>
+                    <p className="text-sm text-blue-800" dangerouslySetInnerHTML={{ __html: t('authPage.completeProfile.levelDescription') }} />
                   </div>
                 </div>
               </div>
@@ -349,13 +349,13 @@ export const CompleteProfile = () => {
                     setSelectedClubName(clubName);
                     if (clubError) setClubError("");
                   }}
-                  label="Código de Club"
-                  placeholder="ABC"
+                  label={t('authPage.completeProfile.clubCodeLabel')}
+                  placeholder={t('authPage.completeProfile.clubCodePlaceholder')}
                   required
                   error={clubError}
                 />
                 <p className="text-xs text-slate-500">
-                  Ingresa el código de 3 letras que te proporcionó tu entrenador
+                  {t('authPage.completeProfile.clubCodeHint')}
                 </p>
               </div>
 
@@ -368,12 +368,12 @@ export const CompleteProfile = () => {
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Guardando...
+                    {t('authPage.completeProfile.saving')}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5" />
-                    Completar Perfil
+                    {t('authPage.completeProfile.submitButton')}
                   </div>
                 )}
               </Button>
@@ -383,7 +383,7 @@ export const CompleteProfile = () => {
 
         {/* Footer */}
         <div className="text-center mt-6 text-sm text-slate-400">
-          <p>© 2025 PadeLock. Todos los derechos reservados.</p>
+          <p>{t('authPage.completeProfile.footer')}</p>
         </div>
       </div>
     </div>

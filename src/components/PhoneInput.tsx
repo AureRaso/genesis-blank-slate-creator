@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,7 +55,8 @@ interface PhoneInputProps {
   className?: string;
 }
 
-export const PhoneInput = ({ value, onChange, label = "Teléfono", required = true, className = "" }: PhoneInputProps) => {
+export const PhoneInput = ({ value, onChange, label, required = true, className = "" }: PhoneInputProps) => {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("ES"); // España por defecto
 
@@ -149,15 +151,22 @@ export const PhoneInput = ({ value, onChange, label = "Teléfono", required = tr
       </div>
       <p className="text-xs text-slate-500">
         {selectedCountry.code === "ES"
-          ? "Introduce tu número sin el prefijo +34"
-          : `Introduce tu número sin el prefijo ${selectedCountry.prefix} (${selectedCountry.minDigits}${selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''} dígitos)`
+          ? t('authPage.phoneInput.hintSpain')
+          : t('authPage.phoneInput.hintOther', {
+              prefix: selectedCountry.prefix,
+              minDigits: selectedCountry.minDigits,
+              maxDigitsSuffix: selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''
+            })
         }
       </p>
       {phone.length > 0 && !isPhoneValid && (
         <p className="text-xs text-red-600">
           {selectedCountry.code === "ES"
-            ? "Número inválido: debe tener 9 dígitos y empezar por 6 o 7"
-            : `Número inválido: debe tener entre ${selectedCountry.minDigits} y ${selectedCountry.maxDigits} dígitos`
+            ? t('authPage.phoneInput.invalidSpain')
+            : t('authPage.phoneInput.invalidOther', {
+                minDigits: selectedCountry.minDigits,
+                maxDigits: selectedCountry.maxDigits
+              })
           }
         </p>
       )}

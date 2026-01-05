@@ -1370,6 +1370,25 @@
       "termsLink": "Terms of Service",
       "privacyLink": "Privacy Policy",
       "and": "and"
+    },
+    "completeProfile": {
+      "title": "Complete Your Profile",
+      "subtitle": "We just need a few more details to personalize your experience",
+      "phoneLabel": "Phone",
+      "levelTitle": "Playing level",
+      "levelDescription": "Your initial level will be set to <strong>5 (intermediate)</strong>. You can adjust it later from your profile or your coach can modify it based on your progress.",
+      "clubCodeLabel": "Club Code",
+      "clubCodePlaceholder": "ABC",
+      "clubCodeHint": "Enter the 3-letter code provided by your coach",
+      "saving": "Saving...",
+      "submitButton": "Complete Profile",
+      "footer": "© 2025 PadeLock. All rights reserved."
+    },
+    "phoneInput": {
+      "hintSpain": "Enter your number without the +34 prefix",
+      "hintOther": "Enter your number without the {{prefix}} prefix ({{minDigits}}{{maxDigitsSuffix}} digits)",
+      "invalidSpain": "Invalid number: must have 9 digits and start with 6 or 7",
+      "invalidOther": "Invalid number: must have between {{minDigits}} and {{maxDigits}} digits"
     }
   },
   "settings": {
