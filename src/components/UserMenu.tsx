@@ -45,15 +45,15 @@ const UserMenu = () => {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'Administrador';
+        return t('userMenu.admin');
       case 'trainer':
-        return 'Entrenador';
+        return t('userMenu.trainer');
       case 'guardian':
-        return 'Tutor';
+        return t('userMenu.guardian');
       case 'owner':
-        return 'Propietario';
+        return t('userMenu.owner');
       default:
-        return 'Jugador';
+        return t('userMenu.player');
     }
   };
 
@@ -90,7 +90,7 @@ const UserMenu = () => {
           <DropdownMenuItem asChild>
             <a href="/dashboard/payment">
               <Wallet className="mr-2 h-4 w-4" />
-              <span>Suscripción</span>
+              <span>{t('userMenu.subscription')}</span>
             </a>
           </DropdownMenuItem>
         )}
@@ -104,7 +104,7 @@ const UserMenu = () => {
           <DropdownMenuSubTrigger>
             <Globe className="mr-2 h-4 w-4" />
             <span className="flex items-center gap-2">
-              Idioma
+              {t('userMenu.language')}
               <span className="text-base">{currentLang.flag}</span>
             </span>
           </DropdownMenuSubTrigger>

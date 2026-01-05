@@ -193,6 +193,7 @@
   },
   "sidebar": {
     "dashboard": "Dashboard",
+    "home": "Home",
     "leagues": "Leagues",
     "matches": "Matches",
     "scheduledClasses": "Scheduled Classes",
@@ -203,14 +204,27 @@
     "standings": "Standings",
     "waitlistNotifications": "Waitlist",
     "payment": "Payment",
-    "biblioteca": "Library"
+    "biblioteca": "Library",
+    "myPayments": "My Payments",
+    "history": "History",
+    "profiles": "Profiles",
+    "myChildren": "My Children",
+    "promotions": "Promotions",
+    "createClass": "Create Class",
+    "attendance": "Attendance",
+    "attendanceToday": "Today's Attendance",
+    "payments": "Payments"
   },
   "userMenu": {
     "admin": "Administrator",
     "trainer": "Trainer",
     "player": "Player",
+    "guardian": "Guardian",
+    "owner": "Owner",
     "settings": "Settings",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "subscription": "Subscription",
+    "language": "Language"
   },
   "pages": {
     "dashboard": {

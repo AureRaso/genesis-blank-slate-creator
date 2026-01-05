@@ -59,7 +59,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/students"}>
                 <Link to="/dashboard/students">
                   <Users />
-                  <span>Jugadores</span>
+                  <span>{t('sidebar.players')}</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -75,7 +75,7 @@ const AppSidebar = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/today-attendance"}>
                 <Link to="/dashboard/today-attendance">
                   <ClipboardCheck />
-                  <span>Asistencia Hoy</span>
+                  <span>{t('sidebar.attendanceToday')}</span>
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -147,17 +147,17 @@ const AppSidebar = () => {
         isActive: true
       },
       {
-        title: "Mis Pagos",
+        title: t('sidebar.myPayments'),
         url: "/dashboard/my-payments",
         icon: Wallet
       },
       ...(isGuardian ? [{
-        title: "Mis Hijos",
+        title: t('sidebar.myChildren'),
         url: "/dashboard/my-children",
         icon: Users
       }] : []),
       ...(hasPromotions ? [{
-        title: "Promociones",
+        title: t('sidebar.promotions'),
         url: "/dashboard/promotions",
         icon: Tag
       }] : []),
@@ -227,7 +227,7 @@ const AppSidebar = () => {
         icon: Calendar
       },
       {
-        title: "Asistencia",
+        title: t('sidebar.attendance'),
         url: "/dashboard/today-attendance",
         icon: ClipboardCheck
       },
@@ -264,7 +264,7 @@ const AppSidebar = () => {
         icon: Building2
       },
       {
-        title: "Promociones",
+        title: t('sidebar.promotions'),
         url: "/dashboard/promotions",
         icon: Tag
       },

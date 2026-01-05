@@ -3,11 +3,13 @@ import { Home, CreditCard, Settings, Users, ClipboardCheck, Tag, Plus, History, 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
+import { useTranslation } from "react-i18next";
 
 const MobileTabBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isPlayer, isTrainer, isGuardian, isAdmin, profile } = useAuth();
+  const { t } = useTranslation();
 
   // Check if club has promotions
   const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
@@ -15,27 +17,27 @@ const MobileTabBar = () => {
   // Tabs for players
   const playerTabs = [
     {
-      name: "Inicio",
+      name: t('sidebar.home'),
       path: "/dashboard",
       icon: Home,
     },
     {
-      name: "Pagos",
+      name: t('sidebar.payments'),
       path: "/dashboard/my-payments",
       icon: Wallet,
     },
     {
-      name: "Historial",
+      name: t('sidebar.history'),
       path: "/dashboard/historial",
       icon: History,
     },
     ...(isGuardian ? [{
-      name: "Perfiles",
+      name: t('sidebar.profiles'),
       path: "/dashboard/my-children",
       icon: Users,
     }] : []),
     ...(hasPromotions ? [{
-      name: "Promociones",
+      name: t('sidebar.promotions'),
       path: "/dashboard/promotions",
       icon: Tag,
     }] : []),
@@ -44,12 +46,12 @@ const MobileTabBar = () => {
   // Tabs for trainers (same as admin)
   const trainerTabs = [
     {
-      name: "Dashboard",
+      name: t('sidebar.dashboard'),
       path: "/dashboard",
       icon: Home,
     },
     {
-      name: "Crear Clase",
+      name: t('sidebar.createClass'),
       action: () => {
         // Navegar directamente a la página de crear clase
         navigate("/dashboard/scheduled-classes/new");
@@ -57,12 +59,12 @@ const MobileTabBar = () => {
       icon: Plus,
     },
     {
-      name: "Asistencia",
+      name: t('sidebar.attendance'),
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
     },
     {
-      name: "Pagos",
+      name: t('sidebar.payments'),
       path: "/dashboard/monthly-payments",
       icon: Wallet,
     },
@@ -71,12 +73,12 @@ const MobileTabBar = () => {
   // Tabs for admins
   const adminTabs = [
     {
-      name: "Dashboard",
+      name: t('sidebar.dashboard'),
       path: "/dashboard",
       icon: Home,
     },
     {
-      name: "Crear Clase",
+      name: t('sidebar.createClass'),
       action: () => {
         // Navegar directamente a la página de crear clase
         navigate("/dashboard/scheduled-classes/new");
@@ -84,12 +86,12 @@ const MobileTabBar = () => {
       icon: Plus,
     },
     {
-      name: "Asistencia",
+      name: t('sidebar.attendance'),
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
     },
     {
-      name: "Pagos",
+      name: t('sidebar.payments'),
       path: "/dashboard/monthly-payments",
       icon: Wallet,
     },

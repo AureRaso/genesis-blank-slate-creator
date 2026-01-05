@@ -40,6 +40,7 @@
   },
   "sidebar": {
     "dashboard": "Dashboard",
+    "home": "Inicio",
     "leagues": "Ligas",
     "matches": "Partidos",
     "scheduledClasses": "Clases Programadas",
@@ -50,14 +51,27 @@
     "standings": "Clasificación",
     "waitlistNotifications": "Lista de Espera",
     "payment": "Pago",
-    "biblioteca": "Biblioteca"
+    "biblioteca": "Biblioteca",
+    "myPayments": "Mis Pagos",
+    "history": "Historial",
+    "profiles": "Perfiles",
+    "myChildren": "Mis Hijos",
+    "promotions": "Promociones",
+    "createClass": "Crear Clase",
+    "attendance": "Asistencia",
+    "attendanceToday": "Asistencia Hoy",
+    "payments": "Pagos"
   },
   "userMenu": {
     "admin": "Administrador",
     "trainer": "Entrenador",
     "player": "Jugador",
+    "guardian": "Tutor",
+    "owner": "Propietario",
     "settings": "Configuración",
-    "signOut": "Cerrar Sesión"
+    "signOut": "Cerrar Sesión",
+    "subscription": "Suscripción",
+    "language": "Idioma"
   },
   "pages": {
     "dashboard": {

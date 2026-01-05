@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield, MoreVertical, Trash2 } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield, MoreVertical, Trash2, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -44,10 +46,18 @@ interface ClubWithStripe {
   stripe_onboarding_completed?: boolean | null;
 }
 
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
+
 const SettingsPage = () => {
   const { profile, isAdmin, isPlayer, isTrainer, isGuardian, user } = useAuth();
   const { data: clubs } = useClubs();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { language, changeLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>('');
   const [testStripeUrl, setTestStripeUrl] = useState<string>('');
@@ -293,7 +303,7 @@ const SettingsPage = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
                   <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-                  Información Personal
+                  {t('userMenu.settings')}
                 </CardTitle>
                 {!isEditing ? (
                   <Button onClick={() => setIsEditing(true)} variant="outline" size="sm" className="w-full sm:w-auto">
@@ -407,6 +417,32 @@ const SettingsPage = () => {
             authProviderMessage={getAuthProviderMessage(user)}
           />
         </div>
+
+        {/* Language Section */}
+        <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
+              <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
+              {t('userMenu.language')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map((lang) => (
+                <Button
+                  key={lang.code}
+                  variant={language === lang.code ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => changeLanguage(lang.code)}
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-lg">{lang.flag}</span>
+                  <span>{lang.name}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Logout Section */}
         <div className="pt-4 border-t border-gray-200">
