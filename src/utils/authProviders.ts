@@ -40,7 +40,24 @@ export const canChangePassword = (user: User | null): boolean => {
 };
 
 /**
- * Returns a user-friendly message about their authentication method
+ * Returns the translation key for the authentication method message
+ */
+export const getAuthProviderMessageKey = (user: User | null): string => {
+  const provider = getAuthProvider(user);
+
+  switch (provider) {
+    case 'email':
+      return 'settings.authProvider.email';
+    case 'google':
+      return 'settings.authProvider.google';
+    default:
+      return 'settings.authProvider.unknown';
+  }
+};
+
+/**
+ * @deprecated Use getAuthProviderMessageKey with useTranslation instead
+ * Returns a user-friendly message about their authentication method (Spanish fallback)
  */
 export const getAuthProviderMessage = (user: User | null): string => {
   const provider = getAuthProvider(user);

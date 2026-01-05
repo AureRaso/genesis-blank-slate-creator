@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordChangeSection } from '@/components/PasswordChangeSection';
-import { canChangePassword, getAuthProviderMessage } from '@/utils/authProviders';
+import { canChangePassword, getAuthProviderMessageKey } from '@/utils/authProviders';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -171,11 +171,11 @@ const SettingsPage = () => {
 
       if (error) throw error;
 
-      toast.success('Perfil actualizado correctamente');
+      toast.success(t('settings.toasts.profileUpdated'));
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Error al actualizar el perfil');
+      toast.error(t('settings.toasts.profileUpdateError'));
     } finally {
       setLoading(false);
     }
@@ -186,11 +186,11 @@ const SettingsPage = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      toast.success('Sesión cerrada correctamente');
+      toast.success(t('settings.toasts.logoutSuccess'));
       navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
-      toast.error('Error al cerrar sesión');
+      toast.error(t('settings.toasts.logoutError'));
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,7 @@ const SettingsPage = () => {
 
   const handleDeleteAccount = async () => {
     if (deleteReason.trim().length < 20) {
-      toast.error('El motivo debe tener al menos 20 caracteres');
+      toast.error(t('settings.toasts.deleteReasonMinLength'));
       return;
     }
 
@@ -230,14 +230,14 @@ const SettingsPage = () => {
 
       if (deleteError) throw deleteError;
 
-      toast.success('Tu cuenta ha sido eliminada correctamente');
+      toast.success(t('settings.toasts.accountDeleted'));
 
       // Sign out after deletion
       await supabase.auth.signOut();
       navigate('/');
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast.error('Error al eliminar la cuenta. Por favor, contacta al soporte.');
+      toast.error(t('settings.toasts.accountDeleteError'));
     } finally {
       setLoading(false);
       setShowFinalDeleteDialog(false);
@@ -252,10 +252,10 @@ const SettingsPage = () => {
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              Configuración
+              {t('settings.title')}
             </h1>
             <p className="text-sm sm:text-base text-gray-500">
-              Administra tu información personal
+              {t('settings.description')}
             </p>
           </div>
 
@@ -267,13 +267,13 @@ const SettingsPage = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Opciones Especiales</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('settings.lopivi.title')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
 
               {userClub && (
                 <DropdownMenuItem onClick={() => setShowLopiviDialog(true)}>
                   <Shield className="mr-2 h-4 w-4 text-blue-600" />
-                  <span>Reportar Incidente LOPIVI</span>
+                  <span>{t('settings.lopivi.title')}</span>
                 </DropdownMenuItem>
               )}
 
@@ -282,7 +282,7 @@ const SettingsPage = () => {
                 className="text-red-600 focus:text-red-600 focus:bg-red-50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                <span>Eliminar mi cuenta</span>
+                <span>{t('settings.deleteAccount.button')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -295,19 +295,19 @@ const SettingsPage = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
                   <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-                  {t('userMenu.settings')}
+                  {t('settings.personalInfo.title')}
                 </CardTitle>
                 {!isEditing ? (
                   <Button onClick={() => setIsEditing(true)} variant="outline" size="sm" className="w-full sm:w-auto">
-                    Editar
+                    {t('common.edit')}
                   </Button>
                 ) : (
                   <div className="flex gap-2">
                     <Button onClick={() => setIsEditing(false)} variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
-                      Cancelar
+                      {t('common.cancel')}
                     </Button>
                     <Button onClick={handleSaveProfile} disabled={loading} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm">
-                      {loading ? 'Guardando...' : 'Guardar'}
+                      {loading ? t('settings.personalInfo.saving') : t('common.save')}
                     </Button>
                   </div>
                 )}
@@ -317,45 +317,45 @@ const SettingsPage = () => {
               <div className="space-y-4 sm:space-y-5">
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="full_name" className="text-xs sm:text-sm font-medium">
-                    Nombre Completo
+                    {t('settings.personalInfo.fullName')}
                   </Label>
                   {isEditing ? (
                     <Input
                       id="full_name"
                       value={editedProfile.full_name}
                       onChange={(e) => setEditedProfile({ ...editedProfile, full_name: e.target.value })}
-                      placeholder="Tu nombre completo"
+                      placeholder={t('settings.personalInfo.fullNamePlaceholder')}
                       className="text-sm h-9 sm:h-10"
                     />
                   ) : (
-                    <p className="text-sm sm:text-base">{profile?.full_name || 'No especificado'}</p>
+                    <p className="text-sm sm:text-base">{profile?.full_name || t('settings.personalInfo.clubNotAssigned')}</p>
                   )}
                 </div>
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="email" className="text-xs sm:text-sm font-medium">
-                    Email
+                    {t('settings.personalInfo.email')}
                   </Label>
-                  <p className="text-sm sm:text-base text-muted-foreground truncate">{user?.email || 'No especificado'}</p>
+                  <p className="text-sm sm:text-base text-muted-foreground truncate">{user?.email || t('settings.personalInfo.clubNotAssigned')}</p>
                   <p className="text-xs text-muted-foreground">
-                    El email no se puede cambiar desde aquí
+                    {t('settings.personalInfo.emailDescription')}
                   </p>
                 </div>
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">
-                    Teléfono
+                    {t('settings.personalInfo.phone')}
                   </Label>
                   {isEditing ? (
                     <Input
                       id="phone"
                       value={editedProfile.phone}
                       onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
-                      placeholder="Tu número de teléfono"
+                      placeholder={t('settings.personalInfo.phonePlaceholder')}
                       className="text-sm h-9 sm:h-10"
                     />
                   ) : (
-                    <p className="text-sm sm:text-base">{profile?.phone || 'No especificado'}</p>
+                    <p className="text-sm sm:text-base">{profile?.phone || t('settings.personalInfo.clubNotAssigned')}</p>
                   )}
                 </div>
 
@@ -392,12 +392,9 @@ const SettingsPage = () => {
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label className="text-xs sm:text-sm font-medium">
-                    Club
+                    {t('settings.personalInfo.club')}
                   </Label>
-                  <p className="text-sm sm:text-base truncate">{userClub?.name || 'No asignado'}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Contacta al administrador para cambiar de club
-                  </p>
+                  <p className="text-sm sm:text-base truncate">{userClub?.name || t('settings.personalInfo.clubNotAssigned')}</p>
                 </div>
               </div>
             </CardContent>
@@ -406,7 +403,7 @@ const SettingsPage = () => {
           {/* Password Change Section */}
           <PasswordChangeSection
             canChangePassword={canChangePassword(user)}
-            authProviderMessage={getAuthProviderMessage(user)}
+            authProviderMessage={t(getAuthProviderMessageKey(user))}
           />
         </div>
 
@@ -420,7 +417,7 @@ const SettingsPage = () => {
             size="default"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+            {loading ? t('auth.signOut') + '...' : t('auth.signOut')}
           </Button>
         </div>
 
@@ -430,27 +427,19 @@ const SettingsPage = () => {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="h-5 w-5" />
-                ¿Estás seguro?
+                {t('settings.deleteAccount.dialogTitle')}
               </AlertDialogTitle>
               <AlertDialogDescription className="space-y-3">
-                <p>Estás a punto de eliminar tu cuenta de forma permanente.</p>
-                <p className="font-semibold">Esta acción:</p>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Eliminará toda tu información personal</li>
-                  <li>Cancelará todas tus inscripciones a clases</li>
-                  <li>Eliminará tu historial de asistencia</li>
-                  <li>No se puede revertir</li>
-                </ul>
-                <p className="font-semibold text-red-600">¿Realmente deseas continuar?</p>
+                <p>{t('settings.deleteAccount.dialogDescription')}</p>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>No, cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{t('settings.deleteAccount.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleInitialDeleteConfirm}
                 className="bg-red-600 hover:bg-red-700"
               >
-                Sí, continuar
+                {t('settings.deleteAccount.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -462,38 +451,35 @@ const SettingsPage = () => {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="h-5 w-5" />
-                Confirmación Final
+                {t('settings.deleteAccount.dialogTitle')}
               </AlertDialogTitle>
               <AlertDialogDescription className="space-y-4">
-                <p className="font-semibold">Esta es tu última oportunidad para cancelar.</p>
+                <p className="font-semibold">{t('settings.deleteAccount.warning')}</p>
                 <div className="space-y-2">
                   <Label htmlFor="delete-reason" className="text-sm font-medium">
-                    Por favor, cuéntanos por qué eliminas tu cuenta (mínimo 20 caracteres):
+                    {t('settings.deleteAccount.confirmLabel')}
                   </Label>
                   <Textarea
                     id="delete-reason"
                     value={deleteReason}
                     onChange={(e) => setDeleteReason(e.target.value)}
-                    placeholder="Ej: No uso la aplicación con frecuencia..."
+                    placeholder={t('settings.deleteAccount.confirmPlaceholder')}
                     className="min-h-[100px] resize-none"
                     maxLength={500}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {deleteReason.length}/20 caracteres mínimos
-                  </p>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setDeleteReason('')}>
-                Cancelar
+                {t('settings.deleteAccount.cancel')}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAccount}
                 disabled={loading || deleteReason.trim().length < 20}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {loading ? 'Eliminando...' : 'Eliminar mi cuenta definitivamente'}
+                {loading ? t('settings.deleteAccount.deleting') : t('settings.deleteAccount.confirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -806,7 +792,7 @@ const SettingsPage = () => {
               {/* Password Change Section */}
               <PasswordChangeSection
                 canChangePassword={canChangePassword(user)}
-                authProviderMessage={getAuthProviderMessage(user)}
+                authProviderMessage={t(getAuthProviderMessageKey(user))}
               />
             </div>
 
@@ -820,7 +806,7 @@ const SettingsPage = () => {
                 size="default"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                {loading ? 'Cerrando sesión...' : 'Cerrar sesión'}
+                {loading ? t('auth.signOut') + '...' : t('auth.signOut')}
               </Button>
             </div>
           </TabsContent>

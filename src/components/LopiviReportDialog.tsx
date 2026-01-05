@@ -11,6 +11,7 @@ import { AlertTriangle, Shield, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface LopiviReportFormData {
   reporter_name: string;
@@ -31,25 +32,28 @@ interface LopiviReportDialogProps {
   clubName: string;
 }
 
-const INCIDENT_TYPES = [
-  "Violencia física",
-  "Violencia psicológica",
-  "Acoso o bullying",
-  "Discriminación",
-  "Conducta inapropiada",
-  "Negligencia",
-  "Otro"
-];
+// Keys for incident types - values sent to database
+const INCIDENT_TYPE_KEYS = [
+  "physicalViolence",
+  "psychologicalViolence",
+  "harassment",
+  "discrimination",
+  "inappropriateConduct",
+  "negligence",
+  "other"
+] as const;
 
-const RELATIONSHIP_TYPES = [
-  "Padre/Madre",
-  "Tutor legal",
-  "Alumno/a",
-  "Testigo",
-  "Otro"
-];
+// Keys for relationship types - values sent to database
+const RELATIONSHIP_TYPE_KEYS = [
+  "parentMother",
+  "legalGuardian",
+  "student",
+  "witness",
+  "other"
+] as const;
 
 export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: LopiviReportDialogProps) => {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -99,16 +103,16 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
         throw error;
       }
 
-      toast.success('Reporte enviado', {
-        description: 'Tu reporte ha sido enviado correctamente. El delegado de protección del club será notificado.',
+      toast.success(t('settings.lopivi.reportSent'), {
+        description: t('settings.lopivi.reportSentDescription'),
       });
 
       reset();
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting LOPIVI report:', error);
-      toast.error('Error', {
-        description: 'No se pudo enviar el reporte. Por favor, inténtalo de nuevo.',
+      toast.error(t('settings.lopivi.errorSending'), {
+        description: t('settings.lopivi.errorSendingDescription'),
       });
     } finally {
       setIsSubmitting(false);
@@ -121,10 +125,10 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Shield className="h-5 w-5 text-blue-600" />
-            Reporte de Incidente LOPIVI
+            {t('settings.lopivi.title')}
           </DialogTitle>
           <DialogDescription>
-            Club: {clubName} · Toda la información será tratada de forma confidencial
+            {t('settings.lopivi.clubLabel')} {clubName} · {t('settings.lopivi.confidentialNote')}
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +139,7 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
               <div className="flex gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-800">
-                  Este formulario permite reportar incidentes relacionados con la protección de menores.
+                  {t('settings.lopivi.alertText')}
                 </p>
               </div>
             </div>
@@ -143,11 +147,11 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
             {/* Compact Form Fields */}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <Label htmlFor="reporter_name" className="text-sm">Nombre completo *</Label>
+                <Label htmlFor="reporter_name" className="text-sm">{t('settings.lopivi.reporterName')} *</Label>
                 <Input
                   id="reporter_name"
-                  {...register("reporter_name", { required: "El nombre es obligatorio" })}
-                  placeholder="Nombre y apellidos"
+                  {...register("reporter_name", { required: t('settings.lopivi.reporterNameRequired') })}
+                  placeholder={t('settings.lopivi.reporterNamePlaceholder')}
                   className="h-9"
                 />
                 {errors.reporter_name && (
@@ -156,18 +160,18 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
               </div>
 
               <div>
-                <Label htmlFor="reporter_email" className="text-sm">Email *</Label>
+                <Label htmlFor="reporter_email" className="text-sm">{t('settings.lopivi.reporterEmail')} *</Label>
                 <Input
                   id="reporter_email"
                   type="email"
                   {...register("reporter_email", {
-                    required: "El email es obligatorio",
+                    required: t('settings.lopivi.reporterEmailRequired'),
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Email inválido"
+                      message: t('settings.lopivi.reporterEmailInvalid')
                     }
                   })}
-                  placeholder="tu@email.com"
+                  placeholder={t('settings.lopivi.reporterEmailPlaceholder')}
                   className="h-9"
                 />
                 {errors.reporter_email && (
@@ -176,57 +180,57 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
               </div>
 
               <div>
-                <Label htmlFor="reporter_phone" className="text-sm">Teléfono</Label>
+                <Label htmlFor="reporter_phone" className="text-sm">{t('settings.lopivi.reporterPhone')}</Label>
                 <Input
                   id="reporter_phone"
                   {...register("reporter_phone")}
-                  placeholder="+34 666 123 456"
+                  placeholder={t('settings.lopivi.reporterPhonePlaceholder')}
                   className="h-9"
                 />
               </div>
 
               <div>
-                <Label htmlFor="reporter_relationship" className="text-sm">Tu relación *</Label>
+                <Label htmlFor="reporter_relationship" className="text-sm">{t('settings.lopivi.relationship')} *</Label>
                 <Select
                   onValueChange={(value) => setValue("reporter_relationship", value)}
                   value={watch("reporter_relationship")}
                 >
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecciona" />
+                    <SelectValue placeholder={t('settings.lopivi.relationshipPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {RELATIONSHIP_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    {RELATIONSHIP_TYPE_KEYS.map((key) => (
+                      <SelectItem key={key} value={key}>{t(`settings.lopivi.relationshipTypes.${key}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {!watch("reporter_relationship") && (
-                  <p className="text-xs text-destructive mt-1">Requerido</p>
+                  <p className="text-xs text-destructive mt-1">{t('settings.lopivi.relationshipRequired')}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="incident_type" className="text-sm">Tipo de incidente *</Label>
+                <Label htmlFor="incident_type" className="text-sm">{t('settings.lopivi.incidentType')} *</Label>
                 <Select
                   onValueChange={(value) => setValue("incident_type", value)}
                   value={watch("incident_type")}
                 >
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecciona" />
+                    <SelectValue placeholder={t('settings.lopivi.incidentTypePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {INCIDENT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    {INCIDENT_TYPE_KEYS.map((key) => (
+                      <SelectItem key={key} value={key}>{t(`settings.lopivi.incidentTypes.${key}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {!watch("incident_type") && (
-                  <p className="text-xs text-destructive mt-1">Requerido</p>
+                  <p className="text-xs text-destructive mt-1">{t('settings.lopivi.incidentTypeRequired')}</p>
                 )}
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="incident_date" className="text-sm">Fecha del incidente</Label>
+                <Label htmlFor="incident_date" className="text-sm">{t('settings.lopivi.incidentDate')}</Label>
                 <Input
                   id="incident_date"
                   type="date"
@@ -236,14 +240,14 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="incident_description" className="text-sm">Descripción del incidente * (mín. 20 caracteres)</Label>
+                <Label htmlFor="incident_description" className="text-sm">{t('settings.lopivi.incidentDescription')} * ({t('settings.lopivi.incidentDescriptionMin')})</Label>
                 <Textarea
                   id="incident_description"
                   {...register("incident_description", {
-                    required: "La descripción es obligatoria",
-                    minLength: { value: 20, message: "Mínimo 20 caracteres" }
+                    required: t('settings.lopivi.incidentDescriptionRequired'),
+                    minLength: { value: 20, message: t('settings.lopivi.incidentDescriptionMinLength') }
                   })}
-                  placeholder="Describe qué ocurrió, cuándo, dónde..."
+                  placeholder={t('settings.lopivi.incidentDescriptionPlaceholder')}
                   rows={4}
                   className="resize-none"
                 />
@@ -256,22 +260,22 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="people_involved" className="text-sm">Personas involucradas</Label>
+                <Label htmlFor="people_involved" className="text-sm">{t('settings.lopivi.peopleInvolved')}</Label>
                 <Textarea
                   id="people_involved"
                   {...register("people_involved")}
-                  placeholder="Nombres (opcional)"
+                  placeholder={t('settings.lopivi.peopleInvolvedPlaceholder')}
                   rows={2}
                   className="resize-none"
                 />
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="witnesses" className="text-sm">Testigos</Label>
+                <Label htmlFor="witnesses" className="text-sm">{t('settings.lopivi.witnesses')}</Label>
                 <Textarea
                   id="witnesses"
                   {...register("witnesses")}
-                  placeholder="Nombres de testigos (opcional)"
+                  placeholder={t('settings.lopivi.witnessesPlaceholder')}
                   rows={2}
                   className="resize-none"
                 />
@@ -286,7 +290,7 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
-                Cancelar
+                {t('settings.lopivi.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -296,12 +300,12 @@ export const LopiviReportDialog = ({ open, onOpenChange, clubId, clubName }: Lop
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Enviando...
+                    {t('settings.lopivi.sending')}
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Enviar Reporte
+                    {t('settings.lopivi.sendReport')}
                   </>
                 )}
               </Button>

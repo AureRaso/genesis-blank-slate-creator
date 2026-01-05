@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface PasswordChangeSectionProps {
   canChangePassword: boolean;
@@ -14,6 +15,7 @@ interface PasswordChangeSectionProps {
 }
 
 export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }: PasswordChangeSectionProps) => {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,17 +29,17 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
 
     // Validations
     if (!newPassword || !confirmPassword) {
-      toast.error('Todos los campos son obligatorios');
+      toast.error(t('settings.passwordChange.errorFieldsRequired'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error('Las contraseñas nuevas no coinciden');
+      toast.error(t('settings.passwordChange.errorPasswordsMatch'));
       return;
     }
 
     if (newPassword.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres');
+      toast.error(t('settings.passwordChange.errorMinLength'));
       return;
     }
 
@@ -49,7 +51,7 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
 
       if (error) throw error;
 
-      toast.success('Contraseña actualizada correctamente');
+      toast.success(t('settings.passwordChange.passwordUpdated'));
 
       // Clear form
       setCurrentPassword('');
@@ -57,7 +59,7 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
       setConfirmPassword('');
     } catch (error: any) {
       console.error('Error updating password:', error);
-      toast.error(error.message || 'Error al actualizar la contraseña');
+      toast.error(error.message || t('settings.passwordChange.errorUpdating'));
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +71,7 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user?.email) {
-        toast.error('No se encontró el email del usuario');
+        toast.error(t('common.error'));
         return;
       }
 
@@ -79,10 +81,10 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
 
       if (error) throw error;
 
-      toast.success('Se ha enviado un correo con las instrucciones para restablecer tu contraseña');
+      toast.success(t('settings.passwordChange.passwordUpdated'));
     } catch (error: any) {
       console.error('Error requesting password reset:', error);
-      toast.error('Error al solicitar el restablecimiento de contraseña');
+      toast.error(t('settings.passwordChange.errorUpdating'));
     } finally {
       setIsLoading(false);
     }
@@ -94,10 +96,10 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Seguridad de la Cuenta
+            {t('settings.passwordChange.title')}
           </CardTitle>
           <CardDescription>
-            Gestión de contraseña
+            {t('settings.passwordChange.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -106,9 +108,7 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
             <AlertDescription className="ml-2">
               <p className="font-medium mb-2">{authProviderMessage}</p>
               <p className="text-sm text-muted-foreground">
-                Como has iniciado sesión con Google, tu contraseña es gestionada por Google.
-                No puedes cambiarla desde aquí. Para cambiar tu contraseña de Google,
-                visita tu cuenta de Google.
+                {t('settings.passwordChange.googleMessage')}
               </p>
             </AlertDescription>
           </Alert>
@@ -122,10 +122,10 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lock className="h-5 w-5" />
-          Cambiar Contraseña
+          {t('settings.passwordChange.titleChange')}
         </CardTitle>
         <CardDescription>
-          {authProviderMessage}. Puedes cambiar tu contraseña aquí.
+          {authProviderMessage}. {t('settings.passwordChange.descriptionChange')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -134,21 +134,21 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
             <CheckCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="ml-2 text-blue-800">
               <p className="text-sm">
-                Tu contraseña debe tener al menos 6 caracteres.
+                {t('settings.passwordChange.requirements')}
               </p>
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password" className="text-xs sm:text-sm">Nueva Contraseña</Label>
+              <Label htmlFor="new-password" className="text-xs sm:text-sm">{t('settings.passwordChange.newPassword')}</Label>
               <div className="relative max-w-md">
                 <Input
                   id="new-password"
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Introduce tu nueva contraseña"
+                  placeholder={t('settings.passwordChange.newPasswordPlaceholder')}
                   className="pr-10 text-sm h-9 sm:h-10"
                   required
                 />
@@ -163,14 +163,14 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password" className="text-xs sm:text-sm">Confirmar Nueva Contraseña</Label>
+              <Label htmlFor="confirm-password" className="text-xs sm:text-sm">{t('settings.passwordChange.confirmPassword')}</Label>
               <div className="relative max-w-md">
                 <Input
                   id="confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirma tu nueva contraseña"
+                  placeholder={t('settings.passwordChange.confirmPasswordPlaceholder')}
                   className="pr-10 text-sm h-9 sm:h-10"
                   required
                 />
@@ -192,7 +192,7 @@ export const PasswordChangeSection = ({ canChangePassword, authProviderMessage }
               className="w-auto"
               size="sm"
             >
-              {isLoading ? 'Actualizando...' : 'Cambiar Contraseña'}
+              {isLoading ? t('settings.passwordChange.updating') : t('settings.passwordChange.changePassword')}
             </Button>
           </div>
         </form>
