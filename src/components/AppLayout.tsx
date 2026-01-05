@@ -16,9 +16,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, Wallet } from "lucide-react";
+import { LogOut, Settings, Wallet, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
+
+const LANGUAGES = [
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -33,6 +44,10 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const isAdmin = authContext?.isAdmin || false;
   const isSuperAdmin = authContext?.isSuperAdmin || false;
   const { profile, signOut } = useAuth();
+  const { t } = useTranslation();
+  const { language, changeLanguage } = useLanguage();
+
+  const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
 
   const getBreadcrumbInfo = () => {
     const path = location.pathname;
@@ -121,12 +136,39 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Configuración</span>
+                    <span>{t('userMenu.settings')}</span>
                   </Link>
                 </DropdownMenuItem>
+                {(isPlayer || isGuardian) && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Globe className="mr-2 h-4 w-4" />
+                      <span className="flex items-center gap-2">
+                        {t('userMenu.language')}
+                        <span className="text-base">{currentLang.flag}</span>
+                      </span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {LANGUAGES.map((lang) => (
+                        <DropdownMenuItem
+                          key={lang.code}
+                          onClick={() => changeLanguage(lang.code)}
+                          className={language === lang.code ? 'bg-accent' : ''}
+                        >
+                          <span className="text-base mr-2">{lang.flag}</span>
+                          <span>{lang.name}</span>
+                          {language === lang.code && (
+                            <span className="ml-auto text-muted-foreground">✓</span>
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar sesión</span>
+                  <span>{t('userMenu.signOut')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
