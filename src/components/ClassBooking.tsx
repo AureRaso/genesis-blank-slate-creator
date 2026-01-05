@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAvailableProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useCreateEnrollmentRequest, useMyEnrollmentRequests } from "@/hooks/useEnrollmentRequests";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const ClassBooking = () => {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
@@ -18,6 +19,7 @@ const ClassBooking = () => {
   const { data: myRequests, isLoading: requestsLoading } = useMyEnrollmentRequests();
   const createRequest = useCreateEnrollmentRequest();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Función para obtener el estado de la solicitud para una clase
   const getRequestStatus = (classId: string) => {
@@ -43,12 +45,12 @@ const ClassBooking = () => {
       return classItem.custom_level;
     }
     if (classItem.level_from && classItem.level_to) {
-      return `Nivel ${classItem.level_from} - ${classItem.level_to}`;
+      return `${t('playerDashboard.classBooking.level')} ${classItem.level_from} - ${classItem.level_to}`;
     }
     if (classItem.level_from) {
-      return `Nivel ${classItem.level_from}`;
+      return `${t('playerDashboard.classBooking.level')} ${classItem.level_from}`;
     }
-    return 'Todos los niveles';
+    return t('playerDashboard.classBooking.allLevels');
   };
 
   const getAvailableSpots = (classItem: any) => {
@@ -87,10 +89,10 @@ const ClassBooking = () => {
         <CardContent className="flex flex-col items-center justify-center py-8">
           <Calendar className="h-12 w-12 text-playtomic-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-playtomic-gray-900 mb-2">
-            No hay clases disponibles
+            {t('playerDashboard.classBooking.noClassesAvailable')}
           </h3>
           <p className="text-playtomic-gray-600 text-center">
-            En este momento no hay clases abiertas para inscripción. Vuelve a comprobar más tarde.
+            {t('playerDashboard.classBooking.noClassesDescription')}
           </p>
         </CardContent>
       </Card>
@@ -137,7 +139,7 @@ const ClassBooking = () => {
 
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-playtomic-orange" />
-                    <span className="text-sm font-medium">Entrenador: {classItem.trainer?.full_name || 'No asignado'}</span>
+                    <span className="text-sm font-medium">{t('playerDashboard.classBooking.trainer')}: {classItem.trainer?.full_name || t('playerDashboard.classBooking.notAssigned')}</span>
                   </div>
 
                   {classItem.monthly_price && (
@@ -152,7 +154,7 @@ const ClassBooking = () => {
                   <div className="flex items-center space-x-2">
                     <UserPlus className="h-4 w-4 text-playtomic-gray-500" />
                     <span className="text-playtomic-green font-medium">
-                      {availableSpots > 0 ? `${availableSpots} plazas libres` : 'Completa'}
+                      {availableSpots > 0 ? t('playerDashboard.classBooking.spotsAvailable', { count: availableSpots }) : t('playerDashboard.classBooking.full')}
                     </span>
                   </div>
                 </div>
@@ -168,26 +170,26 @@ const ClassBooking = () => {
                       {requestStatus.status === 'pending' && (
                         <>
                           <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-                          <span className="text-sm font-medium text-blue-700">Solicitud pendiente</span>
+                          <span className="text-sm font-medium text-blue-700">{t('playerDashboard.classBooking.requestPending')}</span>
                         </>
                       )}
                       {requestStatus.status === 'accepted' && (
                         <>
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-700">Solicitud aceptada</span>
+                          <span className="text-sm font-medium text-green-700">{t('playerDashboard.classBooking.requestAccepted')}</span>
                         </>
                       )}
                       {requestStatus.status === 'rejected' && (
                         <>
                           <XCircle className="h-4 w-4 text-red-600" />
-                          <span className="text-sm font-medium text-red-700">Solicitud rechazada</span>
+                          <span className="text-sm font-medium text-red-700">{t('playerDashboard.classBooking.requestRejected')}</span>
                         </>
                       )}
                     </div>
                     <p className="text-xs text-gray-600 mt-1">
-                      {requestStatus.status === 'pending' && 'El entrenador revisará tu solicitud pronto'}
-                      {requestStatus.status === 'accepted' && 'Ya estás inscrito en esta clase'}
-                      {requestStatus.status === 'rejected' && (requestStatus.rejection_reason || 'El entrenador ha rechazado tu solicitud')}
+                      {requestStatus.status === 'pending' && t('playerDashboard.classBooking.trainerWillReview')}
+                      {requestStatus.status === 'accepted' && t('playerDashboard.classBooking.alreadyEnrolled')}
+                      {requestStatus.status === 'rejected' && (requestStatus.rejection_reason || t('playerDashboard.classBooking.rejectedByTrainer'))}
                     </p>
                   </div>
                 )}
@@ -199,33 +201,33 @@ const ClassBooking = () => {
                       onClick={() => setSelectedClass(classItem.id)}
                       disabled={availableSpots <= 0 || (requestStatus?.status === 'pending' || requestStatus?.status === 'accepted')}
                     >
-                      {requestStatus?.status === 'pending' ? 'Solicitud Pendiente' :
-                       requestStatus?.status === 'accepted' ? 'Ya Inscrito' :
-                       availableSpots > 0 ? 'Solicitar Inscripción' : 'Sin plazas'}
+                      {requestStatus?.status === 'pending' ? t('playerDashboard.classBooking.pendingButton') :
+                       requestStatus?.status === 'accepted' ? t('playerDashboard.classBooking.enrolledButton') :
+                       availableSpots > 0 ? t('playerDashboard.classBooking.requestEnrollment') : t('playerDashboard.classBooking.noSpots')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Solicitar Inscripción</AlertDialogTitle>
+                      <AlertDialogTitle>{t('playerDashboard.classBooking.requestEnrollmentTitle')}</AlertDialogTitle>
                        <AlertDialogDescription asChild>
                          <div className="space-y-3">
-                           <p>¿Deseas solicitar la inscripción en esta clase? El entrenador revisará tu solicitud y te confirmará.</p>
+                           <p>{t('playerDashboard.classBooking.requestEnrollmentDescription')}</p>
                            <div className="bg-playtomic-gray-50 p-3 rounded-lg space-y-2">
-                             <p><strong>Clase:</strong> {classItem.name}</p>
-                             <p><strong>Nivel:</strong> {levelDisplay}</p>
-                             <p><strong>Club:</strong> {classItem.clubs?.name}</p>
-                             <p><strong>Días:</strong> {formatDaysOfWeek(classItem.days_of_week)}</p>
-                             <p><strong>Horario:</strong> {classItem.start_time}</p>
-                             <p><strong>Entrenador:</strong> {classItem.trainer?.full_name || 'No asignado'}</p>
+                             <p><strong>{t('playerDashboard.classBooking.class')}:</strong> {classItem.name}</p>
+                             <p><strong>{t('playerDashboard.classBooking.level')}:</strong> {levelDisplay}</p>
+                             <p><strong>{t('playerDashboard.classBooking.club')}:</strong> {classItem.clubs?.name}</p>
+                             <p><strong>{t('playerDashboard.classBooking.days')}:</strong> {formatDaysOfWeek(classItem.days_of_week)}</p>
+                             <p><strong>{t('playerDashboard.classBooking.schedule')}:</strong> {classItem.start_time}</p>
+                             <p><strong>{t('playerDashboard.classBooking.trainer')}:</strong> {classItem.trainer?.full_name || t('playerDashboard.classBooking.notAssigned')}</p>
                              {classItem.monthly_price && (
-                               <p><strong>Precio:</strong> {classItem.monthly_price}€/mes</p>
+                               <p><strong>{t('playerDashboard.classBooking.price')}:</strong> {classItem.monthly_price}€/mes</p>
                              )}
                            </div>
                            <div className="space-y-2">
-                             <Label htmlFor="notes">Información adicional (opcional)</Label>
+                             <Label htmlFor="notes">{t('playerDashboard.classBooking.additionalInfo')}</Label>
                              <Textarea
                                id="notes"
-                               placeholder="Ej: Nivel de experiencia, objetivos, disponibilidad..."
+                               placeholder={t('playerDashboard.classBooking.additionalInfoPlaceholder')}
                                value={notes}
                                onChange={(e) => setNotes(e.target.value)}
                                rows={3}
@@ -236,14 +238,14 @@ const ClassBooking = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel onClick={() => setNotes("")}>
-                        Cancelar
+                        {t('playerDashboard.classBooking.cancel')}
                       </AlertDialogCancel>
                        <AlertDialogAction
                          onClick={() => handleEnrollment(classItem.id)}
                          className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark hover:from-playtomic-orange-dark hover:to-playtomic-orange"
                          disabled={createRequest.isPending}
                        >
-                         {createRequest.isPending ? "Enviando..." : "Solicitar Inscripción"}
+                         {createRequest.isPending ? t('playerDashboard.classBooking.sending') : t('playerDashboard.classBooking.requestEnrollment')}
                        </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -13,8 +13,9 @@ import { AttendanceToggle } from "./AttendanceToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, enUS, it } from "date-fns/locale";
 import { ClassWaitlist } from "@/types/waitlist";
+import { useTranslation } from "react-i18next";
 
 interface TodayClassesConfirmationProps {
   selectedChildId?: string;
@@ -24,6 +25,16 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const { isGuardian } = useAuth();
   const { data: allClasses = [], isLoading } = useTodayClassAttendance();
   const { data: waitlistRequests = [], isLoading: loadingWaitlist } = useMyWaitlistRequests();
+  const { t, i18n } = useTranslation();
+
+  // Get locale for date-fns based on current language
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'en': return enUS;
+      case 'it': return it;
+      default: return es;
+    }
+  };
 
 
   // Filter classes based on selected child
@@ -92,7 +103,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    const formatted = date.toLocaleDateString('es-ES', {
+    const localeCode = i18n.language === 'en' ? 'en-US' : i18n.language === 'it' ? 'it-IT' : 'es-ES';
+    const formatted = date.toLocaleDateString(localeCode, {
       weekday: 'long',
       day: 'numeric',
       month: 'long'
@@ -172,7 +184,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
               <Calendar className="h-6 w-6 text-white" />
             </div>
-            Próximas clases
+            {t('playerDashboard.upcomingClasses')}
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,7 +207,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   // Helper functions for waitlist section
   const formatWaitlistDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    return format(date, "EEEE, d 'de' MMMM", { locale: es });
+    const formatString = i18n.language === 'es' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d";
+    return format(date, formatString, { locale: getDateLocale() });
   };
 
   const getStatusBadge = (status: string) => {
@@ -204,21 +217,21 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
         return (
           <Badge className="bg-amber-100 text-amber-800 border-amber-300">
             <Clock className="h-3 w-3 mr-1" />
-            Pendiente
+            {t('playerDashboard.waitlistPending')}
           </Badge>
         );
       case 'accepted':
         return (
           <Badge className="bg-green-100 text-green-800 border-green-300">
             <CheckCircle2 className="h-3 w-3 mr-1" />
-            Aceptado
+            {t('playerDashboard.waitlistAccepted')}
           </Badge>
         );
       case 'rejected':
         return (
           <Badge className="bg-red-100 text-red-800 border-red-300">
             <XCircle className="h-3 w-3 mr-1" />
-            Rechazado
+            {t('playerDashboard.waitlistRejected')}
           </Badge>
         );
       default:
@@ -236,7 +249,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
           <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
             <Bell className="h-5 w-5 text-white" />
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-800">Solicitudes de Lista de Espera</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-slate-800">{t('playerDashboard.waitlistRequests')}</h3>
         </div>
 
         <div className="space-y-2">
@@ -294,7 +307,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     <div className="mt-3 pt-3 border-t border-amber-200">
                       <p className="text-xs text-amber-800">
                         <AlertCircle className="h-3.5 w-3.5 inline mr-1" />
-                        Tu solicitud está siendo revisada por el profesor
+                        {t('playerDashboard.waitlistBeingReviewed')}
                       </p>
                     </div>
                   )}
@@ -302,7 +315,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     <div className="mt-3 pt-3 border-t border-green-200">
                       <p className="text-xs text-green-800 font-medium">
                         <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />
-                        Has sido aceptado en esta clase
+                        {t('playerDashboard.waitlistAcceptedInClass')}
                       </p>
                     </div>
                   )}
@@ -310,7 +323,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     <div className="mt-3 pt-3 border-t border-red-200">
                       <p className="text-xs text-red-800">
                         <XCircle className="h-3.5 w-3.5 inline mr-1" />
-                        Lo sentimos, no hay plazas disponibles en esta clase
+                        {t('playerDashboard.waitlistNoSpots')}
                       </p>
                     </div>
                   )}
@@ -334,7 +347,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
               <Calendar className="h-6 w-6 text-white" />
             </div>
-            Mis clases
+            {t('playerDashboard.myClassesTitle')}
           </h2>
         </div>
         <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl text-center">
@@ -342,12 +355,12 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="h-8 w-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">Sin clases programadas</h3>
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">{t('playerDashboard.noScheduledClasses')}</h3>
             <p className="text-slate-500 text-sm">
-              No tienes clases en los próximos 10 días
+              {t('playerDashboard.noClassesNext10Days')}
             </p>
             <p className="text-slate-400 text-xs mt-2">
-              ¡Disfruta tu tiempo libre! 🎉
+              {t('playerDashboard.enjoyFreeTime')}
             </p>
           </CardContent>
         </Card>
@@ -366,7 +379,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
       {/* Header - Responsive: stacked on mobile, inline on desktop */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
         <div className="flex-1">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Próximas clases</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{t('playerDashboard.upcomingClasses')}</h2>
         </div>
 
         {/* Reminder Banner - Full width on mobile, 50% on desktop */}
@@ -378,10 +391,10 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-green-800">
-                  Estás confirmado automáticamente
+                  {t('playerDashboard.autoConfirmed')}
                 </p>
                 <p className="text-xs text-green-600 mt-0.5 sm:mt-1 line-clamp-2">
-                  Si no puedes asistir, usa el interruptor para liberar tu plaza.
+                  {t('playerDashboard.releaseSpotHint')}
                 </p>
               </div>
             </div>
@@ -441,7 +454,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     </h3>
                     {isCancelled && (
                       <Badge variant="destructive" className="text-xs">
-                        CANCELADA
+                        {t('playerDashboard.cancelled')}
                       </Badge>
                     )}
                   </div>
@@ -452,7 +465,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                       <User className="h-3 w-3 text-primary" />
                     </div>
                     <span className="text-xs font-medium truncate">
-                      {classItem.programmed_class.trainer?.full_name || 'Entrenador no asignado'}
+                      {classItem.programmed_class.trainer?.full_name || t('playerDashboard.noTrainerAssigned')}
                       {classItem.programmed_class.trainer_2?.full_name && `, ${classItem.programmed_class.trainer_2.full_name}`}
                     </span>
                   </div>
@@ -464,7 +477,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                     <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg border border-gray-200">
                       <AlertCircle className="h-3.5 w-3.5 text-gray-600" />
                       <span className="text-xs text-gray-700 font-medium">
-                        Esta clase ha sido cancelada por el club
+                        {t('playerDashboard.classCancelledByClub')}
                       </span>
                     </div>
                   ) : (
@@ -481,7 +494,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                         <div className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
                           <div className="flex items-center gap-1.5 text-red-800 font-medium text-xs">
                             <AlertCircle className="h-3.5 w-3.5" />
-                            <span>Motivo (opcional)</span>
+                            <span>{t('playerDashboard.absenceReason')}</span>
                           </div>
 
                           {/* Selector de motivo */}
@@ -490,21 +503,21 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                             onValueChange={(value) => setSelectedReasonType(prev => ({ ...prev, [`${classItem.id}-${scheduledDate}`]: value }))}
                           >
                             <SelectTrigger className="w-full bg-white h-9 text-xs">
-                              <SelectValue placeholder="Selecciona un motivo..." />
+                              <SelectValue placeholder={t('playerDashboard.selectReason')} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="lesion">🤕 Lesión</SelectItem>
-                              <SelectItem value="trabajo">💼 Trabajo</SelectItem>
-                              <SelectItem value="enfermedad">🏥 Enfermedad</SelectItem>
-                              <SelectItem value="familiar">👨‍👩‍👧 Motivos familiares</SelectItem>
-                              <SelectItem value="otro">✏️ Otro motivo...</SelectItem>
+                              <SelectItem value="lesion">{t('playerDashboard.reasonInjury')}</SelectItem>
+                              <SelectItem value="trabajo">{t('playerDashboard.reasonWork')}</SelectItem>
+                              <SelectItem value="enfermedad">{t('playerDashboard.reasonSickness')}</SelectItem>
+                              <SelectItem value="familiar">{t('playerDashboard.reasonFamily')}</SelectItem>
+                              <SelectItem value="otro">{t('playerDashboard.reasonOther')}</SelectItem>
                             </SelectContent>
                           </Select>
 
                           {/* Campo de texto personalizado */}
                           {selectedReasonType[`${classItem.id}-${scheduledDate}`] === 'otro' && (
                             <Textarea
-                              placeholder="Describe tu motivo..."
+                              placeholder={t('playerDashboard.describeReason')}
                               value={absenceReasons[`${classItem.id}-${scheduledDate}`] || ''}
                               onChange={(e) => setAbsenceReasons(prev => ({ ...prev, [`${classItem.id}-${scheduledDate}`]: e.target.value }))}
                               className="w-full min-h-[60px] bg-white text-xs"
@@ -519,7 +532,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                             className="w-full bg-red-500 hover:bg-red-600 text-white h-8 text-xs"
                           >
                             <Save className="h-3.5 w-3.5 mr-1.5" />
-                            {confirmAbsence.isPending ? 'Guardando...' : 'Guardar ausencia'}
+                            {confirmAbsence.isPending ? t('playerDashboard.saving') : t('playerDashboard.saveAbsence')}
                           </Button>
                         </div>
                       )}
@@ -528,7 +541,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                       {isAbsent && classItem.absence_reason && (
                         <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
                           <p className="text-xs text-red-800">
-                            <strong>Motivo:</strong> {classItem.absence_reason}
+                            <strong>{t('playerDashboard.reasonLabel')}</strong> {classItem.absence_reason}
                           </p>
                         </div>
                       )}
@@ -538,7 +551,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                         <div className="flex items-start gap-1.5 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                           <AlertCircle className="h-3.5 w-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-amber-800">
-                            Tu ausencia ha sido registrada. Tu plaza está disponible.
+                            {t('playerDashboard.absenceRegistered')}
                           </p>
                         </div>
                       )}

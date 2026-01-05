@@ -14,10 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 const PlayerDashboard = () => {
   const { profile, isGuardian, retryAuth } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
@@ -135,11 +137,11 @@ const PlayerDashboard = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'active':
-        return 'Activa';
+        return t('playerDashboard.status.active');
       case 'upcoming':
-        return 'Próximamente';
+        return t('playerDashboard.status.upcoming');
       case 'completed':
-        return 'Finalizada';
+        return t('playerDashboard.status.completed');
       default:
         return status;
     }
@@ -183,10 +185,10 @@ const PlayerDashboard = () => {
         {/* Título y subtítulo */}
         <div className="space-y-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            ¡Hola, {profile?.full_name?.split(' ')[0]}!
+            {t('playerDashboard.greeting', { name: profile?.full_name?.split(' ')[0] })}
           </h1>
           <p className="text-sm sm:text-base text-gray-500">
-            Bienvenido a tu panel de control
+            {t('playerDashboard.welcome')}
           </p>
         </div>
 
@@ -195,17 +197,17 @@ const PlayerDashboard = () => {
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="flex items-center gap-2 text-gray-700">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">Ver clases de:</span>
+              <span className="font-medium text-xs sm:text-sm whitespace-nowrap">{t('playerDashboard.viewClassesOf')}</span>
             </div>
             <Select value={selectedChildId} onValueChange={setSelectedChildId}>
               <SelectTrigger className="w-full sm:w-[200px] lg:w-[240px]">
-                <SelectValue placeholder="Selecciona un hijo" />
+                <SelectValue placeholder={t('playerDashboard.selectChild')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    <span>Todos mis perfiles</span>
+                    <span>{t('playerDashboard.allProfiles')}</span>
                   </div>
                 </SelectItem>
                 {children.map((child) => (

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface AttendanceToggleProps {
   isAttending: boolean;
@@ -8,6 +9,8 @@ interface AttendanceToggleProps {
 }
 
 export const AttendanceToggle = ({ isAttending, onChange, disabled = false }: AttendanceToggleProps) => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-between gap-3 w-full">
       {/* Status message - ahora a la izquierda */}
@@ -17,18 +20,18 @@ export const AttendanceToggle = ({ isAttending, onChange, disabled = false }: At
         {isAttending ? (
           <>
             <Check className="h-3.5 w-3.5" />
-            <span>Confirmada</span>
+            <span>{t('playerDashboard.attendance.confirmed')}</span>
           </>
         ) : (
           <>
             <X className="h-3.5 w-3.5" />
-            <span>No asistiré</span>
+            <span>{t('playerDashboard.attendance.notAttending')}</span>
           </>
         )}
       </div>
 
-      {/* Toggle Container - más compacto */}
-      <div className="relative w-48">
+      {/* Toggle Container - ancho aumentado para textos largos en otros idiomas */}
+      <div className="relative w-52">
         {/* Background track */}
         <div
           className={`relative h-10 rounded-full cursor-pointer transition-colors duration-300 ${
@@ -38,14 +41,14 @@ export const AttendanceToggle = ({ isAttending, onChange, disabled = false }: At
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={() => !disabled && onChange(!isAttending)}
         >
-          {/* Labels */}
-          <div className="absolute inset-0 flex items-center justify-between px-4 text-white font-semibold text-xs pointer-events-none">
+          {/* Labels - texto más pequeño para acomodar traducciones más largas */}
+          <div className="absolute inset-0 flex items-center justify-between px-3 text-white font-semibold text-[11px] pointer-events-none">
             <div className={`flex items-center gap-1 transition-opacity ${isAttending ? 'opacity-100' : 'opacity-40'}`}>
               <Check className="h-3.5 w-3.5" />
-              <span>VOY</span>
+              <span>{t('playerDashboard.attendance.going')}</span>
             </div>
             <div className={`flex items-center gap-1 transition-opacity ${!isAttending ? 'opacity-100' : 'opacity-40'}`}>
-              <span>NO VOY</span>
+              <span>{t('playerDashboard.attendance.notGoing')}</span>
               <X className="h-3.5 w-3.5" />
             </div>
           </div>

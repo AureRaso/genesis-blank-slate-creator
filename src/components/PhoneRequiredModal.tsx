@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertCircle, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 // Lista de países con sus prefijos
 const COUNTRIES = [
@@ -69,6 +70,7 @@ export const PhoneRequiredModal = ({
   const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [phoneWasUpdated, setPhoneWasUpdated] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Get selected country
   const selectedCountry = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0];
@@ -128,16 +130,16 @@ export const PhoneRequiredModal = ({
 
     if (!validatePhone(phone, selectedCountry)) {
 
-      let errorMessage = `Por favor, introduce un número válido para ${selectedCountry.name}`;
+      let errorMessage = `${t('playerDashboard.phoneModal.invalidNumberFor')} ${selectedCountry.name}`;
 
       if (selectedCountry.code === "ES") {
-        errorMessage = "Por favor, introduce un número de teléfono español válido (9 dígitos empezando por 6 o 7)";
+        errorMessage = t('playerDashboard.phoneModal.invalidSpanishNumber');
       } else {
-        errorMessage += ` (${selectedCountry.minDigits}${selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''} dígitos)`;
+        errorMessage += ` (${selectedCountry.minDigits}${selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''} ${t('playerDashboard.phoneModal.digits')})`;
       }
 
       toast({
-        title: "Número inválido",
+        title: t('playerDashboard.phoneModal.invalidNumber'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -146,8 +148,8 @@ export const PhoneRequiredModal = ({
 
     if (!whatsappConsent) {
       toast({
-        title: "Consentimiento requerido",
-        description: "Debes aceptar recibir comunicaciones por WhatsApp para continuar",
+        title: t('playerDashboard.phoneModal.consentRequired'),
+        description: t('playerDashboard.phoneModal.mustAcceptWhatsapp'),
         variant: "destructive",
       });
       return;
@@ -191,8 +193,8 @@ export const PhoneRequiredModal = ({
       }
 
       toast({
-        title: "¡Teléfono guardado!",
-        description: "Ahora recibirás recordatorios de tus clases por WhatsApp",
+        title: t('playerDashboard.phoneModal.phoneSaved'),
+        description: t('playerDashboard.phoneModal.phoneRemindersEnabled'),
       });
 
       // Set local state to close modal immediately
@@ -203,8 +205,8 @@ export const PhoneRequiredModal = ({
     } catch (error) {
       console.error('Error updating phone:', error);
       toast({
-        title: "Error",
-        description: "No se pudo guardar el teléfono. Inténtalo de nuevo.",
+        title: t('playerDashboard.phoneModal.error'),
+        description: t('playerDashboard.phoneModal.couldNotSave'),
         variant: "destructive",
       });
     } finally {
@@ -228,7 +230,7 @@ export const PhoneRequiredModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-6 w-6 text-amber-500" />
-            Completa tu perfil
+            {t('playerDashboard.phoneModal.completeProfile')}
           </DialogTitle>
         </DialogHeader>
 
@@ -237,10 +239,10 @@ export const PhoneRequiredModal = ({
             <Phone className="h-5 w-5 text-amber-600 mt-0.5" />
             <div className="flex-1 text-sm">
               <p className="font-medium text-amber-900 mb-1">
-                Necesitamos tu número de teléfono
+                {t('playerDashboard.phoneModal.needPhoneNumber')}
               </p>
               <p className="text-amber-700">
-                Para enviarte recordatorios de tus clases por WhatsApp y mantenerte informado.
+                {t('playerDashboard.phoneModal.phoneReason')}
               </p>
             </div>
           </div>
@@ -248,7 +250,7 @@ export const PhoneRequiredModal = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="country" className="text-sm font-medium">
-                País
+                {t('playerDashboard.phoneModal.country')}
               </label>
               <Select value={countryCode} onValueChange={handleCountryChange}>
                 <SelectTrigger className="w-full">
@@ -268,7 +270,7 @@ export const PhoneRequiredModal = ({
 
             <div className="space-y-2">
               <label htmlFor="phone" className="text-sm font-medium">
-                Número de teléfono
+                {t('playerDashboard.phoneModal.phoneNumber')}
               </label>
               <div className="flex gap-2">
                 <div className="flex items-center px-3 border rounded-md bg-muted text-muted-foreground min-w-[80px] justify-center">
@@ -289,8 +291,8 @@ export const PhoneRequiredModal = ({
               </div>
               <p className="text-xs text-muted-foreground">
                 {selectedCountry.code === "ES"
-                  ? "Introduce tu número sin el prefijo +34"
-                  : `Introduce tu número sin el prefijo ${selectedCountry.prefix} (${selectedCountry.minDigits}${selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''} dígitos)`
+                  ? `${t('playerDashboard.phoneModal.enterWithoutPrefix')} +34`
+                  : `${t('playerDashboard.phoneModal.enterWithoutPrefix')} ${selectedCountry.prefix} (${selectedCountry.minDigits}${selectedCountry.minDigits !== selectedCountry.maxDigits ? `-${selectedCountry.maxDigits}` : ''} ${t('playerDashboard.phoneModal.digits')})`
                 }
               </p>
             </div>
@@ -306,7 +308,7 @@ export const PhoneRequiredModal = ({
                 htmlFor="whatsapp-consent"
                 className="text-sm leading-tight cursor-pointer select-none"
               >
-                Acepto recibir recordatorios y comunicaciones sobre mis clases por WhatsApp
+                {t('playerDashboard.phoneModal.whatsappConsent')}
               </label>
             </div>
 
@@ -315,12 +317,12 @@ export const PhoneRequiredModal = ({
               className="w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Guardando..." : "Guardar y continuar"}
+              {isSubmitting ? t('playerDashboard.phoneModal.saving') : t('playerDashboard.phoneModal.saveAndContinue')}
             </Button>
           </form>
 
           <p className="text-xs text-center text-muted-foreground">
-            No podrás usar la aplicación hasta completar este paso
+            {t('playerDashboard.phoneModal.cantUseApp')}
           </p>
         </div>
       </DialogContent>

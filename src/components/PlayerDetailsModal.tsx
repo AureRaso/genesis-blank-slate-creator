@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, Shirt, Calendar, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const VALID_SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 
@@ -26,6 +27,7 @@ export const PlayerDetailsModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detailsWereUpdated, setDetailsWereUpdated] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Validate shirt size
   const isValidShirtSize = VALID_SHIRT_SIZES.includes(shirtSize.toUpperCase());
@@ -58,8 +60,8 @@ export const PlayerDetailsModal = ({
 
     if (!validateBirthDate(birthDate)) {
       toast({
-        title: "Fecha no valida",
-        description: "Por favor, introduce una fecha de nacimiento valida (edad entre 5 y 100 anos)",
+        title: t('playerDashboard.playerDetailsModal.invalidDate'),
+        description: t('playerDashboard.playerDetailsModal.invalidDateDescription'),
         variant: "destructive",
       });
       return;
@@ -67,8 +69,8 @@ export const PlayerDetailsModal = ({
 
     if (!shirtSize || !isValidShirtSize) {
       toast({
-        title: "Talla no valida",
-        description: "Por favor, introduce una talla valida: XS, S, M, L, XL, XXL o 3XL",
+        title: t('playerDashboard.playerDetailsModal.invalidSize'),
+        description: t('playerDashboard.playerDetailsModal.invalidSizeDescription'),
         variant: "destructive",
       });
       return;
@@ -88,8 +90,8 @@ export const PlayerDetailsModal = ({
       if (error) throw error;
 
       toast({
-        title: "Datos guardados!",
-        description: "Tu fecha de nacimiento y talla han sido guardados correctamente",
+        title: t('playerDashboard.playerDetailsModal.dataSaved'),
+        description: t('playerDashboard.playerDetailsModal.dataSavedDescription'),
       });
 
       setDetailsWereUpdated(true);
@@ -97,8 +99,8 @@ export const PlayerDetailsModal = ({
     } catch (error) {
       console.error('Error updating player details:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron guardar los datos. Intentalo de nuevo.",
+        title: t('playerDashboard.playerDetailsModal.error'),
+        description: t('playerDashboard.playerDetailsModal.couldNotSave'),
         variant: "destructive",
       });
     } finally {
@@ -121,7 +123,7 @@ export const PlayerDetailsModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-6 w-6 text-amber-500" />
-            Completa tu perfil
+            {t('playerDashboard.playerDetailsModal.completeProfile')}
           </DialogTitle>
         </DialogHeader>
 
@@ -130,10 +132,10 @@ export const PlayerDetailsModal = ({
             <Shirt className="h-5 w-5 text-amber-600 mt-0.5" />
             <div className="flex-1 text-sm">
               <p className="font-medium text-amber-900 mb-1">
-                Necesitamos algunos datos adicionales
+                {t('playerDashboard.playerDetailsModal.needAdditionalData')}
               </p>
               <p className="text-amber-700">
-                Tu club requiere esta informacion para la gestion de equipaciones y organizacion de categorias.
+                {t('playerDashboard.playerDetailsModal.dataReason')}
               </p>
             </div>
           </div>
@@ -142,7 +144,7 @@ export const PlayerDetailsModal = ({
             <div className="space-y-2">
               <label htmlFor="birthDate" className="text-sm font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Fecha de nacimiento
+                {t('playerDashboard.playerDetailsModal.birthDate')}
               </label>
               <Input
                 id="birthDate"
@@ -157,13 +159,13 @@ export const PlayerDetailsModal = ({
             <div className="space-y-2">
               <label htmlFor="shirtSize" className="text-sm font-medium flex items-center gap-2">
                 <Shirt className="h-4 w-4" />
-                Talla de camiseta
+                {t('playerDashboard.playerDetailsModal.shirtSize')}
               </label>
               <div className="relative">
                 <Input
                   id="shirtSize"
                   type="text"
-                  placeholder="Ej: M, L, XL"
+                  placeholder={t('playerDashboard.playerDetailsModal.shirtSizePlaceholder')}
                   value={shirtSize}
                   onChange={handleShirtSizeChange}
                   maxLength={3}
@@ -182,7 +184,7 @@ export const PlayerDetailsModal = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Tallas validas: XS, S, M, L, XL, XXL, 3XL
+                {t('playerDashboard.playerDetailsModal.validSizes')}
               </p>
             </div>
 
@@ -191,12 +193,12 @@ export const PlayerDetailsModal = ({
               className="w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Guardando..." : "Guardar y continuar"}
+              {isSubmitting ? t('playerDashboard.playerDetailsModal.saving') : t('playerDashboard.playerDetailsModal.saveAndContinue')}
             </Button>
           </form>
 
           <p className="text-xs text-center text-muted-foreground">
-            No podras usar la aplicacion hasta completar este paso
+            {t('playerDashboard.playerDetailsModal.cantUseApp')}
           </p>
         </div>
       </DialogContent>
