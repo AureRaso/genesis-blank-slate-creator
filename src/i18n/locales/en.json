@@ -1287,6 +1287,77 @@
       "helloMessage": "Hello! I'm {{name}} and I want to activate PadeLock notifications to receive class reminders."
     }
   },
+  "authPage": {
+    "loading": {
+      "verifying": "Verifying your account...",
+      "wait": "This will only take a few seconds",
+      "preparing": "Preparing your experience..."
+    },
+    "branding": {
+      "title": "Manage your academy successfully",
+      "features": {
+        "scheduling": "Smart class scheduling",
+        "players": "Player and trainer management",
+        "tracking": "Payment and attendance tracking",
+        "notifications": "Automatic notifications"
+      }
+    },
+    "card": {
+      "title": "System Access",
+      "subtitle": "Manage your padel club efficiently"
+    },
+    "tabs": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up"
+    },
+    "signIn": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "your@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "button": "Sign In",
+      "loading": "Signing in...",
+      "forgotPassword": "Forgot your password?"
+    },
+    "signUp": {
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Your full name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "your@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Minimum 6 characters",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "button": "Create Account",
+      "loading": "Creating account..."
+    },
+    "social": {
+      "divider": "Or continue with",
+      "google": "Continue with Google"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid credentials",
+      "emailNotConfirmed": "Please confirm your email before signing in",
+      "userNotFound": "No user found with that email",
+      "wrongPassword": "Incorrect password",
+      "emailAlreadyUsed": "This email is already registered",
+      "weakPassword": "Password is too weak",
+      "networkError": "Connection error. Check your internet",
+      "passwordMismatch": "Passwords do not match",
+      "generalError": "An error occurred. Please try again"
+    },
+    "success": {
+      "accountCreated": "Account created successfully!",
+      "checkEmail": "Check your email to confirm your account",
+      "welcomeBack": "Welcome back!"
+    },
+    "footer": {
+      "termsPrefix": "By continuing, you agree to our",
+      "termsLink": "Terms of Service",
+      "privacyLink": "Privacy Policy",
+      "and": "and"
+    }
+  },
   "settings": {
     "title": "Settings",
     "description": "Manage your personal information and account settings",

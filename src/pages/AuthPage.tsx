@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { LopiviModal } from "@/components/LopiviModal";
 import { PhoneInput } from "@/components/PhoneInput";
 
 export const AuthPage = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -378,8 +380,8 @@ export const AuthPage = () => {
             <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-playtomic-orange/20 mx-auto"></div>
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Verificando tu cuenta...</h2>
-            <p className="text-slate-300 text-sm">Esto solo tomará unos segundos</p>
+            <h2 className="text-2xl font-bold text-white">{t('authPage.loading.verifying')}</h2>
+            <p className="text-slate-300 text-sm">{t('authPage.loading.wait')}</p>
 
             {/* 🧪 Indicador de modo de prueba */}
             {testMode && (
@@ -423,23 +425,20 @@ export const AuthPage = () => {
           {/* Hero text */}
           <div className="space-y-3 lg:space-y-4">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight">
-              Gestiona tu academia
-              <span className="block bg-gradient-to-r from-playtomic-orange to-orange-400 bg-clip-text text-transparent">
-                con éxito
-              </span>
+              {t('authPage.branding.title')}
             </h1>
             <p className="text-base sm:text-lg lg:text-xl text-slate-300 max-w-lg mx-auto lg:mx-0">
-              La plataforma completa para administrar tu academia, profesores y alumnos de manera profesional.
+              {t('authPage.card.subtitle')}
             </p>
           </div>
 
           {/* Features - Hidden on mobile to save space */}
           <div className="hidden lg:flex lg:flex-col space-y-4 max-w-lg">
             {[
-              "Gestión completa de alumnos y matrículas",
-              "Programación inteligente de clases",
-              "Sistema de pagos integrado con Stripe",
-              "Reportes y estadísticas en tiempo real"
+              t('authPage.branding.features.scheduling'),
+              t('authPage.branding.features.players'),
+              t('authPage.branding.features.tracking'),
+              t('authPage.branding.features.notifications')
             ].map((feature, index) => (
               <div key={index} className="flex items-start gap-3 text-slate-200">
                 <div className="mt-1 flex-shrink-0">
@@ -456,10 +455,10 @@ export const AuthPage = () => {
   <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-xl rounded-2xl overflow-y-auto border border-white/20 max-h-[90vh] lg:max-h-[85vh]">
     <CardHeader className="text-center space-y-3 pb-8 pt-12 px-8">
       <CardTitle className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-        Acceso al Sistema
+        {t('authPage.card.title')}
       </CardTitle>
       <CardDescription className="text-base text-slate-600">
-        Gestiona tu club de pádel de forma profesional
+        {t('authPage.card.subtitle')}
       </CardDescription>
     </CardHeader>
     
@@ -471,14 +470,14 @@ export const AuthPage = () => {
             className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-playtomic-orange rounded-lg transition-all duration-200 font-semibold"
           >
             <LogIn className="h-4 w-4" />
-            <span>Iniciar Sesión</span>
+            <span>{t('authPage.tabs.signIn')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="signup"
             className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-playtomic-orange rounded-lg transition-all duration-200 font-semibold"
           >
             <UserPlus className="h-4 w-4" />
-            <span>Registrarse</span>
+            <span>{t('authPage.tabs.signUp')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -489,23 +488,23 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signin-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Email
+                  {t('authPage.signIn.emailLabel')}
                 </Label>
                 <Input
                   id="signin-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
+                  placeholder={t('authPage.signIn.emailPlaceholder')}
                   className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
                   required
                 />
               </div>
-              
+
               <div className="space-y-3">
                 <Label htmlFor="signin-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Contraseña
+                  {t('authPage.signIn.passwordLabel')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -513,7 +512,7 @@ export const AuthPage = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Tu contraseña"
+                    placeholder={t('authPage.signIn.passwordPlaceholder')}
                     className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all pr-10"
                     required
                   />
@@ -535,7 +534,7 @@ export const AuthPage = () => {
                 to="/forgot-password"
                 className="text-sm text-playtomic-orange hover:text-orange-600 font-medium transition-colors"
               >
-                ¿Olvidaste tu contraseña?
+                {t('authPage.signIn.forgotPassword')}
               </Link>
             </div>
 
@@ -547,12 +546,12 @@ export const AuthPage = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Iniciando Sesión...
+                  {t('authPage.signIn.loading')}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <LogIn className="h-5 w-5" />
-                  Iniciar Sesión
+                  {t('authPage.signIn.button')}
                 </div>
               )}
             </Button>
@@ -563,7 +562,7 @@ export const AuthPage = () => {
                 <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-slate-500 font-medium">O continúa con</span>
+                <span className="px-3 bg-white text-slate-500 font-medium">{t('authPage.social.divider')}</span>
               </div>
             </div>
 
@@ -581,11 +580,8 @@ export const AuthPage = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continuar con Google
+                {t('authPage.social.google')}
               </Button>
-              <p className="text-xs text-center text-slate-500">
-                Inicia sesión o crea una cuenta automáticamente
-              </p>
             </div>
           </form>
         </TabsContent>
@@ -607,11 +603,8 @@ export const AuthPage = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continuar con Google
+                {t('authPage.social.google')}
               </Button>
-              <p className="text-xs text-center text-slate-500">
-                Registro rápido y seguro con tu cuenta de Google
-              </p>
             </div>
 
             {/* Divider */}
@@ -620,7 +613,7 @@ export const AuthPage = () => {
                 <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-slate-500 font-medium">O regístrate con email</span>
+                <span className="px-3 bg-white text-slate-500 font-medium">{t('authPage.social.divider')}</span>
               </div>
             </div>
 
@@ -650,14 +643,14 @@ export const AuthPage = () => {
             <div className="space-y-3">
               <Label htmlFor="signup-name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Nombre y Apellidos *
+                {t('authPage.signUp.nameLabel')} *
               </Label>
               <Input
                 id="signup-name"
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                placeholder="Juan Pérez García"
+                placeholder={t('authPage.signUp.namePlaceholder')}
                 className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
                 required
               />
@@ -676,14 +669,14 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Email *
+                  {t('authPage.signUp.emailLabel')} *
                 </Label>
                 <Input
                   id="signup-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
+                  placeholder={t('authPage.signUp.emailPlaceholder')}
                   className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all"
                   required
                 />
@@ -692,7 +685,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-confirm-email" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Confirmar Email *
+                  {t('authPage.signUp.confirmPasswordLabel').replace('Password', 'Email')} *
                 </Label>
                 <Input
                   id="signup-confirm-email"
@@ -704,10 +697,10 @@ export const AuthPage = () => {
                   }}
                   onBlur={() => {
                     if (confirmEmail && email && email !== confirmEmail) {
-                      setEmailError("Los emails no coinciden");
+                      setEmailError(t('authPage.errors.passwordMismatch').replace('contraseñas', 'emails').replace('passwords', 'emails').replace('password', 'email'));
                     }
                   }}
-                  placeholder="Confirma tu email"
+                  placeholder={t('authPage.signUp.emailPlaceholder')}
                   className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all ${
                     emailError
                       ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
@@ -729,7 +722,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Contraseña *
+                  {t('authPage.signUp.passwordLabel')} *
                 </Label>
                 <div className="relative">
                   <Input
@@ -737,7 +730,7 @@ export const AuthPage = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t('authPage.signUp.passwordPlaceholder')}
                     className="h-12 text-base border-slate-200 bg-white focus:border-playtomic-orange focus:ring-2 focus:ring-playtomic-orange/20 rounded-lg transition-all pr-10"
                     required
                   />
@@ -755,7 +748,7 @@ export const AuthPage = () => {
               <div className="space-y-3">
                 <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Confirmar Contraseña *
+                  {t('authPage.signUp.confirmPasswordLabel')} *
                 </Label>
                 <div className="relative">
                   <Input
@@ -768,10 +761,10 @@ export const AuthPage = () => {
                     }}
                     onBlur={() => {
                       if (confirmPassword && password && password !== confirmPassword) {
-                        setPasswordError("Las contraseñas no coinciden");
+                        setPasswordError(t('authPage.errors.passwordMismatch'));
                       }
                     }}
-                    placeholder="Repite tu contraseña"
+                    placeholder={t('authPage.signUp.confirmPasswordPlaceholder')}
                     className={`h-12 text-base bg-white focus:ring-2 rounded-lg transition-all pr-10 ${
                       passwordError
                         ? 'border-2 border-red-500 focus:border-red-500 focus:ring-red-200'
@@ -868,12 +861,12 @@ export const AuthPage = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Creando Cuenta...
+                  {t('authPage.signUp.loading')}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5" />
-                  Crear Cuenta
+                  {t('authPage.signUp.button')}
                 </div>
               )}
             </Button>

@@ -1278,6 +1278,77 @@
       "helloMessage": "Ciao! Sono {{name}} e voglio attivare le notifiche di PadeLock per ricevere promemoria delle mie lezioni."
     }
   },
+  "authPage": {
+    "loading": {
+      "verifying": "Verifica del tuo account...",
+      "wait": "Ci vorranno solo pochi secondi",
+      "preparing": "Preparazione della tua esperienza..."
+    },
+    "branding": {
+      "title": "Gestisci la tua accademia con successo",
+      "features": {
+        "scheduling": "Programmazione intelligente delle lezioni",
+        "players": "Gestione giocatori e allenatori",
+        "tracking": "Monitoraggio pagamenti e presenze",
+        "notifications": "Notifiche automatiche"
+      }
+    },
+    "card": {
+      "title": "Accesso al Sistema",
+      "subtitle": "Gestisci il tuo club di padel in modo efficiente"
+    },
+    "tabs": {
+      "signIn": "Accedi",
+      "signUp": "Registrati"
+    },
+    "signIn": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "tua@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "La tua password",
+      "button": "Accedi",
+      "loading": "Accesso in corso...",
+      "forgotPassword": "Password dimenticata?"
+    },
+    "signUp": {
+      "nameLabel": "Nome Completo",
+      "namePlaceholder": "Il tuo nome completo",
+      "emailLabel": "Email",
+      "emailPlaceholder": "tua@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Minimo 6 caratteri",
+      "confirmPasswordLabel": "Conferma Password",
+      "confirmPasswordPlaceholder": "Conferma la tua password",
+      "button": "Crea Account",
+      "loading": "Creazione account..."
+    },
+    "social": {
+      "divider": "Oppure continua con",
+      "google": "Continua con Google"
+    },
+    "errors": {
+      "invalidCredentials": "Credenziali non valide",
+      "emailNotConfirmed": "Conferma la tua email prima di accedere",
+      "userNotFound": "Nessun utente trovato con questa email",
+      "wrongPassword": "Password errata",
+      "emailAlreadyUsed": "Questa email è già registrata",
+      "weakPassword": "La password è troppo debole",
+      "networkError": "Errore di connessione. Controlla internet",
+      "passwordMismatch": "Le password non corrispondono",
+      "generalError": "Si è verificato un errore. Riprova"
+    },
+    "success": {
+      "accountCreated": "Account creato con successo!",
+      "checkEmail": "Controlla la tua email per confermare l'account",
+      "welcomeBack": "Bentornato!"
+    },
+    "footer": {
+      "termsPrefix": "Continuando, accetti i nostri",
+      "termsLink": "Termini di Servizio",
+      "privacyLink": "Politica sulla Privacy",
+      "and": "e"
+    }
+  },
   "settings": {
     "title": "Impostazioni",
     "description": "Gestisci le tue informazioni personali e le impostazioni dell'account",
