@@ -8,7 +8,7 @@ import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { useTranslation } from "react-i18next";
 
 // Número de WhatsApp de PadeLock
-const PADELOCK_WHATSAPP_NUMBER = "34644658069";
+const PADELOCK_WHATSAPP_NUMBER = "34694294381";
 
 interface WhatsAppActivationModalProps {
   userName: string;
