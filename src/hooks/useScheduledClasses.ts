@@ -286,3 +286,146 @@ export const useDeleteScheduledClass = () => {
     },
   });
 };
+
+// Hook to count classes in a series (for showing user how many will be affected)
+export const useSeriesClassCount = (classId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ["series-class-count", classId],
+    queryFn: async () => {
+      // Get the class details to identify the series
+      const { data: classData, error: fetchError } = await supabase
+        .from("programmed_classes")
+        .select('club_id, name, start_time')
+        .eq("id", classId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!classData) return 1;
+
+      // Count all classes in the series
+      const { count, error: countError } = await supabase
+        .from('programmed_classes')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', classData.club_id)
+        .eq('name', classData.name)
+        .eq('start_time', classData.start_time)
+        .eq('is_active', true);
+
+      if (countError) throw countError;
+
+      return count || 1;
+    },
+    enabled,
+  });
+};
+
+// Day index mapping for calculating date differences
+const DAY_INDEX: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miércoles: 3,
+  miercoles: 3, // without accent
+  jueves: 4,
+  viernes: 5,
+  sábado: 6,
+  sabado: 6, // without accent
+};
+
+// Calculate the difference in days between two weekdays
+export const calculateDaysDifference = (oldDay: string, newDay: string): number => {
+  const oldIndex = DAY_INDEX[oldDay.toLowerCase()] ?? 0;
+  const newIndex = DAY_INDEX[newDay.toLowerCase()] ?? 0;
+  return newIndex - oldIndex;
+};
+
+// Hook to update all classes in a series
+export const useUpdateScheduledClassSeries = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+      originalDay,
+      newDay
+    }: {
+      id: string;
+      data: Partial<CreateScheduledClassData>;
+      originalDay?: string;
+      newDay?: string;
+    }) => {
+      // Get the class details to identify the series
+      const { data: classData, error: fetchError } = await supabase
+        .from("programmed_classes")
+        .select('club_id, name, start_time')
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!classData) throw new Error("Clase no encontrada");
+
+      // Find all classes in the series
+      const { data: seriesClasses, error: seriesError } = await supabase
+        .from('programmed_classes')
+        .select('id, start_date, end_date')
+        .eq('club_id', classData.club_id)
+        .eq('name', classData.name)
+        .eq('start_time', classData.start_time)
+        .eq('is_active', true);
+
+      if (seriesError) throw seriesError;
+      if (!seriesClasses || seriesClasses.length === 0) {
+        throw new Error("No se encontraron clases en la serie");
+      }
+
+      // Calculate days difference if day changed
+      const daysDiff = (originalDay && newDay)
+        ? calculateDaysDifference(originalDay, newDay)
+        : 0;
+
+      // Update each class in the series
+      const updates = seriesClasses.map(async (cls) => {
+        const updateData: any = { ...data };
+
+        // Adjust dates if day changed
+        if (daysDiff !== 0) {
+          const startDate = parseISO(cls.start_date);
+          const endDate = parseISO(cls.end_date);
+
+          startDate.setDate(startDate.getDate() + daysDiff);
+          endDate.setDate(endDate.getDate() + daysDiff);
+
+          updateData.start_date = format(startDate, 'yyyy-MM-dd');
+          updateData.end_date = format(endDate, 'yyyy-MM-dd');
+        }
+
+        const { error } = await supabase
+          .from("programmed_classes")
+          .update(updateData)
+          .eq("id", cls.id);
+
+        if (error) throw error;
+      });
+
+      await Promise.all(updates);
+
+      return { updatedCount: seriesClasses.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
+      toast({
+        title: "Serie actualizada",
+        description: `Se han actualizado ${data.updatedCount} clase${data.updatedCount > 1 ? 's' : ''} de la serie.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la serie: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

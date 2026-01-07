@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { X, Plus, Lock } from "lucide-react";
-import { useUpdateScheduledClass } from "@/hooks/useScheduledClasses";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { X, Plus, Lock, Calendar, CalendarDays } from "lucide-react";
+import { useUpdateScheduledClass, useUpdateScheduledClassSeries, useSeriesClassCount, calculateDaysDifference } from "@/hooks/useScheduledClasses";
 import { useClassParticipants } from "@/hooks/useProgrammedClasses";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { format, parseISO, addDays } from "date-fns";
 import type { ScheduledClassWithTemplate } from "@/hooks/useScheduledClasses";
 
 interface EditClassModalProps {
@@ -47,7 +49,12 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
   const { toast } = useToast();
   const { t } = useTranslation();
   const updateClassMutation = useUpdateScheduledClass();
+  const updateSeriesMutation = useUpdateScheduledClassSeries();
   const { data: participants } = useClassParticipants(cls.id);
+  const { data: seriesCount } = useSeriesClassCount(cls.id, isOpen);
+
+  // Store original day to detect changes
+  const originalDay = cls.days_of_week?.[0] || '';
 
   const [formData, setFormData] = useState({
     name: cls.name,
@@ -66,6 +73,29 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
     cls.custom_level ? 'custom' : 'numeric'
   );
 
+  // Update scope: 'single' = only this class, 'all' = all classes in series
+  const [updateScope, setUpdateScope] = useState<'single' | 'all'>('single');
+
+  // Check if day has changed
+  const currentDay = formData.days_of_week?.[0] || '';
+  const dayHasChanged = originalDay !== currentDay && currentDay !== '';
+
+  // Auto-adjust dates when day changes (only for single class update)
+  useEffect(() => {
+    if (dayHasChanged && updateScope === 'single') {
+      const daysDiff = calculateDaysDifference(originalDay, currentDay);
+      if (daysDiff !== 0) {
+        const newStartDate = addDays(parseISO(cls.start_date), daysDiff);
+        const newEndDate = addDays(parseISO(cls.end_date), daysDiff);
+        setFormData(prev => ({
+          ...prev,
+          start_date: format(newStartDate, 'yyyy-MM-dd'),
+          end_date: format(newEndDate, 'yyyy-MM-dd')
+        }));
+      }
+    }
+  }, [currentDay, originalDay, dayHasChanged, updateScope, cls.start_date, cls.end_date]);
+
   // Calcular plazas disponibles
   const activeParticipants = participants?.filter((p: any) => p.status === 'active').length || 0;
   const maxParticipants = cls.max_participants || 0;
@@ -74,7 +104,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const updateData = {
         ...formData,
@@ -84,16 +114,33 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
         is_open: formData.is_open
       };
 
-      await updateClassMutation.mutateAsync({
-        id: cls.id,
-        data: updateData
-      });
+      if (updateScope === 'single') {
+        // Update only this class
+        await updateClassMutation.mutateAsync({
+          id: cls.id,
+          data: updateData
+        });
+      } else {
+        // Update all classes in the series
+        // For series update, we don't include start_date/end_date in updateData
+        // because each class will have its dates adjusted individually based on day change
+        const { start_date, end_date, ...seriesUpdateData } = updateData;
+
+        await updateSeriesMutation.mutateAsync({
+          id: cls.id,
+          data: seriesUpdateData,
+          originalDay: dayHasChanged ? originalDay : undefined,
+          newDay: dayHasChanged ? currentDay : undefined
+        });
+      }
 
       onClose();
     } catch (error) {
       console.error('Error updating class:', error);
     }
   };
+
+  const isSubmitting = updateClassMutation.isPending || updateSeriesMutation.isPending;
 
   const addDay = (day: string) => {
     if (!formData.days_of_week.includes(day)) {
@@ -321,14 +368,59 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
                 </div>
               </div>
             </div>
+
+            {/* Update scope selector - only show if there are multiple classes in series */}
+            {seriesCount && seriesCount > 1 && (
+              <div className="space-y-3 pt-4 border-t">
+                <Label className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  {t('classes.updateScope', '¿Qué clases quieres modificar?')}
+                </Label>
+                <RadioGroup
+                  value={updateScope}
+                  onValueChange={(value: 'single' | 'all') => setUpdateScope(value)}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                    <RadioGroupItem value="single" id="scope-single" />
+                    <Label htmlFor="scope-single" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>{t('classes.updateSingle', 'Solo esta clase')}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t('classes.updateSingleDesc', 'Los cambios solo afectarán a esta clase específica')}
+                      </p>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                    <RadioGroupItem value="all" id="scope-all" />
+                    <Label htmlFor="scope-all" className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4" />
+                        <span>{t('classes.updateAll', 'Todas las clases de la serie')}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {seriesCount} {t('classes.classes', 'clases')}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {dayHasChanged
+                          ? t('classes.updateAllWithDayChange', 'Las fechas de todas las clases se ajustarán automáticamente al nuevo día')
+                          : t('classes.updateAllDesc', 'Los cambios se aplicarán a todas las clases de esta serie')}
+                      </p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={updateClassMutation.isPending}>
-              {updateClassMutation.isPending ? t('classes.saving') : t('classes.saveChanges')}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t('classes.saving') : t('classes.saveChanges')}
             </Button>
           </div>
         </form>
