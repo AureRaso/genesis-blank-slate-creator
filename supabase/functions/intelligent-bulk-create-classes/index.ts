@@ -48,8 +48,8 @@ interface CreationResult {
 
 async function validateUserPermissions(supabaseClient: any, user: any, clubId: string) {
   console.log('Validating user permissions for club:', clubId);
-  
-  // Check if user is admin of the club
+
+  // Check if user is admin of the club (creator or assigned via club_id)
   const { data: clubCheck, error: clubError } = await supabaseClient
     .from('clubs')
     .select('id, created_by_profile_id')
@@ -60,8 +60,23 @@ async function validateUserPermissions(supabaseClient: any, user: any, clubId: s
     throw new Error('Club no encontrado');
   }
 
-  const isAdmin = clubCheck.created_by_profile_id === user.id;
-  
+  // Check if user is the creator of the club
+  let isAdmin = clubCheck.created_by_profile_id === user.id;
+
+  // If not the creator, check if user has this club_id assigned in their profile
+  if (!isAdmin) {
+    const { data: userProfile } = await supabaseClient
+      .from('profiles')
+      .select('role, club_id')
+      .eq('id', user.id)
+      .single();
+
+    if (userProfile && userProfile.role === 'admin' && userProfile.club_id === clubId) {
+      isAdmin = true;
+      console.log('User is admin via club_id assignment');
+    }
+  }
+
   let isTrainer = false;
   if (!isAdmin) {
     const { data: trainerCheck } = await supabaseClient
@@ -70,7 +85,7 @@ async function validateUserPermissions(supabaseClient: any, user: any, clubId: s
       .eq('club_id', clubId)
       .eq('trainer_profile_id', user.id)
       .single();
-    
+
     isTrainer = !!trainerCheck;
   }
 
@@ -83,14 +98,28 @@ async function validateUserPermissions(supabaseClient: any, user: any, clubId: s
 }
 
 async function validateClassData(classData: ClassToCreate, supabaseClient: any, userId: string) {
-  // Check if trainer is the admin who owns the club (can assign themselves)
+  // Check if trainer is an admin of the club (creator or assigned via club_id)
   const { data: clubCheck } = await supabaseClient
     .from('clubs')
     .select('created_by_profile_id')
     .eq('id', classData.club_id)
     .single();
 
-  const isAdminSelfAssigning = clubCheck?.created_by_profile_id === classData.trainer_profile_id;
+  // Check if trainer is the creator
+  let isAdminSelfAssigning = clubCheck?.created_by_profile_id === classData.trainer_profile_id;
+
+  // If not creator, check if trainer has club_id assigned in their profile
+  if (!isAdminSelfAssigning) {
+    const { data: trainerProfile } = await supabaseClient
+      .from('profiles')
+      .select('role, club_id')
+      .eq('id', classData.trainer_profile_id)
+      .single();
+
+    if (trainerProfile && trainerProfile.role === 'admin' && trainerProfile.club_id === classData.club_id) {
+      isAdminSelfAssigning = true;
+    }
+  }
 
   // If not admin self-assigning, validate trainer exists in trainer_clubs
   if (!isAdminSelfAssigning) {
