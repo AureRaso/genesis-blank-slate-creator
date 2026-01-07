@@ -38,7 +38,7 @@ const DashboardStats = () => {
   const pendingMatches = matches?.filter(match => match.status === 'pending').length || 0;
   const totalPlayers = clubPlayers?.length || 0;
   const totalProgrammedClasses = programmedClasses?.length || 0;
-  const totalTodayClasses = todayClasses?.length || 0;
+  const totalTodayClasses = todayClasses?.classes?.length || 0;
 
   // Define different stats based on feature flags
   // Using only orange (primary) and neutral grays for brand consistency

@@ -338,7 +338,7 @@ const TrainerDashboard = () => {
   }
 
   const totalProgrammedClasses = myClasses?.length || 0;
-  const totalTodayClasses = todayClasses?.length || 0;
+  const totalTodayClasses = todayClasses?.classes?.length || 0;
   const totalStudentsCount = totalStudents || 0;
 
   // Calculate average class size
