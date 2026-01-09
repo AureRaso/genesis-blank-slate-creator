@@ -3,13 +3,17 @@ import { Home, CreditCard, Settings, Users, ClipboardCheck, Tag, Plus, History, 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHasPromotions } from "@/hooks/usePromotions";
+import { useClub } from "@/hooks/useClub";
 import { useTranslation } from "react-i18next";
 
 const MobileTabBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isPlayer, isTrainer, isGuardian, isAdmin, profile } = useAuth();
+  const { isPlayer, isTrainer, isGuardian, isAdmin, profile, effectiveClubId } = useAuth();
   const { t } = useTranslation();
+
+  // Fetch club data for feature flags
+  const { data: club } = useClub(effectiveClubId);
 
   // Check if club has promotions
   const { data: hasPromotions = false } = useHasPromotions(profile?.club_id);
@@ -63,11 +67,11 @@ const MobileTabBar = () => {
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
     },
-    {
+    ...(club?.enable_monthly_payments ? [{
       name: t('sidebar.payments'),
       path: "/dashboard/monthly-payments",
       icon: Wallet,
-    },
+    }] : []),
   ];
 
   // Tabs for admins
@@ -90,11 +94,11 @@ const MobileTabBar = () => {
       path: "/dashboard/today-attendance",
       icon: ClipboardCheck,
     },
-    {
+    ...(club?.enable_monthly_payments ? [{
       name: t('sidebar.payments'),
       path: "/dashboard/monthly-payments",
       icon: Wallet,
-    },
+    }] : []),
   ];
 
   // Guardians use the same tabs as players
