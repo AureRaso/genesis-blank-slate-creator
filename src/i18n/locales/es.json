@@ -55,12 +55,14 @@
     "myPayments": "Mis Pagos",
     "history": "Historial",
     "profiles": "Perfiles",
-    "myChildren": "Mis Hijos",
+    "myChildren": "Mis Perfiles",
+    "areYouStudent": "¿Eres alumno?",
     "promotions": "Promociones",
     "createClass": "Crear Clase",
     "attendance": "Asistencia",
     "attendanceToday": "Asistencia Hoy",
-    "payments": "Pagos"
+    "payments": "Pagos",
+    "paymentControl": "Control de Pagos"
   },
   "userMenu": {
     "admin": "Administrador",

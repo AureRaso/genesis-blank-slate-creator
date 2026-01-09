@@ -208,12 +208,14 @@
     "myPayments": "My Payments",
     "history": "History",
     "profiles": "Profiles",
-    "myChildren": "My Children",
+    "myChildren": "My Profiles",
+    "areYouStudent": "Are you a student?",
     "promotions": "Promotions",
     "createClass": "Create Class",
     "attendance": "Attendance",
     "attendanceToday": "Today's Attendance",
-    "payments": "Payments"
+    "payments": "Payments",
+    "paymentControl": "Payment Control"
   },
   "userMenu": {
     "admin": "Administrator",

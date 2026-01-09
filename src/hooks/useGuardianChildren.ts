@@ -19,7 +19,6 @@ export interface GuardianChild {
 
 export interface AddChildData {
   fullName: string;
-  level: number;
   clubId?: string; // Opcional para mantener compatibilidad con guardians que usan el club del guardian
 }
 
@@ -127,7 +126,7 @@ export const useGuardianChildren = () => {
       // Verificar que realmente es un guardian (consultar directamente la DB)
       const { data: guardianProfile, error: guardianCheckError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, full_name')
         .eq('id', guardianId)
         .single();
 
@@ -135,7 +134,7 @@ export const useGuardianChildren = () => {
         throw new Error('Solo los usuarios con rol guardian pueden añadir hijos');
       }
 
-      // 1. Generar email único para el hijo
+      // 1. Generar email único para el perfil
       // Normalizar el nombre: quitar tildes, caracteres especiales y espacios
       const normalizedName = childData.fullName
         .toLowerCase()
@@ -147,10 +146,16 @@ export const useGuardianChildren = () => {
         .replace(/\.+/g, '.') // Eliminar puntos duplicados
         .replace(/^\.+|\.+$/g, ''); // Eliminar puntos al inicio y final
 
-      const childEmail = `child.${normalizedName}.${Date.now()}@temp.padelock.com`;
+      // Detectar si es el guardian creando su propio perfil comparando nombres
+      const isSelfProfile = childData.fullName.toLowerCase().trim() === guardianProfile?.full_name?.toLowerCase().trim();
+      const emailPrefix = isSelfProfile ? 'guardian' : 'child';
+      const childEmail = `${emailPrefix}.${normalizedName}.${Date.now()}@temp.padelock.com`;
       const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!'; // Contraseña temporal aleatoria
 
       // 2. Crear el usuario en auth.users usando signUp
+      // Nivel 5 por defecto para todos (hijos y padres-alumnos)
+      const DEFAULT_LEVEL = 5;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: childEmail,
         password: tempPassword,
@@ -158,7 +163,7 @@ export const useGuardianChildren = () => {
           data: {
             full_name: childData.fullName,
             club_id: childData.clubId || profile.club_id,
-            level: childData.level,
+            level: DEFAULT_LEVEL,
             role: 'player'
           },
           emailRedirectTo: undefined // No enviar email de confirmación
@@ -225,8 +230,8 @@ export const useGuardianChildren = () => {
       // Invalidar y refetch la lista de hijos
       queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
       toast({
-        title: '¡Hijo añadido!',
-        description: 'El perfil del hijo se ha creado correctamente.',
+        title: '¡Perfil añadido!',
+        description: 'El perfil se ha creado correctamente.',
       });
     },
     onError: (error: any) => {

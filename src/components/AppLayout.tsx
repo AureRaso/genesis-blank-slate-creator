@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -24,6 +24,8 @@ import { LogOut, Settings, Wallet, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
+import { useGuardianChildren } from "@/hooks/useGuardianChildren";
+import { AddSelfAsStudentModal } from "@/components/AddSelfAsStudentModal";
 
 const LANGUAGES = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
@@ -46,6 +48,32 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
   const { language, changeLanguage } = useLanguage();
+  const [isAddSelfModalOpen, setIsAddSelfModalOpen] = useState(false);
+
+  // Hook para guardians - detectar si ya tiene perfil propio
+  const { children: guardianChildren, addChild, isAddingChild } = useGuardianChildren();
+  const hasSelfProfile = isGuardian && guardianChildren.some(child =>
+    child.full_name.toLowerCase().trim() === profile?.full_name?.toLowerCase().trim()
+  );
+
+  const handleAddSelfAsStudent = () => {
+    if (!profile?.full_name || !profile?.club_id) {
+      return;
+    }
+
+    addChild(
+      {
+        fullName: profile.full_name,
+        clubId: profile.club_id
+      },
+      {
+        onSuccess: () => {
+          setIsAddSelfModalOpen(false);
+          window.location.reload();
+        }
+      }
+    );
+  };
 
   const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
 
@@ -139,6 +167,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                     <span>{t('userMenu.settings')}</span>
                   </Link>
                 </DropdownMenuItem>
+                {isGuardian && !hasSelfProfile && (
+                  <DropdownMenuItem
+                    onClick={() => setIsAddSelfModalOpen(true)}
+                    className="cursor-pointer text-playtomic-orange"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{t('sidebar.areYouStudent')}</span>
+                  </DropdownMenuItem>
+                )}
                 {(isPlayer || isGuardian) && (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
@@ -214,6 +251,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
         {/* Mobile Tab Bar - Only visible on mobile */}
         <MobileTabBar />
+
+        {/* Modal para crear perfil de alumno (solo guardians en móvil) */}
+        <AddSelfAsStudentModal
+          open={isAddSelfModalOpen}
+          onOpenChange={setIsAddSelfModalOpen}
+          onConfirm={handleAddSelfAsStudent}
+          isLoading={isAddingChild}
+        />
       </>
     );
   }

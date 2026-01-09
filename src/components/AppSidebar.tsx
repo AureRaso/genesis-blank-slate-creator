@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award, Wallet } from "lucide-react";
+import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award, Wallet, User } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
@@ -9,8 +10,146 @@ import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useClub } from "@/hooks/useClub";
 import { useHasPromotions } from "@/hooks/usePromotions";
+import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 import SuperAdminClubSelector from "@/components/SuperAdminClubSelector";
+import { AddSelfAsStudentModal } from "@/components/AddSelfAsStudentModal";
+
+// Componente separado para Guardian/Player para poder usar hooks
+const GuardianPlayerSidebar = ({
+  isGuardian,
+  hasPromotions,
+  leaguesEnabled,
+  club,
+  profile,
+  location,
+  t
+}: {
+  isGuardian: boolean;
+  hasPromotions: boolean;
+  leaguesEnabled: boolean;
+  club: any;
+  profile: any;
+  location: any;
+  t: any;
+}) => {
+  const [isAddSelfModalOpen, setIsAddSelfModalOpen] = useState(false);
+  const { children, addChild, isAddingChild } = useGuardianChildren();
+
+  // Verificar si el guardian ya tiene un perfil de alumno
+  const hasSelfProfile = isGuardian && children.some(child =>
+    child.full_name.toLowerCase().trim() === profile?.full_name?.toLowerCase().trim()
+  );
+
+  const handleAddSelfAsStudent = () => {
+    if (!profile?.full_name || !profile?.club_id) {
+      return;
+    }
+
+    addChild(
+      {
+        fullName: profile.full_name,
+        clubId: profile.club_id
+      },
+      {
+        onSuccess: () => {
+          setIsAddSelfModalOpen(false);
+          window.location.reload();
+        }
+      }
+    );
+  };
+
+  const playerNavItems = [
+    {
+      title: t('sidebar.dashboard'),
+      url: "/dashboard",
+      icon: SquareTerminal,
+      isActive: true
+    },
+    {
+      title: t('sidebar.myPayments'),
+      url: "/dashboard/my-payments",
+      icon: Wallet
+    },
+    ...(isGuardian ? [{
+      title: t('sidebar.myChildren'),
+      url: "/dashboard/my-children",
+      icon: Users
+    }] : []),
+    ...(hasPromotions ? [{
+      title: t('sidebar.promotions'),
+      url: "/dashboard/promotions",
+      icon: Tag
+    }] : []),
+    ...(leaguesEnabled ? [{
+      title: t('sidebar.leagues'),
+      url: "/dashboard/leagues",
+      icon: Trophy
+    }] : [])
+  ];
+
+  return (
+    <>
+      <Sidebar variant="inset" className="w-64">
+        <SidebarHeader className="flex items-center justify-center py-3">
+          <Link to="/" className="flex items-center justify-center">
+            <img src={PadeLockLogo} alt="PadeLock" className="w-30 h-20 object-contain" />
+          </Link>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              {playerNavItems.map(item => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                    <Link to={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              {/* Opción para crear perfil de alumno (solo guardians sin perfil propio) */}
+              {isGuardian && !hasSelfProfile && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setIsAddSelfModalOpen(true)}
+                    className="text-playtomic-orange hover:text-orange-600 hover:bg-orange-50"
+                  >
+                    <User />
+                    <span>{t('sidebar.areYouStudent')}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="p-0">
+          {/* Información del Club */}
+          {club && (
+            <div className="border-t border-sidebar-border p-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-sm">{club.name}</span>
+              </div>
+            </div>
+          )}
+          <UserMenu />
+        </SidebarFooter>
+      </Sidebar>
+
+      {/* Modal para crear perfil de alumno */}
+      <AddSelfAsStudentModal
+        open={isAddSelfModalOpen}
+        onOpenChange={setIsAddSelfModalOpen}
+        onConfirm={handleAddSelfAsStudent}
+        isLoading={isAddingChild}
+      />
+    </>
+  );
+};
+
 const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
@@ -89,15 +228,16 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              {/* Control de pagos - Temporalmente oculto */}
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
-                <Link to="/dashboard/monthly-payments">
-                  <Wallet />
-                  <span>Control de pagos</span>
-                </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem> */}
+              {club?.enable_monthly_payments && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
+                  <Link to="/dashboard/monthly-payments">
+                    <Wallet />
+                    <span>{t('sidebar.paymentControl')}</span>
+                  </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {/* Sistema de Scoring - Temporalmente oculto */}
               {/* {club?.enable_scoring_reports && (
                 <>
@@ -139,67 +279,15 @@ const AppSidebar = () => {
 
   // Si es jugador o guardian, mostrar panel personalizado sin profesores
   if (isPlayer || isGuardian) {
-    const playerNavItems = [
-      {
-        title: t('sidebar.dashboard'),
-        url: "/dashboard",
-        icon: SquareTerminal,
-        isActive: true
-      },
-      {
-        title: t('sidebar.myPayments'),
-        url: "/dashboard/my-payments",
-        icon: Wallet
-      },
-      ...(isGuardian ? [{
-        title: t('sidebar.myChildren'),
-        url: "/dashboard/my-children",
-        icon: Users
-      }] : []),
-      ...(hasPromotions ? [{
-        title: t('sidebar.promotions'),
-        url: "/dashboard/promotions",
-        icon: Tag
-      }] : []),
-      ...(leaguesEnabled ? [{
-        title: t('sidebar.leagues'),
-        url: "/dashboard/leagues",
-        icon: Trophy
-      }] : [])
-    ];
-    return <Sidebar variant="inset" className="w-64">
-        <SidebarHeader className="flex items-center justify-center py-3">
-          <Link to="/" className="flex items-center justify-center">
-            <img src={PadeLockLogo} alt="PadeLock" className="w-30 h-20 object-contain" />
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu>
-              {playerNavItems.map(item => <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                    <Link to={item.url}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>)}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter className="p-0">
-          {/* Información del Club */}
-          {club && (
-            <div className="border-t border-sidebar-border p-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm">{club.name}</span>
-              </div>
-            </div>
-          )}
-          <UserMenu />
-        </SidebarFooter>
-      </Sidebar>;
+    return <GuardianPlayerSidebar
+      isGuardian={isGuardian}
+      hasPromotions={hasPromotions}
+      leaguesEnabled={leaguesEnabled}
+      club={club}
+      profile={profile}
+      location={location}
+      t={t}
+    />;
   }
 
   // Panel para administradores con feature flags
@@ -242,12 +330,11 @@ const AppSidebar = () => {
       //   url: "/dashboard/student-scores",
       //   icon: Award
       // },
-      // Control de pagos - Temporalmente oculto
-      // {
-      //   title: "Control de pagos",
-      //   url: "/dashboard/monthly-payments",
-      //   icon: Wallet
-      // },
+      ...(club?.enable_monthly_payments ? [{
+        title: t('sidebar.paymentControl'),
+        url: "/dashboard/monthly-payments",
+        icon: Wallet
+      }] : []),
       {
         title: t('sidebar.players'),
         url: "/dashboard/players",

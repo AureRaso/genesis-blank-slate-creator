@@ -208,12 +208,14 @@
     "myPayments": "I Miei Pagamenti",
     "history": "Cronologia",
     "profiles": "Profili",
-    "myChildren": "I Miei Figli",
+    "myChildren": "I Miei Profili",
+    "areYouStudent": "Sei un alunno?",
     "promotions": "Promozioni",
     "createClass": "Crea Lezione",
     "attendance": "Presenze",
     "attendanceToday": "Presenze Oggi",
-    "payments": "Pagamenti"
+    "payments": "Pagamenti",
+    "paymentControl": "Controllo Pagamenti"
   },
   "userMenu": {
     "admin": "Amministratore",
