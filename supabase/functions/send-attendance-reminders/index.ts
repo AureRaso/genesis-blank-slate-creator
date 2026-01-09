@@ -9,16 +9,32 @@ const corsHeaders = {
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const WHATSAPP_REMINDER_URL = Deno.env.get('WHATSAPP_REMINDER_URL') ||
-  'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/send-class-reminder-whatsapp';
 const TEST_SECRET = Deno.env.get('TEST_SECRET') || 'whatsapp-test-2025';
 
-// Club IDs with WhatsApp reminders enabled
-const WHATSAPP_ENABLED_CLUBS = [
-  'cc0a5265-99c5-4b99-a479-5334280d0c6d', // Gali
+// WhatsApp reminder URLs - Kapso (new) vs Whapi (legacy)
+const KAPSO_REMINDER_URL = Deno.env.get('KAPSO_REMINDER_URL') ||
+  'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/send-class-reminder-kapso';
+const WHAPI_REMINDER_URL = Deno.env.get('WHATSAPP_REMINDER_URL') ||
+  'https://hwwvtxyezhgmhyxjpnvl.supabase.co/functions/v1/send-class-reminder-whatsapp';
+
+// Club IDs with WhatsApp reminders enabled via KAPSO (new system with templates)
+const KAPSO_ENABLED_CLUBS: string[] = [
+  '09e8aa4e-69fa-4432-aedb-e7f831b3ebcc', // SVQ Academy - TEST CLUB FOR KAPSO
   'bbc10821-1c94-4b62-97ac-2fde0708cefd', // La Red 21 Galisport
-  '09e8aa4e-69fa-4432-aedb-e7f831b3ebcc', // SVQ Academy
+  '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel
+  'a994e74e-0a7f-4721-8c0f-e23100a01614', // Wild Padel Indoor
   'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
+];
+
+// Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)
+// PAUSED: All 24h reminders disabled temporarily (29 Dec 2025 - awaiting new eSIM setup)
+const WHAPI_ENABLED_CLUBS: string[] = [
+  // ALL CLUBS TEMPORARILY DISABLED - Will re-enable with new eSIM account
+  // 'cc0a5265-99c5-4b99-a479-5334280d0c6d', // Gali - DISABLED
+  // 'bbc10821-1c94-4b62-97ac-2fde0708cefd', // La Red 21 Galisport - DISABLED
+  // 'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña - DISABLED
+  // 'a994e74e-0a7f-4721-8c0f-e23100a01614', // Wild Padel Indoor - DISABLED
+  // '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel - DISABLED
 ];
 
 // Create Supabase client with service role (bypasses RLS)
@@ -34,28 +50,78 @@ interface ReminderEmailData {
   confirmationLink: string;
 }
 
-async function sendWhatsAppReminder(studentEmail: string): Promise<boolean> {
-  try {
-    console.log('📱 Sending WhatsApp reminder to:', studentEmail);
+interface WhatsAppReminderData {
+  userEmail: string;
+  participationId: string;
+  className: string;
+  startTime: string;
+  durationMinutes: number;
+  clubName: string;
+  studentName: string;
+  guardianPhone?: string; // Phone number of guardian (for temp email students)
+}
 
-    const response = await fetch(WHATSAPP_REMINDER_URL, {
+// Helper function to get guardian contact info for students with temp emails
+async function getGuardianContactInfo(studentProfileId: string): Promise<{ email: string; phone: string | null } | null> {
+  try {
+    const { data: guardianData, error } = await supabase
+      .from('account_dependents')
+      .select(`
+        guardian:profiles!account_dependents_guardian_profile_id_fkey (
+          email,
+          phone
+        )
+      `)
+      .eq('dependent_profile_id', studentProfileId)
+      .single();
+
+    if (error || !guardianData?.guardian) {
+      return null;
+    }
+
+    const guardian = guardianData.guardian as any;
+    return {
+      email: guardian.email,
+      phone: guardian.phone
+    };
+  } catch (error) {
+    console.error('Error fetching guardian info:', error);
+    return null;
+  }
+}
+
+async function sendWhatsAppReminder(data: WhatsAppReminderData, useKapso: boolean): Promise<boolean> {
+  try {
+    const reminderUrl = useKapso ? KAPSO_REMINDER_URL : WHAPI_REMINDER_URL;
+    const system = useKapso ? 'Kapso' : 'Whapi';
+
+    console.log(`📱 Sending WhatsApp reminder via ${system} to:`, data.userEmail);
+
+    const response = await fetch(reminderUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userEmail: studentEmail,
-        testSecret: TEST_SECRET
+        userEmail: data.userEmail,
+        participationId: data.participationId,
+        className: data.className,
+        startTime: data.startTime,
+        durationMinutes: data.durationMinutes,
+        clubName: data.clubName,
+        studentName: data.studentName,
+        testSecret: TEST_SECRET,
+        guardianPhone: data.guardianPhone // Pass guardian phone for temp email students
       })
     });
 
     const result = await response.json();
 
     if (result.success) {
-      console.log('✅ WhatsApp reminder sent successfully');
+      console.log(`✅ WhatsApp reminder sent successfully via ${system}`);
       return true;
     } else {
-      console.error('❌ WhatsApp reminder failed:', result.error);
+      console.error(`❌ WhatsApp reminder failed via ${system}:`, result.error);
       return false;
     }
   } catch (error) {
@@ -234,6 +300,7 @@ serve(async (req) => {
         id,
         name,
         start_time,
+        duration_minutes,
         days_of_week,
         club_id,
         clubs:club_id (
@@ -331,7 +398,8 @@ serve(async (req) => {
           student_enrollment:student_enrollments!student_enrollment_id (
             id,
             full_name,
-            email
+            email,
+            student_profile_id
           )
         `)
         .eq('class_id', classInfo.id)
@@ -358,11 +426,32 @@ serve(async (req) => {
           continue;
         }
 
+        // Determine recipient: check if this is a temp email (guardian's child or guardian-as-student)
+        // If so, redirect notifications to the guardian instead
+        let recipientEmail = enrollment.email;
+        let guardianPhone: string | null = null;
+        const studentName = enrollment.full_name; // Always use the student/child name
+
+        if (enrollment.email.includes('@temp.padelock.com') && enrollment.student_profile_id) {
+          // This is a temp email - look up the guardian
+          const guardianInfo = await getGuardianContactInfo(enrollment.student_profile_id);
+
+          if (guardianInfo?.email) {
+            recipientEmail = guardianInfo.email;
+            guardianPhone = guardianInfo.phone;
+            console.log(`👨‍👩‍👧 Redirecting notification for "${studentName}" to guardian: ${recipientEmail}`);
+          } else {
+            // No guardian found for temp email - skip this participant
+            console.warn(`⚠️ Skipping temp email student without guardian: ${enrollment.email} (${studentName})`);
+            continue;
+          }
+        }
+
         const confirmationLink = 'https://www.padelock.com/dashboard';
 
         const emailSent = await sendReminderEmail({
-          studentEmail: enrollment.email,
-          studentName: enrollment.full_name,
+          studentEmail: recipientEmail,
+          studentName: studentName,
           className: classInfo.name,
           classDate: targetDate,
           classTime: classInfo.start_time,
@@ -374,15 +463,28 @@ serve(async (req) => {
           totalRemindersSent++;
         }
 
-        // Send WhatsApp reminder for clubs with WhatsApp enabled
-        if (WHATSAPP_ENABLED_CLUBS.includes(classInfo.club_id)) {
-          console.log(`📱 Sending WhatsApp to student: ${enrollment.email} (club: ${(classInfo.clubs as any)?.name})`);
-          const whatsappSent = await sendWhatsAppReminder(enrollment.email);
+        // Send WhatsApp reminder for clubs with WhatsApp enabled (Kapso or Whapi)
+        const useKapso = KAPSO_ENABLED_CLUBS.includes(classInfo.club_id);
+        const useWhapi = WHAPI_ENABLED_CLUBS.includes(classInfo.club_id);
+
+        if (useKapso || useWhapi) {
+          const system = useKapso ? 'Kapso' : 'Whapi';
+          console.log(`📱 Sending WhatsApp via ${system} for student "${studentName}" to: ${recipientEmail} (club: ${(classInfo.clubs as any)?.name})`);
+          const whatsappSent = await sendWhatsAppReminder({
+            userEmail: recipientEmail,
+            participationId: participant.id,
+            className: classInfo.name,
+            startTime: classInfo.start_time,
+            durationMinutes: classInfo.duration_minutes || 60,
+            clubName: (classInfo.clubs as any)?.name || '',
+            studentName: studentName,
+            guardianPhone: guardianPhone || undefined
+          }, useKapso);
           if (whatsappSent) {
             totalWhatsAppSent++;
           }
-          // Extra delay for WhatsApp to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Delay for WhatsApp rate limiting (2s for Kapso/Meta API - templates are pre-approved)
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
