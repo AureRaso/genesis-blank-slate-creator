@@ -31,7 +31,7 @@ const MONTH_NAMES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 25;
 
 const STATUS_CONFIG = {
   pendiente: {
