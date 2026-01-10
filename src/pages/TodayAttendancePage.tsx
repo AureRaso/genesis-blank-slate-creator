@@ -91,10 +91,12 @@ const TodayAttendancePage = () => {
     open: boolean;
     classId: string;
     className: string;
+    clubId: string;
   }>({
     open: false,
     classId: '',
     className: '',
+    clubId: '',
   });
   const [whatsappGroupDialog, setWhatsappGroupDialog] = useState<{
     open: boolean;
@@ -1432,11 +1434,11 @@ const TodayAttendancePage = () => {
               Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
             </DialogDescription>
           </DialogHeader>
-          {profile?.club_id && (
+          {substituteDialog.clubId && (
             <SubstituteStudentSearch
               classId={substituteDialog.classId}
-              clubId={profile.club_id}
-              onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '' })}
+              clubId={substituteDialog.clubId}
+              onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', clubId: '' })}
             />
           )}
         </DialogContent>

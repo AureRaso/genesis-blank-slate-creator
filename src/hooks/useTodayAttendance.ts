@@ -12,6 +12,7 @@ export interface TodayAttendanceClass {
   duration_minutes: number;
   max_participants?: number;
   days_of_week?: string[]; // Added to support week view filtering
+  club_id: string; // Added for student selector filtering
   trainer: {
     full_name: string;
   } | null;
@@ -175,6 +176,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         start_time: classData.start_time,
         duration_minutes: classData.duration_minutes,
         max_participants: classData.max_participants,
+        club_id: classData.club_id, // Include club_id for student selector filtering
         trainer: classData.trainer,
         trainer_2: classData.trainer_2, // Secondary trainer
         days_of_week: classData.days_of_week, // Include days for filtering in component

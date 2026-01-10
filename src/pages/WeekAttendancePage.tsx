@@ -114,11 +114,13 @@ const WeekAttendancePage = () => {
     classId: string;
     className: string;
     selectedDate: string;
+    clubId: string;
   }>({
     open: false,
     classId: '',
     className: '',
     selectedDate: '',
+    clubId: '',
   });
   const [bulkEnrollDialog, setBulkEnrollDialog] = useState<{
     open: boolean;
@@ -1161,7 +1163,7 @@ const WeekAttendancePage = () => {
                                       classId: classData.id,
                                       className: classData.name,
                                       classStartTime: classData.start_time,
-                                      clubId: profile?.club_id || '',
+                                      clubId: classData.club_id,
                                     });
                                   }}
                                 >
@@ -1177,7 +1179,7 @@ const WeekAttendancePage = () => {
                                       open: true,
                                       classId: classData.id,
                                       className: classData.name,
-                                      clubId: profile?.club_id || '',
+                                      clubId: classData.club_id,
                                       classStartTime: classData.start_time,
                                     });
                                   }}
@@ -1489,6 +1491,7 @@ const WeekAttendancePage = () => {
                                     classId: classData.id,
                                     className: classData.name,
                                     selectedDate: notificationDate,
+                                    clubId: classData.club_id,
                                   })}
                                   className="text-xs sm:text-sm w-full sm:flex-1 sm:min-w-[140px]"
                                 >
@@ -1715,11 +1718,11 @@ const WeekAttendancePage = () => {
                   Busca y añade un alumno sustituto para la clase <strong>{substituteDialog.className}</strong>
                 </DialogDescription>
               </DialogHeader>
-              {profile?.club_id && (
+              {substituteDialog.clubId && (
                 <SubstituteStudentSearch
                   classId={substituteDialog.classId}
-                  clubId={profile.club_id}
-                  onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', selectedDate: '' })}
+                  clubId={substituteDialog.clubId}
+                  onSuccess={() => setSubstituteDialog({ open: false, classId: '', className: '', selectedDate: '', clubId: '' })}
                 />
               )}
             </DialogContent>
