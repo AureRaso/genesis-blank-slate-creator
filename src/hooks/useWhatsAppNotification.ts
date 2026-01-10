@@ -35,13 +35,6 @@ const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
   // Format class time without seconds (HH:MM)
   const formattedClassTime = classTime.substring(0, 5);
 
-  // Calculate cutoff time (3 hours before class)
-  const [hours, minutes] = classTime.split(':');
-  const classDateTime = new Date(date);
-  classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
-  const cutoffTime = new Date(classDateTime.getTime() - 3 * 60 * 60 * 1000);
-  const cutoffTimeStr = cutoffTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
   return `🎾 ¡Plaza en clase de recuperación disponible!
 
 Fecha: ${formattedDate}
@@ -50,8 +43,6 @@ Profesor: ${trainerName}
 
 👉 Apúntate a la lista de espera en el siguiente enlace:
 ${waitlistUrl}
-
-⏰ Disponible hasta las ${cutoffTimeStr}
 
 Las plazas se asignan a criterio del profesor.`;
 };
@@ -71,13 +62,6 @@ const generateFreeSpotMessage = (params: SendWhatsAppParams): string => {
   // Format class time without seconds (HH:MM)
   const formattedClassTime = classTime.substring(0, 5);
 
-  // Calculate cutoff time (3 hours before class)
-  const [hours, minutes] = classTime.split(':');
-  const classDateTime = new Date(date);
-  classDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
-  const cutoffTime = new Date(classDateTime.getTime() - 3 * 60 * 60 * 1000);
-  const cutoffTimeStr = cutoffTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
   const slotText = availableSlots === 1 ? '1 plaza disponible' : `${availableSlots} plazas disponibles`;
 
   return `🎾 ¡${slotText} en clase!
@@ -89,8 +73,6 @@ const generateFreeSpotMessage = (params: SendWhatsAppParams): string => {
 
 👉 Apúntate a la lista de espera en el siguiente enlace:
 ${waitlistUrl}
-
-⏰ Disponible hasta las ${cutoffTimeStr}
 
 Las plazas se asignan a criterio del profesor.`;
 };
