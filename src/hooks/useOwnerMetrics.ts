@@ -50,15 +50,36 @@ export const useOwnerMetrics = () => {
         console.warn("Error fetching clubs count:", error);
       }
 
-      // Contar usuarios por rol
-      const { data: profiles } = await supabase
+      // Contar usuarios total (usando count para evitar el límite de 1000 filas)
+      const { count: totalUsersCount } = await supabase
         .from("profiles")
-        .select("role");
+        .select("*", { count: "exact", head: true });
 
-      const totalUsers = profiles?.length || 0;
-      const totalTrainers = profiles?.filter(p => p.role === "trainer").length || 0;
-      const totalPlayers = profiles?.filter(p => p.role === "player").length || 0;
-      const totalAdmins = profiles?.filter(p => p.role === "admin" || p.role === "club_admin").length || 0;
+      // Contar usuarios por rol (usando count individual para cada rol)
+      const { count: trainersCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "trainer");
+
+      const { count: playersCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "player");
+
+      const { count: adminsCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .in("role", ["admin", "club_admin"]);
+
+      const { count: guardiansCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "guardian");
+
+      const totalUsers = totalUsersCount || 0;
+      const totalTrainers = trainersCount || 0;
+      const totalPlayers = playersCount || 0;
+      const totalAdmins = adminsCount || 0;
 
       // Contar clases de hoy (con manejo de errores)
       let todayClassesCount = 0;
