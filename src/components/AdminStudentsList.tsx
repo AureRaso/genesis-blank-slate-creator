@@ -49,6 +49,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -76,6 +77,17 @@ const AdminStudentsList = () => {
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Format phone number for WhatsApp link
+  const formatPhoneForWhatsApp = (phone: string): string => {
+    const digits = phone.replace(/\D/g, '');
+    // If already has international prefix (more than 9 digits), use as is
+    if (digits.length > 9) {
+      return digits;
+    }
+    // Otherwise assume Spain (+34)
+    return `34${digits}`;
   };
 
   // Reset page when filters change
@@ -417,10 +429,16 @@ const AdminStudentsList = () => {
                             <span className="truncate">{student.email}</span>
                           </div>
                           {student.phone && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span>{student.phone || 'N/A'}</span>
-                            </div>
+                            <a
+                              href={`https://wa.me/${formatPhoneForWhatsApp(student.phone)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 transition-all duration-200 text-xs font-medium border border-green-200 hover:border-green-300 hover:shadow-sm w-fit"
+                              title={t('playersPage.adminStudentsList.openWhatsApp')}
+                            >
+                              <WhatsAppIcon className="h-3.5 w-3.5" />
+                              <span>{student.phone}</span>
+                            </a>
                           )}
                         </div>
 

@@ -561,6 +561,7 @@
       "levelError": "Il livello deve essere un numero intero tra 1 e 10",
       "deleteStudent": "Elimina studente",
       "editName": "Modifica nome",
+      "openWhatsApp": "Apri conversazione WhatsApp",
       "deleteDialog": {
         "title": "Eliminare studente dal club?",
         "aboutToDelete": "Stai per eliminare {{name}}",

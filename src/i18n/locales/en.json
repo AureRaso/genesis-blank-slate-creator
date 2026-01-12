@@ -561,6 +561,7 @@
       "levelError": "Level must be an integer between 1 and 10",
       "deleteStudent": "Delete student",
       "editName": "Edit name",
+      "openWhatsApp": "Open WhatsApp conversation",
       "deleteDialog": {
         "title": "Delete student from club?",
         "aboutToDelete": "You are about to delete {{name}}",
