@@ -136,7 +136,7 @@ export const usePendingWaitlistRequests = (clubId?: string, clubIds?: string[]) 
 
 /**
  * Hook to approve a waitlist request
- * This will convert the player to a class participant
+ * This will convert the player to a class participant and send notifications
  */
 export const useApproveWaitlistRequest = () => {
   const { toast } = useToast();
@@ -185,9 +185,15 @@ export const useApproveWaitlistRequest = () => {
 
       if (updateError) throw updateError;
 
-      return { waitlistId, classId };
+      // Return data needed for notifications
+      return {
+        waitlistId,
+        classId,
+        studentEnrollmentId: waitlistEntry.student_enrollment_id,
+        classDate: waitlistEntry.class_date
+      };
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['pending-waitlist-requests'] });
       queryClient.invalidateQueries({ queryKey: ['classes-with-absences'] });
       queryClient.invalidateQueries({ queryKey: ['class-waitlist-details'] });
@@ -196,6 +202,72 @@ export const useApproveWaitlistRequest = () => {
         title: "Solicitud aprobada",
         description: "El jugador ha sido añadido a la clase.",
       });
+
+      // Send email and WhatsApp notifications
+      try {
+        // Fetch student data
+        const { data: studentData, error: studentError } = await supabase
+          .from('student_enrollments')
+          .select('full_name, email')
+          .eq('id', result.studentEnrollmentId)
+          .single();
+
+        if (studentError) {
+          console.error('Error fetching student data for notification:', studentError);
+          return;
+        }
+
+        // Fetch class data with club info
+        const { data: classData, error: classError } = await supabase
+          .from('programmed_classes')
+          .select('name, start_time, clubs:club_id(name)')
+          .eq('id', result.classId)
+          .single();
+
+        if (classError) {
+          console.error('Error fetching class data for notification:', classError);
+          return;
+        }
+
+        if (studentData && classData) {
+          const notificationPayload = {
+            type: 'accepted',
+            studentEmail: studentData.email,
+            studentName: studentData.full_name,
+            className: classData.name,
+            classDate: result.classDate,
+            classTime: classData.start_time,
+            clubName: (classData.clubs as any)?.name || ''
+          };
+
+          // Send email notification
+          console.log('📧 [NOTIFICATION] Sending acceptance email...');
+          const { error: emailError } = await supabase.functions.invoke('send-waitlist-email', {
+            body: notificationPayload
+          });
+
+          if (emailError) {
+            console.error('Error sending acceptance email:', emailError);
+          } else {
+            console.log('✅ [EMAIL] Acceptance email sent to:', studentData.email);
+          }
+
+          // Send WhatsApp notification
+          console.log('📱 [NOTIFICATION] Sending acceptance WhatsApp...');
+          const { error: whatsappError } = await supabase.functions.invoke('send-waitlist-whatsapp', {
+            body: notificationPayload
+          });
+
+          if (whatsappError) {
+            console.error('Error sending acceptance WhatsApp:', whatsappError);
+          } else {
+            console.log('✅ [WHATSAPP] Acceptance WhatsApp sent to:', studentData.email);
+          }
+        }
+      } catch (notificationError) {
+        console.error('Error sending notifications:', notificationError);
+        // Don't show error to user - notifications are not critical
+      }
     },
     onError: (error: any) => {
       toast({
