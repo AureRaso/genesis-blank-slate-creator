@@ -533,6 +533,10 @@
         "semiannual": "Semestral",
         "annual": "Anual"
       },
+      "trainer": {
+        "label": "Profesor",
+        "all": "Todos los profesores"
+      },
       "sort": {
         "label": "Ordenar",
         "arrival": "Orden de llegada",

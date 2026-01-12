@@ -533,6 +533,10 @@
         "semiannual": "Semiannual",
         "annual": "Annual"
       },
+      "trainer": {
+        "label": "Trainer",
+        "all": "All trainers"
+      },
       "sort": {
         "label": "Sort",
         "arrival": "Arrival order",

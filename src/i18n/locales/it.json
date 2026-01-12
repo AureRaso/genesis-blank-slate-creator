@@ -533,6 +533,10 @@
         "semiannual": "Semestrale",
         "annual": "Annuale"
       },
+      "trainer": {
+        "label": "Allenatore",
+        "all": "Tutti gli allenatori"
+      },
       "sort": {
         "label": "Ordina",
         "arrival": "Ordine di arrivo",
