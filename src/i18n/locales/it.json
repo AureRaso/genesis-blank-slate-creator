@@ -560,6 +560,7 @@
       "level": "Livello",
       "levelError": "Il livello deve essere un numero intero tra 1 e 10",
       "deleteStudent": "Elimina studente",
+      "editName": "Modifica nome",
       "deleteDialog": {
         "title": "Eliminare studente dal club?",
         "aboutToDelete": "Stai per eliminare {{name}}",
@@ -568,6 +569,17 @@
         "dataRetention": "I dati saranno conservati nel database per motivi legali e di audit, ma il giocatore diventerà inattivo.",
         "cancel": "Annulla",
         "confirm": "Elimina giocatore"
+      },
+      "editNameDialog": {
+        "title": "Modifica Nome",
+        "description": "Modificare il nome di {{name}}",
+        "nameLabel": "Nome Completo",
+        "namePlaceholder": "Inserisci il nome completo",
+        "nameError": "Il nome deve avere almeno 2 caratteri",
+        "cancel": "Annulla",
+        "save": "Salva",
+        "saving": "Salvataggio...",
+        "success": "Nome aggiornato con successo"
       }
     }
   },

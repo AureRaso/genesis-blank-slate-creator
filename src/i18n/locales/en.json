@@ -560,6 +560,7 @@
       "level": "Level",
       "levelError": "Level must be an integer between 1 and 10",
       "deleteStudent": "Delete student",
+      "editName": "Edit name",
       "deleteDialog": {
         "title": "Delete student from club?",
         "aboutToDelete": "You are about to delete {{name}}",
@@ -568,6 +569,17 @@
         "dataRetention": "Data will be retained in the database for legal and audit purposes, but the player will become inactive.",
         "cancel": "Cancel",
         "confirm": "Delete player"
+      },
+      "editNameDialog": {
+        "title": "Edit Name",
+        "description": "Modify the name of {{name}}",
+        "nameLabel": "Full Name",
+        "namePlaceholder": "Enter full name",
+        "nameError": "Name must be at least 2 characters",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "success": "Name updated successfully"
       }
     }
   },
