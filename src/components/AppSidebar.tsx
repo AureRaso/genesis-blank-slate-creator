@@ -194,14 +194,15 @@ const AppSidebar = () => {
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
+              {/* Temporalmente oculto - Jugadores para trainers */}
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/students"}>
                 <Link to="/dashboard/students">
                   <Users />
                   <span>{t('sidebar.players')}</span>
                 </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/scheduled-classes"}>
                 <Link to="/dashboard/scheduled-classes">
@@ -228,7 +229,8 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              {club?.enable_monthly_payments && (
+              {/* Temporalmente oculto - Control de pagos para trainers */}
+              {/* {club?.enable_monthly_payments && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/monthly-payments"}>
                   <Link to="/dashboard/monthly-payments">
@@ -237,7 +239,7 @@ const AppSidebar = () => {
                   </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
+              )} */}
               {/* Sistema de Scoring - Temporalmente oculto */}
               {/* {club?.enable_scoring_reports && (
                 <>

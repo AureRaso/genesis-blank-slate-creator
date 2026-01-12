@@ -373,14 +373,14 @@ const TrainerDashboard = () => {
     }
   ];
 
-  // Quick actions
+  // Quick actions - Temporalmente ocultado el botón de Alumnos
   const quickActions = [
-    {
-      title: t('trainerDashboard.quickActions.students'),
-      description: t('trainerDashboard.quickActions.manageStudents'),
-      icon: Users,
-      action: () => navigate("/dashboard/students")
-    },
+    // {
+    //   title: t('trainerDashboard.quickActions.students'),
+    //   description: t('trainerDashboard.quickActions.manageStudents'),
+    //   icon: Users,
+    //   action: () => navigate("/dashboard/students")
+    // },
     {
       title: t('trainerDashboard.quickActions.scheduleClasses'),
       description: t('trainerDashboard.quickActions.configureClasses'),
@@ -518,8 +518,8 @@ const TrainerDashboard = () => {
         </div>
       </div>
 
-      {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
-      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      {/* Activity Backlog Section - Single column on desktop (notifications hidden), hidden on mobile */}
+      <div className="hidden md:block">
         {/* Actividad Reciente */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
@@ -573,8 +573,8 @@ const TrainerDashboard = () => {
           </div>
         </div>
 
-        {/* Unified Notifications Panel */}
-        <div>
+        {/* Unified Notifications Panel - Temporalmente oculto */}
+        {false && <div>
           <div className="mb-3 sm:mb-4">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
               {t('trainerDashboard.notifications.title')}
@@ -875,11 +875,11 @@ const TrainerDashboard = () => {
             });
           })()}
         </div>
-        </div>
+        </div>}
       </div>
 
-      {/* Mobile Notifications Panel - Only visible on mobile */}
-      <div className="md:hidden">
+      {/* Mobile Notifications Panel - Temporalmente oculto */}
+      {false && <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
             {t('trainerDashboard.notifications.title')}
@@ -1180,7 +1180,7 @@ const TrainerDashboard = () => {
             });
           })()}
         </div>
-      </div>
+      </div>}
 
       {/* Substitute Search Sheet (Bottom Sheet for Mobile) */}
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
