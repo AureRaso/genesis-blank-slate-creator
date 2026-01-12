@@ -23,9 +23,12 @@ import {
   ChevronRight,
   Trash2,
   Pencil,
-  User
+  User,
+  GraduationCap
 } from "lucide-react";
-import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment } from "@/hooks/useStudentEnrollments";
+import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment, useClassTrainers, ClassTrainer } from "@/hooks/useStudentEnrollments";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { useArchiveStudent } from "@/hooks/useArchiveStudent";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -59,6 +62,7 @@ const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const [trainerFilter, setTrainerFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<string>("alphabetical"); // "arrival" or "alphabetical"
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
@@ -68,8 +72,48 @@ const AdminStudentsList = () => {
   const [newName, setNewName] = useState("");
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(effectiveClubId);
+  const { data: classTrainersFromHook = [] } = useClassTrainers(effectiveClubId);
   const updateStudentMutation = useUpdateStudentEnrollment();
   const archiveStudentMutation = useArchiveStudent();
+
+  // Get unique trainer IDs from all students' class_trainer_ids
+  const uniqueTrainerIdsFromStudents = [...new Set(
+    students.flatMap(s => s.class_trainer_ids || [])
+  )];
+
+  // Query to get profile names for trainers derived from students (fallback when useClassTrainers doesn't return all trainers due to RLS)
+  const { data: derivedTrainers = [] } = useQuery({
+    queryKey: ["derived-class-trainers", uniqueTrainerIdsFromStudents],
+    queryFn: async () => {
+      if (uniqueTrainerIdsFromStudents.length === 0) return [];
+
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', uniqueTrainerIdsFromStudents);
+
+      if (error) {
+        console.error('Error fetching derived trainers:', error);
+        return [];
+      }
+
+      const trainers: ClassTrainer[] = (profiles || []).map(p => ({
+        profile_id: p.id,
+        full_name: p.full_name || 'Sin nombre',
+      }));
+
+      trainers.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
+
+      return trainers;
+    },
+    enabled: uniqueTrainerIdsFromStudents.length > 0,
+  });
+
+  // Merge trainers from both sources, preferring the larger set
+  // This ensures we show all trainers even if RLS blocks some from the direct query
+  const classTrainers = derivedTrainers.length > classTrainersFromHook.length
+    ? derivedTrainers
+    : classTrainersFromHook;
 
   // Function to normalize text (remove accents)
   const normalizeText = (text: string): string => {
@@ -93,7 +137,7 @@ const AdminStudentsList = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, periodFilter, sortOrder]);
+  }, [searchTerm, statusFilter, periodFilter, trainerFilter, sortOrder]);
 
   const filteredAndSortedStudents = students
     .filter((student) => {
@@ -102,8 +146,9 @@ const AdminStudentsList = () => {
                            normalizeText(student.email).includes(normalizedSearch);
       const matchesStatus = statusFilter === "all" || student.status === statusFilter;
       const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
+      const matchesTrainer = trainerFilter === "all" || (student.class_trainer_ids?.includes(trainerFilter) ?? false);
 
-      return matchesSearch && matchesStatus && matchesPeriod;
+      return matchesSearch && matchesStatus && matchesPeriod && matchesTrainer;
     })
     .sort((a, b) => {
       if (sortOrder === "alphabetical") {
@@ -264,8 +309,9 @@ const AdminStudentsList = () => {
       </Card>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+      <div className="flex flex-col md:flex-row gap-3">
+          {/* Search - takes more space */}
+          <div className="flex-1 min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -277,7 +323,50 @@ const AdminStudentsList = () => {
             </div>
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          {/* Filter dropdowns */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Trainer filter */}
+            <Select value={trainerFilter} onValueChange={setTrainerFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder={t('playersPage.adminStudentsList.trainer.label')} />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('playersPage.adminStudentsList.trainer.all')}</SelectItem>
+                {classTrainers.map(trainer => {
+                  // Show only first name and first surname
+                  const nameParts = trainer.full_name.split(' ');
+                  const shortName = nameParts.length >= 2
+                    ? `${nameParts[0]} ${nameParts[1]}`
+                    : trainer.full_name;
+                  return (
+                    <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                      {shortName}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+
+            {/* Sort order */}
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder={t('playersPage.adminStudentsList.sort.label')} />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alphabetical">{t('playersPage.adminStudentsList.sort.alphabetical')}</SelectItem>
+                <SelectItem value="arrival">{t('playersPage.adminStudentsList.sort.arrival')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Hidden filters - kept for future use */}
+          {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full md:w-40">
               <SelectValue placeholder={t('playersPage.adminStudentsList.status.label')} />
             </SelectTrigger>
@@ -301,20 +390,7 @@ const AdminStudentsList = () => {
               <SelectItem value="semestral">{t('playersPage.adminStudentsList.period.semiannual')}</SelectItem>
               <SelectItem value="anual">{t('playersPage.adminStudentsList.period.annual')}</SelectItem>
             </SelectContent>
-          </Select>
-
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-full md:w-48">
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4" />
-                <SelectValue placeholder={t('playersPage.adminStudentsList.sort.label')} />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="arrival">{t('playersPage.adminStudentsList.sort.arrival')}</SelectItem>
-              <SelectItem value="alphabetical">{t('playersPage.adminStudentsList.sort.alphabetical')}</SelectItem>
-            </SelectContent>
-          </Select>
+          </Select> */}
         </div>
 
         {/* Students List */}

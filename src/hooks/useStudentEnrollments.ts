@@ -28,6 +28,10 @@ export interface StudentEnrollment {
   // Club information
   club_name?: string;
   club_status?: string;
+  // Trainer information (who created the enrollment)
+  trainer_name?: string;
+  // Trainers who teach classes to this student
+  class_trainer_ids?: string[];
 }
 
 export interface EnrollmentForm {
@@ -192,7 +196,8 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
         .from('student_enrollments')
         .select(`
           *,
-          clubs(name, status)
+          clubs(name, status),
+          trainer:profiles!trainer_profile_id(id, full_name)
         `)
         .in('club_id', clubIds)
         .neq("status", "inactive"); // Filter out archived students
@@ -222,16 +227,57 @@ export const useAdminStudentEnrollments = (clubId?: string) => {
         }
       }
 
-      // Transform data to include club information and phone from profiles as fallback
-      const studentsWithClubs = (students || []).map(student => ({
+      // Get class participations to find which trainers teach each student
+      const studentIds = (students || []).map(s => s.id);
+      let studentClassTrainers: Record<string, string[]> = {};
+
+      if (studentIds.length > 0) {
+        const { data: classParticipants } = await supabase
+          .from('class_participants')
+          .select(`
+            student_enrollment_id,
+            programmed_class:programmed_classes(
+              trainer_profile_id,
+              trainer_profile_id_2
+            )
+          `)
+          .in('student_enrollment_id', studentIds);
+
+        if (classParticipants) {
+          // Group trainer_profile_ids by student_enrollment_id
+          classParticipants.forEach(cp => {
+            const studentId = cp.student_enrollment_id;
+            if (!studentClassTrainers[studentId]) {
+              studentClassTrainers[studentId] = [];
+            }
+            // Add primary trainer
+            if (cp.programmed_class?.trainer_profile_id) {
+              if (!studentClassTrainers[studentId].includes(cp.programmed_class.trainer_profile_id)) {
+                studentClassTrainers[studentId].push(cp.programmed_class.trainer_profile_id);
+              }
+            }
+            // Add secondary trainer if exists
+            if (cp.programmed_class?.trainer_profile_id_2) {
+              if (!studentClassTrainers[studentId].includes(cp.programmed_class.trainer_profile_id_2)) {
+                studentClassTrainers[studentId].push(cp.programmed_class.trainer_profile_id_2);
+              }
+            }
+          });
+        }
+      }
+
+      // Transform data to include club, trainer information, and class trainer ids
+      const studentsWithInfo = (students || []).map(student => ({
         ...student,
         // Use phone from enrollment, fallback to phone from profiles
         phone: student.phone || profilePhones[student.email] || '',
         club_name: student.clubs?.name || 'Club desconocido',
         club_status: student.clubs?.status || null,
+        trainer_name: student.trainer?.full_name || null,
+        class_trainer_ids: studentClassTrainers[student.id] || [],
       }));
 
-      return studentsWithClubs as StudentEnrollment[];
+      return studentsWithInfo as StudentEnrollment[];
     },
   });
 };
@@ -601,6 +647,146 @@ export const useUpdateStudentEnrollment = () => {
         description: "No se pudo actualizar los datos del alumno: " + error.message,
         variant: "destructive",
       });
+    },
+  });
+};
+
+// Interface for class trainers (used in filter dropdown)
+export interface ClassTrainer {
+  profile_id: string;
+  full_name: string;
+}
+
+// Hook to get unique trainers who teach classes in the club(s)
+// Uses class_participants to bypass potential RLS restrictions on programmed_classes
+export const useClassTrainers = (clubId?: string) => {
+  return useQuery({
+    queryKey: ["class-trainers", clubId],
+    queryFn: async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Usuario no autenticado');
+
+      // Get user profile to check role
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      let clubIds: string[] = [];
+
+      // If clubId is provided directly (e.g., from superadmin selector), use it
+      if (clubId) {
+        clubIds = [clubId];
+      } else if (userProfile.role === 'superadmin') {
+        // Superadmin with no specific club selected - get ALL their assigned clubs
+        const { data: superadminClubs, error: superadminClubsError } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', userData.user.id);
+
+        if (superadminClubsError) throw superadminClubsError;
+
+        if (!superadminClubs || superadminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = superadminClubs.map(ac => ac.club_id);
+      } else {
+        // Regular admin - get clubs created by this admin
+        const { data: adminClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('created_by_profile_id', userData.user.id);
+
+        if (clubsError) throw clubsError;
+
+        if (!adminClubs || adminClubs.length === 0) {
+          return [];
+        }
+
+        clubIds = adminClubs.map(club => club.id);
+      }
+
+      // Strategy: Get trainers through class_participants which has more permissive RLS
+      // This gets all trainer_profile_ids from classes that have at least one enrolled student
+      const { data: classParticipants, error: participantsError } = await supabase
+        .from('class_participants')
+        .select(`
+          programmed_class:programmed_classes(
+            trainer_profile_id,
+            trainer_profile_id_2,
+            club_id,
+            is_active
+          )
+        `);
+
+      if (participantsError) {
+        console.error('useClassTrainers - Error via class_participants:', participantsError);
+        // Fallback to direct query if class_participants fails
+      }
+
+      // Collect trainer IDs from class_participants results, filtering by club in code
+      const trainerIdsFromParticipants = new Set<string>();
+      if (classParticipants) {
+        classParticipants.forEach(cp => {
+          const pc = cp.programmed_class;
+          // Filter by club_id and is_active in code since we can't filter on nested fields
+          if (pc && pc.is_active && clubIds.includes(pc.club_id)) {
+            if (pc.trainer_profile_id) trainerIdsFromParticipants.add(pc.trainer_profile_id);
+            if (pc.trainer_profile_id_2) trainerIdsFromParticipants.add(pc.trainer_profile_id_2);
+          }
+        });
+      }
+
+      // Also try direct query to programmed_classes (may return fewer results due to RLS)
+      const { data: classes, error: classesError } = await supabase
+        .from('programmed_classes')
+        .select('trainer_profile_id, trainer_profile_id_2')
+        .in('club_id', clubIds)
+        .eq('is_active', true);
+
+      if (classesError) {
+        console.error('useClassTrainers - Error direct query:', classesError);
+      }
+
+      // Collect trainer IDs from direct query
+      const trainerIdsFromClasses = new Set<string>();
+      if (classes) {
+        classes.forEach(cls => {
+          if (cls.trainer_profile_id) trainerIdsFromClasses.add(cls.trainer_profile_id);
+          if (cls.trainer_profile_id_2) trainerIdsFromClasses.add(cls.trainer_profile_id_2);
+        });
+      }
+
+      // Merge both sets - use whichever returned more results, or merge all
+      const allTrainerIds = new Set([...trainerIdsFromParticipants, ...trainerIdsFromClasses]);
+
+      if (allTrainerIds.size === 0) {
+        return [];
+      }
+
+      // Get profile info for these trainers
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', Array.from(allTrainerIds));
+
+      if (profilesError) throw profilesError;
+
+      // Transform to ClassTrainer format
+      const trainers: ClassTrainer[] = (profiles || []).map(p => ({
+        profile_id: p.id,
+        full_name: p.full_name || 'Sin nombre',
+      }));
+
+      // Sort alphabetically by name
+      trainers.sort((a, b) => a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' }));
+
+      return trainers;
     },
   });
 };
