@@ -48,6 +48,7 @@ import BulkEnrollStudentSearch from "@/components/BulkEnrollStudentSearch";
 import { RemoveStudentsDialog } from "@/components/RemoveStudentsDialog";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import OpenClassesTab from "@/components/OpenClassesTab";
+import AssignSecondTrainerDialog from "@/components/AssignSecondTrainerDialog";
 import {
   Dialog,
   DialogContent,
@@ -216,6 +217,15 @@ const WeekAttendancePage = () => {
     classTime: '',
     classDate: '',
     isDeleting: false,
+  });
+
+  // Estado para diálogo de asignar segundo profesor (solo admin/superadmin)
+  const [assignTrainerDialog, setAssignTrainerDialog] = useState<{
+    open: boolean;
+    classData: any | null;
+  }>({
+    open: false,
+    classData: null,
   });
 
   // Hooks para acciones del profesor
@@ -1204,6 +1214,26 @@ const WeekAttendancePage = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                {isAdmin && (
+                                  <DropdownMenuItem
+                                    onClick={() => setAssignTrainerDialog({
+                                      open: true,
+                                      classData: {
+                                        id: classData.id,
+                                        name: classData.name,
+                                        club_id: classData.club_id,
+                                        start_time: classData.start_time,
+                                        trainer_profile_id: classData.trainer_profile_id,
+                                        trainer_profile_id_2: classData.trainer_profile_id_2,
+                                        trainer: classData.trainer,
+                                        trainer_2: classData.trainer_2,
+                                      }
+                                    })}
+                                  >
+                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    Editar clase
+                                  </DropdownMenuItem>
+                                )}
                                 {!hasEnded && (
                                   <DropdownMenuItem
                                     onClick={() => handleCancelClass(classData.id, classData.name, notificationDate, classData.start_time)}
@@ -1950,6 +1980,13 @@ const WeekAttendancePage = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {/* Assign Second Trainer Dialog - Solo admin/superadmin */}
+          <AssignSecondTrainerDialog
+            open={assignTrainerDialog.open}
+            onOpenChange={(open) => setAssignTrainerDialog({ ...assignTrainerDialog, open })}
+            classData={assignTrainerDialog.classData}
+          />
         </TabsContent>
 
         {/* Tab de Clases Abiertas */}

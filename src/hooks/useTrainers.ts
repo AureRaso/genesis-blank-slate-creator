@@ -417,6 +417,50 @@ export const useUpdateTrainer = () => {
   });
 };
 
+// Hook específico para obtener trainers de un club (versión corregida)
+// Usado en AssignSecondTrainerDialog
+export const useTrainersByClubFixed = (clubId: string) => {
+  return useQuery({
+    queryKey: ['trainers', 'by-club-fixed', clubId],
+    queryFn: async () => {
+      if (!clubId) return [];
+
+      // First get trainer_profile_ids for this club
+      const { data: trainerClubsData, error: trainerClubsError } = await supabase
+        .from('trainer_clubs')
+        .select('trainer_profile_id')
+        .eq('club_id', clubId);
+
+      if (trainerClubsError) throw trainerClubsError;
+
+      if (!trainerClubsData || trainerClubsData.length === 0) {
+        return [];
+      }
+
+      const trainerProfileIds = trainerClubsData.map(tc => tc.trainer_profile_id);
+
+      // Then get trainers with their profiles
+      const { data: trainers, error: trainersError } = await supabase
+        .from('trainers')
+        .select(`
+          *,
+          profiles:profile_id (
+            id,
+            full_name,
+            email
+          )
+        `)
+        .in('profile_id', trainerProfileIds)
+        .eq('is_active', true);
+
+      if (trainersError) throw trainersError;
+
+      return trainers || [];
+    },
+    enabled: !!clubId,
+  });
+};
+
 export const useDeleteTrainer = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();

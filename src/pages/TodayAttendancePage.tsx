@@ -45,6 +45,7 @@ import WaitlistManagement from "@/components/WaitlistManagement";
 import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import OpenClassesTab from "@/components/OpenClassesTab";
+import AssignSecondTrainerDialog from "@/components/AssignSecondTrainerDialog";
 import {
   Dialog,
   DialogContent,
@@ -178,6 +179,14 @@ const TodayAttendancePage = () => {
     isDeleting: false,
   });
 
+  // Estado para diálogo de asignar segundo profesor (solo admin/superadmin)
+  const [assignTrainerDialog, setAssignTrainerDialog] = useState<{
+    open: boolean;
+    classData: any | null;
+  }>({
+    open: false,
+    classData: null,
+  });
 
   // Handlers con confirmación
   const handleConfirmAttendance = (participantId: string, participantName: string, scheduledDate: string) => {
@@ -920,6 +929,14 @@ const TodayAttendancePage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {isAdmin && (
+                              <DropdownMenuItem
+                                onClick={() => setAssignTrainerDialog({ open: true, classData })}
+                              >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Editar clase
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time)}
                               className="text-amber-600 focus:text-amber-700"
@@ -1637,6 +1654,13 @@ const TodayAttendancePage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Diálogo para asignar segundo profesor (solo admin) */}
+      <AssignSecondTrainerDialog
+        open={assignTrainerDialog.open}
+        onOpenChange={(open) => setAssignTrainerDialog({ ...assignTrainerDialog, open })}
+        classData={assignTrainerDialog.classData}
+      />
         </TabsContent>
 
         {/* Tab de Clases Abiertas */}
