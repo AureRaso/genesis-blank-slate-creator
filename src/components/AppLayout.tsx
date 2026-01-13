@@ -26,6 +26,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import PadeLockLogo from "@/assets/PadeLock_D5Red.png";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { AddSelfAsStudentModal } from "@/components/AddSelfAsStudentModal";
+import SuperAdminClubSelector from "./SuperAdminClubSelector";
 
 const LANGUAGES = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
@@ -134,8 +135,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <img src={PadeLockLogo} alt="PadeLock" className="h-10 object-contain" />
             </Link>
 
-            {/* Mobile User Menu */}
-            <DropdownMenu>
+            <div className="flex items-center gap-2">
+              {/* SuperAdmin Club Selector - Mobile */}
+              {isSuperAdmin && <SuperAdminClubSelector compact />}
+
+              {/* Mobile User Menu */}
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
                   <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-primary text-white">
@@ -209,6 +214,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </header>
 
           <div className="flex flex-1 min-h-0">

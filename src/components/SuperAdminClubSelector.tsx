@@ -10,12 +10,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 
+interface SuperAdminClubSelectorProps {
+  compact?: boolean; // For mobile header - smaller, different styling
+}
+
 /**
  * Club selector for superadmin users.
  * Allows switching between assigned clubs.
  * Only renders if the user is a superadmin with multiple clubs.
  */
-export function SuperAdminClubSelector() {
+export function SuperAdminClubSelector({ compact = false }: SuperAdminClubSelectorProps) {
   const { isSuperAdmin, superAdminClubs, selectedClubId, setSelectedClubId } = useAuth();
   const { t } = useTranslation();
 
@@ -29,6 +33,16 @@ export function SuperAdminClubSelector() {
 
   // If only one club, show it without dropdown (no need for "all clubs" option)
   if (superAdminClubs.length === 1) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-1.5 px-2 py-1">
+          <Building2 className="h-4 w-4 text-blue-400" />
+          <span className="text-xs text-white font-medium truncate max-w-[100px]">
+            {superAdminClubs[0].name}
+          </span>
+        </div>
+      );
+    }
     return (
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-2">
@@ -36,6 +50,54 @@ export function SuperAdminClubSelector() {
           <span className="font-semibold text-sm">{superAdminClubs[0].name}</span>
         </div>
       </div>
+    );
+  }
+
+  // Compact mode for mobile header
+  if (compact) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 gap-1 hover:bg-white/10"
+          >
+            {isAllClubsSelected ? (
+              <LayoutGrid className="h-4 w-4 text-purple-400" />
+            ) : (
+              <Building2 className="h-4 w-4 text-blue-400" />
+            )}
+            <span className="text-xs text-white font-medium truncate max-w-[100px]">
+              {isAllClubsSelected
+                ? t('superadmin.allClubs', 'Todos')
+                : (selectedClub?.name || '...')
+              }
+            </span>
+            <ChevronDown className="h-3 w-3 text-white/70" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem
+            onClick={() => setSelectedClubId(null)}
+            className={isAllClubsSelected ? 'bg-accent' : ''}
+          >
+            <LayoutGrid className="h-4 w-4 mr-2 text-purple-600" />
+            {t('superadmin.allClubs', 'Todos los clubes')}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {superAdminClubs.map((club) => (
+            <DropdownMenuItem
+              key={club.id}
+              onClick={() => setSelectedClubId(club.id)}
+              className={selectedClubId === club.id ? 'bg-accent' : ''}
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              {club.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 
