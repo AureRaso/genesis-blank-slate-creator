@@ -1202,7 +1202,7 @@ const WeekAttendancePage = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {isAdmin && canCancelClass && !isCancelled && (
+                          {canCancelClass && !isCancelled && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
