@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings, Users } from "lucide-react";
 import { useTrainersByClubFixed } from "@/hooks/useTrainers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ interface ClassData {
   trainer_profile_id_2?: string | null;
   trainer?: { full_name: string } | null;
   trainer_2?: { full_name: string } | null;
+  max_participants?: number;
 }
 
 interface AssignSecondTrainerDialogProps {
@@ -46,6 +48,7 @@ const AssignSecondTrainerDialog = ({
   classData,
 }: AssignSecondTrainerDialogProps) => {
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>("none");
+  const [maxParticipants, setMaxParticipants] = useState<number>(4);
   const [applyToSeries, setApplyToSeries] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
@@ -54,15 +57,11 @@ const AssignSecondTrainerDialog = ({
     classData?.club_id || ""
   );
 
-  // Debug: log trainers data
-  console.log("AssignSecondTrainerDialog - club_id:", classData?.club_id);
-  console.log("AssignSecondTrainerDialog - trainers:", trainers);
-  console.log("AssignSecondTrainerDialog - loadingTrainers:", loadingTrainers);
-
   // Reset state when dialog opens with new class data
   useEffect(() => {
     if (open && classData) {
       setSelectedTrainerId(classData.trainer_profile_id_2 || "none");
+      setMaxParticipants(classData.max_participants || 4);
       setApplyToSeries(false);
     }
   }, [open, classData]);
@@ -78,12 +77,16 @@ const AssignSecondTrainerDialog = ({
     setIsLoading(true);
     try {
       const newTrainerId = selectedTrainerId === "none" ? null : selectedTrainerId;
+      const updateData = {
+        trainer_profile_id_2: newTrainerId,
+        max_participants: maxParticipants,
+      };
 
       if (applyToSeries) {
         // Update all classes in the series (same name, same start_time, same club)
         const { error } = await supabase
           .from("programmed_classes")
-          .update({ trainer_profile_id_2: newTrainerId })
+          .update(updateData)
           .eq("club_id", classData.club_id)
           .eq("name", classData.name)
           .eq("start_time", classData.start_time)
@@ -91,25 +94,17 @@ const AssignSecondTrainerDialog = ({
 
         if (error) throw error;
 
-        toast.success(
-          newTrainerId
-            ? "Segundo profesor asignado a toda la serie"
-            : "Segundo profesor eliminado de toda la serie"
-        );
+        toast.success("Clase actualizada para toda la serie");
       } else {
         // Update only this specific class
         const { error } = await supabase
           .from("programmed_classes")
-          .update({ trainer_profile_id_2: newTrainerId })
+          .update(updateData)
           .eq("id", classData.id);
 
         if (error) throw error;
 
-        toast.success(
-          newTrainerId
-            ? "Segundo profesor asignado correctamente"
-            : "Segundo profesor eliminado correctamente"
-        );
+        toast.success("Clase actualizada correctamente");
       }
 
       // Invalidate queries to refresh the data
@@ -137,8 +132,8 @@ const AssignSecondTrainerDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-blue-600" />
-            Asignar Segundo Profesor
+            <Settings className="h-5 w-5 text-blue-600" />
+            Editar Clase
           </DialogTitle>
           <DialogDescription>
             Clase: <span className="font-medium">{classData.name}</span> ({classData.start_time?.slice(0, 5)})
@@ -171,6 +166,22 @@ const AssignSecondTrainerDialog = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="max-participants" className="text-sm font-medium">
+              Máximo de participantes
+            </Label>
+            <Input
+              id="max-participants"
+              type="number"
+              min={1}
+              max={20}
+              value={maxParticipants}
+              onChange={(e) => setMaxParticipants(Number(e.target.value))}
+              disabled={isLoading}
+              className="w-24"
+            />
           </div>
 
           <div className="flex items-center space-x-2 pt-2">

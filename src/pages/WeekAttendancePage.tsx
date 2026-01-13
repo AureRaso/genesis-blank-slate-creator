@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, UserMinus, MoreVertical } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, UserPlus, Trash2, MessageSquare, LockOpen, ChevronLeft, ChevronRight, Ban, UserMinus, MoreVertical, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1227,10 +1227,11 @@ const WeekAttendancePage = () => {
                                         trainer_profile_id_2: classData.trainer_profile_id_2,
                                         trainer: classData.trainer,
                                         trainer_2: classData.trainer_2,
+                                        max_participants: classData.max_participants,
                                       }
                                     })}
                                   >
-                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    <Settings className="h-4 w-4 mr-2" />
                                     Editar clase
                                   </DropdownMenuItem>
                                 )}

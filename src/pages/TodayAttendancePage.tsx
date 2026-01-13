@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban, MoreVertical } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban, MoreVertical, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -933,7 +933,7 @@ const TodayAttendancePage = () => {
                               <DropdownMenuItem
                                 onClick={() => setAssignTrainerDialog({ open: true, classData })}
                               >
-                                <UserPlus className="h-4 w-4 mr-2" />
+                                <Settings className="h-4 w-4 mr-2" />
                                 Editar clase
                               </DropdownMenuItem>
                             )}
