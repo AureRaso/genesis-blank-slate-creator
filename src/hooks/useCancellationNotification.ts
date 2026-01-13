@@ -33,17 +33,25 @@ interface CancellationResponse {
 export const useSendCancellationNotification = () => {
   return useMutation({
     mutationFn: async (params: SendCancellationParams): Promise<CancellationResponse> => {
-      // Determine which Edge Function to use based on club
-      const useKapso = params.clubId && KAPSO_ENABLED_CLUBS.includes(params.clubId);
-      const functionName = useKapso
-        ? 'send-class-cancellation-kapso'
-        : 'send-class-cancellation-whatsapp';
+      // Solo usar KAPSO para cancelaciones - WHAPI deshabilitado
+      const isKapsoEnabled = params.clubId && KAPSO_ENABLED_CLUBS.includes(params.clubId);
 
-      console.log(`📤 Sending cancellation notifications via ${useKapso ? 'Kapso' : 'Whapi'}...`, params);
+      if (!isKapsoEnabled) {
+        console.log('⚠️ Club not enabled for KAPSO cancellations, skipping notification');
+        return {
+          success: true,
+          message: 'Cancellation notifications disabled for this club',
+          notificationsSent: 0,
+          notificationsFailed: 0,
+          totalParticipants: 0,
+        };
+      }
+
+      console.log(`📤 Sending cancellation notifications via Kapso...`, params);
 
       // Call the Edge Function
       const response = await supabase.functions.invoke<CancellationResponse>(
-        functionName,
+        'send-class-cancellation-kapso',
         {
           body: {
             classId: params.classId,
