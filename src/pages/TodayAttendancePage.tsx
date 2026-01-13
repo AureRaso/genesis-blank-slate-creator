@@ -917,7 +917,7 @@ const TodayAttendancePage = () => {
                       >
                         {confirmedCount}/{maxParticipants}
                       </Badge>
-                      {canCancelClass && !isCancelled && (
+                      {isAdmin && canCancelClass && !isCancelled && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -929,14 +929,12 @@ const TodayAttendancePage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {isAdmin && (
-                              <DropdownMenuItem
-                                onClick={() => setAssignTrainerDialog({ open: true, classData })}
-                              >
-                                <Settings className="h-4 w-4 mr-2" />
-                                Editar clase
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              onClick={() => setAssignTrainerDialog({ open: true, classData })}
+                            >
+                              <Settings className="h-4 w-4 mr-2" />
+                              Editar clase
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time)}
                               className="text-amber-600 focus:text-amber-700"
