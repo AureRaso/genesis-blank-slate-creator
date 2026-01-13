@@ -148,10 +148,10 @@ const TodayAttendancePage = () => {
   // Estado para diálogo de cancelación de clase (soporta múltiples)
   const [cancelClassDialog, setCancelClassDialog] = useState<{
     open: boolean;
-    selectedClasses: { classId: string; className: string; classTime: string }[];
+    selectedClasses: { classId: string; className: string; classTime: string; clubId: string }[];
     classDate: string;
     notifyParticipants: boolean;
-    availableClasses: { classId: string; className: string; classTime: string }[];
+    availableClasses: { classId: string; className: string; classTime: string; clubId: string }[];
     reason: string;
   }>({
     open: false,
@@ -274,6 +274,7 @@ const TodayAttendancePage = () => {
         classId: c.id,
         className: c.name,
         classTime: c.start_time,
+        clubId: c.club_id,
       }))
       .sort((a: any, b: any) => a.classTime.localeCompare(b.classTime));
 
@@ -325,7 +326,7 @@ const TodayAttendancePage = () => {
   };
 
   // Toggle selección de una clase en el diálogo
-  const toggleClassSelection = (classId: string, className: string, classTime: string) => {
+  const toggleClassSelection = (classId: string, className: string, classTime: string, clubId: string) => {
     setCancelClassDialog(prev => {
       const isSelected = prev.selectedClasses.some(c => c.classId === classId);
       if (isSelected) {
@@ -336,7 +337,7 @@ const TodayAttendancePage = () => {
       } else {
         return {
           ...prev,
-          selectedClasses: [...prev.selectedClasses, { classId, className, classTime }],
+          selectedClasses: [...prev.selectedClasses, { classId, className, classTime, clubId }],
         };
       }
     });
@@ -385,6 +386,7 @@ const TodayAttendancePage = () => {
                   className: classItem.className,
                   classTime: classItem.classTime,
                   reason: cancelReason,
+                  clubId: classItem.clubId,
                 });
               }
               resolve();
@@ -1556,7 +1558,7 @@ const TodayAttendancePage = () => {
                           <Checkbox
                             id={`class-today-${classItem.classId}`}
                             checked={cancelClassDialog.selectedClasses.some(c => c.classId === classItem.classId)}
-                            onCheckedChange={() => toggleClassSelection(classItem.classId, classItem.className, classItem.classTime)}
+                            onCheckedChange={() => toggleClassSelection(classItem.classId, classItem.className, classItem.classTime, classItem.clubId)}
                           />
                           <Label htmlFor={`class-today-${classItem.classId}`} className="text-sm cursor-pointer flex-1 text-left">
                             <span className="font-medium">{classItem.classTime.substring(0, 5)}</span>
