@@ -280,6 +280,13 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                       <h4 className="font-semibold text-slate-800 mb-1 truncate">
                         {request.programmed_class?.name || 'Clase'}
                       </h4>
+                      {/* Show child name for guardians */}
+                      {isGuardian && (request as any).child_name && (
+                        <div className="flex items-center gap-1.5 mb-1 text-xs sm:text-sm text-primary font-medium">
+                          <Users className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{(request as any).child_name}</span>
+                        </div>
+                      )}
                       <div className="space-y-1 text-xs sm:text-sm text-slate-600">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 flex-shrink-0" />

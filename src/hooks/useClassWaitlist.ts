@@ -633,22 +633,52 @@ export const useRejectFromWaitlist = () => {
   });
 };
 
-// Hook to get user's own waitlist requests (for players)
+// Hook to get user's own waitlist requests (for players and guardians' children)
 export const useMyWaitlistRequests = () => {
-  const { profile } = useAuth();
+  const { profile, isGuardian } = useAuth();
 
   return useQuery({
-    queryKey: ['my-waitlist-requests', profile?.id],
+    queryKey: ['my-waitlist-requests', profile?.id, isGuardian],
     queryFn: async () => {
       if (!profile?.id || !profile?.email) {
         return [];
       }
 
-      // Get user's enrollment
+      let emailsToSearch: string[] = [profile.email];
+
+      // If guardian, get children's emails
+      if (isGuardian) {
+        const { data: children, error: childrenError } = await supabase
+          .from('account_dependents')
+          .select(`
+            dependent_profile_id,
+            profiles!account_dependents_dependent_profile_id_fkey (
+              id,
+              email
+            )
+          `)
+          .eq('guardian_profile_id', profile.id);
+
+        if (childrenError) {
+          console.error('Error fetching children for waitlist:', childrenError);
+          return [];
+        }
+
+        if (children && children.length > 0) {
+          const childEmails = children
+            .map(c => (c.profiles as any)?.email)
+            .filter(Boolean);
+          emailsToSearch = childEmails;
+        } else {
+          return [];
+        }
+      }
+
+      // Get enrollments for all emails to search (include full_name for guardians)
       const { data: enrollments } = await supabase
         .from('student_enrollments')
-        .select('id')
-        .eq('email', profile.email)
+        .select('id, full_name')
+        .in('email', emailsToSearch)
         .eq('status', 'active');
 
       if (!enrollments || enrollments.length === 0) {
@@ -656,6 +686,7 @@ export const useMyWaitlistRequests = () => {
       }
 
       const enrollmentIds = enrollments.map(e => e.id);
+      const enrollmentsMap = new Map(enrollments.map(e => [e.id, e.full_name]));
 
       // Get all waitlist entries for this user
       const { data: waitlistData, error: waitlistError } = await supabase
@@ -699,9 +730,12 @@ export const useMyWaitlistRequests = () => {
       const transformedData = waitlistData
         .map(item => {
           const classData = classesData?.find(c => c.id === item.class_id);
+          const childName = enrollmentsMap.get(item.student_enrollment_id);
           return {
             ...item,
-            programmed_class: classData || null
+            programmed_class: classData || null,
+            // Include child name for guardian view
+            child_name: isGuardian ? childName : undefined
           };
         })
         .filter(item => {

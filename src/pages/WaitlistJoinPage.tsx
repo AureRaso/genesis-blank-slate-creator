@@ -8,11 +8,18 @@ import { Clock, Calendar, User, CheckCircle2, XCircle, AlertTriangle, Loader2 } 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
+import { GuardianWaitlistFlow } from "@/components/waitlist/GuardianWaitlistFlow";
 
 const WaitlistJoinPage = () => {
   const { classId, date } = useParams<{ classId: string; date: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
+
+  // Si es guardian, usar flujo específico para apuntar a sus hijos
+  // Este condicional NO afecta al flujo de jugadores, entrenadores o admins
+  if (!authLoading && profile?.role === 'guardian' && classId && date) {
+    return <GuardianWaitlistFlow classId={classId} classDate={date} />;
+  }
   const { data: canJoinData, isLoading: checkingEligibility } = useCanJoinWaitlist(classId || '', date || '');
   const { mutate: joinWaitlist, isPending: isJoining, isSuccess } = useJoinWaitlist();
   const [countdown, setCountdown] = useState(3);
