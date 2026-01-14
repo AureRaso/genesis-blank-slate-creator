@@ -17,10 +17,18 @@ const createFormSchema = z.object({
   full_name: z.string().min(1, "Introduce el nombre completo"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(1, "Introduce el teléfono"),
-  club_id: z.string().min(1, "Selecciona un club"),
+  // Support both single club_id (legacy) and club_ids array (multi-club)
+  club_id: z.string().optional(),
+  club_ids: z.array(z.string()).optional(),
   specialty: z.string().optional(),
   photo_url: z.string().url("URL inválida").optional().or(z.literal("")),
   is_active: z.boolean(),
+}).refine(data => {
+  // At least one club must be selected (either via club_id or club_ids)
+  return (data.club_id && data.club_id.length > 0) || (data.club_ids && data.club_ids.length > 0);
+}, {
+  message: "Selecciona al menos un club",
+  path: ["club_ids"],
 });
 
 const editFormSchema = z.object({
@@ -45,6 +53,9 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
 
   const isEditing = !!trainer;
 
+  // Determine if we should show multi-select (when user has access to multiple clubs)
+  const showMultiClubSelect = clubs && clubs.length > 1;
+
   const createForm = useForm<CreateFormData>({
     resolver: zodResolver(createFormSchema),
     defaultValues: {
@@ -52,6 +63,7 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
       email: "",
       phone: "",
       club_id: "",
+      club_ids: [],
       specialty: "",
       photo_url: "",
       is_active: true,
@@ -68,12 +80,17 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
   });
 
   const onCreateSubmit = (data: CreateFormData) => {
+    // Determine club_ids: use club_ids array if multi-select, otherwise use club_id
+    const clubIds = showMultiClubSelect && data.club_ids && data.club_ids.length > 0
+      ? data.club_ids
+      : (data.club_id ? [data.club_id] : []);
+
     // Ensure all required fields are present
     const submitData = {
       full_name: data.full_name,
       email: data.email,
       phone: data.phone,
-      club_id: data.club_id,
+      club_ids: clubIds, // Always send as array for edge function
       specialty: data.specialty,
       photo_url: data.photo_url,
       is_active: data.is_active,
@@ -304,32 +321,74 @@ const TrainerForm = ({ trainer, onClose }: TrainerFormProps) => {
                   )}
                 />*/}
 
-                <FormField
-                  control={createForm.control}
-                  name="club_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('trainersPage.trainerForm.fields.club')}</FormLabel>
-                      <FormControl>
-                        <select
-                          {...field}
-                          className="w-full p-2 border border-gray-300 rounded-md"
-                        >
-                          <option value="">{t('trainersPage.trainerForm.fields.clubPlaceholder')}</option>
+                {/* Show multi-select checkboxes when user has access to multiple clubs */}
+                {showMultiClubSelect ? (
+                  <FormField
+                    control={createForm.control}
+                    name="club_ids"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('trainersPage.trainerForm.fields.club')}</FormLabel>
+                        <FormDescription className="mb-2">
+                          Selecciona los clubes donde el entrenador dará clases
+                        </FormDescription>
+                        <div className="space-y-2 border border-gray-200 rounded-md p-3 max-h-48 overflow-y-auto">
                           {clubs?.map((club) => (
-                            <option key={club.id} value={club.id}>
-                              {club.name}
-                            </option>
+                            <div key={club.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`club-${club.id}`}
+                                checked={field.value?.includes(club.id) || false}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValues, club.id]);
+                                  } else {
+                                    field.onChange(currentValues.filter((id: string) => id !== club.id));
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`club-${club.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                {club.name}
+                              </label>
+                            </div>
                           ))}
-                        </select>
-                      </FormControl>
-                      <FormDescription>
-                        {t('trainersPage.trainerForm.fields.clubDescription')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  /* Show single select dropdown when user has access to only one club */
+                  <FormField
+                    control={createForm.control}
+                    name="club_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('trainersPage.trainerForm.fields.club')}</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="w-full p-2 border border-gray-300 rounded-md"
+                          >
+                            <option value="">{t('trainersPage.trainerForm.fields.clubPlaceholder')}</option>
+                            {clubs?.map((club) => (
+                              <option key={club.id} value={club.id}>
+                                {club.name}
+                              </option>
+                            ))}
+                          </select>
+                        </FormControl>
+                        <FormDescription>
+                          {t('trainersPage.trainerForm.fields.clubDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={createForm.control}

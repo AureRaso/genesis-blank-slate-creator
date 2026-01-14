@@ -68,14 +68,26 @@ const TrainerDashboard = () => {
   const [processedRequests, setProcessedRequests] = useState<Map<string, 'approved' | 'rejected'>>(new Map());
   const { profile } = useAuth();
 
-  // Fetch classes with absences
-  const { data: classesWithAbsences } = useClassesWithAbsences(profile?.club_id);
+  // Get trainer profile first (needed for club IDs)
+  const {
+    data: trainerProfile,
+    isLoading: profileLoading
+  } = useMyTrainerProfile();
+
+  // Get trainer's club IDs (supports multi-club trainers)
+  const trainerClubIds = trainerProfile?.trainer_clubs?.map(tc => tc.club_id) || [];
+  // Keep first club for backward compatibility with hooks that don't support arrays yet
+  const trainerClubId = trainerClubIds[0];
+
+  // Fetch classes with absences (uses trainer's clubs for multi-club support)
+  const { data: classesWithAbsences } = useClassesWithAbsences(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
+  // WhatsApp groups still use profile.club_id (not modified per plan)
   const { data: allWhatsAppGroups } = useAllWhatsAppGroups(profile?.club_id);
 
-  // Fetch pending waitlist requests
-  const { data: waitlistRequests } = usePendingWaitlistRequests(profile?.club_id);
+  // Fetch pending waitlist requests (uses trainer's clubs for multi-club support)
+  const { data: waitlistRequests } = usePendingWaitlistRequests(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
 
@@ -93,32 +105,31 @@ const TrainerDashboard = () => {
   });
 
   const {
-    data: trainerProfile,
-    isLoading: profileLoading
-  } = useMyTrainerProfile();
-
-  // Get trainer's club ID
-  const trainerClubId = trainerProfile?.trainer_clubs?.[0]?.club_id;
-
-  const {
     data: myClasses,
     isLoading: classesLoading
   } = useProgrammedClasses(trainerClubId);
 
   const { data: todayClasses } = useTodayAttendance();
 
-  // Get total students from the club
+  // Get total students from trainer's clubs (supports multi-club)
   const { data: totalStudents } = useQuery({
-    queryKey: ['club-total-students', trainerClubId],
+    queryKey: ['club-total-students', trainerClubIds],
     queryFn: async () => {
-      if (!trainerClubId) return 0;
+      if (trainerClubIds.length === 0) return 0;
 
-      // Get all student enrollments for this club
-      const { data, error } = await supabase
+      // Get all student enrollments for trainer's club(s)
+      let query = supabase
         .from('student_enrollments')
         .select('id', { count: 'exact' })
-        .eq('club_id', trainerClubId)
         .eq('status', 'active');
+
+      if (trainerClubIds.length === 1) {
+        query = query.eq('club_id', trainerClubIds[0]);
+      } else {
+        query = query.in('club_id', trainerClubIds);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching club students:', error);
@@ -127,7 +138,7 @@ const TrainerDashboard = () => {
 
       return data?.length || 0;
     },
-    enabled: !!trainerClubId
+    enabled: trainerClubIds.length > 0
   });
 
   // Fetch recent activities

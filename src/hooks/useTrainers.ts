@@ -29,7 +29,9 @@ export type Trainer = {
 export type CreateTrainerData = {
   full_name: string;
   email: string;
-  club_id: string;
+  // Support both single club_id (legacy) and club_ids array (multi-club)
+  club_id?: string;
+  club_ids?: string[];
   phone: string;
   specialty?: string;
   photo_url?: string;
@@ -297,10 +299,15 @@ export const useCreateTrainer = () => {
       // Obtener el ID del usuario actual (admin) que está creando el profesor
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Determine club_ids: use club_ids array if provided, otherwise use club_id
+      const clubIds = trainerData.club_ids && trainerData.club_ids.length > 0
+        ? trainerData.club_ids
+        : (trainerData.club_id ? [trainerData.club_id] : []);
+
       const requestBody = {
         full_name: trainerData.full_name,
         email: trainerData.email,
-        club_id: trainerData.club_id,
+        club_ids: clubIds, // Always send as array (edge function handles both)
         phone: trainerData.phone,
         specialty: trainerData.specialty || null,
         photo_url: trainerData.photo_url || null,

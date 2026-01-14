@@ -24,15 +24,25 @@ serve(async (req) => {
       }
     )
 
-    const { full_name, email, club_id, phone, specialty, photo_url, is_active, created_by_id } = await req.json()
+    const body = await req.json()
+    const { full_name, email, club_id, club_ids, phone, specialty, photo_url, is_active, created_by_id } = body
+
+    // Support both club_id (legacy) and club_ids (multi-club)
+    // Determine final club_ids array
+    const finalClubIds: string[] = club_ids && Array.isArray(club_ids) && club_ids.length > 0
+      ? club_ids
+      : (club_id ? [club_id] : [])
 
     // Validar datos requeridos
-    if (!full_name || !email || !club_id) {
+    if (!full_name || !email || finalClubIds.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: full_name, email, club_id' }),
+        JSON.stringify({ error: 'Missing required fields: full_name, email, and at least one club' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Use first club as primary for profile.club_id and email
+    const primaryClubId = finalClubIds[0]
 
     // Obtener información del administrador que crea el profesor
     let adminName = 'el administrador'
@@ -48,14 +58,27 @@ serve(async (req) => {
       }
     }
 
-    // Obtener información del club
+    // Obtener información del club primario (para el email)
     const { data: clubData } = await supabaseAdmin
       .from('clubs')
       .select('name')
-      .eq('id', club_id)
+      .eq('id', primaryClubId)
       .single()
 
     const clubName = clubData?.name || 'el club'
+
+    // Get all club names for the email if multi-club
+    let allClubNames = clubName
+    if (finalClubIds.length > 1) {
+      const { data: allClubs } = await supabaseAdmin
+        .from('clubs')
+        .select('name')
+        .in('id', finalClubIds)
+
+      if (allClubs && allClubs.length > 0) {
+        allClubNames = allClubs.map(c => c.name).join(', ')
+      }
+    }
 
     // 1. Crear usuario en Auth con la contraseña fija
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -85,12 +108,13 @@ serve(async (req) => {
     }
 
     // 2. Actualizar el perfil automáticamente creado por el trigger
-    // El trigger ya creó un perfil con role 'player', lo actualizamos a 'trainer' y asignamos el club
+    // El trigger ya creó un perfil con role 'player', lo actualizamos a 'trainer'
+    // For multi-club trainers, we use primaryClubId but trainer_clubs is the source of truth
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         role: 'trainer',
-        club_id: club_id
+        club_id: primaryClubId // Use first club as primary
       })
       .eq('id', authUser.user.id)
 
@@ -120,20 +144,22 @@ serve(async (req) => {
       console.error('Trainer error:', trainerError)
       // Si falla el trainer, limpiar usuario y perfil
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
-      
+
       return new Response(
         JSON.stringify({ error: `Error creating trainer: ${trainerError.message}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // 4. Crear relación trainer-club
+    // 4. Crear relación trainer-club(s) - supports multi-club
+    const trainerClubInserts = finalClubIds.map(clubId => ({
+      trainer_profile_id: authUser.user.id,
+      club_id: clubId
+    }))
+
     const { error: trainerClubError } = await supabaseAdmin
       .from('trainer_clubs')
-      .insert({
-        trainer_profile_id: authUser.user.id,
-        club_id: club_id
-      })
+      .insert(trainerClubInserts)
 
     if (trainerClubError) {
       console.error('Trainer club error:', trainerClubError)
@@ -174,7 +200,7 @@ serve(async (req) => {
                 <div class="content">
                   <p>Hola <strong>${full_name}</strong>,</p>
 
-                  <p>${adminName} te ha dado de alta como <strong>profesor</strong> en <strong>${clubName}</strong>.</p>
+                  <p>${adminName} te ha dado de alta como <strong>profesor</strong> en <strong>${allClubNames}</strong>.</p>
 
                   <p>Ya puedes acceder a la plataforma Padelock para gestionar tus clases y alumnos.</p>
 
