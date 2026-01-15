@@ -80,19 +80,32 @@ const TrainerDashboard = () => {
   const trainerClubId = trainerClubIds[0];
 
   // Fetch classes with absences (uses trainer's clubs for multi-club support)
-  const { data: classesWithAbsences } = useClassesWithAbsences(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
+  const { data: allClassesWithAbsences } = useClassesWithAbsences(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
   // WhatsApp groups still use profile.club_id (not modified per plan)
   const { data: allWhatsAppGroups } = useAllWhatsAppGroups(profile?.club_id);
 
   // Fetch pending waitlist requests (uses trainer's clubs for multi-club support)
-  const { data: waitlistRequests } = usePendingWaitlistRequests(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
+  const { data: allWaitlistRequests } = usePendingWaitlistRequests(undefined, trainerClubIds.length > 0 ? trainerClubIds : undefined);
   const { mutate: approveRequest, isPending: isApproving } = useApproveWaitlistRequest();
   const { mutate: rejectRequest, isPending: isRejecting } = useRejectWaitlistRequest();
 
-  // Filtrar solicitudes que no deben mostrarse (más de 1h después del inicio de clase)
-  const filteredWaitlistRequests = waitlistRequests?.filter((request) => {
+  // Filtrar clases con ausencias - solo mostrar las clases donde el trainer es el profesor principal
+  const classesWithAbsences = allClassesWithAbsences?.filter((classData) => {
+    return classData.trainer?.id === profile?.id;
+  });
+
+  // Obtener los IDs de las clases del trainer para filtrar waitlist
+  const trainerClassIds = new Set(classesWithAbsences?.map(c => c.id) || []);
+
+  // Filtrar solicitudes de waitlist:
+  // 1. Solo las clases del trainer
+  // 2. No mostrar si han pasado más de 1h desde el inicio de la clase
+  const filteredWaitlistRequests = allWaitlistRequests?.filter((request) => {
+    // Verificar que la clase pertenece al trainer
+    if (!trainerClassIds.has(request.class_id)) return false;
+
     const classStartTime = request.programmed_class.start_time;
     const [hours, minutes] = classStartTime.split(':').map(Number);
     const classStartDate = new Date();
@@ -529,8 +542,8 @@ const TrainerDashboard = () => {
         </div>
       </div>
 
-      {/* Activity Backlog Section - Single column on desktop (notifications hidden), hidden on mobile */}
-      <div className="hidden md:block">
+      {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Actividad Reciente */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
@@ -584,8 +597,8 @@ const TrainerDashboard = () => {
           </div>
         </div>
 
-        {/* Unified Notifications Panel - Temporalmente oculto */}
-        {false && <div>
+        {/* Unified Notifications Panel */}
+        <div>
           <div className="mb-3 sm:mb-4">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
               {t('trainerDashboard.notifications.title')}
@@ -886,11 +899,11 @@ const TrainerDashboard = () => {
             });
           })()}
         </div>
-        </div>}
+        </div>
       </div>
 
-      {/* Mobile Notifications Panel - Temporalmente oculto */}
-      {false && <div className="md:hidden">
+      {/* Mobile Notifications Panel */}
+      <div className="md:hidden">
         <div className="mb-3">
           <h3 className="text-base font-bold text-[#10172a]">
             {t('trainerDashboard.notifications.title')}
@@ -1191,7 +1204,7 @@ const TrainerDashboard = () => {
             });
           })()}
         </div>
-      </div>}
+      </div>
 
       {/* Substitute Search Sheet (Bottom Sheet for Mobile) */}
       <Sheet open={substituteDialog.open} onOpenChange={(open) => setSubstituteDialog({ ...substituteDialog, open })}>
