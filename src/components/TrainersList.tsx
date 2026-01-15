@@ -31,29 +31,30 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
   const trainerName = trainer.profiles?.full_name || t('trainersPage.trainersList.fallback.nameNotAvailable');
   const trainerEmail = trainer.profiles?.email || t('trainersPage.trainersList.fallback.emailNotAvailable');
 
-  // Get club info from trainer_clubs join
-  const clubName = trainer.trainer_clubs?.[0]?.clubs?.name || t('trainersPage.trainersList.fallback.clubNotAssigned');
+  // Get all clubs from trainer_clubs join (supports multi-club trainers)
+  const trainerClubs = trainer.trainer_clubs || [];
+  const hasMultipleClubs = trainerClubs.length > 1;
 
   return (
     <Card className="hover:shadow-lg transition-all duration-300">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <Avatar className="h-12 w-12 flex-shrink-0">
               <AvatarImage src={trainer.photo_url || undefined} alt={trainerName} />
               <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white">
                 {getInitials(trainerName)}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="text-lg">{trainerName}</CardTitle>
-              <CardDescription className="text-sm">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-lg truncate">{trainerName}</CardTitle>
+              <CardDescription className="text-sm truncate">
                 {trainerEmail}
               </CardDescription>
             </div>
           </div>
           {isAdmin && (
-            <div className="flex space-x-1">
+            <div className="flex flex-shrink-0">
               <Button variant="ghost" size="icon" onClick={() => onEditTrainer(trainer)}>
                 <Edit className="h-4 w-4" />
               </Button>
@@ -97,10 +98,22 @@ const TrainerCard = ({ trainer, onEditTrainer }: { trainer: Trainer; onEditTrain
         )}
 
         <div className="space-y-1">
-          <p className="text-sm font-medium">{t('trainersPage.trainersList.assignedClub')}</p>
-          <Badge variant="secondary" className="text-xs">
-            {clubName}
-          </Badge>
+          <p className="text-sm font-medium">
+            {hasMultipleClubs ? t('trainersPage.trainersList.assignedClubs', 'Clubs asignados') : t('trainersPage.trainersList.assignedClub')}
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {trainerClubs.length > 0 ? (
+              trainerClubs.map((tc) => (
+                <Badge key={tc.club_id} variant="secondary" className="text-xs">
+                  {tc.clubs?.name || t('trainersPage.trainersList.fallback.clubNotAssigned')}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                {t('trainersPage.trainersList.fallback.clubNotAssigned')}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">
