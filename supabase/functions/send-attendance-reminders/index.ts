@@ -24,6 +24,8 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel
   'a994e74e-0a7f-4721-8c0f-e23100a01614', // Wild Padel Indoor
   'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
+  '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy
+  '6fde47fc-c531-4d5e-a54a-025fcd2a4f9c', // X El Padel Lepe
 ];
 
 // Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)

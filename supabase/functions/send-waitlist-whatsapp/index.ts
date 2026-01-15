@@ -20,11 +20,15 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 // Club IDs with WhatsApp notifications enabled
-const WHATSAPP_ENABLED_CLUBS = [
+const WHATSAPP_ENABLED_CLUBS: string[] = [
   'cc0a5265-99c5-4b99-a479-5334280d0c6d', // Gali
   'bbc10821-1c94-4b62-97ac-2fde0708cefd', // La Red 21 Galisport
   '09e8aa4e-69fa-4432-aedb-e7f831b3ebcc', // SVQ Academy
   'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
+  'a994e74e-0a7f-4721-8c0f-e23100a01614', // Wild Padel Indoor
+  '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel
+  '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy
+  '6fde47fc-c531-4d5e-a54a-025fcd2a4f9c', // X El Padel Lepe
 ];
 
 /**
@@ -204,6 +208,10 @@ serve(async (req) => {
     if (!messageSent) {
       throw new Error('Failed to send WhatsApp message');
     }
+
+    // Add 30 second delay to protect account from bans
+    console.log('Waiting 30 seconds before next message...');
+    await new Promise(resolve => setTimeout(resolve, 30000));
 
     return new Response(JSON.stringify({
       success: true,
