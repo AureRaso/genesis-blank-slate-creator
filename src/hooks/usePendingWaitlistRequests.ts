@@ -185,12 +185,38 @@ export const useApproveWaitlistRequest = () => {
 
       if (updateError) throw updateError;
 
+      // Get other pending entries BEFORE expiring them (for rejection notifications)
+      const { data: otherPendingEntries } = await supabase
+        .from('class_waitlist')
+        .select('id, student_enrollment_id')
+        .eq('class_id', classId)
+        .eq('class_date', waitlistEntry.class_date)
+        .eq('status', 'pending')
+        .neq('id', waitlistId);
+
+      // Expire other pending entries for this class/date
+      if (otherPendingEntries && otherPendingEntries.length > 0) {
+        console.log(`📊 [WAITLIST] Expiring ${otherPendingEntries.length} other pending entries`);
+        const { error: expireError } = await supabase
+          .from('class_waitlist')
+          .update({ status: 'expired' })
+          .eq('class_id', classId)
+          .eq('class_date', waitlistEntry.class_date)
+          .eq('status', 'pending')
+          .neq('id', waitlistId);
+
+        if (expireError) {
+          console.error('Error expiring other waitlist entries:', expireError);
+        }
+      }
+
       // Return data needed for notifications
       return {
         waitlistId,
         classId,
         studentEnrollmentId: waitlistEntry.student_enrollment_id,
-        classDate: waitlistEntry.class_date
+        classDate: waitlistEntry.class_date,
+        expiredEntries: otherPendingEntries || []
       };
     },
     onSuccess: async (result) => {
@@ -262,6 +288,51 @@ export const useApproveWaitlistRequest = () => {
             console.error('Error sending acceptance WhatsApp:', whatsappError);
           } else {
             console.log('✅ [WHATSAPP] Acceptance WhatsApp sent to:', studentData.email);
+          }
+
+          // Send rejection notifications to expired waitlist entries
+          if (result.expiredEntries && result.expiredEntries.length > 0) {
+            console.log(`📊 [WAITLIST-EXPIRED] Sending rejection notifications to ${result.expiredEntries.length} expired entries`);
+
+            for (const expiredEntry of result.expiredEntries) {
+              try {
+                // Fetch expired student data
+                const { data: expiredStudentData } = await supabase
+                  .from('student_enrollments')
+                  .select('full_name, email')
+                  .eq('id', expiredEntry.student_enrollment_id)
+                  .single();
+
+                if (expiredStudentData) {
+                  const rejectionPayload = {
+                    type: 'rejected',
+                    studentEmail: expiredStudentData.email,
+                    studentName: expiredStudentData.full_name,
+                    className: classData.name,
+                    classDate: result.classDate,
+                    classTime: classData.start_time,
+                    clubName: (classData.clubs as any)?.name || ''
+                  };
+
+                  // Send rejection email
+                  console.log('📧 [EXPIRED] Sending rejection email to:', expiredStudentData.email);
+                  await supabase.functions.invoke('send-waitlist-email', {
+                    body: rejectionPayload
+                  });
+
+                  // Send rejection WhatsApp
+                  console.log('📱 [EXPIRED] Sending rejection WhatsApp to:', expiredStudentData.email);
+                  await supabase.functions.invoke('send-waitlist-whatsapp', {
+                    body: rejectionPayload
+                  });
+
+                  console.log('✅ [EXPIRED] Rejection notifications sent to:', expiredStudentData.email);
+                }
+              } catch (expiredNotificationError) {
+                console.error('❌ [EXPIRED] Error sending rejection notification:', expiredNotificationError);
+                // Continue with next expired entry even if one fails
+              }
+            }
           }
         }
       } catch (notificationError) {
