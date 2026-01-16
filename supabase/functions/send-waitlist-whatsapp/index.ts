@@ -33,6 +33,62 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
 ];
 
+// Multi-language message templates
+const MESSAGE_TEMPLATES: Record<string, { accepted: string; rejected: string }> = {
+  es: {
+    accepted: `*¡Ya tienes plaza en el entrenamiento!*
+
+Clase: {className}
+Fecha: {date}
+Hora: {time}
+{clubLine}
+
+¡Nos vemos en la pista!`,
+    rejected: `Hola {name}!
+
+El entrenamiento del {date} a las {time} ha quedado completo y no ha sido posible darte plaza esta vez.
+
+Gracias por estar pendiente. *¡La siguiente te esperamos!*`
+  },
+  en: {
+    accepted: `*You have a spot in the training!*
+
+Class: {className}
+Date: {date}
+Time: {time}
+{clubLine}
+
+See you on the court!`,
+    rejected: `Hi {name}!
+
+The training on {date} at {time} is now full and we couldn't give you a spot this time.
+
+Thanks for your interest. *We'll be waiting for you next time!*`
+  },
+  it: {
+    accepted: `*Hai un posto nell'allenamento!*
+
+Classe: {className}
+Data: {date}
+Ora: {time}
+{clubLine}
+
+Ci vediamo in campo!`,
+    rejected: `Ciao {name}!
+
+L'allenamento del {date} alle {time} è ora al completo e non è stato possibile darti un posto questa volta.
+
+Grazie per l'interesse. *Ti aspettiamo la prossima volta!*`
+  }
+};
+
+// Club line translations
+const CLUB_LINE_TEMPLATES: Record<string, string> = {
+  es: 'Club: {clubName}',
+  en: 'Club: {clubName}',
+  it: 'Club: {clubName}'
+};
+
 /**
  * Format phone number for Whapi
  */
@@ -51,11 +107,17 @@ function formatPhoneNumber(phone: string): string {
 }
 
 /**
- * Format date to Spanish
+ * Format date to localized string
  */
-function formatDateToSpanish(dateStr: string): string {
+function formatDateLocalized(dateStr: string, language: string): string {
   const dateObj = new Date(dateStr);
-  return dateObj.toLocaleDateString('es-ES', {
+  const localeMap: Record<string, string> = {
+    es: 'es-ES',
+    en: 'en-US',
+    it: 'it-IT'
+  };
+  const locale = localeMap[language] || 'es-ES';
+  return dateObj.toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long'
@@ -63,34 +125,37 @@ function formatDateToSpanish(dateStr: string): string {
 }
 
 /**
- * Format accepted message
+ * Format accepted message with i18n support
  */
-function formatAcceptedMessage(request: SendWaitlistWhatsAppRequest): string {
-  const formattedDate = formatDateToSpanish(request.classDate);
+function formatAcceptedMessage(request: SendWaitlistWhatsAppRequest, language: string = 'es'): string {
+  const formattedDate = formatDateLocalized(request.classDate, language);
   const time = request.classTime.substring(0, 5);
+  const templates = MESSAGE_TEMPLATES[language] || MESSAGE_TEMPLATES['es'];
+  const clubLineTemplate = CLUB_LINE_TEMPLATES[language] || CLUB_LINE_TEMPLATES['es'];
 
-  return `*Ya tienes plaza en el entrenamiento!*
+  const clubLine = request.clubName
+    ? clubLineTemplate.replace('{clubName}', request.clubName)
+    : '';
 
-Clase: ${request.className}
-Fecha: ${formattedDate}
-Hora: ${time}
-${request.clubName ? `Club: ${request.clubName}` : ''}
-
-Nos vemos en la pista!`;
+  return templates.accepted
+    .replace('{className}', request.className)
+    .replace('{date}', formattedDate)
+    .replace('{time}', time)
+    .replace('{clubLine}', clubLine);
 }
 
 /**
- * Format rejected message
+ * Format rejected message with i18n support
  */
-function formatRejectedMessage(request: SendWaitlistWhatsAppRequest): string {
-  const formattedDate = formatDateToSpanish(request.classDate);
+function formatRejectedMessage(request: SendWaitlistWhatsAppRequest, language: string = 'es'): string {
+  const formattedDate = formatDateLocalized(request.classDate, language);
   const time = request.classTime.substring(0, 5);
+  const templates = MESSAGE_TEMPLATES[language] || MESSAGE_TEMPLATES['es'];
 
-  return `Hola ${request.studentName}!
-
-El entrenamiento del ${formattedDate} a las ${time} ha quedado completo y no ha sido posible darte plaza esta vez.
-
-Gracias por estar pendiente. *La siguiente te esperamos!*`;
+  return templates.rejected
+    .replace('{name}', request.studentName)
+    .replace('{date}', formattedDate)
+    .replace('{time}', time);
 }
 
 async function sendWhatsAppMessage(phone: string, message: string): Promise<boolean> {
@@ -160,12 +225,16 @@ serve(async (req) => {
       throw new Error('Invalid type. Must be "accepted" or "rejected"');
     }
 
-    // Get student phone and club from database
+    // Get student phone, club and language from database
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: studentData, error: studentError } = await supabaseClient
       .from('student_enrollments')
-      .select('phone, club_id')
+      .select(`
+        phone,
+        club_id,
+        clubs!inner(default_language)
+      `)
       .eq('email', request.studentEmail)
       .single();
 
@@ -199,10 +268,14 @@ serve(async (req) => {
       });
     }
 
-    // Format message based on type
+    // Get club language, fallback to Spanish
+    const clubLanguage = (studentData.clubs as any)?.default_language || 'es';
+    console.log(`Using language: ${clubLanguage} for student ${request.studentEmail}`);
+
+    // Format message based on type and language
     const message = request.type === 'accepted'
-      ? formatAcceptedMessage(request)
-      : formatRejectedMessage(request);
+      ? formatAcceptedMessage(request, clubLanguage)
+      : formatRejectedMessage(request, clubLanguage);
 
     // Send WhatsApp
     const messageSent = await sendWhatsAppMessage(studentData.phone, message);
