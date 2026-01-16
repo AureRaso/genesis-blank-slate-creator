@@ -1,19 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanJoinWaitlist, useJoinWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Clock, Calendar, User, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { GuardianWaitlistFlow } from "@/components/waitlist/GuardianWaitlistFlow";
 
 const WaitlistJoinPage = () => {
   const { classId, date } = useParams<{ classId: string; date: string }>();
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
 
   // Si es guardian, usar flujo específico para apuntar a sus hijos
   // Este condicional NO afecta al flujo de jugadores, entrenadores o admins
@@ -74,7 +77,7 @@ const WaitlistJoinPage = () => {
       <div className="flex items-center justify-center min-h-screen w-full">
         <div className="text-center mx-auto">
           <Loader2 className="h-8 w-8 animate-spin text-playtomic-orange mx-auto mb-4" />
-          <p className="text-muted-foreground">Verificando disponibilidad...</p>
+          <p className="text-muted-foreground">{t('waitlistJoin.checking')}</p>
         </div>
       </div>
     );
@@ -87,15 +90,13 @@ const WaitlistJoinPage = () => {
         <Card className="w-full max-w-md border-green-300 mx-auto">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <CheckCircle2 className="h-16 w-16 text-green-600 mb-4" />
-            <h3 className="text-2xl font-bold text-green-900 mb-2">¡Te has unido!</h3>
+            <h3 className="text-2xl font-bold text-green-900 mb-2">{t('waitlistJoin.success.title')}</h3>
             <p className="text-center text-muted-foreground mb-4">
-              Has sido añadido a la lista de espera correctamente.
-              <br />
-              El profesor revisará tu solicitud pronto.
+              {t('waitlistJoin.success.message')}
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Redirigiendo al dashboard en {countdown}s...</span>
+              <span>{t('waitlistJoin.success.redirecting', { count: countdown })}</span>
             </div>
           </CardContent>
         </Card>
@@ -108,8 +109,8 @@ const WaitlistJoinPage = () => {
       <div className="flex items-center justify-center min-h-screen p-4 w-full">
         <Card className="w-full max-w-md border-destructive mx-auto">
           <CardHeader>
-            <CardTitle className="text-destructive">Enlace inválido</CardTitle>
-            <CardDescription>El enlace que has seguido no es válido</CardDescription>
+            <CardTitle className="text-destructive">{t('waitlistJoin.invalidLink.title')}</CardTitle>
+            <CardDescription>{t('waitlistJoin.invalidLink.description')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -126,13 +127,13 @@ const WaitlistJoinPage = () => {
     }
   };
 
-  // Format date nicely
-  const formattedDate = date ? format(new Date(date), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es }) : '';
+  // Format date nicely using the current language locale
+  const formattedDate = date ? format(new Date(date), "EEEE, d MMMM yyyy", { locale: getDateFnsLocale() }) : '';
 
   // Show error states (but not for not_authenticated - that should show the full page with login button)
   if (canJoinData && !canJoinData.canJoin && canJoinData.reason !== 'not_authenticated') {
     let icon = <AlertTriangle className="h-12 w-12 text-yellow-600" />;
-    let title = "No disponible";
+    let title = t('waitlistJoin.states.notAvailable');
     let colorClass = "border-yellow-300";
     let bgClass = "bg-yellow-50";
 
@@ -141,21 +142,21 @@ const WaitlistJoinPage = () => {
       colorClass = "border-destructive";
       bgClass = "bg-red-50";
       if (canJoinData.reason === 'class_ended') {
-        title = "Clase finalizada";
+        title = t('waitlistJoin.states.classEnded');
       }
     } else if (canJoinData.reason === 'class_full') {
       icon = <XCircle className="h-12 w-12 text-orange-600" />;
-      title = "Plaza cubierta";
+      title = t('waitlistJoin.states.spotTaken');
       colorClass = "border-orange-300";
       bgClass = "bg-orange-50";
     } else if (canJoinData.reason === 'already_in_waitlist' || canJoinData.reason === 'already_accepted') {
       icon = <CheckCircle2 className="h-12 w-12 text-green-600" />;
-      title = "Ya estás en lista";
+      title = t('waitlistJoin.states.alreadyInList');
       colorClass = "border-green-300";
       bgClass = "bg-green-50";
     } else if (canJoinData.reason === 'already_enrolled') {
       icon = <CheckCircle2 className="h-12 w-12 text-green-600" />;
-      title = "Ya inscrito";
+      title = t('waitlistJoin.states.alreadyEnrolled');
       colorClass = "border-green-300";
       bgClass = "bg-green-50";
     }
@@ -187,9 +188,9 @@ const WaitlistJoinPage = () => {
               <Calendar className="h-8 w-8 text-blue-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl">¡Plaza de clase disponible!</CardTitle>
+          <CardTitle className="text-2xl">{t('waitlistJoin.main.title')}</CardTitle>
           <CardDescription className="text-base">
-            Un alumno ha cancelado su asistencia y hay una plaza disponible
+            {t('waitlistJoin.main.subtitle')}
           </CardDescription>
         </CardHeader>
 
@@ -216,15 +217,14 @@ const WaitlistJoinPage = () => {
               <Alert className="border-blue-200 bg-blue-50">
                 <AlertTriangle className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-sm">
-                  <strong>Importante:</strong> Al unirte a la lista de espera, tu solicitud será revisada por el profesor.
-                  Si eres aceptado, recibirás una confirmación y serás agregado automáticamente a la clase.
+                  <strong>{t('waitlistJoin.main.importantTitle')}</strong> {t('waitlistJoin.main.importantText')}
                 </AlertDescription>
               </Alert>
 
               {/* Time limit info */}
               <div className="text-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 inline mr-1" />
-                La lista de espera se cierra 3 horas antes de la clase
+                {t('waitlistJoin.main.closesInfo')}
               </div>
 
               {/* Action Button */}
@@ -232,7 +232,7 @@ const WaitlistJoinPage = () => {
                 {authLoading ? (
                   <Button size="lg" className="w-full" disabled>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Cargando...
+                    {t('waitlistJoin.buttons.loading')}
                   </Button>
                 ) : !user ? (
                   // Not authenticated - show login button
@@ -246,7 +246,7 @@ const WaitlistJoinPage = () => {
                     }}
                   >
                     <User className="h-4 w-4 mr-2" />
-                    Iniciar sesión para unirme
+                    {t('waitlistJoin.buttons.loginToJoin')}
                   </Button>
                 ) : (
                   // Authenticated - show join button
@@ -259,12 +259,12 @@ const WaitlistJoinPage = () => {
                     {isJoining ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uniéndose...
+                        {t('waitlistJoin.buttons.joining')}
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Unirme a la Lista de Espera
+                        {t('waitlistJoin.buttons.joinWaitlist')}
                       </>
                     )}
                   </Button>
@@ -272,8 +272,8 @@ const WaitlistJoinPage = () => {
 
                 <p className="text-xs text-center text-muted-foreground">
                   {user
-                    ? 'Al hacer clic aceptas que tu solicitud sea revisada por el profesor'
-                    : 'Necesitas iniciar sesión para unirte a la lista de espera'}
+                    ? t('waitlistJoin.footer.loggedIn')
+                    : t('waitlistJoin.footer.loggedOut')}
                 </p>
               </div>
             </div>

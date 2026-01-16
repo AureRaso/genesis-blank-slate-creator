@@ -1543,5 +1543,41 @@
       "accountDeleted": "Your account has been deleted successfully",
       "accountDeleteError": "Error deleting account. Please contact support."
     }
+  },
+  "waitlistJoin": {
+    "checking": "Checking availability...",
+    "success": {
+      "title": "You've joined!",
+      "message": "You have been added to the waitlist successfully. The coach will review your request soon.",
+      "redirecting": "Redirecting to dashboard in {{count}}s..."
+    },
+    "invalidLink": {
+      "title": "Invalid link",
+      "description": "The link you followed is not valid"
+    },
+    "states": {
+      "notAvailable": "Not available",
+      "classEnded": "Class ended",
+      "spotTaken": "Spot taken",
+      "alreadyInList": "Already on waitlist",
+      "alreadyEnrolled": "Already enrolled"
+    },
+    "main": {
+      "title": "Class spot available!",
+      "subtitle": "A student has cancelled their attendance and there is a spot available",
+      "importantTitle": "Important:",
+      "importantText": "By joining the waitlist, your request will be reviewed by the coach. If accepted, you will receive a confirmation and be automatically added to the class.",
+      "closesInfo": "The waitlist closes 3 hours before the class"
+    },
+    "buttons": {
+      "loading": "Loading...",
+      "loginToJoin": "Log in to join",
+      "joining": "Joining...",
+      "joinWaitlist": "Join the Waitlist"
+    },
+    "footer": {
+      "loggedIn": "By clicking you accept that your request will be reviewed by the coach",
+      "loggedOut": "You need to log in to join the waitlist"
+    }
   }
 }

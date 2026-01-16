@@ -1534,5 +1534,41 @@
       "accountDeleted": "Il tuo account è stato eliminato correttamente",
       "accountDeleteError": "Errore durante l'eliminazione dell'account. Contatta l'assistenza."
     }
+  },
+  "waitlistJoin": {
+    "checking": "Verifica disponibilità...",
+    "success": {
+      "title": "Ti sei iscritto!",
+      "message": "Sei stato aggiunto alla lista d'attesa con successo. L'allenatore esaminerà la tua richiesta a breve.",
+      "redirecting": "Reindirizzamento alla dashboard tra {{count}}s..."
+    },
+    "invalidLink": {
+      "title": "Link non valido",
+      "description": "Il link che hai seguito non è valido"
+    },
+    "states": {
+      "notAvailable": "Non disponibile",
+      "classEnded": "Lezione terminata",
+      "spotTaken": "Posto occupato",
+      "alreadyInList": "Già in lista d'attesa",
+      "alreadyEnrolled": "Già iscritto"
+    },
+    "main": {
+      "title": "Posto disponibile nella lezione!",
+      "subtitle": "Uno studente ha cancellato la sua presenza e c'è un posto disponibile",
+      "importantTitle": "Importante:",
+      "importantText": "Iscrivendoti alla lista d'attesa, la tua richiesta sarà esaminata dall'allenatore. Se accettato, riceverai una conferma e sarai aggiunto automaticamente alla lezione.",
+      "closesInfo": "La lista d'attesa chiude 3 ore prima della lezione"
+    },
+    "buttons": {
+      "loading": "Caricamento...",
+      "loginToJoin": "Accedi per iscriverti",
+      "joining": "Iscrizione in corso...",
+      "joinWaitlist": "Iscriviti alla Lista d'Attesa"
+    },
+    "footer": {
+      "loggedIn": "Cliccando accetti che la tua richiesta venga esaminata dall'allenatore",
+      "loggedOut": "Devi accedere per iscriverti alla lista d'attesa"
+    }
   }
 }
