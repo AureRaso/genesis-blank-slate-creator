@@ -29,6 +29,8 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
   '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel
   '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy
   '6fde47fc-c531-4d5e-a54a-025fcd2a4f9c', // X El Padel Lepe
+  '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
+  'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
 ];
 
 /**
