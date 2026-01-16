@@ -816,7 +816,8 @@ const TrainerDashboard = () => {
                           waitlistUrl,
                           availableSlots,
                           classId: classData.id,
-                          notificationType: 'absence'
+                          notificationType: 'absence',
+                          language: classData.club_language || 'es'
                         });
 
                         // Marcar la clase como notificada
@@ -1121,7 +1122,8 @@ const TrainerDashboard = () => {
                           waitlistUrl,
                           availableSlots,
                           classId: classData.id,
-                          notificationType: 'absence'
+                          notificationType: 'absence',
+                          language: classData.club_language || 'es'
                         });
 
                         // Marcar la clase como notificada
@@ -1266,7 +1268,8 @@ const TrainerDashboard = () => {
                       waitlistUrl,
                       availableSlots,
                       classId: whatsappGroupDialog.classData.id,
-                      notificationType: 'absence'
+                      notificationType: 'absence',
+                      language: whatsappGroupDialog.classData.club_language || 'es'
                     });
 
                     // Marcar la clase como notificada

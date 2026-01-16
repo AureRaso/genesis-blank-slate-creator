@@ -8,6 +8,7 @@ export interface ClassWithAbsences {
   start_time: string;
   duration_minutes: number;
   max_participants: number;
+  club_language?: string;
   trainer?: {
     id: string;
     full_name: string;
@@ -62,6 +63,9 @@ export const useClassesWithAbsences = (clubId?: string, clubIds?: string[]) => {
           trainer:profiles!trainer_profile_id(
             id,
             full_name
+          ),
+          clubs:club_id(
+            default_language
           )
         `)
         .eq('is_active', true)
@@ -190,6 +194,7 @@ export const useClassesWithAbsences = (clubId?: string, clubIds?: string[]) => {
             start_time: classData.start_time,
             duration_minutes: classData.duration_minutes,
             max_participants: classData.max_participants,
+            club_language: classData.clubs?.default_language || 'es',
             trainer: classData.trainer,
             participants: classParticipants,
             absenceCount,
