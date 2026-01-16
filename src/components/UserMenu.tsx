@@ -44,6 +44,8 @@ const UserMenu = () => {
 
   const getRoleText = (role: string) => {
     switch (role) {
+      case 'superadmin':
+        return t('userMenu.superadmin');
       case 'admin':
         return t('userMenu.admin');
       case 'trainer':

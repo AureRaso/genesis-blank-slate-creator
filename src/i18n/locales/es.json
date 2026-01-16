@@ -65,6 +65,7 @@
     "paymentControl": "Control de Pagos"
   },
   "userMenu": {
+    "superadmin": "Administrador",
     "admin": "Administrador",
     "trainer": "Entrenador",
     "player": "Jugador",

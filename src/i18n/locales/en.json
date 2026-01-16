@@ -218,6 +218,7 @@
     "paymentControl": "Payment Control"
   },
   "userMenu": {
+    "superadmin": "Administrator",
     "admin": "Administrator",
     "trainer": "Trainer",
     "player": "Player",
