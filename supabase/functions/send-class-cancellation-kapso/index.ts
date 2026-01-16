@@ -19,6 +19,21 @@ const KAPSO_API_KEY = Deno.env.get('KAPSO_API_KEY') ?? '';
 const KAPSO_PHONE_NUMBER_ID = Deno.env.get('KAPSO_PHONE_NUMBER_ID') ?? '';
 const KAPSO_BASE_URL = Deno.env.get('KAPSO_BASE_URL') || 'https://api.kapso.ai/meta/whatsapp/v24.0';
 
+// Template configuration per language
+// All templates use the same parameters: nombre_jugador, club, fecha_clase, hora_clase
+const TEMPLATE_CONFIG: Record<string, { name: string; languageCode: string }> = {
+  'es': { name: 'class_cancellation', languageCode: 'es' },
+  'en': { name: 'class_cancelation_en', languageCode: 'en' },
+  'it': { name: 'class_cancelation_it', languageCode: 'it' }
+};
+
+// Locale map for date formatting
+const LOCALE_MAP: Record<string, string> = {
+  'es': 'es-ES',
+  'en': 'en-US',
+  'it': 'it-IT'
+};
+
 /**
  * Format phone number for WhatsApp API (without @s.whatsapp.net)
  */
@@ -34,11 +49,12 @@ function formatPhoneNumber(phone: string): string {
 }
 
 /**
- * Format date in Spanish
+ * Format date in the specified language
  */
-function formatDateInSpanish(dateStr: string): string {
+function formatDateLocalized(dateStr: string, language: string = 'es'): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return new Intl.DateTimeFormat('es-ES', {
+  const locale = LOCALE_MAP[language] || 'es-ES';
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -48,7 +64,10 @@ function formatDateInSpanish(dateStr: string): string {
 
 /**
  * Send WhatsApp template message via Kapso API for class cancellation
- * Template: class_cancellation
+ * Templates per language:
+ *   - ES: class_cancellation
+ *   - EN: class_cancelation_en
+ *   - IT: class_cancelation_it
  * Parameters: nombre_jugador, club, fecha_clase, hora_clase
  */
 async function sendKapsoCancellationTemplate(
@@ -56,7 +75,8 @@ async function sendKapsoCancellationTemplate(
   studentName: string,
   clubName: string,
   classDate: string,
-  classTime: string
+  classTime: string,
+  language: string = 'es'
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
 
   if (!KAPSO_API_KEY || !KAPSO_PHONE_NUMBER_ID) {
@@ -66,15 +86,18 @@ async function sendKapsoCancellationTemplate(
   const formattedPhone = formatPhoneNumber(phone);
   const url = `${KAPSO_BASE_URL}/${KAPSO_PHONE_NUMBER_ID}/messages`;
 
+  // Get template config for the language (fallback to Spanish)
+  const templateConfig = TEMPLATE_CONFIG[language] || TEMPLATE_CONFIG['es'];
+
   // Format date and time for the template
-  const formattedDate = formatDateInSpanish(classDate);
+  const formattedDate = formatDateLocalized(classDate, language);
   const formattedTime = classTime.substring(0, 5); // HH:MM
 
   console.log(`📱 Sending Kapso cancellation template to: ${formattedPhone}`);
-  console.log(`   Template: class_cancellation`);
+  console.log(`   Template: ${templateConfig.name} (language: ${templateConfig.languageCode})`);
   console.log(`   Params: ${studentName}, ${clubName}, ${formattedDate}, ${formattedTime}`);
 
-  // Template class_cancellation has named parameters:
+  // All templates have the same named parameters:
   // {{nombre_jugador}}, {{club}}, {{fecha_clase}}, {{hora_clase}}
   const body = {
     messaging_product: "whatsapp",
@@ -82,8 +105,8 @@ async function sendKapsoCancellationTemplate(
     to: formattedPhone,
     type: "template",
     template: {
-      name: "class_cancellation",
-      language: { code: "es" },
+      name: templateConfig.name,
+      language: { code: templateConfig.languageCode },
       components: [
         {
           type: "body",
@@ -174,14 +197,15 @@ serve(async (req) => {
       throw new Error('Missing required fields: classId, cancelledDate, className, classTime');
     }
 
-    // Get club info for this class
+    // Get club info for this class (including language for i18n)
     const { data: classData, error: classError } = await supabaseClient
       .from('programmed_classes')
       .select(`
         id,
         club_id,
         clubs:club_id (
-          name
+          name,
+          default_language
         )
       `)
       .eq('id', classId)
@@ -193,7 +217,8 @@ serve(async (req) => {
     }
 
     const clubName = (classData?.clubs as any)?.name || 'Tu club';
-    console.log(`✓ Club: ${clubName}`);
+    const clubLanguage = (classData?.clubs as any)?.default_language || 'es';
+    console.log(`✓ Club: ${clubName} (language: ${clubLanguage})`);
 
     // Get all active participants for this class
     const { data: participants, error: participantsError } = await supabaseClient
@@ -295,7 +320,8 @@ serve(async (req) => {
           student.full_name,
           clubName,
           cancelledDate,
-          classTime
+          classTime,
+          clubLanguage
         );
 
         if (result.success) {
