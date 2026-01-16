@@ -722,7 +722,8 @@ const WeekAttendancePage = () => {
       trainerName: classData.trainer?.full_name || 'Profesor',
       waitlistUrl,
       availableSlots: availableSlots,
-      classId: classData.id
+      classId: classData.id,
+      language: classData.club_language || 'es'
     });
 
     // Cerrar el diálogo si estaba abierto
@@ -748,7 +749,8 @@ const WeekAttendancePage = () => {
       waitlistUrl,
       availableSlots: totalAvailableSlots,
       classId: classData.id,
-      notificationType: 'free_spot' as const
+      notificationType: 'free_spot' as const,
+      language: classData.club_language || 'es'
     });
 
     // Cerrar el diálogo si estaba abierto

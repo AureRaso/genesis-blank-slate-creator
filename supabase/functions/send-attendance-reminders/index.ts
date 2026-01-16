@@ -44,6 +44,57 @@ const WHAPI_ENABLED_CLUBS: string[] = [
 // Create Supabase client with service role (bypasses RLS)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// Email translations by language (fallback to Spanish if not found)
+const EMAIL_TRANSLATIONS: Record<string, {
+  subject: string;
+  title: string;
+  greeting: string;
+  intro: string;
+  warningTitle: string;
+  warningText: string;
+  button: string;
+  reminder: string;
+  footer: string;
+  dateLocale: string;
+}> = {
+  'es': {
+    subject: '✅ Estás confirmado - {className}',
+    title: '✅ Estás confirmado',
+    greeting: 'Hola, <strong>{name}</strong> 👋',
+    intro: 'Tu asistencia está confirmada automáticamente para tu próximo entrenamiento:',
+    warningTitle: '⚠️ ¿No puedes asistir?',
+    warningText: 'Marca tu ausencia en la web al menos 5 horas antes del entrenamiento para que otra persona pueda aprovechar tu plaza y tú recuperar la clase.',
+    button: 'Gestionar mi asistencia',
+    reminder: 'Recuerda: Tu plaza está reservada. Si no puedes venir, márcalo cuanto antes.',
+    footer: 'Este es un email automático, por favor no respondas a este mensaje.',
+    dateLocale: 'es-ES'
+  },
+  'en': {
+    subject: '✅ You\'re confirmed - {className}',
+    title: '✅ You\'re confirmed',
+    greeting: 'Hello, <strong>{name}</strong> 👋',
+    intro: 'Your attendance is automatically confirmed for your next training session:',
+    warningTitle: '⚠️ Can\'t attend?',
+    warningText: 'Mark your absence on the website at least 5 hours before training so someone else can take your spot and you can reschedule.',
+    button: 'Manage my attendance',
+    reminder: 'Remember: Your spot is reserved. If you can\'t come, let us know as soon as possible.',
+    footer: 'This is an automated email, please do not reply to this message.',
+    dateLocale: 'en-US'
+  },
+  'it': {
+    subject: '✅ Sei confermato - {className}',
+    title: '✅ Sei confermato',
+    greeting: 'Ciao, <strong>{name}</strong> 👋',
+    intro: 'La tua presenza è confermata automaticamente per il prossimo allenamento:',
+    warningTitle: '⚠️ Non puoi partecipare?',
+    warningText: 'Segnala la tua assenza sul sito almeno 5 ore prima dell\'allenamento per permettere a qualcun altro di prendere il tuo posto e riprogrammare la lezione.',
+    button: 'Gestisci la mia presenza',
+    reminder: 'Ricorda: Il tuo posto è riservato. Se non puoi venire, comunicacelo il prima possibile.',
+    footer: 'Questa è un\'email automatica, per favore non rispondere a questo messaggio.',
+    dateLocale: 'it-IT'
+  }
+};
+
 interface ReminderEmailData {
   studentEmail: string;
   studentName: string;
@@ -52,6 +103,7 @@ interface ReminderEmailData {
   classTime: string;
   clubName: string;
   confirmationLink: string;
+  language?: string; // Language code (es, en, it) - defaults to 'es'
 }
 
 interface WhatsAppReminderData {
@@ -63,6 +115,7 @@ interface WhatsAppReminderData {
   clubName: string;
   studentName: string;
   guardianPhone?: string; // Phone number of guardian (for temp email students)
+  language?: string; // Language code for template selection (es, en, it) - defaults to 'es'
 }
 
 // Helper function to get guardian contact info for students with temp emails
@@ -115,7 +168,8 @@ async function sendWhatsAppReminder(data: WhatsAppReminderData, useKapso: boolea
         clubName: data.clubName,
         studentName: data.studentName,
         testSecret: TEST_SECRET,
-        guardianPhone: data.guardianPhone // Pass guardian phone for temp email students
+        guardianPhone: data.guardianPhone, // Pass guardian phone for temp email students
+        language: data.language || 'es' // Pass language for template selection
       })
     });
 
@@ -139,17 +193,22 @@ async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promi
   const RETRY_DELAY = 2000; // 2 seconds
 
   try {
-    console.log('📧 Sending reminder email to:', data.studentEmail);
+    // Get translations for the language, fallback to Spanish
+    const lang = data.language || 'es';
+    const t = EMAIL_TRANSLATIONS[lang] || EMAIL_TRANSLATIONS['es'];
 
-    // Format date to Spanish
+    console.log(`📧 Sending reminder email to: ${data.studentEmail} (language: ${lang})`);
+
+    // Format date according to language
     const dateObj = new Date(data.classDate);
-    const formattedDate = dateObj.toLocaleDateString('es-ES', {
+    const formattedDate = dateObj.toLocaleDateString(t.dateLocale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long'
     });
 
-    const subject = `✅ Estás confirmado - ${data.className}`;
+    const subject = t.subject.replace('{className}', data.className);
+    const greeting = t.greeting.replace('{name}', data.studentName);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -157,20 +216,20 @@ async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promi
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recordatorio de clase</title>
+  <title>${t.title}</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">✅ Estás confirmado</h1>
+    <h1 style="color: white; margin: 0; font-size: 28px;">${t.title}</h1>
   </div>
 
   <div style="background-color: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
     <p style="font-size: 18px; color: #2d3748; margin-bottom: 10px;">
-      Hola, <strong>${data.studentName}</strong> 👋
+      ${greeting}
     </p>
 
     <p style="font-size: 16px; color: #4b5563; margin-bottom: 25px;">
-      Tu asistencia está confirmada automáticamente para tu próximo entrenamiento:
+      ${t.intro}
     </p>
 
     <div style="background-color: white; padding: 25px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
@@ -187,26 +246,26 @@ async function sendReminderEmail(data: ReminderEmailData, retryCount = 0): Promi
 
     <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 5px; margin: 25px 0;">
       <p style="margin: 0 0 15px 0; color: #92400e; font-size: 16px; font-weight: 600;">
-        ⚠️ ¿No puedes asistir?
+        ${t.warningTitle}
       </p>
       <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
-        Marca tu ausencia en la web al menos 5 horas antes del entrenamiento para que otra persona pueda aprovechar tu plaza y tú recuperar la clase.
+        ${t.warningText}
       </p>
     </div>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${data.confirmationLink}" style="background-color: #f59e0b; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">
-        Gestionar mi asistencia
+        ${t.button}
       </a>
     </div>
 
     <p style="color: #6b7280; font-size: 14px; margin-top: 30px; text-align: center;">
-      Recuerda: Tu plaza está reservada. Si no puedes venir, márcalo cuanto antes.
+      ${t.reminder}
     </p>
   </div>
 
   <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
-    <p>Este es un email automático, por favor no respondas a este mensaje.</p>
+    <p>${t.footer}</p>
   </div>
 </body>
 </html>
@@ -309,7 +368,8 @@ serve(async (req) => {
         club_id,
         clubs:club_id (
           name,
-          id
+          id,
+          default_language
         )
       `)
       .eq('is_active', true)
@@ -452,6 +512,7 @@ serve(async (req) => {
         }
 
         const confirmationLink = 'https://www.padelock.com/dashboard';
+        const clubLanguage = (classInfo.clubs as any)?.default_language || 'es';
 
         const emailSent = await sendReminderEmail({
           studentEmail: recipientEmail,
@@ -460,7 +521,8 @@ serve(async (req) => {
           classDate: targetDate,
           classTime: classInfo.start_time,
           clubName: (classInfo.clubs as any)?.name || '',
-          confirmationLink
+          confirmationLink,
+          language: clubLanguage
         });
 
         if (emailSent) {
@@ -473,7 +535,8 @@ serve(async (req) => {
 
         if (useKapso || useWhapi) {
           const system = useKapso ? 'Kapso' : 'Whapi';
-          console.log(`📱 Sending WhatsApp via ${system} for student "${studentName}" to: ${recipientEmail} (club: ${(classInfo.clubs as any)?.name})`);
+          const clubLanguage = (classInfo.clubs as any)?.default_language || 'es';
+          console.log(`📱 Sending WhatsApp via ${system} for student "${studentName}" to: ${recipientEmail} (club: ${(classInfo.clubs as any)?.name}, language: ${clubLanguage})`);
           const whatsappSent = await sendWhatsAppReminder({
             userEmail: recipientEmail,
             participationId: participant.id,
@@ -482,7 +545,8 @@ serve(async (req) => {
             durationMinutes: classInfo.duration_minutes || 60,
             clubName: (classInfo.clubs as any)?.name || '',
             studentName: studentName,
-            guardianPhone: guardianPhone || undefined
+            guardianPhone: guardianPhone || undefined,
+            language: clubLanguage
           }, useKapso);
           if (whatsappSent) {
             totalWhatsAppSent++;

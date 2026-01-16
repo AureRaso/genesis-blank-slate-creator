@@ -9,6 +9,13 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
+// Confirmation messages by language (fallback to Spanish if not found)
+const CONFIRMATION_MESSAGES: Record<string, string> = {
+  'es': '✅ Entendido, {name}. Tu ausencia ha sido confirmada.',
+  'en': '✅ Got it, {name}. Your absence has been confirmed.',
+  'it': '✅ Capito, {name}. La tua assenza è stata confermata.'
+};
+
 /**
  * Webhook to receive WhatsApp button responses from Whapi
  */
@@ -91,7 +98,7 @@ serve(async (req) => {
     // Create Supabase client
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get the class participation details
+    // Get the class participation details including club language
     const { data: participation, error: participationError } = await supabaseClient
       .from('class_participants')
       .select(`
@@ -102,6 +109,12 @@ serve(async (req) => {
           phone,
           full_name,
           email
+        ),
+        programmed_classes!inner(
+          club_id,
+          clubs!inner(
+            default_language
+          )
         )
       `)
       .eq('id', participationId)
@@ -165,7 +178,12 @@ serve(async (req) => {
 
     if (whapiToken) {
       try {
-        const confirmationMessage = `✅ Entendido, ${(participation.student_enrollments as any).full_name}. Tu ausencia ha sido confirmada.`;
+        // Get club language, fallback to Spanish
+        const clubLanguage = (participation.programmed_classes as any)?.clubs?.default_language || 'es';
+        const messageTemplate = CONFIRMATION_MESSAGES[clubLanguage] || CONFIRMATION_MESSAGES['es'];
+        const confirmationMessage = messageTemplate.replace('{name}', (participation.student_enrollments as any).full_name);
+
+        console.log(`📱 Sending confirmation in language: ${clubLanguage}`);
 
         await fetch(`${whapiEndpoint}/messages/text`, {
           method: 'POST',

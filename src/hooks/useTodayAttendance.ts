@@ -13,6 +13,7 @@ export interface TodayAttendanceClass {
   max_participants?: number;
   days_of_week?: string[]; // Added to support week view filtering
   club_id: string; // Added for student selector filtering
+  club_language?: string; // Club's default language (es, en, it) for notifications
   trainer: {
     full_name: string;
   } | null;
@@ -91,6 +92,9 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           max_participants,
           trainer_profile_id,
           trainer_profile_id_2,
+          clubs:club_id(
+            default_language
+          ),
           trainer:profiles!trainer_profile_id(
             full_name
           ),
@@ -177,6 +181,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         duration_minutes: classData.duration_minutes,
         max_participants: classData.max_participants,
         club_id: classData.club_id, // Include club_id for student selector filtering
+        club_language: classData.clubs?.default_language || 'es', // Club's default language for notifications
         trainer: classData.trainer,
         trainer_2: classData.trainer_2, // Secondary trainer
         days_of_week: classData.days_of_week, // Include days for filtering in component

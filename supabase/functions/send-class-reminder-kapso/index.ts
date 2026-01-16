@@ -17,6 +17,7 @@ interface ClassReminderRequest {
   studentName?: string;
   testSecret?: string;
   guardianPhone?: string; // Direct phone number of guardian (for temp email students)
+  language?: string; // Language code for template selection (es, en, it) - defaults to 'es'
 }
 
 interface TomorrowClass {
@@ -32,6 +33,14 @@ interface TomorrowClass {
 const KAPSO_API_KEY = Deno.env.get('KAPSO_API_KEY') ?? '';
 const KAPSO_PHONE_NUMBER_ID = Deno.env.get('KAPSO_PHONE_NUMBER_ID') ?? '';
 const KAPSO_BASE_URL = Deno.env.get('KAPSO_BASE_URL') || 'https://api.kapso.ai/meta/whatsapp/v24.0';
+
+// Template configuration by language
+// Maps language code to template name and WhatsApp language code
+const TEMPLATE_CONFIG: Record<string, { name: string; languageCode: string }> = {
+  'es': { name: 'reminder_24h', languageCode: 'es' },
+  'en': { name: 'attendance_confirmation', languageCode: 'en' },
+  'it': { name: 'attendance_confirmation_it', languageCode: 'it' }
+};
 
 /**
  * Format phone number for WhatsApp API (without @s.whatsapp.net)
@@ -87,7 +96,8 @@ async function sendKapsoTemplate(
   className: string,
   timeRange: string,
   clubName: string,
-  participationId: string
+  participationId: string,
+  language: string = 'es'
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
 
   if (!KAPSO_API_KEY || !KAPSO_PHONE_NUMBER_ID) {
@@ -97,22 +107,25 @@ async function sendKapsoTemplate(
   const formattedPhone = formatPhoneNumber(phone);
   const url = `${KAPSO_BASE_URL}/${KAPSO_PHONE_NUMBER_ID}/messages`;
 
+  // Get template config for the language, fallback to Spanish if not found
+  const templateConfig = TEMPLATE_CONFIG[language] || TEMPLATE_CONFIG['es'];
+
   console.log(`📱 Sending Kapso template to: ${formattedPhone}`);
-  console.log(`   Template: reminder_24h`);
+  console.log(`   Template: ${templateConfig.name} (${language})`);
   console.log(`   Params: ${studentName}, ${className}, ${timeRange}, ${clubName}`);
   console.log(`   Button payload: absence_${participationId}`);
 
-  // Template reminder_24h has named parameters:
+  // All templates have the same named parameters:
   // {{nombre_jugador}}, {{titulo_clase}}, {{hora_clase}}, {{nombre_club}}
-  // And a quick_reply button "No puedo ir" with dynamic payload
+  // And a quick_reply button with dynamic payload
   const body = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
     to: formattedPhone,
     type: "template",
     template: {
-      name: "reminder_24h",
-      language: { code: "es" },
+      name: templateConfig.name,
+      language: { code: templateConfig.languageCode },
       components: [
         {
           type: "body",
@@ -181,8 +194,8 @@ serve(async (req) => {
     console.log('=== Class Reminder Kapso Request ===');
 
     const requestData: ClassReminderRequest = await req.json();
-    const { userEmail, participationId, className, startTime, durationMinutes, clubName, studentName, testSecret, guardianPhone } = requestData;
-    console.log('Request:', { userEmail, participationId, className, hasTestSecret: !!testSecret, hasGuardianPhone: !!guardianPhone });
+    const { userEmail, participationId, className, startTime, durationMinutes, clubName, studentName, testSecret, guardianPhone, language } = requestData;
+    console.log('Request:', { userEmail, participationId, className, hasTestSecret: !!testSecret, hasGuardianPhone: !!guardianPhone, language: language || 'es' });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -245,10 +258,11 @@ serve(async (req) => {
         className,
         timeRange,
         clubName,
-        participationId
+        participationId,
+        language || 'es'
       );
 
-      console.log(`✓ Sent 1/1 template message (direct mode)`);
+      console.log(`✓ Sent 1/1 template message (direct mode, language: ${language || 'es'})`);
 
       return new Response(
         JSON.stringify({
@@ -440,13 +454,15 @@ serve(async (req) => {
     for (const cls of tomorrowClasses) {
       const timeRange = calculateTimeRange(cls.start_time, cls.duration_minutes);
 
+      // Legacy mode always uses Spanish ('es') as we don't have club language info
       const result = await sendKapsoTemplate(
         phoneNumber,
         studentData.full_name,
         cls.class_name,
         timeRange,
         cls.club_name,
-        cls.participation_id
+        cls.participation_id,
+        'es'
       );
 
       results.push({

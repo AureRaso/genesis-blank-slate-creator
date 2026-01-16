@@ -12,6 +12,7 @@ interface SendWhatsAppParams {
   availableSlots: number;
   classId: string; // ID de la clase para bloquear ausencias
   notificationType?: 'absence' | 'free_spot'; // Tipo de notificación
+  language?: string; // Language code (es, en, it) - defaults to 'es'
 }
 
 interface WhatsAppResponse {
@@ -20,12 +21,63 @@ interface WhatsAppResponse {
   error?: string;
 }
 
-const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
-  const { className, classDate, classTime, trainerName, waitlistUrl } = params;
+// Message translations by language (fallback to Spanish if not found)
+const MESSAGE_TRANSLATIONS: Record<string, {
+  absenceTitle: string;
+  freeSpotTitle: (slots: number) => string;
+  dateLabel: string;
+  timeLabel: string;
+  trainerLabel: string;
+  classLabel: string;
+  waitlistCta: string;
+  footer: string;
+  dateLocale: string;
+}> = {
+  'es': {
+    absenceTitle: '🎾 ¡Plaza en clase de recuperación disponible!',
+    freeSpotTitle: (slots) => `🎾 ¡${slots === 1 ? '1 plaza disponible' : `${slots} plazas disponibles`} en clase!`,
+    dateLabel: 'Fecha',
+    timeLabel: 'Hora',
+    trainerLabel: 'Profesor',
+    classLabel: 'Clase',
+    waitlistCta: '👉 Apúntate a la lista de espera en el siguiente enlace:',
+    footer: 'Las plazas se asignan a criterio del profesor.',
+    dateLocale: 'es-ES'
+  },
+  'en': {
+    absenceTitle: '🎾 Spot available in make-up class!',
+    freeSpotTitle: (slots) => `🎾 ${slots === 1 ? '1 spot available' : `${slots} spots available`} in class!`,
+    dateLabel: 'Date',
+    timeLabel: 'Time',
+    trainerLabel: 'Coach',
+    classLabel: 'Class',
+    waitlistCta: '👉 Join the waitlist at the following link:',
+    footer: 'Spots are assigned at the coach\'s discretion.',
+    dateLocale: 'en-US'
+  },
+  'it': {
+    absenceTitle: '🎾 Posto disponibile nella lezione di recupero!',
+    freeSpotTitle: (slots) => `🎾 ${slots === 1 ? '1 posto disponibile' : `${slots} posti disponibili`} nella lezione!`,
+    dateLabel: 'Data',
+    timeLabel: 'Ora',
+    trainerLabel: 'Allenatore',
+    classLabel: 'Lezione',
+    waitlistCta: '👉 Iscriviti alla lista d\'attesa al seguente link:',
+    footer: 'I posti vengono assegnati a discrezione dell\'allenatore.',
+    dateLocale: 'it-IT'
+  }
+};
 
-  // Format date nicely
+const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
+  const { classDate, classTime, trainerName, waitlistUrl, language } = params;
+
+  // Get translations for the language, fallback to Spanish
+  const lang = language || 'es';
+  const t = MESSAGE_TRANSLATIONS[lang] || MESSAGE_TRANSLATIONS['es'];
+
+  // Format date nicely using the appropriate locale
   const date = new Date(classDate);
-  const formattedDate = new Intl.DateTimeFormat('es-ES', {
+  const formattedDate = new Intl.DateTimeFormat(t.dateLocale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -35,24 +87,28 @@ const generateWhatsAppMessage = (params: SendWhatsAppParams): string => {
   // Format class time without seconds (HH:MM)
   const formattedClassTime = classTime.substring(0, 5);
 
-  return `🎾 ¡Plaza en clase de recuperación disponible!
+  return `${t.absenceTitle}
 
-Fecha: ${formattedDate}
-Hora: ${formattedClassTime}
-Profesor: ${trainerName}
+${t.dateLabel}: ${formattedDate}
+${t.timeLabel}: ${formattedClassTime}
+${t.trainerLabel}: ${trainerName}
 
-👉 Apúntate a la lista de espera en el siguiente enlace:
+${t.waitlistCta}
 ${waitlistUrl}
 
-Las plazas se asignan a criterio del profesor.`;
+${t.footer}`;
 };
 
 const generateFreeSpotMessage = (params: SendWhatsAppParams): string => {
-  const { className, classDate, classTime, trainerName, waitlistUrl, availableSlots } = params;
+  const { className, classDate, classTime, trainerName, waitlistUrl, availableSlots, language } = params;
 
-  // Format date nicely
+  // Get translations for the language, fallback to Spanish
+  const lang = language || 'es';
+  const t = MESSAGE_TRANSLATIONS[lang] || MESSAGE_TRANSLATIONS['es'];
+
+  // Format date nicely using the appropriate locale
   const date = new Date(classDate);
-  const formattedDate = new Intl.DateTimeFormat('es-ES', {
+  const formattedDate = new Intl.DateTimeFormat(t.dateLocale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -62,19 +118,17 @@ const generateFreeSpotMessage = (params: SendWhatsAppParams): string => {
   // Format class time without seconds (HH:MM)
   const formattedClassTime = classTime.substring(0, 5);
 
-  const slotText = availableSlots === 1 ? '1 plaza disponible' : `${availableSlots} plazas disponibles`;
+  return `${t.freeSpotTitle(availableSlots)}
 
-  return `🎾 ¡${slotText} en clase!
+📅 ${t.dateLabel}: ${formattedDate}
+🕐 ${t.timeLabel}: ${formattedClassTime}
+👨‍🏫 ${t.trainerLabel}: ${trainerName}
+📍 ${t.classLabel}: ${className}
 
-📅 Fecha: ${formattedDate}
-🕐 Hora: ${formattedClassTime}
-👨‍🏫 Profesor: ${trainerName}
-📍 Clase: ${className}
-
-👉 Apúntate a la lista de espera en el siguiente enlace:
+${t.waitlistCta}
 ${waitlistUrl}
 
-Las plazas se asignan a criterio del profesor.`;
+${t.footer}`;
 };
 
 export const useSendWhatsAppNotification = () => {

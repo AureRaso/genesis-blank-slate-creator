@@ -521,7 +521,8 @@ const TodayAttendancePage = () => {
       trainerName: classData.trainer?.full_name || 'Profesor',
       waitlistUrl,
       availableSlots: availableSlots,
-      classId: classData.id
+      classId: classData.id,
+      language: classData.club_language || 'es'
     });
 
     // Cerrar el diálogo si estaba abierto
@@ -633,7 +634,8 @@ const TodayAttendancePage = () => {
       waitlistUrl,
       availableSlots: totalAvailableSlots,
       classId: classData.id,
-      notificationType: 'free_spot' as const
+      notificationType: 'free_spot' as const,
+      language: classData.club_language || 'es'
     };
 
     console.log('📤 Sending free spot notification with params:', params);
