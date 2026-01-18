@@ -12,7 +12,8 @@ import {
   Settings,
   BarChart3,
   Shield,
-  MessageSquare
+  MessageSquare,
+  UserMinus
 } from "lucide-react";
 import {
   Sidebar,
@@ -89,6 +90,19 @@ const OwnerSidebar = () => {
                 <Link to="/owner/metrics">
                   <BarChart3 className="h-4 w-4" />
                   <span>Métricas</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Ausencias y Waitlist */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === "/owner/absences-waitlist"}
+              >
+                <Link to="/owner/absences-waitlist">
+                  <UserMinus className="h-4 w-4" />
+                  <span>Ausencias</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
