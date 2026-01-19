@@ -118,13 +118,13 @@ const AssignSecondTrainerDialog = ({
       };
 
       if (applyToSeries) {
-        // Update all classes in the series (same name, same ORIGINAL start_time, same club)
+        // Update all classes in the series (same name, same club)
+        // Series = all classes with the same name in the same club
         const { error } = await supabase
           .from("programmed_classes")
           .update(updateData)
           .eq("club_id", classData.club_id)
           .eq("name", classData.name)
-          .eq("start_time", classData.start_time) // Use original time to find the series
           .eq("is_active", true);
 
         if (error) throw error;

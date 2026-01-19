@@ -14,6 +14,8 @@ export interface TodayAttendanceClass {
   days_of_week?: string[]; // Added to support week view filtering
   club_id: string; // Added for student selector filtering
   club_language?: string; // Club's default language (es, en, it) for notifications
+  trainer_profile_id: string; // Primary trainer ID for edit dialog
+  trainer_profile_id_2?: string | null; // Secondary trainer ID for edit dialog
   trainer: {
     full_name: string;
   } | null;

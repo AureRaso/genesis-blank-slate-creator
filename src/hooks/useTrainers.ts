@@ -424,15 +424,15 @@ export const useUpdateTrainer = () => {
   });
 };
 
-// Hook específico para obtener trainers de un club (versión corregida)
-// Usado en AssignSecondTrainerDialog
+// Hook específico para obtener trainers y admins de un club (versión corregida)
+// Usado en AssignSecondTrainerDialog - incluye tanto entrenadores como administradores
 export const useTrainersByClubFixed = (clubId: string) => {
   return useQuery({
     queryKey: ['trainers', 'by-club-fixed', clubId],
     queryFn: async () => {
       if (!clubId) return [];
 
-      // First get trainer_profile_ids for this club
+      // 1. Get trainer_profile_ids for this club
       const { data: trainerClubsData, error: trainerClubsError } = await supabase
         .from('trainer_clubs')
         .select('trainer_profile_id')
@@ -440,13 +440,37 @@ export const useTrainersByClubFixed = (clubId: string) => {
 
       if (trainerClubsError) throw trainerClubsError;
 
-      if (!trainerClubsData || trainerClubsData.length === 0) {
+      const trainerProfileIds = trainerClubsData?.map(tc => tc.trainer_profile_id) || [];
+
+      // 2. Get admin_profile_ids for this club (admins can also teach classes)
+      const { data: adminClubsData, error: adminClubsError } = await supabase
+        .from('admin_clubs')
+        .select('admin_profile_id')
+        .eq('club_id', clubId);
+
+      if (adminClubsError) throw adminClubsError;
+
+      const adminProfileIds = adminClubsData?.map(ac => ac.admin_profile_id) || [];
+
+      // 3. Also get admins with club_id directly assigned
+      const { data: directAdmins, error: directAdminsError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('club_id', clubId)
+        .in('role', ['admin', 'superadmin']);
+
+      if (directAdminsError) throw directAdminsError;
+
+      const directAdminIds = directAdmins?.map(a => a.id) || [];
+
+      // Combine all unique profile IDs
+      const allProfileIds = [...new Set([...trainerProfileIds, ...adminProfileIds, ...directAdminIds])];
+
+      if (allProfileIds.length === 0) {
         return [];
       }
 
-      const trainerProfileIds = trainerClubsData.map(tc => tc.trainer_profile_id);
-
-      // Then get trainers with their profiles
+      // 4. Get trainers with their profiles
       const { data: trainers, error: trainersError } = await supabase
         .from('trainers')
         .select(`
@@ -457,12 +481,45 @@ export const useTrainersByClubFixed = (clubId: string) => {
             email
           )
         `)
-        .in('profile_id', trainerProfileIds)
+        .in('profile_id', trainerProfileIds.length > 0 ? trainerProfileIds : ['no-match'])
         .eq('is_active', true);
 
       if (trainersError) throw trainersError;
 
-      return trainers || [];
+      // 5. Get admin profiles that are NOT already trainers
+      const trainerIds = trainers?.map(t => t.profile_id) || [];
+      const adminOnlyIds = [...new Set([...adminProfileIds, ...directAdminIds])].filter(
+        id => !trainerIds.includes(id)
+      );
+
+      let adminProfiles: any[] = [];
+      if (adminOnlyIds.length > 0) {
+        const { data: admins, error: adminsError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', adminOnlyIds);
+
+        if (adminsError) throw adminsError;
+
+        // Transform admin profiles to match trainer format
+        adminProfiles = (admins || []).map(admin => ({
+          id: `admin-${admin.id}`, // Unique ID to differentiate from trainers
+          profile_id: admin.id,
+          specialty: null,
+          photo_url: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          profiles: {
+            id: admin.id,
+            full_name: admin.full_name,
+            email: admin.email,
+          },
+        }));
+      }
+
+      // Combine trainers and admins
+      return [...(trainers || []), ...adminProfiles];
     },
     enabled: !!clubId,
   });
