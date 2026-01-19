@@ -182,6 +182,8 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
         max_participants: classData.max_participants,
         club_id: classData.club_id, // Include club_id for student selector filtering
         club_language: classData.clubs?.default_language || 'es', // Club's default language for notifications
+        trainer_profile_id: classData.trainer_profile_id, // Include for edit dialog
+        trainer_profile_id_2: classData.trainer_profile_id_2, // Include for edit dialog
         trainer: classData.trainer,
         trainer_2: classData.trainer_2, // Secondary trainer
         days_of_week: classData.days_of_week, // Include days for filtering in component

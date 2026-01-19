@@ -59,6 +59,9 @@ const AssignSecondTrainerDialog = ({
     classData?.club_id || ""
   );
 
+  // Store the original trainer_profile_id to use as fallback
+  const originalTrainerId = classData?.trainer_profile_id || "";
+
   // Reset state when dialog opens with new class data
   useEffect(() => {
     if (open && classData) {
@@ -92,7 +95,10 @@ const AssignSecondTrainerDialog = ({
     }
 
     // Use the selected primary trainer, or fall back to the original if not changed
-    const finalPrimaryTrainerId = primaryTrainerId || classData.trainer_profile_id;
+    // primaryTrainerId could be empty if user didn't change it, so use originalTrainerId
+    const finalPrimaryTrainerId = primaryTrainerId || originalTrainerId;
+
+    // Only show error if there's truly no trainer (neither selected nor original)
     if (!finalPrimaryTrainerId) {
       toast.error("Debes seleccionar un profesor titular");
       return;
