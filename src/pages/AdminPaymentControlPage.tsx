@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw } from "lucide-react";
+import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,24 @@ import {
   StudentPayment,
 } from "@/hooks/useStudentPayments";
 import { useStudentsWithAssignments } from "@/hooks/useRateAssignments";
+import { usePaymentRates } from "@/hooks/usePaymentRates";
 
 const ITEMS_PER_PAGE = 25;
+
+const MONTHS = [
+  { value: "01", label: "Enero" },
+  { value: "02", label: "Febrero" },
+  { value: "03", label: "Marzo" },
+  { value: "04", label: "Abril" },
+  { value: "05", label: "Mayo" },
+  { value: "06", label: "Junio" },
+  { value: "07", label: "Julio" },
+  { value: "08", label: "Agosto" },
+  { value: "09", label: "Septiembre" },
+  { value: "10", label: "Octubre" },
+  { value: "11", label: "Noviembre" },
+  { value: "12", label: "Diciembre" },
+];
 
 const STATUS_CONFIG = {
   pendiente: {
@@ -62,6 +78,7 @@ const PAYMENT_METHOD_CONFIG: Record<string, { label: string; icon: typeof Bankno
 export default function AdminPaymentControlPage() {
   const { data: payments, isLoading } = useAdminStudentPayments();
   const { data: students } = useStudentsWithAssignments();
+  const { data: rates } = usePaymentRates();
   const verifyPayment = useVerifyStudentPayment();
   const createExtraPayment = useCreateExtraPayment();
   const generateMonthlyPayments = useGenerateMonthlyPayments();
@@ -70,6 +87,38 @@ export default function AdminPaymentControlPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
+
+  // Filter states
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterRateId, setFilterRateId] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all"); // all, normal, extra
+
+  // Get available years from payments
+  const availableYears = useMemo(() => {
+    if (!payments || payments.length === 0) return [];
+    const years = new Set<string>();
+    payments.forEach(p => {
+      if (p.period_start) {
+        years.add(p.period_start.substring(0, 4));
+      } else if (p.issue_date) {
+        years.add(p.issue_date.substring(0, 4));
+      }
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [payments]);
+
+  // Check if any filters are active
+  const hasActiveFilters = filterMonth !== "all" || filterYear !== "all" || filterRateId !== "all" || filterType !== "all";
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilterMonth("all");
+    setFilterYear("all");
+    setFilterRateId("all");
+    setFilterType("all");
+    setCurrentPage(1);
+  };
 
   // Verify Dialog state
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
@@ -98,16 +147,49 @@ export default function AdminPaymentControlPage() {
     );
   }
 
-  // Filter by search term
-  const filteredPayments = (payments || []).filter(payment => {
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      payment.student_enrollment?.full_name?.toLowerCase().includes(searchLower) ||
-      payment.student_enrollment?.email?.toLowerCase().includes(searchLower) ||
-      payment.concept?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Filter payments by all criteria
+  const filteredPayments = useMemo(() => {
+    return (payments || []).filter(payment => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch =
+          payment.student_enrollment?.full_name?.toLowerCase().includes(searchLower) ||
+          payment.student_enrollment?.email?.toLowerCase().includes(searchLower) ||
+          payment.concept?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Month filter
+      if (filterMonth !== "all") {
+        const paymentMonth = payment.period_start
+          ? payment.period_start.substring(5, 7)
+          : payment.issue_date.substring(5, 7);
+        if (paymentMonth !== filterMonth) return false;
+      }
+
+      // Year filter
+      if (filterYear !== "all") {
+        const paymentYear = payment.period_start
+          ? payment.period_start.substring(0, 4)
+          : payment.issue_date.substring(0, 4);
+        if (paymentYear !== filterYear) return false;
+      }
+
+      // Rate filter
+      if (filterRateId !== "all") {
+        if (payment.payment_rate_id !== filterRateId) return false;
+      }
+
+      // Type filter (normal vs extra)
+      if (filterType !== "all") {
+        if (filterType === "extra" && !payment.is_extra_payment) return false;
+        if (filterType === "normal" && payment.is_extra_payment) return false;
+      }
+
+      return true;
+    });
+  }, [payments, searchTerm, filterMonth, filterYear, filterRateId, filterType]);
 
   // Filter payments by status
   const pendingPayments = filteredPayments.filter(p => p.status === 'pendiente');
@@ -441,22 +523,100 @@ export default function AdminPaymentControlPage() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Buscar por nombre, email o concepto..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              handleFilterChange();
-            }}
-            className="pl-9 bg-white"
-          />
-          {searchTerm && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-              ({filteredPayments.length})
+      {/* Search and Filters */}
+      <div className="space-y-3 mb-4">
+        {/* Search bar */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por nombre, email o concepto..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                handleFilterChange();
+              }}
+              className="pl-9 bg-white"
+            />
+          </div>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+
+        {/* Filters row */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <Filter className="h-4 w-4 text-gray-400" />
+
+          {/* Month filter */}
+          <Select value={filterMonth} onValueChange={(v) => { setFilterMonth(v); handleFilterChange(); }}>
+            <SelectTrigger className="w-[130px] h-9 bg-white">
+              <SelectValue placeholder="Mes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los meses</SelectItem>
+              {MONTHS.map(month => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Year filter */}
+          <Select value={filterYear} onValueChange={(v) => { setFilterYear(v); handleFilterChange(); }}>
+            <SelectTrigger className="w-[110px] h-9 bg-white">
+              <SelectValue placeholder="Año" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Rate filter */}
+          <Select value={filterRateId} onValueChange={(v) => { setFilterRateId(v); handleFilterChange(); }}>
+            <SelectTrigger className="w-[150px] h-9 bg-white">
+              <SelectValue placeholder="Tarifa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las tarifas</SelectItem>
+              {rates?.map(rate => (
+                <SelectItem key={rate.id} value={rate.id}>
+                  {rate.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Type filter */}
+          <Select value={filterType} onValueChange={(v) => { setFilterType(v); handleFilterChange(); }}>
+            <SelectTrigger className="w-[120px] h-9 bg-white">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="normal">Normales</SelectItem>
+              <SelectItem value="extra">Extras</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Results count */}
+          {(searchTerm || hasActiveFilters) && (
+            <span className="text-sm text-gray-500 ml-2">
+              {filteredPayments.length} resultados
             </span>
           )}
         </div>
