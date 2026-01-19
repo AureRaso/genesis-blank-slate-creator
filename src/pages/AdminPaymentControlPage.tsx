@@ -36,20 +36,32 @@ import { usePaymentRates } from "@/hooks/usePaymentRates";
 
 const ITEMS_PER_PAGE = 25;
 
+// Short month names for chips
 const MONTHS = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
+  { value: "01", label: "Ene", fullLabel: "Enero" },
+  { value: "02", label: "Feb", fullLabel: "Febrero" },
+  { value: "03", label: "Mar", fullLabel: "Marzo" },
+  { value: "04", label: "Abr", fullLabel: "Abril" },
+  { value: "05", label: "May", fullLabel: "Mayo" },
+  { value: "06", label: "Jun", fullLabel: "Junio" },
+  { value: "07", label: "Jul", fullLabel: "Julio" },
+  { value: "08", label: "Ago", fullLabel: "Agosto" },
+  { value: "09", label: "Sep", fullLabel: "Septiembre" },
+  { value: "10", label: "Oct", fullLabel: "Octubre" },
+  { value: "11", label: "Nov", fullLabel: "Noviembre" },
+  { value: "12", label: "Dic", fullLabel: "Diciembre" },
 ];
+
+// Get current month value (01-12)
+const getCurrentMonth = () => {
+  const month = new Date().getMonth() + 1;
+  return month.toString().padStart(2, '0');
+};
+
+// Get current year
+const getCurrentYear = () => {
+  return new Date().getFullYear().toString();
+};
 
 const STATUS_CONFIG = {
   pendiente: {
@@ -88,9 +100,9 @@ export default function AdminPaymentControlPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
 
-  // Filter states
-  const [filterMonth, setFilterMonth] = useState<string>("all");
-  const [filterYear, setFilterYear] = useState<string>("all");
+  // Filter states - default to current month/year
+  const [filterMonth, setFilterMonth] = useState<string>(getCurrentMonth());
+  const [filterYear, setFilterYear] = useState<string>(getCurrentYear());
   const [filterRateId, setFilterRateId] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all"); // all, normal, extra
 
@@ -108,15 +120,30 @@ export default function AdminPaymentControlPage() {
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [payments]);
 
-  // Check if any filters are active
-  const hasActiveFilters = filterMonth !== "all" || filterYear !== "all" || filterRateId !== "all" || filterType !== "all";
+  // Check if non-default filters are active (month/year defaults don't count)
+  const hasNonDefaultFilters = filterRateId !== "all" || filterType !== "all";
 
-  // Clear all filters
-  const clearFilters = () => {
-    setFilterMonth("all");
-    setFilterYear("all");
+  // Check if viewing different period than current
+  const isViewingDifferentPeriod = filterMonth !== getCurrentMonth() || filterYear !== getCurrentYear();
+
+  // Reset to current month
+  const resetToCurrentMonth = () => {
+    setFilterMonth(getCurrentMonth());
+    setFilterYear(getCurrentYear());
+    setCurrentPage(1);
+  };
+
+  // Clear additional filters (keep month/year)
+  const clearAdditionalFilters = () => {
     setFilterRateId("all");
     setFilterType("all");
+    setCurrentPage(1);
+  };
+
+  // Show all periods (remove month/year filter)
+  const showAllPeriods = () => {
+    setFilterMonth("all");
+    setFilterYear("all");
     setCurrentPage(1);
   };
 
@@ -523,72 +550,103 @@ export default function AdminPaymentControlPage() {
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <div className="space-y-3 mb-4">
-        {/* Search bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1 max-w-md">
+      {/* Filters Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+        {/* Year selector + Search row */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          {/* Year chips */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-gray-400 hidden sm:block" />
+            <div className="flex gap-1">
+              {availableYears.length > 0 ? (
+                <>
+                  {availableYears.slice(0, 3).map(year => (
+                    <button
+                      key={year}
+                      onClick={() => { setFilterYear(year); handleFilterChange(); }}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                        filterYear === year
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                  <button
+                    onClick={showAllPeriods}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                      filterMonth === "all" && filterYear === "all"
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Todo
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { setFilterYear(getCurrentYear()); handleFilterChange(); }}
+                    className="px-3 py-1.5 text-sm font-medium rounded-full bg-primary text-white"
+                  >
+                    {getCurrentYear()}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm ml-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar por nombre, email o concepto..."
+              placeholder="Buscar alumno o concepto..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 handleFilterChange();
               }}
-              className="pl-9 bg-white"
+              className="pl-9 h-9"
             />
           </div>
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Limpiar filtros
-            </Button>
-          )}
         </div>
 
-        {/* Filters row */}
-        <div className="flex flex-wrap gap-2 items-center">
+        {/* Month chips - scrollable on mobile */}
+        {filterYear !== "all" && (
+          <div className="mb-4">
+            <div className="flex gap-1 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {MONTHS.map(month => {
+                const isSelected = filterMonth === month.value;
+                const isCurrent = month.value === getCurrentMonth() && filterYear === getCurrentYear();
+                return (
+                  <button
+                    key={month.value}
+                    onClick={() => { setFilterMonth(month.value); handleFilterChange(); }}
+                    className={`flex-shrink-0 px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
+                      isSelected
+                        ? 'bg-primary text-white shadow-sm'
+                        : isCurrent
+                        ? 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
+                    }`}
+                  >
+                    <span className="sm:hidden">{month.label}</span>
+                    <span className="hidden sm:inline">{month.fullLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Additional filters row */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
           <Filter className="h-4 w-4 text-gray-400" />
-
-          {/* Month filter */}
-          <Select value={filterMonth} onValueChange={(v) => { setFilterMonth(v); handleFilterChange(); }}>
-            <SelectTrigger className="w-[130px] h-9 bg-white">
-              <SelectValue placeholder="Mes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los meses</SelectItem>
-              {MONTHS.map(month => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Year filter */}
-          <Select value={filterYear} onValueChange={(v) => { setFilterYear(v); handleFilterChange(); }}>
-            <SelectTrigger className="w-[110px] h-9 bg-white">
-              <SelectValue placeholder="Año" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {availableYears.map(year => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
           {/* Rate filter */}
           <Select value={filterRateId} onValueChange={(v) => { setFilterRateId(v); handleFilterChange(); }}>
-            <SelectTrigger className="w-[150px] h-9 bg-white">
+            <SelectTrigger className="w-[140px] h-8 text-sm bg-white">
               <SelectValue placeholder="Tarifa" />
             </SelectTrigger>
             <SelectContent>
@@ -601,24 +659,59 @@ export default function AdminPaymentControlPage() {
             </SelectContent>
           </Select>
 
-          {/* Type filter */}
-          <Select value={filterType} onValueChange={(v) => { setFilterType(v); handleFilterChange(); }}>
-            <SelectTrigger className="w-[120px] h-9 bg-white">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="normal">Normales</SelectItem>
-              <SelectItem value="extra">Extras</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Type filter chips */}
+          <div className="flex gap-1">
+            {[
+              { value: "all", label: "Todos" },
+              { value: "normal", label: "Normales" },
+              { value: "extra", label: "Extras" },
+            ].map(type => (
+              <button
+                key={type.value}
+                onClick={() => { setFilterType(type.value); handleFilterChange(); }}
+                className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                  filterType === type.value
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Action buttons */}
+          {isViewingDifferentPeriod && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetToCurrentMonth}
+              className="text-primary hover:text-primary/80 text-xs h-8"
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              Mes actual
+            </Button>
+          )}
+
+          {hasNonDefaultFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAdditionalFilters}
+              className="text-gray-500 hover:text-gray-700 text-xs h-8"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Limpiar
+            </Button>
+          )}
 
           {/* Results count */}
-          {(searchTerm || hasActiveFilters) && (
-            <span className="text-sm text-gray-500 ml-2">
-              {filteredPayments.length} resultados
-            </span>
-          )}
+          <span className="text-xs text-gray-500">
+            {filteredPayments.length} pagos
+          </span>
         </div>
       </div>
 
