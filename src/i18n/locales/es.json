@@ -62,7 +62,8 @@
     "attendance": "Asistencia",
     "attendanceToday": "Asistencia Hoy",
     "payments": "Pagos",
-    "paymentControl": "Control de Pagos"
+    "paymentControl": "Control de Pagos",
+    "paymentRates": "Tarifas"
   },
   "userMenu": {
     "superadmin": "Administrador",

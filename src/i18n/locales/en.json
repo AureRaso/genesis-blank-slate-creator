@@ -215,7 +215,8 @@
     "attendance": "Attendance",
     "attendanceToday": "Today's Attendance",
     "payments": "Payments",
-    "paymentControl": "Payment Control"
+    "paymentControl": "Payment Control",
+    "paymentRates": "Rates"
   },
   "userMenu": {
     "superadmin": "Administrator",

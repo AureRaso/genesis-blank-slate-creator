@@ -336,6 +336,10 @@ const AppSidebar = () => {
         title: t('sidebar.paymentControl'),
         url: "/dashboard/monthly-payments",
         icon: Wallet
+      }, {
+        title: t('sidebar.paymentRates'),
+        url: "/dashboard/payment-rates",
+        icon: CreditCard
       }] : []),
       {
         title: t('sidebar.players'),

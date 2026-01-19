@@ -73,6 +73,8 @@ import TestPasswordResetPage from "@/pages/TestPasswordResetPage";
 import PlayerPaymentsPage from "@/pages/PlayerPaymentsPage";
 import AdminPaymentControlPage from "@/pages/AdminPaymentControlPage";
 import EjerciciosPage from "@/pages/EjerciciosPage";
+import PaymentRatesPage from "@/pages/PaymentRatesPage";
+import AssignRatesPage from "@/pages/AssignRatesPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -272,6 +274,8 @@ function App() {
                      {isAdmin && <Route path="/student-scores" element={<StudentScoresPage />} />}
                      {isAdmin && <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />}
                      {isAdmin && <Route path="/monthly-payments" element={<AdminPaymentControlPage />} />}
+                     {isAdmin && <Route path="/payment-rates" element={<PaymentRatesPage />} />}
+                     {isAdmin && <Route path="/payment-rates/assign" element={<AssignRatesPage />} />}
                      {(isAdmin || isTrainer) && <Route path="/ejercicios" element={<EjerciciosPage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />

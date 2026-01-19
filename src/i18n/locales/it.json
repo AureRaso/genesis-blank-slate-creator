@@ -215,7 +215,8 @@
     "attendance": "Presenze",
     "attendanceToday": "Presenze Oggi",
     "payments": "Pagamenti",
-    "paymentControl": "Controllo Pagamenti"
+    "paymentControl": "Controllo Pagamenti",
+    "paymentRates": "Tariffe"
   },
   "userMenu": {
     "superadmin": "Amministratore",

@@ -1,0 +1,523 @@
+import { useState } from "react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar, Euro, Loader2, Settings } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  usePaymentRates,
+  useCreatePaymentRate,
+  useUpdatePaymentRate,
+  useDeletePaymentRate,
+  useTogglePaymentRateActive,
+  PaymentRate,
+  CreatePaymentRateInput,
+} from "@/hooks/usePaymentRates";
+import { Link } from "react-router-dom";
+
+const PERIODICITY_LABELS: Record<string, string> = {
+  mensual: "Mensual",
+  trimestral: "Trimestral",
+  semestral: "Semestral",
+  anual: "Anual",
+};
+
+const RATE_TYPE_LABELS: Record<string, string> = {
+  fija: "Precio Fijo",
+  por_clase: "Por Clase",
+};
+
+const initialFormState: CreatePaymentRateInput = {
+  name: "",
+  description: "",
+  rate_type: "fija",
+  periodicity: "mensual",
+  fixed_price: undefined,
+  price_per_class: undefined,
+  billing_day: 1,
+  due_days: 30,
+  grace_days: 7,
+};
+
+export default function PaymentRatesPage() {
+  const { data: rates, isLoading } = usePaymentRates();
+  const createRate = useCreatePaymentRate();
+  const updateRate = useUpdatePaymentRate();
+  const deleteRate = useDeletePaymentRate();
+  const toggleActive = useTogglePaymentRateActive();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingRate, setEditingRate] = useState<PaymentRate | null>(null);
+  const [deletingRateId, setDeletingRateId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<CreatePaymentRateInput>(initialFormState);
+
+  const handleOpenCreate = () => {
+    setEditingRate(null);
+    setFormData(initialFormState);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEdit = (rate: PaymentRate) => {
+    setEditingRate(rate);
+    setFormData({
+      name: rate.name,
+      description: rate.description || "",
+      rate_type: rate.rate_type,
+      periodicity: rate.periodicity,
+      fixed_price: rate.fixed_price || undefined,
+      price_per_class: rate.price_per_class || undefined,
+      billing_day: rate.billing_day,
+      due_days: rate.due_days,
+      grace_days: rate.grace_days,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenDelete = (id: string) => {
+    setDeletingRateId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (editingRate) {
+      await updateRate.mutateAsync({
+        id: editingRate.id,
+        ...formData,
+      });
+    } else {
+      await createRate.mutateAsync(formData);
+    }
+
+    setIsDialogOpen(false);
+    setEditingRate(null);
+    setFormData(initialFormState);
+  };
+
+  const handleDelete = async () => {
+    if (deletingRateId) {
+      await deleteRate.mutateAsync(deletingRateId);
+      setIsDeleteDialogOpen(false);
+      setDeletingRateId(null);
+    }
+  };
+
+  const handleToggleActive = async (rate: PaymentRate) => {
+    await toggleActive.mutateAsync({
+      id: rate.id,
+      is_active: !rate.is_active,
+    });
+  };
+
+  const formatPrice = (rate: PaymentRate) => {
+    if (rate.rate_type === "fija" && rate.fixed_price) {
+      return `${rate.fixed_price.toFixed(2)} €`;
+    }
+    if (rate.rate_type === "por_clase" && rate.price_per_class) {
+      return `${rate.price_per_class.toFixed(2)} € / clase`;
+    }
+    return "-";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-6 px-4 max-w-6xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Tarifas de Pago</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Configura las tarifas que se aplicarán a los alumnos
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/dashboard/payment-rates/assign">
+              <Settings className="h-4 w-4 mr-2" />
+              Asignar Tarifas
+            </Link>
+          </Button>
+          <Button onClick={handleOpenCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Tarifa
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
+      {rates && rates.length > 0 ? (
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Periodicidad</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
+                <TableHead className="text-center">Día Cobro</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rates.map((rate) => (
+                <TableRow key={rate.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{rate.name}</p>
+                      {rate.description && (
+                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                          {rate.description}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {RATE_TYPE_LABELS[rate.rate_type]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{PERIODICITY_LABELS[rate.periodicity]}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatPrice(rate)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="secondary">Día {rate.billing_day}</Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      className={
+                        rate.is_active
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-gray-50 text-gray-500 border-gray-200"
+                      }
+                    >
+                      {rate.is_active ? "Activa" : "Inactiva"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleActive(rate)}
+                        title={rate.is_active ? "Desactivar" : "Activar"}
+                      >
+                        {rate.is_active ? (
+                          <ToggleRight className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <ToggleLeft className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenEdit(rate)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenDelete(rate.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      ) : (
+        <Card className="p-12 text-center border-dashed">
+          <Euro className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
+            No hay tarifas configuradas
+          </h3>
+          <p className="text-gray-500 text-sm mb-4">
+            Crea tu primera tarifa para empezar a gestionar los pagos de tus alumnos
+          </p>
+          <Button onClick={handleOpenCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Tarifa
+          </Button>
+        </Card>
+      )}
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>
+                {editingRate ? "Editar Tarifa" : "Nueva Tarifa"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingRate
+                  ? "Modifica los datos de la tarifa"
+                  : "Configura una nueva tarifa de pago para tus alumnos"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              {/* Name */}
+              <div className="grid gap-2">
+                <Label htmlFor="name">Nombre *</Label>
+                <Input
+                  id="name"
+                  placeholder="Ej: Tarifa Mensual Adultos"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div className="grid gap-2">
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Descripción opcional..."
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              {/* Rate Type & Periodicity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Tipo de Tarifa *</Label>
+                  <Select
+                    value={formData.rate_type}
+                    onValueChange={(value: "fija" | "por_clase") =>
+                      setFormData({ ...formData, rate_type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fija">Precio Fijo</SelectItem>
+                      <SelectItem value="por_clase">Por Clase</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Periodicidad *</Label>
+                  <Select
+                    value={formData.periodicity}
+                    onValueChange={(
+                      value: "mensual" | "trimestral" | "semestral" | "anual"
+                    ) => setFormData({ ...formData, periodicity: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mensual">Mensual</SelectItem>
+                      <SelectItem value="trimestral">Trimestral</SelectItem>
+                      <SelectItem value="semestral">Semestral</SelectItem>
+                      <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="grid gap-2">
+                <Label htmlFor="price">
+                  {formData.rate_type === "fija"
+                    ? "Precio Fijo (€) *"
+                    : "Precio por Clase (€) *"}
+                </Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={
+                    formData.rate_type === "fija"
+                      ? formData.fixed_price || ""
+                      : formData.price_per_class || ""
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value
+                      ? parseFloat(e.target.value)
+                      : undefined;
+                    if (formData.rate_type === "fija") {
+                      setFormData({ ...formData, fixed_price: value });
+                    } else {
+                      setFormData({ ...formData, price_per_class: value });
+                    }
+                  }}
+                  required
+                />
+              </div>
+
+              {/* Billing Day */}
+              <div className="grid gap-2">
+                <Label htmlFor="billing_day">Día de Cobro (1-28) *</Label>
+                <Input
+                  id="billing_day"
+                  type="number"
+                  min="1"
+                  max="28"
+                  value={formData.billing_day}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      billing_day: parseInt(e.target.value) || 1,
+                    })
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500">
+                  Día del mes en que se genera el pago pendiente
+                </p>
+              </div>
+
+              {/* Due Days & Grace Days */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="due_days">Días para Pagar</Label>
+                  <Input
+                    id="due_days"
+                    type="number"
+                    min="1"
+                    max="90"
+                    value={formData.due_days}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        due_days: parseInt(e.target.value) || 30,
+                      })
+                    }
+                  />
+                  <p className="text-xs text-gray-500">Por defecto: 30 días</p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="grace_days">Días Recordatorio</Label>
+                  <Input
+                    id="grace_days"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={formData.grace_days}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        grace_days: parseInt(e.target.value) || 7,
+                      })
+                    }
+                  />
+                  <p className="text-xs text-gray-500">
+                    Días antes del vencimiento
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createRate.isPending || updateRate.isPending}
+              >
+                {createRate.isPending || updateRate.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {editingRate ? "Guardar" : "Crear"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar tarifa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Si hay alumnos con esta tarifa
+              asignada, se eliminarán también las asignaciones.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteRate.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

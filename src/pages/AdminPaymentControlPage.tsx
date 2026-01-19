@@ -1,7 +1,7 @@
-import { useAdminMonthlyPayments, useVerifyPayment } from "@/hooks/useAdminMonthlyPayments";
-import { Loader2, Wallet, FileText, TrendingUp, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,14 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MonthlyPaymentWithStudent } from "@/hooks/useAdminMonthlyPayments";
-
-const MONTH_NAMES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
+import {
+  useAdminStudentPayments,
+  useVerifyStudentPayment,
+  useCreateExtraPayment,
+  useGenerateMonthlyPayments,
+  StudentPayment,
+} from "@/hooks/useStudentPayments";
+import { useStudentsWithAssignments } from "@/hooks/useRateAssignments";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -51,40 +53,36 @@ const STATUS_CONFIG = {
   },
 };
 
+const PAYMENT_METHOD_CONFIG: Record<string, { label: string; icon: typeof Banknote }> = {
+  efectivo: { label: "Efectivo", icon: Banknote },
+  tarjeta: { label: "Tarjeta", icon: CreditCard },
+  bizum: { label: "Bizum", icon: Smartphone },
+};
+
 export default function AdminPaymentControlPage() {
-  const { data: payments, isLoading } = useAdminMonthlyPayments();
-  const verifyPayment = useVerifyPayment();
+  const { data: payments, isLoading } = useAdminStudentPayments();
+  const { data: students } = useStudentsWithAssignments();
+  const verifyPayment = useVerifyStudentPayment();
+  const createExtraPayment = useCreateExtraPayment();
+  const generateMonthlyPayments = useGenerateMonthlyPayments();
+
   const [activeTab, setActiveTab] = useState<string>("pendiente");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
 
-  // Dialog state
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogPayment, setDialogPayment] = useState<MonthlyPaymentWithStudent | null>(null);
+  // Verify Dialog state
+  const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
+  const [dialogPayment, setDialogPayment] = useState<StudentPayment | null>(null);
   const [dialogAction, setDialogAction] = useState<'approve' | 'reject' | null>(null);
-  const [notes, setNotes] = useState("");
-  const [rejectionReason, setRejectionReason] = useState("");
+  const [adminNotes, setAdminNotes] = useState("");
 
-  // Get unique months and years from payments
-  const { availableMonths, availableYears } = useMemo(() => {
-    if (!payments) return { availableMonths: [], availableYears: [] };
-
-    const months = new Set<number>();
-    const years = new Set<number>();
-
-    payments.forEach(payment => {
-      months.add(payment.month);
-      years.add(payment.year);
-    });
-
-    return {
-      availableMonths: Array.from(months).sort((a, b) => a - b),
-      availableYears: Array.from(years).sort((a, b) => b - a),
-    };
-  }, [payments]);
+  // Extra Payment Dialog state
+  const [isExtraPaymentDialogOpen, setIsExtraPaymentDialogOpen] = useState(false);
+  const [extraPaymentStudentId, setExtraPaymentStudentId] = useState("");
+  const [extraPaymentConcept, setExtraPaymentConcept] = useState("");
+  const [extraPaymentAmount, setExtraPaymentAmount] = useState("");
+  const [extraPaymentDescription, setExtraPaymentDescription] = useState("");
 
   // Reset to page 1 when active tab changes
   useEffect(() => {
@@ -100,39 +98,15 @@ export default function AdminPaymentControlPage() {
     );
   }
 
-  if (!payments || payments.length === 0) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Control de pagos</h1>
-          <p className="text-gray-500 text-sm mt-1">Gestiona los pagos mensuales de todos los estudiantes</p>
-        </div>
-
-        <Card className="p-12 text-center border-dashed">
-          <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">
-            No hay pagos registrados
-          </h3>
-          <p className="text-gray-500 text-sm">
-            Cuando los estudiantes se inscriban en clases mensuales, aquí podrás gestionar sus pagos.
-          </p>
-        </Card>
-      </div>
-    );
-  }
-
-  // Filter by search term, month, and year
-  const filteredPayments = payments.filter(payment => {
+  // Filter by search term
+  const filteredPayments = (payments || []).filter(payment => {
+    if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch =
-      payment.student_enrollment.full_name.toLowerCase().includes(searchLower) ||
-      payment.student_enrollment.email.toLowerCase().includes(searchLower) ||
-      (payment.student_enrollment.phone?.toLowerCase().includes(searchLower));
-
-    const matchesMonth = selectedMonth === "all" || payment.month === parseInt(selectedMonth);
-    const matchesYear = selectedYear === "all" || payment.year === parseInt(selectedYear);
-
-    return matchesSearch && matchesMonth && matchesYear;
+    return (
+      payment.student_enrollment?.full_name?.toLowerCase().includes(searchLower) ||
+      payment.student_enrollment?.email?.toLowerCase().includes(searchLower) ||
+      payment.concept?.toLowerCase().includes(searchLower)
+    );
   });
 
   // Filter payments by status
@@ -141,19 +115,19 @@ export default function AdminPaymentControlPage() {
   const paidPayments = filteredPayments.filter(p => p.status === 'pagado');
 
   // Get summary statistics
-  const totalPending = pendingPayments.reduce((sum, p) => sum + p.total_amount, 0);
-  const totalInReview = inReviewPayments.reduce((sum, p) => sum + p.total_amount, 0);
-  const totalPaid = paidPayments.reduce((sum, p) => sum + p.total_amount, 0);
+  const totalPending = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+  const totalInReview = inReviewPayments.reduce((sum, p) => sum + p.amount, 0);
+  const totalPaid = paidPayments.reduce((sum, p) => sum + p.amount, 0);
   const totalExpected = totalPending + totalInReview + totalPaid;
 
   // Pagination logic
-  const getPaginatedData = (data: typeof filteredPayments) => {
+  const getPaginatedData = (data: StudentPayment[]) => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return data.slice(startIndex, endIndex);
   };
 
-  const getTotalPages = (data: typeof filteredPayments) => {
+  const getTotalPages = (data: StudentPayment[]) => {
     return Math.ceil(data.length / ITEMS_PER_PAGE);
   };
 
@@ -194,25 +168,47 @@ export default function AdminPaymentControlPage() {
     setSelectedPayments(newSelected);
   };
 
-  const openDialog = (payment: MonthlyPaymentWithStudent, action: 'approve' | 'reject') => {
+  const openVerifyDialog = (payment: StudentPayment, action: 'approve' | 'reject') => {
     setDialogPayment(payment);
     setDialogAction(action);
-    setNotes(payment.notes || "");
-    setRejectionReason("");
-    setIsDialogOpen(true);
+    setAdminNotes(payment.admin_notes || "");
+    setIsVerifyDialogOpen(true);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!dialogPayment || !dialogAction) return;
 
-    if (dialogAction === 'approve') {
-      verifyPayment.mutate({ paymentId: dialogPayment.id, status: 'pagado', notes });
-    } else {
-      verifyPayment.mutate({ paymentId: dialogPayment.id, status: 'pendiente', notes, rejectionReason });
-    }
-    setIsDialogOpen(false);
+    await verifyPayment.mutateAsync({
+      paymentId: dialogPayment.id,
+      status: dialogAction === 'approve' ? 'pagado' : 'pendiente',
+      adminNotes: adminNotes || undefined,
+    });
+
+    setIsVerifyDialogOpen(false);
     setDialogPayment(null);
     setDialogAction(null);
+    setAdminNotes("");
+  };
+
+  const openExtraPaymentDialog = () => {
+    setExtraPaymentStudentId("");
+    setExtraPaymentConcept("");
+    setExtraPaymentAmount("");
+    setExtraPaymentDescription("");
+    setIsExtraPaymentDialogOpen(true);
+  };
+
+  const handleCreateExtraPayment = async () => {
+    if (!extraPaymentStudentId || !extraPaymentConcept || !extraPaymentAmount) return;
+
+    await createExtraPayment.mutateAsync({
+      student_enrollment_id: extraPaymentStudentId,
+      concept: extraPaymentConcept,
+      amount: parseFloat(extraPaymentAmount),
+      description: extraPaymentDescription || undefined,
+    });
+
+    setIsExtraPaymentDialogOpen(false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -222,6 +218,10 @@ export default function AdminPaymentControlPage() {
     }).format(amount) + ' €';
   };
 
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('es-ES');
+  };
+
   const PaginationControls = () => {
     if (totalPages <= 1) return null;
 
@@ -229,7 +229,7 @@ export default function AdminPaymentControlPage() {
     const endItem = Math.min(currentPage * ITEMS_PER_PAGE, currentData.length);
 
     return (
-      <div className="flex items-center justify-between mt-4 px-2">
+      <div className="flex items-center justify-between mt-4 px-4 pb-4">
         <div className="text-sm text-gray-500">
           Mostrando {startItem} - {endItem} de {currentData.length}
         </div>
@@ -258,7 +258,7 @@ export default function AdminPaymentControlPage() {
     );
   };
 
-  const PaymentRow = ({ payment }: { payment: MonthlyPaymentWithStudent }) => {
+  const PaymentRow = ({ payment }: { payment: StudentPayment }) => {
     const statusConfig = STATUS_CONFIG[payment.status];
     const StatusIcon = statusConfig.icon;
     const isSelected = selectedPayments.has(payment.id);
@@ -275,38 +275,83 @@ export default function AdminPaymentControlPage() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
               <span className="text-sm font-medium text-primary">
-                {payment.student_enrollment.full_name.charAt(0).toUpperCase()}
+                {payment.student_enrollment?.full_name?.charAt(0).toUpperCase() || '?'}
               </span>
             </div>
             <div>
-              <p className="font-medium text-gray-900">{payment.student_enrollment.full_name}</p>
-              <p className="text-xs text-gray-500">{payment.total_classes} clases · {payment.price_per_class.toFixed(0)} € / clase</p>
+              <p className="font-medium text-gray-900">{payment.student_enrollment?.full_name || 'Sin nombre'}</p>
+              <p className="text-xs text-gray-500">{payment.concept}</p>
             </div>
           </div>
         </td>
         <td className="py-3 px-4 text-right">
-          <span className="font-semibold text-gray-900">{formatCurrency(payment.total_amount)}</span>
+          <span className="font-semibold text-gray-900">{formatCurrency(payment.amount)}</span>
+        </td>
+        <td className="py-3 px-4">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Calendar className="h-3 w-3" />
+              <span>Vence: {formatDate(payment.due_date)}</span>
+            </div>
+            {payment.payment_method && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                {(() => {
+                  const config = PAYMENT_METHOD_CONFIG[payment.payment_method];
+                  const Icon = config?.icon || Banknote;
+                  return (
+                    <>
+                      <Icon className="h-3 w-3" />
+                      <span>{config?.label || payment.payment_method}</span>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
         </td>
         <td className="py-3 px-4">
           <Badge variant="outline" className={`${statusConfig.color} flex items-center gap-1 w-fit`}>
             <StatusIcon className="h-3 w-3" />
             {statusConfig.label}
           </Badge>
+          {payment.is_extra_payment && (
+            <Badge variant="secondary" className="ml-1 text-xs">Extra</Badge>
+          )}
         </td>
         <td className="py-3 px-4 text-right">
-          {payment.status !== 'pagado' && (
+          {payment.status === 'pendiente' && (
             <Button
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary/80 hover:bg-primary/5 font-medium"
-              onClick={() => openDialog(payment, 'approve')}
+              onClick={() => openVerifyDialog(payment, 'approve')}
             >
-              Marcar como pagado
+              Marcar pagado
             </Button>
           )}
-          {payment.status === 'pagado' && payment.verified_paid_at && (
+          {payment.status === 'en_revision' && (
+            <div className="flex gap-1 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                onClick={() => openVerifyDialog(payment, 'approve')}
+              >
+                Aprobar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => openVerifyDialog(payment, 'reject')}
+              >
+                Rechazar
+              </Button>
+            </div>
+          )}
+          {payment.status === 'pagado' && payment.admin_verified_at && (
             <span className="text-xs text-gray-500">
-              Verificado {new Date(payment.verified_paid_at).toLocaleDateString('es-ES')}
+              Verificado {formatDate(payment.admin_verified_at)}
             </span>
           )}
         </td>
@@ -317,9 +362,35 @@ export default function AdminPaymentControlPage() {
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Control de pagos</h1>
-        <p className="text-gray-500 text-sm mt-1">Gestiona los pagos mensuales de todos los estudiantes</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Control de pagos</h1>
+          <p className="text-gray-500 text-sm mt-1">Gestiona los pagos de todos los estudiantes</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button asChild variant="outline">
+            <Link to="/dashboard/payment-rates">
+              <Settings className="h-4 w-4 mr-2" />
+              Tarifas
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => generateMonthlyPayments.mutate()}
+            disabled={generateMonthlyPayments.isPending}
+          >
+            {generateMonthlyPayments.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Generar Pagos del Mes
+          </Button>
+          <Button onClick={openExtraPaymentDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Pago Extra
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -370,12 +441,12 @@ export default function AdminPaymentControlPage() {
         </Card>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Buscar por nombre, email o teléfono..."
+            placeholder="Buscar por nombre, email o concepto..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -388,40 +459,6 @@ export default function AdminPaymentControlPage() {
               ({filteredPayments.length})
             </span>
           )}
-        </div>
-        <div className="flex gap-2">
-          <Select value={selectedMonth} onValueChange={(value) => {
-            setSelectedMonth(value);
-            handleFilterChange();
-          }}>
-            <SelectTrigger className="w-[160px] bg-white">
-              <SelectValue placeholder="Todos los meses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los meses</SelectItem>
-              {availableMonths.map((month) => (
-                <SelectItem key={month} value={month.toString()}>
-                  {MONTH_NAMES[month - 1]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedYear} onValueChange={(value) => {
-            setSelectedYear(value);
-            handleFilterChange();
-          }}>
-            <SelectTrigger className="w-[130px] bg-white">
-              <SelectValue placeholder="Todos los años" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los años</SelectItem>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -450,49 +487,72 @@ export default function AdminPaymentControlPage() {
 
         {/* Table Content */}
         <div className="bg-white rounded-lg border border-gray-200 mt-4 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="py-3 px-4 text-left w-12">
-                  <Checkbox
-                    checked={paginatedData.length > 0 && paginatedData.every(p => selectedPayments.has(p.id))}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Alumno
-                </th>
-                <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acción
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
-                    {searchTerm ? 'No se encontraron pagos con ese criterio de búsqueda' : 'No hay pagos en esta categoría'}
-                  </td>
-                </tr>
-              ) : (
-                paginatedData.map((payment) => (
-                  <PaymentRow key={payment.id} payment={payment} />
-                ))
-              )}
-            </tbody>
-          </table>
-          <PaginationControls />
+          {(!payments || payments.length === 0) ? (
+            <div className="p-12 text-center">
+              <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No hay pagos registrados
+              </h3>
+              <p className="text-gray-500 text-sm mb-4">
+                Asigna tarifas a los alumnos para empezar a gestionar sus pagos.
+              </p>
+              <Button asChild>
+                <Link to="/dashboard/payment-rates/assign">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Asignar Tarifas
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50/50">
+                    <th className="py-3 px-4 text-left w-12">
+                      <Checkbox
+                        checked={paginatedData.length > 0 && paginatedData.every(p => selectedPayments.has(p.id))}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Alumno
+                    </th>
+                    <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Importe
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Detalles
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acción
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-gray-500">
+                        {searchTerm ? 'No se encontraron pagos con ese criterio de búsqueda' : 'No hay pagos en esta categoría'}
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedData.map((payment) => (
+                      <PaymentRow key={payment.id} payment={payment} />
+                    ))
+                  )}
+                </tbody>
+              </table>
+              <PaginationControls />
+            </>
+          )}
         </div>
       </Tabs>
 
-      {/* Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Verify Dialog */}
+      <Dialog open={isVerifyDialogOpen} onOpenChange={setIsVerifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -500,54 +560,112 @@ export default function AdminPaymentControlPage() {
             </DialogTitle>
             <DialogDescription>
               {dialogAction === 'approve' && dialogPayment
-                ? `Confirmar el pago de ${formatCurrency(dialogPayment.total_amount)} de ${dialogPayment.student_enrollment.full_name}`
+                ? `Confirmar el pago de ${formatCurrency(dialogPayment.amount)} de ${dialogPayment.student_enrollment?.full_name}`
                 : `El alumno será notificado del rechazo y deberá volver a marcar el pago.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {dialogAction === 'reject' && (
-              <div className="space-y-2">
-                <Label htmlFor="rejectionReason">
-                  Motivo del rechazo <span className="text-red-500">*</span>
-                </Label>
-                <Textarea
-                  id="rejectionReason"
-                  placeholder="Ej: El comprobante no coincide con el monto, imagen borrosa, datos incorrectos..."
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  rows={3}
-                  className="resize-none"
-                />
-                <p className="text-xs text-gray-500">
-                  Este motivo será visible para el alumno
-                </p>
-              </div>
-            )}
             <div className="space-y-2">
-              <Label htmlFor="notes">
-                Notas {dialogAction === 'approve' ? '(opcional)' : 'internas (opcional)'}
+              <Label htmlFor="adminNotes">
+                Notas {dialogAction === 'approve' ? '(opcional)' : ''}
               </Label>
               <Textarea
-                id="notes"
+                id="adminNotes"
                 placeholder={dialogAction === 'approve'
                   ? "Añade notas sobre esta verificación..."
-                  : "Notas internas solo visibles para administradores..."}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
+                  : "Indica el motivo del rechazo..."}
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsVerifyDialogOpen(false)}>
               Cancelar
             </Button>
             <Button
               onClick={handleVerify}
               variant={dialogAction === 'approve' ? 'default' : 'destructive'}
-              disabled={dialogAction === 'reject' && !rejectionReason.trim()}
+              disabled={verifyPayment.isPending}
             >
+              {verifyPayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {dialogAction === 'approve' ? 'Confirmar' : 'Rechazar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extra Payment Dialog */}
+      <Dialog open={isExtraPaymentDialogOpen} onOpenChange={setIsExtraPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir Pago Extra</DialogTitle>
+            <DialogDescription>
+              Crea un pago adicional para un alumno (ej: clase suelta, material, etc.)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Alumno *</Label>
+              <Select value={extraPaymentStudentId} onValueChange={setExtraPaymentStudentId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un alumno..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {students?.map(student => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="concept">Concepto *</Label>
+              <Input
+                id="concept"
+                placeholder="Ej: Clase suelta, Material, Inscripción torneo..."
+                value={extraPaymentConcept}
+                onChange={(e) => setExtraPaymentConcept(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Importe (€) *</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={extraPaymentAmount}
+                onChange={(e) => setExtraPaymentAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descripción (opcional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Añade detalles adicionales..."
+                value={extraPaymentDescription}
+                onChange={(e) => setExtraPaymentDescription(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExtraPaymentDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateExtraPayment}
+              disabled={!extraPaymentStudentId || !extraPaymentConcept || !extraPaymentAmount || createExtraPayment.isPending}
+            >
+              {createExtraPayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Crear Pago
             </Button>
           </DialogFooter>
         </DialogContent>
