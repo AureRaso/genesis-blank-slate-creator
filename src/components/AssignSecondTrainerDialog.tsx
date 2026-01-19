@@ -47,6 +47,7 @@ const AssignSecondTrainerDialog = ({
   onOpenChange,
   classData,
 }: AssignSecondTrainerDialogProps) => {
+  const [primaryTrainerId, setPrimaryTrainerId] = useState<string>("");
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>("none");
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
   const [applyToSeries, setApplyToSeries] = useState(false);
@@ -60,25 +61,40 @@ const AssignSecondTrainerDialog = ({
   // Reset state when dialog opens with new class data
   useEffect(() => {
     if (open && classData) {
+      setPrimaryTrainerId(classData.trainer_profile_id || "");
       setSelectedTrainerId(classData.trainer_profile_id_2 || "none");
       setMaxParticipants(classData.max_participants || 4);
       setApplyToSeries(false);
     }
   }, [open, classData]);
 
-  // Filter out the primary trainer from the list
-  const availableTrainers = trainers?.filter(
-    (trainer) => trainer.profile_id !== classData?.trainer_profile_id
+  // Filter out the primary trainer from the second trainer list
+  const availableSecondTrainers = trainers?.filter(
+    (trainer) => trainer.profile_id !== primaryTrainerId
   );
+
+  // Handle primary trainer change - clear second trainer if it's the same
+  const handlePrimaryTrainerChange = (newPrimaryId: string) => {
+    setPrimaryTrainerId(newPrimaryId);
+    // If the new primary trainer was the second trainer, clear it
+    if (selectedTrainerId === newPrimaryId) {
+      setSelectedTrainerId("none");
+    }
+  };
 
   const handleSave = async () => {
     if (!classData) return;
+    if (!primaryTrainerId) {
+      toast.error("Debes seleccionar un profesor titular");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const newTrainerId = selectedTrainerId === "none" ? null : selectedTrainerId;
+      const newSecondTrainerId = selectedTrainerId === "none" ? null : selectedTrainerId;
       const updateData = {
-        trainer_profile_id_2: newTrainerId,
+        trainer_profile_id: primaryTrainerId,
+        trainer_profile_id_2: newSecondTrainerId,
         max_participants: maxParticipants,
       };
 
@@ -137,14 +153,34 @@ const AssignSecondTrainerDialog = ({
           </DialogTitle>
           <DialogDescription>
             Clase: <span className="font-medium">{classData.name}</span> ({classData.start_time?.slice(0, 5)})
-            <br />
-            Profesor principal: <span className="font-medium">{classData.trainer?.full_name || "Sin asignar"}</span>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="trainer-select" className="text-sm font-medium">
+            <Label htmlFor="primary-trainer-select" className="text-sm font-medium">
+              Profesor titular
+            </Label>
+            <Select
+              value={primaryTrainerId}
+              onValueChange={handlePrimaryTrainerChange}
+              disabled={loadingTrainers || isLoading}
+            >
+              <SelectTrigger id="primary-trainer-select">
+                <SelectValue placeholder="Seleccionar profesor titular" />
+              </SelectTrigger>
+              <SelectContent>
+                {trainers?.map((trainer) => (
+                  <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
+                    {trainer.profiles?.full_name || trainer.profile_id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="second-trainer-select" className="text-sm font-medium">
               Segundo profesor
             </Label>
             <Select
@@ -152,14 +188,14 @@ const AssignSecondTrainerDialog = ({
               onValueChange={setSelectedTrainerId}
               disabled={loadingTrainers || isLoading}
             >
-              <SelectTrigger id="trainer-select">
+              <SelectTrigger id="second-trainer-select">
                 <SelectValue placeholder="Seleccionar profesor" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">
                   <span className="text-muted-foreground">Sin segundo profesor</span>
                 </SelectItem>
-                {availableTrainers?.map((trainer) => (
+                {availableSecondTrainers?.map((trainer) => (
                   <SelectItem key={trainer.profile_id} value={trainer.profile_id}>
                     {trainer.profiles?.full_name || trainer.profile_id}
                   </SelectItem>
