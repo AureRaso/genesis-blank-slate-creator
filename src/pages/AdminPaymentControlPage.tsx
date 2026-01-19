@@ -105,6 +105,45 @@ export default function AdminPaymentControlPage() {
   const [filterYear, setFilterYear] = useState<string>(getCurrentYear());
   const [filterRateId, setFilterRateId] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all"); // all, normal, extra
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  // Month navigation functions
+  const goToPreviousMonth = () => {
+    let month = parseInt(filterMonth);
+    let year = parseInt(filterYear);
+
+    month -= 1;
+    if (month < 1) {
+      month = 12;
+      year -= 1;
+    }
+
+    setFilterMonth(month.toString().padStart(2, '0'));
+    setFilterYear(year.toString());
+    handleFilterChange();
+  };
+
+  const goToNextMonth = () => {
+    let month = parseInt(filterMonth);
+    let year = parseInt(filterYear);
+
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+
+    setFilterMonth(month.toString().padStart(2, '0'));
+    setFilterYear(year.toString());
+    handleFilterChange();
+  };
+
+  // Get the label for current selected month
+  const getCurrentMonthLabel = () => {
+    if (filterMonth === "all" || filterYear === "all") return "Todos";
+    const monthObj = MONTHS.find(m => m.value === filterMonth);
+    return monthObj ? `${monthObj.fullLabel} ${filterYear}` : "";
+  };
 
   // Get available years from payments
   const availableYears = useMemo(() => {
@@ -156,9 +195,11 @@ export default function AdminPaymentControlPage() {
   // Extra Payment Dialog state
   const [isExtraPaymentDialogOpen, setIsExtraPaymentDialogOpen] = useState(false);
   const [extraPaymentStudentId, setExtraPaymentStudentId] = useState("");
+  const [extraPaymentStudentSearch, setExtraPaymentStudentSearch] = useState("");
   const [extraPaymentConcept, setExtraPaymentConcept] = useState("");
   const [extraPaymentAmount, setExtraPaymentAmount] = useState("");
   const [extraPaymentDescription, setExtraPaymentDescription] = useState("");
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
 
   // Reset to page 1 when active tab changes
   useEffect(() => {
@@ -166,15 +207,7 @@ export default function AdminPaymentControlPage() {
     setSelectedPayments(new Set());
   }, [activeTab]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Filter payments by all criteria
+  // Filter payments by all criteria - MUST be before any early returns
   const filteredPayments = useMemo(() => {
     return (payments || []).filter(payment => {
       // Search filter
@@ -222,6 +255,16 @@ export default function AdminPaymentControlPage() {
   const pendingPayments = filteredPayments.filter(p => p.status === 'pendiente');
   const inReviewPayments = filteredPayments.filter(p => p.status === 'en_revision');
   const paidPayments = filteredPayments.filter(p => p.status === 'pagado');
+
+  // Filter students for extra payment search
+  const filteredStudents = useMemo(() => {
+    if (!students || !extraPaymentStudentSearch.trim()) return students || [];
+    const searchLower = extraPaymentStudentSearch.toLowerCase();
+    return students.filter(s =>
+      s.full_name?.toLowerCase().includes(searchLower) ||
+      s.email?.toLowerCase().includes(searchLower)
+    );
+  }, [students, extraPaymentStudentSearch]);
 
   // Get summary statistics
   const totalPending = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -301,10 +344,18 @@ export default function AdminPaymentControlPage() {
 
   const openExtraPaymentDialog = () => {
     setExtraPaymentStudentId("");
+    setExtraPaymentStudentSearch("");
     setExtraPaymentConcept("");
     setExtraPaymentAmount("");
     setExtraPaymentDescription("");
+    setShowStudentDropdown(false);
     setIsExtraPaymentDialogOpen(true);
+  };
+
+  const handleSelectStudent = (student: { id: string; full_name: string }) => {
+    setExtraPaymentStudentId(student.id);
+    setExtraPaymentStudentSearch(student.full_name);
+    setShowStudentDropdown(false);
   };
 
   const handleCreateExtraPayment = async () => {
@@ -374,29 +425,22 @@ export default function AdminPaymentControlPage() {
 
     return (
       <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-        <td className="py-3 px-4">
+        <td className="py-3 px-4 hidden sm:table-cell">
           <Checkbox
             checked={isSelected}
             onCheckedChange={(checked) => handleSelectPayment(payment.id, checked as boolean)}
           />
         </td>
-        <td className="py-3 px-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-              <span className="text-sm font-medium text-primary">
-                {payment.student_enrollment?.full_name?.charAt(0).toUpperCase() || '?'}
-              </span>
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">{payment.student_enrollment?.full_name || 'Sin nombre'}</p>
-              <p className="text-xs text-gray-500">{payment.concept}</p>
-            </div>
+        <td className="py-3 px-2 sm:px-4">
+          <div>
+            <p className="font-medium text-gray-900 text-sm sm:text-base">{payment.student_enrollment?.full_name || 'Sin nombre'}</p>
+            <p className="text-xs text-gray-500">{payment.concept}</p>
           </div>
         </td>
-        <td className="py-3 px-4 text-right">
-          <span className="font-semibold text-gray-900">{formatCurrency(payment.amount)}</span>
+        <td className="py-3 px-2 sm:px-4 text-center">
+          <span className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(payment.amount)}</span>
         </td>
-        <td className="py-3 px-4">
+        <td className="py-3 px-4 hidden md:table-cell">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Calendar className="h-3 w-3" />
@@ -418,7 +462,7 @@ export default function AdminPaymentControlPage() {
             )}
           </div>
         </td>
-        <td className="py-3 px-4">
+        <td className="py-3 px-4 hidden lg:table-cell">
           <Badge variant="outline" className={`${statusConfig.color} flex items-center gap-1 w-fit`}>
             <StatusIcon className="h-3 w-3" />
             {statusConfig.label}
@@ -427,46 +471,59 @@ export default function AdminPaymentControlPage() {
             <Badge variant="secondary" className="ml-1 text-xs">Extra</Badge>
           )}
         </td>
-        <td className="py-3 px-4 text-right">
+        <td className="py-3 px-2 sm:px-4 text-center">
           {payment.status === 'pendiente' && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:text-primary/80 hover:bg-primary/5 font-medium"
+              className="text-primary hover:text-white hover:bg-primary font-medium text-xs sm:text-sm px-2 sm:px-3"
               onClick={() => openVerifyDialog(payment, 'approve')}
             >
-              Marcar pagado
+              <span className="hidden sm:inline">Marcar pagado</span>
+              <span className="sm:hidden">Pagado</span>
             </Button>
           )}
           {payment.status === 'en_revision' && (
-            <div className="flex gap-1 justify-end">
+            <div className="flex gap-1 justify-center">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                className="text-emerald-600 hover:text-white hover:bg-emerald-600 text-xs sm:text-sm px-2 sm:px-3"
                 onClick={() => openVerifyDialog(payment, 'approve')}
               >
-                Aprobar
+                <span className="hidden sm:inline">Aprobar</span>
+                <CheckCircle2 className="h-4 w-4 sm:hidden" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-white hover:bg-red-600 text-xs sm:text-sm px-2 sm:px-3"
                 onClick={() => openVerifyDialog(payment, 'reject')}
               >
-                Rechazar
+                <span className="hidden sm:inline">Rechazar</span>
+                <X className="h-4 w-4 sm:hidden" />
               </Button>
             </div>
           )}
           {payment.status === 'pagado' && payment.admin_verified_at && (
             <span className="text-xs text-gray-500">
-              Verificado {formatDate(payment.admin_verified_at)}
+              <span className="hidden sm:inline">Verificado {formatDate(payment.admin_verified_at)}</span>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 sm:hidden mx-auto" />
             </span>
           )}
         </td>
       </tr>
     );
   };
+
+  // Loading state - must be after all hooks
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
@@ -552,53 +609,50 @@ export default function AdminPaymentControlPage() {
 
       {/* Filters Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-        {/* Year selector + Search row */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          {/* Year chips */}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-400 hidden sm:block" />
-            <div className="flex gap-1">
-              {availableYears.length > 0 ? (
-                <>
-                  {availableYears.slice(0, 3).map(year => (
-                    <button
-                      key={year}
-                      onClick={() => { setFilterYear(year); handleFilterChange(); }}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                        filterYear === year
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                  <button
-                    onClick={showAllPeriods}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                      filterMonth === "all" && filterYear === "all"
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Todo
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => { setFilterYear(getCurrentYear()); handleFilterChange(); }}
-                    className="px-3 py-1.5 text-sm font-medium rounded-full bg-primary text-white"
-                  >
-                    {getCurrentYear()}
-                  </button>
-                </>
-              )}
-            </div>
+        {/* Month navigation - full width on mobile */}
+        <div className="flex items-center justify-between gap-2 mb-3 sm:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPreviousMonth}
+            className="h-10 w-10 p-0"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <div className="text-base font-semibold text-gray-900 text-center flex-1">
+            {getCurrentMonthLabel()}
           </div>
 
-          {/* Search */}
-          <div className="relative flex-1 max-w-sm ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNextMonth}
+            className="h-10 w-10 p-0"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Mes actual button - mobile */}
+        {isViewingDifferentPeriod && (
+          <div className="mb-3 sm:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetToCurrentMonth}
+              className="text-primary hover:text-white hover:bg-primary text-sm h-8 w-full"
+            >
+              <Calendar className="h-4 w-4 mr-1" />
+              Ir al mes actual
+            </Button>
+          </div>
+        )}
+
+        {/* Main filter row */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Search input */}
+          <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar alumno o concepto..."
@@ -610,108 +664,202 @@ export default function AdminPaymentControlPage() {
               className="pl-9 h-9"
             />
           </div>
-        </div>
 
-        {/* Month chips - scrollable on mobile */}
-        {filterYear !== "all" && (
-          <div className="mb-4">
-            <div className="flex gap-1 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-              {MONTHS.map(month => {
-                const isSelected = filterMonth === month.value;
-                const isCurrent = month.value === getCurrentMonth() && filterYear === getCurrentYear();
-                return (
-                  <button
-                    key={month.value}
-                    onClick={() => { setFilterMonth(month.value); handleFilterChange(); }}
-                    className={`flex-shrink-0 px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
-                      isSelected
-                        ? 'bg-primary text-white shadow-sm'
-                        : isCurrent
-                        ? 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
-                    }`}
-                  >
-                    <span className="sm:hidden">{month.label}</span>
-                    <span className="hidden sm:inline">{month.fullLabel}</span>
-                  </button>
-                );
-              })}
+          {/* Filter toggle button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+            className={`h-9 gap-2 ${isFilterPanelOpen ? 'bg-gray-100' : ''}`}
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+            {(filterRateId !== "all" || filterType !== "all") && (
+              <span className="w-2 h-2 rounded-full bg-primary" />
+            )}
+          </Button>
+
+          {/* Month navigation - desktop only */}
+          <div className="hidden sm:flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousMonth}
+              className="h-9 px-2"
+              title="Mes anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="px-3 py-1.5 text-sm font-medium min-w-[120px] text-center">
+              {getCurrentMonthLabel()}
             </div>
-          </div>
-        )}
 
-        {/* Additional filters row */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
-          <Filter className="h-4 w-4 text-gray-400" />
-
-          {/* Rate filter */}
-          <Select value={filterRateId} onValueChange={(v) => { setFilterRateId(v); handleFilterChange(); }}>
-            <SelectTrigger className="w-[140px] h-8 text-sm bg-white">
-              <SelectValue placeholder="Tarifa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las tarifas</SelectItem>
-              {rates?.map(rate => (
-                <SelectItem key={rate.id} value={rate.id}>
-                  {rate.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Type filter chips */}
-          <div className="flex gap-1">
-            {[
-              { value: "all", label: "Todos" },
-              { value: "normal", label: "Normales" },
-              { value: "extra", label: "Extras" },
-            ].map(type => (
-              <button
-                key={type.value}
-                onClick={() => { setFilterType(type.value); handleFilterChange(); }}
-                className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
-                  filterType === type.value
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {type.label}
-              </button>
-            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextMonth}
+              className="h-9 px-2"
+              title="Mes próximo"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Action buttons */}
+          {/* Mes actual button - desktop only */}
           {isViewingDifferentPeriod && (
             <Button
               variant="ghost"
               size="sm"
               onClick={resetToCurrentMonth}
-              className="text-primary hover:text-primary/80 text-xs h-8"
+              className="hidden sm:flex text-primary hover:text-white hover:bg-primary text-sm h-9"
             >
-              <Calendar className="h-3 w-3 mr-1" />
+              <Calendar className="h-4 w-4 mr-1" />
               Mes actual
             </Button>
           )}
 
-          {hasNonDefaultFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAdditionalFilters}
-              className="text-gray-500 hover:text-gray-700 text-xs h-8"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Limpiar
-            </Button>
-          )}
-
           {/* Results count */}
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 ml-auto hidden sm:block">
             {filteredPayments.length} pagos
           </span>
+        </div>
+
+        {/* Collapsible filter panel */}
+        {isFilterPanelOpen && (
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+            {/* Year chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500 font-medium w-16">Año:</span>
+              <div className="flex gap-1 flex-wrap">
+                {availableYears.length > 0 ? (
+                  <>
+                    {availableYears.slice(0, 3).map(year => (
+                      <button
+                        key={year}
+                        onClick={() => { setFilterYear(year); handleFilterChange(); }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                          filterYear === year
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                    <button
+                      onClick={showAllPeriods}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                        filterMonth === "all" && filterYear === "all"
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Todo
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => { setFilterYear(getCurrentYear()); handleFilterChange(); }}
+                    className="px-3 py-1.5 text-sm font-medium rounded-full bg-primary text-white"
+                  >
+                    {getCurrentYear()}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Month chips */}
+            {filterYear !== "all" && (
+              <div className="flex flex-wrap items-start gap-2">
+                <span className="text-sm text-gray-500 font-medium w-16 pt-1.5">Mes:</span>
+                <div className="flex flex-wrap gap-1.5 flex-1">
+                  {MONTHS.map(month => {
+                    const isSelected = filterMonth === month.value;
+                    const isCurrent = month.value === getCurrentMonth() && filterYear === getCurrentYear();
+                    return (
+                      <button
+                        key={month.value}
+                        onClick={() => { setFilterMonth(month.value); handleFilterChange(); }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
+                          isSelected
+                            ? 'bg-primary text-white shadow-sm'
+                            : isCurrent
+                            ? 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
+                        }`}
+                      >
+                        <span className="sm:hidden">{month.label}</span>
+                        <span className="hidden sm:inline">{month.fullLabel}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Rate filter */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500 font-medium w-16">Tarifa:</span>
+              <Select value={filterRateId} onValueChange={(v) => { setFilterRateId(v); handleFilterChange(); }}>
+                <SelectTrigger className="w-[180px] h-9 text-sm bg-white">
+                  <SelectValue placeholder="Tarifa" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las tarifas</SelectItem>
+                  {rates?.map(rate => (
+                    <SelectItem key={rate.id} value={rate.id}>
+                      {rate.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Type filter chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500 font-medium w-16">Tipo:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "all", label: "Todos" },
+                  { value: "normal", label: "Normales" },
+                  { value: "extra", label: "Extras" },
+                ].map(type => (
+                  <button
+                    key={type.value}
+                    onClick={() => { setFilterType(type.value); handleFilterChange(); }}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                      filterType === type.value
+                        ? 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear filters button */}
+            {hasNonDefaultFilters && (
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAdditionalFilters}
+                  className="text-gray-500 hover:text-gray-700 text-sm h-8"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Limpiar filtros
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mobile results count */}
+        <div className="mt-3 text-xs text-gray-500 sm:hidden">
+          {filteredPayments.length} pagos encontrados
         </div>
       </div>
 
@@ -761,25 +909,25 @@ export default function AdminPaymentControlPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="py-3 px-4 text-left w-12">
+                    <th className="py-3 px-4 text-left w-12 hidden sm:table-cell">
                       <Checkbox
                         checked={paginatedData.length > 0 && paginatedData.every(p => selectedPayments.has(p.id))}
                         onCheckedChange={handleSelectAll}
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Alumno
                     </th>
-                    <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-2 sm:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Importe
                     </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Detalles
                     </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                       Estado
                     </th>
-                    <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="py-3 px-2 sm:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acción
                     </th>
                   </tr>
@@ -861,18 +1009,60 @@ export default function AdminPaymentControlPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Alumno *</Label>
-              <Select value={extraPaymentStudentId} onValueChange={setExtraPaymentStudentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un alumno..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {students?.map(student => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {student.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar alumno por nombre o email..."
+                  value={extraPaymentStudentSearch}
+                  onChange={(e) => {
+                    setExtraPaymentStudentSearch(e.target.value);
+                    setExtraPaymentStudentId("");
+                    setShowStudentDropdown(true);
+                  }}
+                  onFocus={() => setShowStudentDropdown(true)}
+                  className="pl-9"
+                />
+                {showStudentDropdown && extraPaymentStudentSearch && !extraPaymentStudentId && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredStudents.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        No se encontraron alumnos
+                      </div>
+                    ) : (
+                      filteredStudents.slice(0, 10).map(student => (
+                        <button
+                          key={student.id}
+                          type="button"
+                          onClick={() => handleSelectStudent(student)}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                        >
+                          <span className="font-medium">{student.full_name}</span>
+                          {student.email && (
+                            <span className="text-gray-500 ml-2 text-xs">{student.email}</span>
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+                {extraPaymentStudentId && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      {extraPaymentStudentSearch}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExtraPaymentStudentId("");
+                          setExtraPaymentStudentSearch("");
+                        }}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">

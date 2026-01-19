@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar, Euro, Loader2, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar, Euro, Loader2, Settings, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,7 @@ const initialFormState: CreatePaymentRateInput = {
 };
 
 export default function PaymentRatesPage() {
+  const navigate = useNavigate();
   const { data: rates, isLoading } = usePaymentRates();
   const createRate = useCreatePaymentRate();
   const updateRate = useUpdatePaymentRate();
@@ -205,15 +207,22 @@ export default function PaymentRatesPage() {
             </TableHeader>
             <TableBody>
               {rates.map((rate) => (
-                <TableRow key={rate.id}>
+                <TableRow
+                  key={rate.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => navigate(`/dashboard/payment-rates/${rate.id}`)}
+                >
                   <TableCell>
-                    <div>
-                      <p className="font-medium">{rate.name}</p>
-                      {rate.description && (
-                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
-                          {rate.description}
-                        </p>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <p className="font-medium">{rate.name}</p>
+                        {rate.description && (
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                            {rate.description}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-400 ml-auto" />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -228,31 +237,21 @@ export default function PaymentRatesPage() {
                   <TableCell className="text-center">
                     <Badge variant="secondary">Día {rate.billing_day}</Badge>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      className={
-                        rate.is_active
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-gray-50 text-gray-500 border-gray-200"
-                      }
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleToggleActive(rate)}
+                      className="inline-flex items-center justify-center"
+                      title={rate.is_active ? "Desactivar tarifa" : "Activar tarifa"}
                     >
-                      {rate.is_active ? "Activa" : "Inactiva"}
-                    </Badge>
+                      {rate.is_active ? (
+                        <ToggleRight className="h-7 w-7 text-emerald-600 hover:text-emerald-700 transition-colors" />
+                      ) : (
+                        <ToggleLeft className="h-7 w-7 text-gray-400 hover:text-gray-500 transition-colors" />
+                      )}
+                    </button>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleToggleActive(rate)}
-                        title={rate.is_active ? "Desactivar" : "Activar"}
-                      >
-                        {rate.is_active ? (
-                          <ToggleRight className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <ToggleLeft className="h-4 w-4 text-gray-400" />
-                        )}
-                      </Button>
+                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"

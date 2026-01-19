@@ -74,6 +74,7 @@ import PlayerPaymentsPage from "@/pages/PlayerPaymentsPage";
 import AdminPaymentControlPage from "@/pages/AdminPaymentControlPage";
 import EjerciciosPage from "@/pages/EjerciciosPage";
 import PaymentRatesPage from "@/pages/PaymentRatesPage";
+import PaymentRateDetailPage from "@/pages/PaymentRateDetailPage";
 import AssignRatesPage from "@/pages/AssignRatesPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -275,6 +276,7 @@ function App() {
                      {isAdmin && <Route path="/students/:studentEnrollmentId/score" element={<StudentScoreDetailPage />} />}
                      {isAdmin && <Route path="/monthly-payments" element={<AdminPaymentControlPage />} />}
                      {isAdmin && <Route path="/payment-rates" element={<PaymentRatesPage />} />}
+                     {isAdmin && <Route path="/payment-rates/:rateId" element={<PaymentRateDetailPage />} />}
                      {isAdmin && <Route path="/payment-rates/assign" element={<AssignRatesPage />} />}
                      {(isAdmin || isTrainer) && <Route path="/ejercicios" element={<EjerciciosPage />} />}
                      <Route path="/settings" element={<SettingsPage />} />
