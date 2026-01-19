@@ -99,8 +99,29 @@ export const useClassesWithAbsences = (clubId?: string, clubIds?: string[]) => {
         return [];
       }
 
+      // Get cancelled classes for today
+      const todayClassIds = todayClasses.map(c => c.id);
+      const { data: cancelledClasses, error: cancelledError } = await supabase
+        .from('cancelled_classes')
+        .select('programmed_class_id')
+        .in('programmed_class_id', todayClassIds)
+        .eq('cancelled_date', today);
+
+      if (cancelledError) {
+        console.error('Error fetching cancelled classes:', cancelledError);
+        // Continue without filtering - don't break the whole query
+      }
+
+      // Filter out cancelled classes
+      const cancelledIds = new Set(cancelledClasses?.map(c => c.programmed_class_id) || []);
+      const todayClassesNotCancelled = todayClasses.filter(c => !cancelledIds.has(c.id));
+
+      if (todayClassesNotCancelled.length === 0) {
+        return [];
+      }
+
       // Get participants for all these classes
-      const classIds = todayClasses.map(c => c.id);
+      const classIds = todayClassesNotCancelled.map(c => c.id);
       const { data: participants, error: participantsError } = await supabase
         .from('class_participants')
         .select(`
@@ -147,7 +168,7 @@ export const useClassesWithAbsences = (clubId?: string, clubIds?: string[]) => {
       );
 
       // Group participants by class and filter classes with absences
-      const classesWithParticipants: ClassWithAbsences[] = todayClasses
+      const classesWithParticipants: ClassWithAbsences[] = todayClassesNotCancelled
         .map((classData: any) => {
           const classParticipants = (participants?.filter(p => p.class_id === classData.id) || [])
             .map(p => {
