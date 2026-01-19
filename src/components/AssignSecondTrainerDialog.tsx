@@ -86,12 +86,15 @@ const AssignSecondTrainerDialog = ({
 
   const handleSave = async () => {
     if (!classData) return;
-    if (!primaryTrainerId) {
-      toast.error("Debes seleccionar un profesor titular");
-      return;
-    }
     if (!startTime) {
       toast.error("Debes seleccionar una hora de inicio");
+      return;
+    }
+
+    // Use the selected primary trainer, or fall back to the original if not changed
+    const finalPrimaryTrainerId = primaryTrainerId || classData.trainer_profile_id;
+    if (!finalPrimaryTrainerId) {
+      toast.error("Debes seleccionar un profesor titular");
       return;
     }
 
@@ -102,7 +105,7 @@ const AssignSecondTrainerDialog = ({
       const formattedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
 
       const updateData = {
-        trainer_profile_id: primaryTrainerId,
+        trainer_profile_id: finalPrimaryTrainerId,
         trainer_profile_id_2: newSecondTrainerId,
         max_participants: maxParticipants,
         start_time: formattedStartTime,
