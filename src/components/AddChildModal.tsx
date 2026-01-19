@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus, User, Target } from 'lucide-react';
+import { UserPlus, User } from 'lucide-react';
 import { AddChildData } from '@/hooks/useGuardianChildren';
 import ClubCodeInput from '@/components/ClubCodeInput';
 
@@ -29,18 +29,12 @@ export const AddChildModal = ({
   mode = 'add' // Por defecto, no pedir código de club
 }: AddChildModalProps) => {
   const [fullName, setFullName] = useState('');
-  const [level, setLevel] = useState('');
   const [clubCode, setClubCode] = useState('');
   const [selectedClubId, setSelectedClubId] = useState('');
   const [clubError, setClubError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    const numLevel = parseFloat(level);
-    if (isNaN(numLevel) || numLevel < 1.0 || numLevel > 10.0) {
-      return;
-    }
 
     // Solo validar código de club en modo 'setup'
     if (mode === 'setup' && !selectedClubId) {
@@ -50,7 +44,6 @@ export const AddChildModal = ({
 
     onAddChild({
       fullName,
-      level: numLevel,
       clubId: mode === 'setup' ? selectedClubId : undefined, // Solo enviar clubId en modo setup
     });
 
@@ -62,7 +55,6 @@ export const AddChildModal = ({
     if (!newOpen && !isLoading) {
       // Solo resetear si no está cargando
       setFullName('');
-      setLevel('');
       setClubCode('');
       setSelectedClubId('');
       setClubError('');
@@ -125,33 +117,6 @@ export const AddChildModal = ({
               />
             </div>
           )}
-
-          {/* Nivel */}
-          <div className="space-y-2">
-            <Label htmlFor="child-level" className="text-sm font-semibold flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Nivel de Juego (Playtomic) *
-            </Label>
-            <Input
-              id="child-level"
-              type="text"
-              inputMode="decimal"
-              value={level}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  setLevel(value);
-                }
-              }}
-              placeholder="Ej: 2.5"
-              className="h-12"
-              required
-              disabled={isLoading}
-            />
-            <p className="text-xs text-slate-500">
-              Nivel aproximado de tu hijo/a (1.0 - 10.0)
-            </p>
-          </div>
 
           {/* Botones */}
           <div className="flex gap-3 pt-4">

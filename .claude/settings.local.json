@@ -61,7 +61,8 @@
       "Bash(dir:*)",
       "Bash(grep:*)",
       "Bash(if [ -f \"c:/Users/sefac/Documents/Sergio/Proyectos/genesis-blank-slate-creator/.env\" ])",
-      "Bash(then grep \"SUPABASE\" \"c:/Users/sefac/Documents/Sergio/Proyectos/genesis-blank-slate-creator/.env\")"
+      "Bash(then grep \"SUPABASE\" \"c:/Users/sefac/Documents/Sergio/Proyectos/genesis-blank-slate-creator/.env\")",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

@@ -60,6 +60,11 @@ export const useStudentBehaviorMetrics = (
 /**
  * Calculate a reliability score based on behavior metrics
  * Score ranges from 0-10, where 10 is the most reliable
+ *
+ * La fórmula valora:
+ * - Asistir: muy positivo (demuestra compromiso)
+ * - Cancelar con anticipación: positivo (buena comunicación, permite reorganizar)
+ * - Cancelar tarde: negativo (causa problemas de organización)
  */
 export const calculateReliabilityScore = (metrics: StudentBehaviorMetrics | undefined): number => {
   if (!metrics) return 0;
@@ -72,13 +77,13 @@ export const calculateReliabilityScore = (metrics: StudentBehaviorMetrics | unde
   if (totalActions === 0) return 5;
 
   // Calculate weighted score
-  // Attended classes: +10 points each
-  // Late absences: -5 points each (bad behavior)
-  // Early absences: -1 point each (acceptable behavior)
+  // Attended classes: +10 points (muy positivo - compromiso demostrado)
+  // Early absences: +2 points (positivo - buena comunicación, avisa con tiempo)
+  // Late absences: -5 points (negativo - causa problemas de organización)
   const rawScore = (
-    (total_attended * 10) -
-    (late_notice_absences * 5) -
-    (early_notice_absences * 1)
+    (total_attended * 10) +
+    (early_notice_absences * 2) -
+    (late_notice_absences * 5)
   ) / totalActions;
 
   // Normalize to 0-10 scale

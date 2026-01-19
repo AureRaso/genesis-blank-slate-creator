@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserPlus, Calendar, Target, Building2, Loader2, CheckCircle, AlertCircle, Edit } from 'lucide-react';
+import { Users, UserPlus, Calendar, Target, Building2, Edit } from 'lucide-react';
 import { useGuardianChildren, GuardianChild } from '@/hooks/useGuardianChildren';
 import { AddChildModal } from '@/components/AddChildModal';
 import { EditChildModal } from '@/components/EditChildModal';
@@ -126,14 +125,14 @@ const MyChildrenPage = () => {
                 <CardContent className="p-4 sm:p-6 lg:p-8">
                   {/* Header Section */}
                   <div className="flex items-start justify-between mb-3 sm:mb-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-slate-800 leading-tight mb-2">
+                    <div className="flex-1 min-w-0 flex items-center gap-3">
+                      <div className="w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-playtomic-orange to-orange-600">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 leading-tight">
                         {child.full_name}
                       </h3>
                     </div>
-                    <Badge variant="secondary" className="ml-2">
-                      {child.relationship_type === 'child' ? 'Hijo/a' : 'Otro'}
-                    </Badge>
                   </div>
 
                   {/* Child Details */}

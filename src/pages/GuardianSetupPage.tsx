@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserPlus, ArrowRight, Loader2, PartyPopper } from 'lucide-react';
-import { useGuardianChildren, GuardianChild } from '@/hooks/useGuardianChildren';
+import { useGuardianChildren } from '@/hooks/useGuardianChildren';
 import { AddChildModal } from '@/components/AddChildModal';
 import { useAuth } from '@/contexts/AuthContext';
 import padelockLogo from '@/assets/PadeLock_D5Red.png';
@@ -25,12 +25,12 @@ const GuardianSetupPage = () => {
     }
   }, [profile?.role, navigate]); // Only depend on role, not full profile object
 
-  // Update the flag when children are added
+  // Update the flag when at least one child is added
   useEffect(() => {
     if (children.length > 0) {
       setHasAddedAtLeastOne(true);
     }
-  }, [children]);
+  }, [children.length]);
 
   const handleAddChild = (data: any) => {
     addChild(data, {
@@ -108,6 +108,7 @@ const GuardianSetupPage = () => {
               onClick={() => setIsAddChildModalOpen(true)}
               size="lg"
               className="bg-gradient-to-r from-playtomic-orange to-orange-600 hover:from-playtomic-orange/90 hover:to-orange-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+              disabled={isAddingChild}
             >
               <UserPlus className="h-5 w-5 mr-2" />
               Añadir Hijo/a
@@ -129,7 +130,7 @@ const GuardianSetupPage = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {/* Success Message - Más compacto */}
+              {/* Success Message */}
               <Card className="border-0 shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white max-w-2xl mx-auto">
                 <CardContent className="py-4 px-6 text-center">
                   <div className="flex items-center justify-center gap-3">
@@ -185,29 +186,18 @@ const GuardianSetupPage = () => {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-            {hasAddedAtLeastOne && (
+            {children.length > 0 && (
               <Button
                 onClick={handleFinishSetup}
                 size="lg"
                 className="bg-white text-slate-900 hover:bg-white/90 hover:scale-105 font-semibold shadow-lg transition-all duration-200"
               >
-                No añadir más hijos
+                Continuar al dashboard
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             )}
           </div>
 
-          {/* Skip Option */}
-          {!hasAddedAtLeastOne && (
-            <div className="text-center pt-4">
-              <button
-                onClick={handleFinishSetup}
-                className="text-slate-300 hover:text-white text-sm underline transition-colors"
-              >
-                Omitir por ahora (puedes añadir hijos más tarde)
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

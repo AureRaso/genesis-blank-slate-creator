@@ -200,7 +200,7 @@ export default function ScheduledClassForm({
   
   // Watch for club_id changes to filter students
   const selectedClubId = form.watch('club_id');
-  
+
   const {
     data: students
   } = isAdmin ? useAdminStudentEnrollments(selectedClubId) : useStudentEnrollments(); // Use admin hook for admins with club filtering
