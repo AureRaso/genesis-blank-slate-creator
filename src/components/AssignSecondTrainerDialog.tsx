@@ -50,6 +50,7 @@ const AssignSecondTrainerDialog = ({
   const [primaryTrainerId, setPrimaryTrainerId] = useState<string>("");
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>("none");
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
+  const [startTime, setStartTime] = useState<string>("09:00");
   const [applyToSeries, setApplyToSeries] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
@@ -64,6 +65,7 @@ const AssignSecondTrainerDialog = ({
       setPrimaryTrainerId(classData.trainer_profile_id || "");
       setSelectedTrainerId(classData.trainer_profile_id_2 || "none");
       setMaxParticipants(classData.max_participants || 4);
+      setStartTime(classData.start_time?.slice(0, 5) || "09:00");
       setApplyToSeries(false);
     }
   }, [open, classData]);
@@ -88,24 +90,32 @@ const AssignSecondTrainerDialog = ({
       toast.error("Debes seleccionar un profesor titular");
       return;
     }
+    if (!startTime) {
+      toast.error("Debes seleccionar una hora de inicio");
+      return;
+    }
 
     setIsLoading(true);
     try {
       const newSecondTrainerId = selectedTrainerId === "none" ? null : selectedTrainerId;
+      // Format time as HH:MM:SS for database
+      const formattedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
+
       const updateData = {
         trainer_profile_id: primaryTrainerId,
         trainer_profile_id_2: newSecondTrainerId,
         max_participants: maxParticipants,
+        start_time: formattedStartTime,
       };
 
       if (applyToSeries) {
-        // Update all classes in the series (same name, same start_time, same club)
+        // Update all classes in the series (same name, same ORIGINAL start_time, same club)
         const { error } = await supabase
           .from("programmed_classes")
           .update(updateData)
           .eq("club_id", classData.club_id)
           .eq("name", classData.name)
-          .eq("start_time", classData.start_time)
+          .eq("start_time", classData.start_time) // Use original time to find the series
           .eq("is_active", true);
 
         if (error) throw error;
@@ -159,7 +169,7 @@ const AssignSecondTrainerDialog = ({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="primary-trainer-select" className="text-sm font-medium">
-              Profesor titular
+              Cambiar profesor titular
             </Label>
             <Select
               value={primaryTrainerId}
@@ -204,20 +214,36 @@ const AssignSecondTrainerDialog = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="max-participants" className="text-sm font-medium">
-              Máximo de participantes
-            </Label>
-            <Input
-              id="max-participants"
-              type="number"
-              min={1}
-              max={20}
-              value={maxParticipants}
-              onChange={(e) => setMaxParticipants(Number(e.target.value))}
-              disabled={isLoading}
-              className="w-24"
-            />
+          <div className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start-time" className="text-sm font-medium">
+                Hora de inicio
+              </Label>
+              <Input
+                id="start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                disabled={isLoading}
+                className="w-28"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="max-participants" className="text-sm font-medium">
+                Máx. participantes
+              </Label>
+              <Input
+                id="max-participants"
+                type="number"
+                min={1}
+                max={20}
+                value={maxParticipants}
+                onChange={(e) => setMaxParticipants(Number(e.target.value))}
+                disabled={isLoading}
+                className="w-20"
+              />
+            </div>
           </div>
 
           <div className="flex items-center space-x-2 pt-2">
