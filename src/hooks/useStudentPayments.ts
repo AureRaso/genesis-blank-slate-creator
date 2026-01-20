@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import { PaymentRate } from "./usePaymentRates";
 
 // Types
@@ -108,11 +109,11 @@ export function useCreateExtraPayment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
-      toast.success('Pago extra creado correctamente');
+      toast.success(i18n.t('paymentControl.toasts.extraCreated'));
     },
     onError: (error: Error) => {
       console.error('Error creating extra payment:', error);
-      toast.error('Error al crear el pago extra');
+      toast.error(i18n.t('paymentControl.toasts.errorCreatingExtra'));
     },
   });
 }
@@ -158,12 +159,12 @@ export function useVerifyStudentPayment() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
       toast.success(
-        data.status === 'pagado' ? 'Pago verificado correctamente' : 'Pago rechazado'
+        data.status === 'pagado' ? i18n.t('paymentControl.toasts.verified') : i18n.t('paymentControl.toasts.rejected')
       );
     },
     onError: (error: Error) => {
       console.error('Error verifying payment:', error);
-      toast.error('Error al verificar el pago');
+      toast.error(i18n.t('paymentControl.toasts.errorVerifying'));
     },
   });
 }
@@ -183,11 +184,11 @@ export function useDeleteStudentPayment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
-      toast.success('Pago eliminado');
+      toast.success(i18n.t('paymentControl.toasts.deleted'));
     },
     onError: (error: Error) => {
       console.error('Error deleting payment:', error);
-      toast.error('Error al eliminar el pago');
+      toast.error(i18n.t('paymentControl.toasts.errorDeleting'));
     },
   });
 }
@@ -263,11 +264,11 @@ export function useMarkPaymentAsPaid() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
-      toast.success('Pago marcado como realizado. Pendiente de verificación.');
+      toast.success(i18n.t('paymentControl.toasts.markedAsPaid'));
     },
     onError: (error: Error) => {
       console.error('Error marking payment as paid:', error);
-      toast.error('Error al marcar el pago');
+      toast.error(i18n.t('paymentControl.toasts.errorMarkingPaid'));
     },
   });
 }
@@ -356,11 +357,11 @@ export function useGeneratePayment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
-      toast.success('Pago generado correctamente');
+      toast.success(i18n.t('paymentControl.toasts.paymentGenerated'));
     },
     onError: (error: Error) => {
       console.error('Error generating payment:', error);
-      toast.error('Error al generar el pago');
+      toast.error(i18n.t('paymentControl.toasts.errorGenerating'));
     },
   });
 }
@@ -414,7 +415,7 @@ export function useGenerateMonthlyPayments() {
       ) || [];
 
       if (clubAssignments.length === 0) {
-        throw new Error('No hay asignaciones activas para generar pagos');
+        throw new Error(i18n.t('paymentControl.toasts.noActiveAssignments'));
       }
 
       // Check which assignments already have a payment for this period
@@ -482,16 +483,16 @@ export function useGenerateMonthlyPayments() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['student-payments'] });
       if (data.generated > 0) {
-        toast.success(`${data.generated} pagos generados correctamente`);
+        toast.success(i18n.t('paymentControl.toasts.paymentsGenerated', { count: data.generated }));
       } else if (data.skipped > 0) {
-        toast.info('Ya existen pagos para este período');
+        toast.info(i18n.t('paymentControl.toasts.paymentsExist'));
       } else {
-        toast.info('No se generaron nuevos pagos');
+        toast.info(i18n.t('paymentControl.toasts.noNewPayments'));
       }
     },
     onError: (error: Error) => {
       console.error('Error generating monthly payments:', error);
-      toast.error(error.message || 'Error al generar los pagos');
+      toast.error(error.message || i18n.t('paymentControl.toasts.errorGenerating'));
     },
   });
 }

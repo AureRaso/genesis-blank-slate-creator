@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar, Euro, Loader2, Settings, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -51,17 +52,6 @@ import {
 } from "@/hooks/usePaymentRates";
 import { Link } from "react-router-dom";
 
-const PERIODICITY_LABELS: Record<string, string> = {
-  mensual: "Mensual",
-  trimestral: "Trimestral",
-  semestral: "Semestral",
-  anual: "Anual",
-};
-
-const RATE_TYPE_LABELS: Record<string, string> = {
-  fija: "Precio Fijo",
-  por_clase: "Por Clase",
-};
 
 const initialFormState: CreatePaymentRateInput = {
   name: "",
@@ -76,6 +66,7 @@ const initialFormState: CreatePaymentRateInput = {
 };
 
 export default function PaymentRatesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: rates, isLoading } = usePaymentRates();
   const createRate = useCreatePaymentRate();
@@ -153,9 +144,27 @@ export default function PaymentRatesPage() {
       return `${rate.fixed_price.toFixed(2)} €`;
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € / clase`;
+      return `${rate.price_per_class.toFixed(2)} € / ${t("paymentRates.detail.overview.perClass")}`;
     }
     return "-";
+  };
+
+  const getPeriodicityLabel = (periodicity: string) => {
+    const labels: Record<string, string> = {
+      mensual: t("paymentRates.periodicity.monthly"),
+      trimestral: t("paymentRates.periodicity.quarterly"),
+      semestral: t("paymentRates.periodicity.semiannual"),
+      anual: t("paymentRates.periodicity.annual"),
+    };
+    return labels[periodicity] || periodicity;
+  };
+
+  const getRateTypeLabel = (rateType: string) => {
+    const labels: Record<string, string> = {
+      fija: t("paymentRates.rateTypes.fixed"),
+      por_clase: t("paymentRates.rateTypes.perClass"),
+    };
+    return labels[rateType] || rateType;
   };
 
   if (isLoading) {
@@ -171,21 +180,21 @@ export default function PaymentRatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tarifas de Pago</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("paymentRates.title")}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Configura las tarifas que se aplicarán a los alumnos
+            {t("paymentRates.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/dashboard/payment-rates/assign">
               <Settings className="h-4 w-4 mr-2" />
-              Asignar Tarifas
+              {t("paymentRates.assignRates")}
             </Link>
           </Button>
           <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            Nueva Tarifa
+            {t("paymentRates.newRate")}
           </Button>
         </div>
       </div>
@@ -196,13 +205,13 @@ export default function PaymentRatesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Periodicidad</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="text-center">Día Cobro</TableHead>
-                <TableHead className="text-center">Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>{t("paymentRates.table.name")}</TableHead>
+                <TableHead>{t("paymentRates.table.type")}</TableHead>
+                <TableHead>{t("paymentRates.table.periodicity")}</TableHead>
+                <TableHead className="text-right">{t("paymentRates.table.price")}</TableHead>
+                <TableHead className="text-center">{t("paymentRates.table.billingDay")}</TableHead>
+                <TableHead className="text-center">{t("paymentRates.table.status")}</TableHead>
+                <TableHead className="text-right">{t("paymentRates.table.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,21 +236,21 @@ export default function PaymentRatesPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {RATE_TYPE_LABELS[rate.rate_type]}
+                      {getRateTypeLabel(rate.rate_type)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{PERIODICITY_LABELS[rate.periodicity]}</TableCell>
+                  <TableCell>{getPeriodicityLabel(rate.periodicity)}</TableCell>
                   <TableCell className="text-right font-medium">
                     {formatPrice(rate)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="secondary">Día {rate.billing_day}</Badge>
+                    <Badge variant="secondary">{t("paymentRates.table.day")} {rate.billing_day}</Badge>
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleToggleActive(rate)}
                       className="inline-flex items-center justify-center"
-                      title={rate.is_active ? "Desactivar tarifa" : "Activar tarifa"}
+                      title={rate.is_active ? t("paymentRates.deactivateRate") : t("paymentRates.activateRate")}
                     >
                       {rate.is_active ? (
                         <ToggleRight className="h-7 w-7 text-emerald-600 hover:text-emerald-700 transition-colors" />
@@ -278,14 +287,14 @@ export default function PaymentRatesPage() {
         <Card className="p-12 text-center border-dashed">
           <Euro className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-700 mb-2">
-            No hay tarifas configuradas
+            {t("paymentRates.empty.title")}
           </h3>
           <p className="text-gray-500 text-sm mb-4">
-            Crea tu primera tarifa para empezar a gestionar los pagos de tus alumnos
+            {t("paymentRates.empty.description")}
           </p>
           <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            Crear Tarifa
+            {t("paymentRates.empty.action")}
           </Button>
         </Card>
       )}
@@ -296,22 +305,22 @@ export default function PaymentRatesPage() {
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
-                {editingRate ? "Editar Tarifa" : "Nueva Tarifa"}
+                {editingRate ? t("paymentRates.form.editTitle") : t("paymentRates.form.createTitle")}
               </DialogTitle>
               <DialogDescription>
                 {editingRate
-                  ? "Modifica los datos de la tarifa"
-                  : "Configura una nueva tarifa de pago para tus alumnos"}
+                  ? t("paymentRates.form.editDescription")
+                  : t("paymentRates.form.createDescription")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
               {/* Name */}
               <div className="grid gap-2">
-                <Label htmlFor="name">Nombre *</Label>
+                <Label htmlFor="name">{t("paymentRates.form.name")} *</Label>
                 <Input
                   id="name"
-                  placeholder="Ej: Tarifa Mensual Adultos"
+                  placeholder={t("paymentRates.form.namePlaceholder")}
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -322,10 +331,10 @@ export default function PaymentRatesPage() {
 
               {/* Description */}
               <div className="grid gap-2">
-                <Label htmlFor="description">Descripción</Label>
+                <Label htmlFor="description">{t("paymentRates.form.description")}</Label>
                 <Textarea
                   id="description"
-                  placeholder="Descripción opcional..."
+                  placeholder={t("paymentRates.form.descriptionPlaceholder")}
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -337,7 +346,7 @@ export default function PaymentRatesPage() {
               {/* Rate Type & Periodicity */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label>Tipo de Tarifa *</Label>
+                  <Label>{t("paymentRates.form.rateType")} *</Label>
                   <Select
                     value={formData.rate_type}
                     onValueChange={(value: "fija" | "por_clase") =>
@@ -348,14 +357,14 @@ export default function PaymentRatesPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fija">Precio Fijo</SelectItem>
-                      <SelectItem value="por_clase">Por Clase</SelectItem>
+                      <SelectItem value="fija">{t("paymentRates.rateTypes.fixed")}</SelectItem>
+                      <SelectItem value="por_clase">{t("paymentRates.rateTypes.perClass")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Periodicidad *</Label>
+                  <Label>{t("paymentRates.form.periodicity")} *</Label>
                   <Select
                     value={formData.periodicity}
                     onValueChange={(
@@ -366,10 +375,10 @@ export default function PaymentRatesPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mensual">Mensual</SelectItem>
-                      <SelectItem value="trimestral">Trimestral</SelectItem>
-                      <SelectItem value="semestral">Semestral</SelectItem>
-                      <SelectItem value="anual">Anual</SelectItem>
+                      <SelectItem value="mensual">{t("paymentRates.periodicity.monthly")}</SelectItem>
+                      <SelectItem value="trimestral">{t("paymentRates.periodicity.quarterly")}</SelectItem>
+                      <SelectItem value="semestral">{t("paymentRates.periodicity.semiannual")}</SelectItem>
+                      <SelectItem value="anual">{t("paymentRates.periodicity.annual")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -379,8 +388,8 @@ export default function PaymentRatesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="price">
                   {formData.rate_type === "fija"
-                    ? "Precio Fijo (€) *"
-                    : "Precio por Clase (€) *"}
+                    ? `${t("paymentRates.form.fixedPrice")} (€) *`
+                    : `${t("paymentRates.form.pricePerClass")} (€) *`}
                 </Label>
                 <Input
                   id="price"
@@ -409,7 +418,7 @@ export default function PaymentRatesPage() {
 
               {/* Billing Day */}
               <div className="grid gap-2">
-                <Label htmlFor="billing_day">Día de Cobro (1-28) *</Label>
+                <Label htmlFor="billing_day">{t("paymentRates.form.billingDay")} (1-28) *</Label>
                 <Input
                   id="billing_day"
                   type="number"
@@ -425,14 +434,14 @@ export default function PaymentRatesPage() {
                   required
                 />
                 <p className="text-xs text-gray-500">
-                  Día del mes en que se genera el pago pendiente
+                  {t("paymentRates.form.billingDayHelp")}
                 </p>
               </div>
 
               {/* Due Days & Grace Days */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="due_days">Días para Pagar</Label>
+                  <Label htmlFor="due_days">{t("paymentRates.form.dueDays")}</Label>
                   <Input
                     id="due_days"
                     type="number"
@@ -446,11 +455,11 @@ export default function PaymentRatesPage() {
                       })
                     }
                   />
-                  <p className="text-xs text-gray-500">Por defecto: 30 días</p>
+                  <p className="text-xs text-gray-500">{t("paymentRates.form.dueDaysHelp")}</p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="grace_days">Días Recordatorio</Label>
+                  <Label htmlFor="grace_days">{t("paymentRates.form.graceDays")}</Label>
                   <Input
                     id="grace_days"
                     type="number"
@@ -465,7 +474,7 @@ export default function PaymentRatesPage() {
                     }
                   />
                   <p className="text-xs text-gray-500">
-                    Días antes del vencimiento
+                    {t("paymentRates.form.graceDaysHelp")}
                   </p>
                 </div>
               </div>
@@ -477,7 +486,7 @@ export default function PaymentRatesPage() {
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
               >
-                Cancelar
+                {t("paymentRates.form.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -486,7 +495,7 @@ export default function PaymentRatesPage() {
                 {createRate.isPending || updateRate.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
-                {editingRate ? "Guardar" : "Crear"}
+                {editingRate ? t("paymentRates.form.save") : t("paymentRates.form.create")}
               </Button>
             </DialogFooter>
           </form>
@@ -497,14 +506,13 @@ export default function PaymentRatesPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar tarifa?</AlertDialogTitle>
+            <AlertDialogTitle>{t("paymentRates.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Si hay alumnos con esta tarifa
-              asignada, se eliminarán también las asignaciones.
+              {t("paymentRates.deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("paymentRates.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
@@ -512,7 +520,7 @@ export default function PaymentRatesPage() {
               {deleteRate.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Eliminar
+              {t("paymentRates.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

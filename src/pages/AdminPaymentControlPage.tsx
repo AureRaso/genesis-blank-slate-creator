@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -63,37 +64,65 @@ const getCurrentYear = () => {
   return new Date().getFullYear().toString();
 };
 
-const STATUS_CONFIG = {
-  pendiente: {
-    label: "Pendiente",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: AlertCircle,
-  },
-  en_revision: {
-    label: "En Revisión",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: Clock,
-  },
-  pagado: {
-    label: "Pagado",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    icon: CheckCircle2,
-  },
+const STATUS_COLORS = {
+  pendiente: "bg-amber-50 text-amber-700 border-amber-200",
+  en_revision: "bg-blue-50 text-blue-700 border-blue-200",
+  pagado: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
-const PAYMENT_METHOD_CONFIG: Record<string, { label: string; icon: typeof Banknote }> = {
-  efectivo: { label: "Efectivo", icon: Banknote },
-  tarjeta: { label: "Tarjeta", icon: CreditCard },
-  bizum: { label: "Bizum", icon: Smartphone },
+const STATUS_ICONS = {
+  pendiente: AlertCircle,
+  en_revision: Clock,
+  pagado: CheckCircle2,
+};
+
+const PAYMENT_METHOD_ICONS: Record<string, typeof Banknote> = {
+  efectivo: Banknote,
+  tarjeta: CreditCard,
+  bizum: Smartphone,
 };
 
 export default function AdminPaymentControlPage() {
+  const { t, i18n } = useTranslation();
   const { data: payments, isLoading } = useAdminStudentPayments();
   const { data: students } = useStudentsWithAssignments();
   const { data: rates } = usePaymentRates();
   const verifyPayment = useVerifyStudentPayment();
   const createExtraPayment = useCreateExtraPayment();
   const generateMonthlyPayments = useGenerateMonthlyPayments();
+
+  // Get locale for date formatting
+  const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
+
+  // Helper functions for translations
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pendiente: t("paymentControl.status.pending"),
+      en_revision: t("paymentControl.status.inReview"),
+      pagado: t("paymentControl.status.paid"),
+    };
+    return labels[status] || status;
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      efectivo: t("paymentControl.paymentMethods.cash"),
+      tarjeta: t("paymentControl.paymentMethods.card"),
+      bizum: t("paymentControl.paymentMethods.bizum"),
+    };
+    return labels[method] || method;
+  };
+
+  // Get month label based on current language
+  const getMonthLabel = (monthValue: string, full: boolean = true) => {
+    const monthKey = {
+      "01": "jan", "02": "feb", "03": "mar", "04": "apr",
+      "05": "may", "06": "jun", "07": "jul", "08": "aug",
+      "09": "sep", "10": "oct", "11": "nov", "12": "dec",
+    }[monthValue];
+    if (!monthKey) return monthValue;
+    return full ? t(`months.${monthKey}.full`) : t(`months.${monthKey}.short`);
+  };
 
   const [activeTab, setActiveTab] = useState<string>("pendiente");
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,9 +169,8 @@ export default function AdminPaymentControlPage() {
 
   // Get the label for current selected month
   const getCurrentMonthLabel = () => {
-    if (filterMonth === "all" || filterYear === "all") return "Todos";
-    const monthObj = MONTHS.find(m => m.value === filterMonth);
-    return monthObj ? `${monthObj.fullLabel} ${filterYear}` : "";
+    if (filterMonth === "all" || filterYear === "all") return t("paymentControl.filters.all");
+    return `${getMonthLabel(filterMonth)} ${filterYear}`;
   };
 
   // Get available years from payments
@@ -379,7 +407,7 @@ export default function AdminPaymentControlPage() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-ES');
+    return new Date(dateStr).toLocaleDateString(dateLocale);
   };
 
   const PaginationControls = () => {
@@ -391,7 +419,7 @@ export default function AdminPaymentControlPage() {
     return (
       <div className="flex items-center justify-between mt-4 px-4 pb-4">
         <div className="text-sm text-gray-500">
-          Mostrando {startItem} - {endItem} de {currentData.length}
+          {t("paymentControl.table.showing", { start: startItem, end: endItem, total: currentData.length })}
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -403,7 +431,7 @@ export default function AdminPaymentControlPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-gray-600 min-w-[80px] text-center">
-            {currentPage} de {totalPages}
+            {t("paymentControl.table.pageOf", { current: currentPage, total: totalPages })}
           </span>
           <Button
             variant="outline"
@@ -419,8 +447,8 @@ export default function AdminPaymentControlPage() {
   };
 
   const PaymentRow = ({ payment }: { payment: StudentPayment }) => {
-    const statusConfig = STATUS_CONFIG[payment.status];
-    const StatusIcon = statusConfig.icon;
+    const statusColor = STATUS_COLORS[payment.status];
+    const StatusIcon = STATUS_ICONS[payment.status];
     const isSelected = selectedPayments.has(payment.id);
 
     return (
@@ -433,7 +461,7 @@ export default function AdminPaymentControlPage() {
         </td>
         <td className="py-3 px-2 sm:px-4">
           <div>
-            <p className="font-medium text-gray-900 text-sm sm:text-base">{payment.student_enrollment?.full_name || 'Sin nombre'}</p>
+            <p className="font-medium text-gray-900 text-sm sm:text-base">{payment.student_enrollment?.full_name || t("paymentControl.table.noName")}</p>
             <p className="text-xs text-gray-500">{payment.concept}</p>
           </div>
         </td>
@@ -444,17 +472,16 @@ export default function AdminPaymentControlPage() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Calendar className="h-3 w-3" />
-              <span>Vence: {formatDate(payment.due_date)}</span>
+              <span>{t("paymentControl.table.dueDate")} {formatDate(payment.due_date)}</span>
             </div>
             {payment.payment_method && (
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 {(() => {
-                  const config = PAYMENT_METHOD_CONFIG[payment.payment_method];
-                  const Icon = config?.icon || Banknote;
+                  const Icon = PAYMENT_METHOD_ICONS[payment.payment_method] || Banknote;
                   return (
                     <>
                       <Icon className="h-3 w-3" />
-                      <span>{config?.label || payment.payment_method}</span>
+                      <span>{getPaymentMethodLabel(payment.payment_method)}</span>
                     </>
                   );
                 })()}
@@ -463,12 +490,12 @@ export default function AdminPaymentControlPage() {
           </div>
         </td>
         <td className="py-3 px-4 hidden lg:table-cell">
-          <Badge variant="outline" className={`${statusConfig.color} flex items-center gap-1 w-fit`}>
+          <Badge variant="outline" className={`${statusColor} flex items-center gap-1 w-fit`}>
             <StatusIcon className="h-3 w-3" />
-            {statusConfig.label}
+            {getStatusLabel(payment.status)}
           </Badge>
           {payment.is_extra_payment && (
-            <Badge variant="secondary" className="ml-1 text-xs">Extra</Badge>
+            <Badge variant="secondary" className="ml-1 text-xs">{t("paymentControl.filters.extra")}</Badge>
           )}
         </td>
         <td className="py-3 px-2 sm:px-4 text-center">
@@ -479,8 +506,8 @@ export default function AdminPaymentControlPage() {
               className="text-primary hover:text-white hover:bg-primary font-medium text-xs sm:text-sm px-2 sm:px-3"
               onClick={() => openVerifyDialog(payment, 'approve')}
             >
-              <span className="hidden sm:inline">Marcar pagado</span>
-              <span className="sm:hidden">Pagado</span>
+              <span className="hidden sm:inline">{t("paymentControl.table.markAsPaid")}</span>
+              <span className="sm:hidden">{t("paymentControl.table.paid")}</span>
             </Button>
           )}
           {payment.status === 'en_revision' && (
@@ -491,7 +518,7 @@ export default function AdminPaymentControlPage() {
                 className="text-emerald-600 hover:text-white hover:bg-emerald-600 text-xs sm:text-sm px-2 sm:px-3"
                 onClick={() => openVerifyDialog(payment, 'approve')}
               >
-                <span className="hidden sm:inline">Aprobar</span>
+                <span className="hidden sm:inline">{t("paymentControl.table.approve")}</span>
                 <CheckCircle2 className="h-4 w-4 sm:hidden" />
               </Button>
               <Button
@@ -500,14 +527,14 @@ export default function AdminPaymentControlPage() {
                 className="text-red-600 hover:text-white hover:bg-red-600 text-xs sm:text-sm px-2 sm:px-3"
                 onClick={() => openVerifyDialog(payment, 'reject')}
               >
-                <span className="hidden sm:inline">Rechazar</span>
+                <span className="hidden sm:inline">{t("paymentControl.table.reject")}</span>
                 <X className="h-4 w-4 sm:hidden" />
               </Button>
             </div>
           )}
           {payment.status === 'pagado' && payment.admin_verified_at && (
             <span className="text-xs text-gray-500">
-              <span className="hidden sm:inline">Verificado {formatDate(payment.admin_verified_at)}</span>
+              <span className="hidden sm:inline">{t("paymentControl.table.verified")} {formatDate(payment.admin_verified_at)}</span>
               <CheckCircle2 className="h-4 w-4 text-emerald-500 sm:hidden mx-auto" />
             </span>
           )}
@@ -530,14 +557,14 @@ export default function AdminPaymentControlPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Control de pagos</h1>
-          <p className="text-gray-500 text-sm mt-1">Gestiona los pagos de todos los estudiantes</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("paymentControl.title")}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t("paymentControl.subtitle")}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button asChild variant="outline">
             <Link to="/dashboard/payment-rates">
               <Settings className="h-4 w-4 mr-2" />
-              Tarifas
+              {t("paymentControl.rates")}
             </Link>
           </Button>
           <Button
@@ -550,11 +577,11 @@ export default function AdminPaymentControlPage() {
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
-            Generar Pagos del Mes
+            {t("paymentControl.generateMonthlyPayments")}
           </Button>
           <Button onClick={openExtraPaymentDialog}>
             <Plus className="h-4 w-4 mr-2" />
-            Pago Extra
+            {t("paymentControl.extraPayment")}
           </Button>
         </div>
       </div>
@@ -562,17 +589,17 @@ export default function AdminPaymentControlPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-gradient-to-br from-violet-50 to-white border-violet-100">
-          <p className="text-xs font-medium text-violet-600 mb-1">Total Esperado</p>
+          <p className="text-xs font-medium text-violet-600 mb-1">{t("paymentControl.summary.totalExpected")}</p>
           <p className="text-xl font-bold text-violet-900">{formatCurrency(totalExpected)}</p>
-          <p className="text-xs text-violet-500 mt-1">{filteredPayments.length} pagos</p>
+          <p className="text-xs text-violet-500 mt-1">{filteredPayments.length} {t("paymentControl.summary.payments")}</p>
         </Card>
 
         <Card className="p-4 bg-gradient-to-br from-amber-50 to-white border-amber-100">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-600 mb-1">Pendientes</p>
+              <p className="text-xs font-medium text-amber-600 mb-1">{t("paymentControl.summary.pending")}</p>
               <p className="text-xl font-bold text-amber-900">{formatCurrency(totalPending)}</p>
-              <p className="text-xs text-amber-500 mt-1">{pendingPayments.length} pagos</p>
+              <p className="text-xs text-amber-500 mt-1">{pendingPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
               <FileText className="h-4 w-4 text-amber-600" />
@@ -583,9 +610,9 @@ export default function AdminPaymentControlPage() {
         <Card className="p-4 bg-gradient-to-br from-blue-50 to-white border-blue-100">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 mb-1">En Revisión</p>
+              <p className="text-xs font-medium text-blue-600 mb-1">{t("paymentControl.summary.inReview")}</p>
               <p className="text-xl font-bold text-blue-900">{formatCurrency(totalInReview)}</p>
-              <p className="text-xs text-blue-500 mt-1">{inReviewPayments.length} pagos</p>
+              <p className="text-xs text-blue-500 mt-1">{inReviewPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
               <Clock className="h-4 w-4 text-blue-600" />
@@ -596,9 +623,9 @@ export default function AdminPaymentControlPage() {
         <Card className="p-4 bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-emerald-600 mb-1">Pagados</p>
+              <p className="text-xs font-medium text-emerald-600 mb-1">{t("paymentControl.summary.paid")}</p>
               <p className="text-xl font-bold text-emerald-900">{formatCurrency(totalPaid)}</p>
-              <p className="text-xs text-emerald-500 mt-1">{paidPayments.length} pagos</p>
+              <p className="text-xs text-emerald-500 mt-1">{paidPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -644,7 +671,7 @@ export default function AdminPaymentControlPage() {
               className="text-primary hover:text-white hover:bg-primary text-sm h-8 w-full"
             >
               <Calendar className="h-4 w-4 mr-1" />
-              Ir al mes actual
+              {t("paymentControl.filters.goToCurrentMonth")}
             </Button>
           </div>
         )}
@@ -655,7 +682,7 @@ export default function AdminPaymentControlPage() {
           <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar alumno o concepto..."
+              placeholder={t("paymentControl.filters.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -673,7 +700,7 @@ export default function AdminPaymentControlPage() {
             className={`h-9 gap-2 ${isFilterPanelOpen ? 'bg-gray-100' : ''}`}
           >
             <Filter className="h-4 w-4" />
-            Filtros
+            {t("paymentControl.filters.filters")}
             {(filterRateId !== "all" || filterType !== "all") && (
               <span className="w-2 h-2 rounded-full bg-primary" />
             )}
@@ -686,7 +713,7 @@ export default function AdminPaymentControlPage() {
               size="sm"
               onClick={goToPreviousMonth}
               className="h-9 px-2"
-              title="Mes anterior"
+              title={t("paymentControl.filters.previousMonth")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -700,7 +727,7 @@ export default function AdminPaymentControlPage() {
               size="sm"
               onClick={goToNextMonth}
               className="h-9 px-2"
-              title="Mes próximo"
+              title={t("paymentControl.filters.nextMonth")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -715,13 +742,13 @@ export default function AdminPaymentControlPage() {
               className="hidden sm:flex text-primary hover:text-white hover:bg-primary text-sm h-9"
             >
               <Calendar className="h-4 w-4 mr-1" />
-              Mes actual
+              {t("paymentControl.filters.currentMonth")}
             </Button>
           )}
 
           {/* Results count */}
           <span className="text-xs text-gray-500 ml-auto hidden sm:block">
-            {filteredPayments.length} pagos
+            {filteredPayments.length} {t("paymentControl.summary.payments")}
           </span>
         </div>
 
@@ -730,7 +757,7 @@ export default function AdminPaymentControlPage() {
           <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
             {/* Year chips */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-500 font-medium w-16">Año:</span>
+              <span className="text-sm text-gray-500 font-medium w-16">{t("paymentControl.filters.year")}</span>
               <div className="flex gap-1 flex-wrap">
                 {availableYears.length > 0 ? (
                   <>
@@ -755,7 +782,7 @@ export default function AdminPaymentControlPage() {
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      Todo
+                      {t("paymentControl.filters.all")}
                     </button>
                   </>
                 ) : (
@@ -772,7 +799,7 @@ export default function AdminPaymentControlPage() {
             {/* Month chips */}
             {filterYear !== "all" && (
               <div className="flex flex-wrap items-start gap-2">
-                <span className="text-sm text-gray-500 font-medium w-16 pt-1.5">Mes:</span>
+                <span className="text-sm text-gray-500 font-medium w-16 pt-1.5">{t("paymentControl.filters.month")}</span>
                 <div className="flex flex-wrap gap-1.5 flex-1">
                   {MONTHS.map(month => {
                     const isSelected = filterMonth === month.value;
@@ -789,8 +816,8 @@ export default function AdminPaymentControlPage() {
                             : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-transparent'
                         }`}
                       >
-                        <span className="sm:hidden">{month.label}</span>
-                        <span className="hidden sm:inline">{month.fullLabel}</span>
+                        <span className="sm:hidden">{getMonthLabel(month.value, false)}</span>
+                        <span className="hidden sm:inline">{getMonthLabel(month.value, true)}</span>
                       </button>
                     );
                   })}
@@ -800,13 +827,13 @@ export default function AdminPaymentControlPage() {
 
             {/* Rate filter */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-500 font-medium w-16">Tarifa:</span>
+              <span className="text-sm text-gray-500 font-medium w-16">{t("paymentControl.filters.rate")}</span>
               <Select value={filterRateId} onValueChange={(v) => { setFilterRateId(v); handleFilterChange(); }}>
                 <SelectTrigger className="w-[180px] h-9 text-sm bg-white">
-                  <SelectValue placeholder="Tarifa" />
+                  <SelectValue placeholder={t("paymentControl.filters.rate")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las tarifas</SelectItem>
+                  <SelectItem value="all">{t("paymentControl.filters.allRates")}</SelectItem>
                   {rates?.map(rate => (
                     <SelectItem key={rate.id} value={rate.id}>
                       {rate.name}
@@ -818,12 +845,12 @@ export default function AdminPaymentControlPage() {
 
             {/* Type filter chips */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-500 font-medium w-16">Tipo:</span>
+              <span className="text-sm text-gray-500 font-medium w-16">{t("paymentControl.filters.type")}</span>
               <div className="flex gap-1">
                 {[
-                  { value: "all", label: "Todos" },
-                  { value: "normal", label: "Normales" },
-                  { value: "extra", label: "Extras" },
+                  { value: "all", label: t("paymentControl.filters.allTypes") },
+                  { value: "normal", label: t("paymentControl.filters.normal") },
+                  { value: "extra", label: t("paymentControl.filters.extra") },
                 ].map(type => (
                   <button
                     key={type.value}
@@ -850,7 +877,7 @@ export default function AdminPaymentControlPage() {
                   className="text-gray-500 hover:text-gray-700 text-sm h-8"
                 >
                   <X className="h-4 w-4 mr-1" />
-                  Limpiar filtros
+                  {t("paymentControl.filters.clearFilters")}
                 </Button>
               </div>
             )}
@@ -859,7 +886,7 @@ export default function AdminPaymentControlPage() {
 
         {/* Mobile results count */}
         <div className="mt-3 text-xs text-gray-500 sm:hidden">
-          {filteredPayments.length} pagos encontrados
+          {filteredPayments.length} {t("paymentControl.filters.paymentsFound")}
         </div>
       </div>
 
@@ -870,19 +897,19 @@ export default function AdminPaymentControlPage() {
             value="pendiente"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 font-medium"
           >
-            Pendientes ({pendingPayments.length})
+            {t("paymentControl.tabs.pending")} ({pendingPayments.length})
           </TabsTrigger>
           <TabsTrigger
             value="en_revision"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 font-medium"
           >
-            En Revisión ({inReviewPayments.length})
+            {t("paymentControl.tabs.inReview")} ({inReviewPayments.length})
           </TabsTrigger>
           <TabsTrigger
             value="pagado"
             className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 font-medium"
           >
-            Pagados ({paidPayments.length})
+            {t("paymentControl.tabs.paid")} ({paidPayments.length})
           </TabsTrigger>
         </TabsList>
 
@@ -892,15 +919,15 @@ export default function AdminPaymentControlPage() {
             <div className="p-12 text-center">
               <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-700 mb-2">
-                No hay pagos registrados
+                {t("paymentControl.table.noPaymentsRegistered")}
               </h3>
               <p className="text-gray-500 text-sm mb-4">
-                Asigna tarifas a los alumnos para empezar a gestionar sus pagos.
+                {t("paymentControl.table.assignRatesToStart")}
               </p>
               <Button asChild>
                 <Link to="/dashboard/payment-rates/assign">
                   <Settings className="h-4 w-4 mr-2" />
-                  Asignar Tarifas
+                  {t("paymentControl.table.assignRates")}
                 </Link>
               </Button>
             </div>
@@ -916,19 +943,19 @@ export default function AdminPaymentControlPage() {
                       />
                     </th>
                     <th className="py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Alumno
+                      {t("paymentControl.table.student")}
                     </th>
                     <th className="py-3 px-2 sm:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Importe
+                      {t("paymentControl.table.amount")}
                     </th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                      Detalles
+                      {t("paymentControl.table.details")}
                     </th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                      Estado
+                      {t("paymentControl.table.status")}
                     </th>
                     <th className="py-3 px-2 sm:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acción
+                      {t("paymentControl.table.action")}
                     </th>
                   </tr>
                 </thead>
@@ -936,7 +963,7 @@ export default function AdminPaymentControlPage() {
                   {paginatedData.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-12 text-center text-gray-500">
-                        {searchTerm ? 'No se encontraron pagos con ese criterio de búsqueda' : 'No hay pagos en esta categoría'}
+                        {searchTerm ? t("paymentControl.table.noPaymentsFound") : t("paymentControl.table.noPaymentsInCategory")}
                       </td>
                     </tr>
                   ) : (
@@ -957,24 +984,24 @@ export default function AdminPaymentControlPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialogAction === 'approve' ? 'Confirmar Pago' : 'Rechazar Pago'}
+              {dialogAction === 'approve' ? t("paymentControl.verifyDialog.confirmPayment") : t("paymentControl.verifyDialog.rejectPayment")}
             </DialogTitle>
             <DialogDescription>
               {dialogAction === 'approve' && dialogPayment
-                ? `Confirmar el pago de ${formatCurrency(dialogPayment.amount)} de ${dialogPayment.student_enrollment?.full_name}`
-                : `El alumno será notificado del rechazo y deberá volver a marcar el pago.`}
+                ? t("paymentControl.verifyDialog.confirmPaymentDesc", { amount: formatCurrency(dialogPayment.amount), name: dialogPayment.student_enrollment?.full_name })
+                : t("paymentControl.verifyDialog.rejectPaymentDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="adminNotes">
-                Notas {dialogAction === 'approve' ? '(opcional)' : ''}
+                {t("paymentControl.verifyDialog.notes")} {dialogAction === 'approve' ? t("paymentControl.verifyDialog.notesOptional") : ''}
               </Label>
               <Textarea
                 id="adminNotes"
                 placeholder={dialogAction === 'approve'
-                  ? "Añade notas sobre esta verificación..."
-                  : "Indica el motivo del rechazo..."}
+                  ? t("paymentControl.verifyDialog.notesPlaceholderApprove")
+                  : t("paymentControl.verifyDialog.notesPlaceholderReject")}
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={3}
@@ -983,7 +1010,7 @@ export default function AdminPaymentControlPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsVerifyDialogOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleVerify}
@@ -991,7 +1018,7 @@ export default function AdminPaymentControlPage() {
               disabled={verifyPayment.isPending}
             >
               {verifyPayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {dialogAction === 'approve' ? 'Confirmar' : 'Rechazar'}
+              {dialogAction === 'approve' ? t("paymentControl.verifyDialog.confirm") : t("paymentControl.verifyDialog.reject")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1001,18 +1028,18 @@ export default function AdminPaymentControlPage() {
       <Dialog open={isExtraPaymentDialogOpen} onOpenChange={setIsExtraPaymentDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Añadir Pago Extra</DialogTitle>
+            <DialogTitle>{t("paymentControl.extraPaymentDialog.title")}</DialogTitle>
             <DialogDescription>
-              Crea un pago adicional para un alumno (ej: clase suelta, material, etc.)
+              {t("paymentControl.extraPaymentDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Alumno *</Label>
+              <Label>{t("paymentControl.extraPaymentDialog.student")} *</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar alumno por nombre o email..."
+                  placeholder={t("paymentControl.extraPaymentDialog.studentSearchPlaceholder")}
                   value={extraPaymentStudentSearch}
                   onChange={(e) => {
                     setExtraPaymentStudentSearch(e.target.value);
@@ -1026,7 +1053,7 @@ export default function AdminPaymentControlPage() {
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {filteredStudents.length === 0 ? (
                       <div className="px-3 py-2 text-sm text-gray-500">
-                        No se encontraron alumnos
+                        {t("paymentControl.extraPaymentDialog.noStudentsFound")}
                       </div>
                     ) : (
                       filteredStudents.slice(0, 10).map(student => (
@@ -1066,17 +1093,17 @@ export default function AdminPaymentControlPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="concept">Concepto *</Label>
+              <Label htmlFor="concept">{t("paymentControl.extraPaymentDialog.concept")} *</Label>
               <Input
                 id="concept"
-                placeholder="Ej: Clase suelta, Material, Inscripción torneo..."
+                placeholder={t("paymentControl.extraPaymentDialog.conceptPlaceholder")}
                 value={extraPaymentConcept}
                 onChange={(e) => setExtraPaymentConcept(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Importe (€) *</Label>
+              <Label htmlFor="amount">{t("paymentControl.extraPaymentDialog.amount")} *</Label>
               <Input
                 id="amount"
                 type="number"
@@ -1089,10 +1116,10 @@ export default function AdminPaymentControlPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Descripción (opcional)</Label>
+              <Label htmlFor="description">{t("paymentControl.extraPaymentDialog.descriptionLabel")}</Label>
               <Textarea
                 id="description"
-                placeholder="Añade detalles adicionales..."
+                placeholder={t("paymentControl.extraPaymentDialog.descriptionPlaceholder")}
                 value={extraPaymentDescription}
                 onChange={(e) => setExtraPaymentDescription(e.target.value)}
                 rows={2}
@@ -1101,14 +1128,14 @@ export default function AdminPaymentControlPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsExtraPaymentDialogOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleCreateExtraPayment}
               disabled={!extraPaymentStudentId || !extraPaymentConcept || !extraPaymentAmount || createExtraPayment.isPending}
             >
               {createExtraPayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Crear Pago
+              {t("paymentControl.extraPaymentDialog.createPayment")}
             </Button>
           </DialogFooter>
         </DialogContent>

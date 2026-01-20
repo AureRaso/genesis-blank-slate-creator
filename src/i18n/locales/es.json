@@ -1580,5 +1580,389 @@
       "loggedIn": "Al hacer clic aceptas que tu solicitud sea revisada por el profesor",
       "loggedOut": "Necesitas iniciar sesión para unirte a la lista de espera"
     }
+  },
+  "months": {
+    "jan": { "short": "Ene", "full": "Enero" },
+    "feb": { "short": "Feb", "full": "Febrero" },
+    "mar": { "short": "Mar", "full": "Marzo" },
+    "apr": { "short": "Abr", "full": "Abril" },
+    "may": { "short": "May", "full": "Mayo" },
+    "jun": { "short": "Jun", "full": "Junio" },
+    "jul": { "short": "Jul", "full": "Julio" },
+    "aug": { "short": "Ago", "full": "Agosto" },
+    "sep": { "short": "Sep", "full": "Septiembre" },
+    "oct": { "short": "Oct", "full": "Octubre" },
+    "nov": { "short": "Nov", "full": "Noviembre" },
+    "dec": { "short": "Dic", "full": "Diciembre" }
+  },
+  "paymentRates": {
+    "title": "Tarifas de Pago",
+    "subtitle": "Configura las tarifas que se aplicarán a los alumnos",
+    "newRate": "Nueva Tarifa",
+    "assignRates": "Asignar Tarifas",
+    "activateRate": "Activar tarifa",
+    "deactivateRate": "Desactivar tarifa",
+    "empty": {
+      "title": "No hay tarifas configuradas",
+      "description": "Crea tu primera tarifa para empezar a gestionar los pagos de tus alumnos",
+      "action": "Crear Tarifa"
+    },
+    "table": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "periodicity": "Periodicidad",
+      "price": "Precio",
+      "billingDay": "Día Cobro",
+      "status": "Estado",
+      "actions": "Acciones",
+      "day": "Día"
+    },
+    "rateTypes": {
+      "fixed": "Precio Fijo",
+      "perClass": "Por Clase"
+    },
+    "periodicity": {
+      "monthly": "Mensual",
+      "quarterly": "Trimestral",
+      "semiannual": "Semestral",
+      "annual": "Anual"
+    },
+    "status": {
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "paused": "Pausada",
+      "finished": "Finalizada"
+    },
+    "form": {
+      "createTitle": "Nueva Tarifa",
+      "editTitle": "Editar Tarifa",
+      "editDescription": "Modifica los datos de la tarifa",
+      "createDescription": "Configura una nueva tarifa de pago para tus alumnos",
+      "name": "Nombre",
+      "namePlaceholder": "Ej: Tarifa Mensual Adultos",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción opcional...",
+      "rateType": "Tipo de Tarifa",
+      "periodicity": "Periodicidad",
+      "fixedPrice": "Precio Fijo",
+      "pricePerClass": "Precio por Clase",
+      "billingDay": "Día de Cobro",
+      "billingDayHelp": "Día del mes en que se genera el pago pendiente",
+      "dueDays": "Días para Pagar",
+      "dueDaysHelp": "Por defecto: 30 días",
+      "graceDays": "Días Recordatorio",
+      "graceDaysHelp": "Días antes del vencimiento",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "create": "Crear"
+    },
+    "deleteDialog": {
+      "title": "¿Eliminar tarifa?",
+      "description": "Esta acción no se puede deshacer. Si hay alumnos con esta tarifa asignada, se eliminarán también las asignaciones.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "toasts": {
+      "created": "Tarifa creada correctamente",
+      "updated": "Tarifa actualizada correctamente",
+      "deleted": "Tarifa eliminada correctamente",
+      "activated": "Tarifa activada",
+      "deactivated": "Tarifa desactivada",
+      "errorCreating": "Error al crear la tarifa",
+      "errorUpdating": "Error al actualizar la tarifa",
+      "errorDeleting": "Error al eliminar la tarifa. Puede que tenga asignaciones activas.",
+      "errorToggling": "Error al cambiar el estado de la tarifa"
+    },
+    "detail": {
+      "backToRates": "Volver a Tarifas",
+      "back": "Volver",
+      "rateNotFound": "Tarifa no encontrada",
+      "rateNotFoundDesc": "La tarifa que buscas no existe o ha sido eliminada.",
+      "perClassSuffix": "/ clase",
+      "stats": {
+        "activeStudents": "Alumnos Activos",
+        "ofTotal": "de {{total}} totales",
+        "totalBilled": "Total Facturado",
+        "payments": "pagos",
+        "totalCollected": "Total Cobrado",
+        "collectionRate": "% tasa de cobro",
+        "pending": "Pendiente",
+        "avgDays": "~{{days}} días prom.",
+        "noData": "Sin datos"
+      },
+      "config": {
+        "title": "Configuración",
+        "billingDay": "Día de cobro",
+        "dayPrefix": "Día",
+        "daysToPayLabel": "Días para pagar",
+        "days": "días",
+        "reminder": "Recordatorio",
+        "daysBefore": "días antes",
+        "created": "Creada"
+      },
+      "tabs": {
+        "students": "Alumnos",
+        "paymentHistory": "Historial de Pagos",
+        "payments": "Pagos",
+        "history": "Historial"
+      },
+      "students": {
+        "searchPlaceholder": "Buscar alumno...",
+        "ofStudents": "{{count}} de {{total}} alumnos",
+        "since": "Desde",
+        "openWhatsApp": "Abrir WhatsApp",
+        "student": "Alumno",
+        "email": "Email",
+        "phone": "Teléfono",
+        "noStudentsFound": "No se encontraron alumnos",
+        "noActiveStudents": "No hay alumnos con esta tarifa activa",
+        "assignStudents": "Asignar Alumnos"
+      },
+      "paymentHistory": {
+        "goToCurrentMonth": "Ir al mes actual",
+        "currentMonth": "Mes actual",
+        "previousMonth": "Mes anterior",
+        "nextMonth": "Mes próximo",
+        "period": "período",
+        "period_one": "período",
+        "period_other": "períodos",
+        "periodFound": "período encontrado",
+        "periodFound_one": "período encontrado",
+        "periodFound_other": "períodos encontrados",
+        "paid": "Pagados",
+        "pending": "Pendientes",
+        "inReview": "En Revisión",
+        "billingEvolution": "Evolución de Facturación",
+        "globalCollectionRate": "Tasa de Cobro Global",
+        "collected": "cobrado",
+        "collectedAmount": "Cobrado",
+        "pendingAmount": "Pendiente",
+        "totalBilled": "Total Facturado",
+        "monthDetail": "Detalle por Mes",
+        "totalAmount": "Importe Total",
+        "totalPayments": "Total Pagos",
+        "noPaymentHistory": "No hay historial de pagos para esta tarifa"
+      },
+      "assignments": {
+        "searchPlaceholder": "Buscar alumno...",
+        "statusPlaceholder": "Estado",
+        "allStatuses": "Todos los estados",
+        "active": "Activas",
+        "paused": "Pausadas",
+        "finished": "Finalizadas",
+        "ofAssignments": "{{count}} de {{total}} asignaciones",
+        "noName": "Sin nombre",
+        "from": "Desde:",
+        "until": "Hasta:",
+        "student": "Alumno",
+        "status": "Estado",
+        "startDate": "Fecha Inicio",
+        "endDate": "Fecha Fin",
+        "assigned": "Asignado",
+        "noAssignmentsFound": "No se encontraron asignaciones",
+        "noAssignmentHistory": "No hay historial de asignaciones"
+      }
+    },
+    "assign": {
+      "title": "Asignar Tarifas",
+      "subtitle": "Selecciona una tarifa y asígnala a múltiples alumnos",
+      "step1": {
+        "title": "Seleccionar Tarifa",
+        "rateLabel": "Tarifa a asignar *",
+        "ratePlaceholder": "Selecciona una tarifa...",
+        "price": "Precio",
+        "periodicity": "Periodicidad",
+        "billingDay": "Día de cobro",
+        "startDate": "Fecha Inicio *",
+        "endDate": "Fecha Fin (opcional)",
+        "noActiveRates": "No hay tarifas activas. Crea una tarifa primero.",
+        "goToRates": "Ir a Tarifas"
+      },
+      "step2": {
+        "title": "Seleccionar Alumnos",
+        "selectedCount": "{{count}} seleccionados",
+        "searchPlaceholder": "Buscar por nombre o email...",
+        "filterAll": "Todos",
+        "filterAssigned": "Con tarifa",
+        "filterUnassigned": "Sin tarifa",
+        "tableStudent": "Alumno",
+        "tableCurrentRate": "Tarifa Actual",
+        "rateAssigned": "Tarifa asignada",
+        "noRate": "Sin tarifa",
+        "noStudentsFound": "No se encontraron alumnos con ese criterio",
+        "noStudentsRegistered": "No hay alumnos registrados"
+      },
+      "step3": {
+        "title": "Confirmar Asignación",
+        "rate": "Tarifa",
+        "students": "Alumnos",
+        "startDate": "Fecha Inicio",
+        "endDate": "Fecha Fin",
+        "indefinite": "Indefinido",
+        "cancel": "Cancelar",
+        "assign": "Asignar Tarifa"
+      },
+      "periodicity": {
+        "mensual": "Mensual",
+        "trimestral": "Trimestral",
+        "semestral": "Semestral",
+        "anual": "Anual"
+      },
+      "pricePerClass": "/ clase"
+    }
+  },
+  "paymentControl": {
+    "title": "Control de pagos",
+    "subtitle": "Gestiona los pagos de todos los estudiantes",
+    "rates": "Tarifas",
+    "generateMonthlyPayments": "Generar Pagos del Mes",
+    "extraPayment": "Pago Extra",
+    "summary": {
+      "totalExpected": "Total Esperado",
+      "payments": "pagos",
+      "pending": "Pendientes",
+      "inReview": "En Revisión",
+      "paid": "Pagados"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar alumno o concepto...",
+      "filters": "Filtros",
+      "all": "Todos",
+      "goToCurrentMonth": "Ir al mes actual",
+      "currentMonth": "Mes actual",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes próximo",
+      "year": "Año:",
+      "month": "Mes:",
+      "rate": "Tarifa:",
+      "allRates": "Todas las tarifas",
+      "type": "Tipo:",
+      "allTypes": "Todos",
+      "normal": "Normales",
+      "extra": "Extras",
+      "clearFilters": "Limpiar filtros",
+      "paymentsFound": "pagos encontrados"
+    },
+    "tabs": {
+      "pending": "Pendientes",
+      "inReview": "En Revisión",
+      "paid": "Pagados"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "inReview": "En Revisión",
+      "paid": "Pagado"
+    },
+    "paymentMethods": {
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "bizum": "Bizum"
+    },
+    "table": {
+      "student": "Alumno",
+      "amount": "Importe",
+      "details": "Detalles",
+      "status": "Estado",
+      "action": "Acción",
+      "noName": "Sin nombre",
+      "dueDate": "Vence:",
+      "verified": "Verificado",
+      "markAsPaid": "Marcar pagado",
+      "paid": "Pagado",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "noPaymentsRegistered": "No hay pagos registrados",
+      "assignRatesToStart": "Asigna tarifas a los alumnos para empezar a gestionar sus pagos.",
+      "assignRates": "Asignar Tarifas",
+      "noPaymentsInCategory": "No hay pagos en esta categoría",
+      "noPaymentsFound": "No se encontraron pagos con ese criterio de búsqueda",
+      "showing": "Mostrando {{start}} - {{end}} de {{total}}",
+      "pageOf": "{{current}} de {{total}}"
+    },
+    "verifyDialog": {
+      "confirmPayment": "Confirmar Pago",
+      "rejectPayment": "Rechazar Pago",
+      "confirmPaymentDesc": "Confirmar el pago de {{amount}} de {{name}}",
+      "rejectPaymentDesc": "El alumno será notificado del rechazo y deberá volver a marcar el pago.",
+      "notes": "Notas",
+      "notesOptional": "(opcional)",
+      "notesPlaceholderApprove": "Añade notas sobre esta verificación...",
+      "notesPlaceholderReject": "Indica el motivo del rechazo...",
+      "confirm": "Confirmar",
+      "reject": "Rechazar"
+    },
+    "extraPaymentDialog": {
+      "title": "Añadir Pago Extra",
+      "description": "Crea un pago adicional para un alumno (ej: clase suelta, material, etc.)",
+      "student": "Alumno",
+      "studentSearchPlaceholder": "Buscar alumno por nombre o email...",
+      "noStudentsFound": "No se encontraron alumnos",
+      "concept": "Concepto",
+      "conceptPlaceholder": "Ej: Clase suelta, Material, Inscripción torneo...",
+      "amount": "Importe (€)",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Añade detalles adicionales...",
+      "createPayment": "Crear Pago"
+    },
+    "toasts": {
+      "paymentVerified": "Pago verificado correctamente",
+      "paymentRejected": "Pago rechazado",
+      "errorVerifying": "Error al verificar el pago",
+      "extraPaymentCreated": "Pago extra creado correctamente",
+      "errorCreatingExtra": "Error al crear el pago extra",
+      "paymentsGenerated": "{{count}} pagos generados correctamente",
+      "paymentsAlreadyExist": "Ya existen pagos para este período",
+      "noNewPayments": "No se generaron nuevos pagos",
+      "noActiveAssignments": "No hay asignaciones activas para generar pagos",
+      "errorGenerating": "Error al generar los pagos",
+      "paymentGenerated": "Pago generado correctamente",
+      "errorGeneratingPayment": "Error al generar el pago"
+    }
+  },
+  "myPayments": {
+    "title": "Mis Pagos",
+    "subtitle": "Gestiona los pagos de tus clases",
+    "totalPending": "Total pendiente de pago",
+    "tabs": {
+      "pending": "Pendientes",
+      "inReview": "En Revisión",
+      "paid": "Pagados"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "inReview": "En Revisión",
+      "paid": "Pagado"
+    },
+    "paymentMethods": {
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "bizum": "Bizum"
+    },
+    "card": {
+      "issued": "Emitido",
+      "dueDate": "Vence",
+      "method": "Método",
+      "overdue": "Vencido hace {{days}} días",
+      "dueToday": "Vence hoy",
+      "dueInDays": "Vence en {{days}} días",
+      "iPaid": "He pagado",
+      "pendingVerification": "Pendiente de verificación por el administrador",
+      "verifiedOn": "Verificado el {{date}}"
+    },
+    "empty": {
+      "noPending": "No tienes pagos pendientes",
+      "noInReview": "No hay pagos en revisión",
+      "noPaid": "No hay pagos realizados aún"
+    },
+    "dialog": {
+      "title": "Confirmar Pago",
+      "description": "Indica cómo has realizado el pago de {{amount}}",
+      "paymentMethod": "Método de pago *",
+      "paymentMethodPlaceholder": "Selecciona el método de pago",
+      "notes": "Notas (opcional)",
+      "notesPlaceholder": "Añade cualquier información adicional...",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar Pago"
+    }
   }
 }

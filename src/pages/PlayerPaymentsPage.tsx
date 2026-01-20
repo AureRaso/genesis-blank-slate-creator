@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Wallet, Clock, CheckCircle2, AlertCircle, Loader2, Calendar, Euro, CreditCard, Banknote, Smartphone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,33 +24,50 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useMyPayments, useMarkPaymentAsPaid, StudentPayment } from "@/hooks/useStudentPayments";
 
-const STATUS_CONFIG = {
-  pendiente: {
-    label: "Pendiente",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: AlertCircle,
-  },
-  en_revision: {
-    label: "En Revisión",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: Clock,
-  },
-  pagado: {
-    label: "Pagado",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    icon: CheckCircle2,
-  },
+const STATUS_COLORS = {
+  pendiente: "bg-amber-50 text-amber-700 border-amber-200",
+  en_revision: "bg-blue-50 text-blue-700 border-blue-200",
+  pagado: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
-const PAYMENT_METHOD_CONFIG = {
-  efectivo: { label: "Efectivo", icon: Banknote },
-  tarjeta: { label: "Tarjeta", icon: CreditCard },
-  bizum: { label: "Bizum", icon: Smartphone },
+const STATUS_ICONS = {
+  pendiente: AlertCircle,
+  en_revision: Clock,
+  pagado: CheckCircle2,
+};
+
+const PAYMENT_METHOD_ICONS = {
+  efectivo: Banknote,
+  tarjeta: CreditCard,
+  bizum: Smartphone,
 };
 
 export default function PlayerPaymentsPage() {
+  const { t, i18n } = useTranslation();
   const { data: payments, isLoading } = useMyPayments();
   const markAsPaid = useMarkPaymentAsPaid();
+
+  // Get locale for date formatting
+  const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
+
+  // Helper functions for translations
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pendiente: t("myPayments.status.pending"),
+      en_revision: t("myPayments.status.inReview"),
+      pagado: t("myPayments.status.paid"),
+    };
+    return labels[status] || status;
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      efectivo: t("myPayments.paymentMethods.cash"),
+      tarjeta: t("myPayments.paymentMethods.card"),
+      bizum: t("myPayments.paymentMethods.bizum"),
+    };
+    return labels[method] || method;
+  };
 
   const [activeTab, setActiveTab] = useState<string>("pendiente");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -113,19 +131,19 @@ export default function PlayerPaymentsPage() {
     const days = getDaysUntilDue(dueDate);
 
     if (days < 0) {
-      return <Badge variant="destructive">Vencido hace {Math.abs(days)} días</Badge>;
+      return <Badge variant="destructive">{t("myPayments.card.overdue", { days: Math.abs(days) })}</Badge>;
     } else if (days === 0) {
-      return <Badge variant="destructive">Vence hoy</Badge>;
+      return <Badge variant="destructive">{t("myPayments.card.dueToday")}</Badge>;
     } else if (days <= 7) {
-      return <Badge className="bg-amber-100 text-amber-700 border-amber-200">Vence en {days} días</Badge>;
+      return <Badge className="bg-amber-100 text-amber-700 border-amber-200">{t("myPayments.card.dueInDays", { days })}</Badge>;
     } else {
-      return <Badge variant="secondary">Vence en {days} días</Badge>;
+      return <Badge variant="secondary">{t("myPayments.card.dueInDays", { days })}</Badge>;
     }
   };
 
   const PaymentCard = ({ payment }: { payment: StudentPayment }) => {
-    const statusConfig = STATUS_CONFIG[payment.status];
-    const StatusIcon = statusConfig.icon;
+    const statusColor = STATUS_COLORS[payment.status];
+    const StatusIcon = STATUS_ICONS[payment.status];
 
     return (
       <Card className="p-4 hover:shadow-md transition-shadow">
@@ -138,9 +156,9 @@ export default function PlayerPaymentsPage() {
                 <p className="text-sm text-gray-500">{payment.description}</p>
               )}
             </div>
-            <Badge className={statusConfig.color}>
+            <Badge className={statusColor}>
               <StatusIcon className="h-3 w-3 mr-1" />
-              {statusConfig.label}
+              {getStatusLabel(payment.status)}
             </Badge>
           </div>
 
@@ -156,12 +174,12 @@ export default function PlayerPaymentsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              <span>Emitido: {new Date(payment.issue_date).toLocaleDateString('es-ES')}</span>
+              <span>{t("myPayments.card.issued")}: {new Date(payment.issue_date).toLocaleDateString(dateLocale)}</span>
             </div>
             <span className="hidden sm:inline text-gray-300">•</span>
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              <span>Vence: {new Date(payment.due_date).toLocaleDateString('es-ES')}</span>
+              <span>{t("myPayments.card.dueDate")}: {new Date(payment.due_date).toLocaleDateString(dateLocale)}</span>
             </div>
           </div>
 
@@ -174,12 +192,11 @@ export default function PlayerPaymentsPage() {
           {payment.payment_method && (
             <div className="flex items-center gap-2 text-sm">
               {(() => {
-                const methodConfig = PAYMENT_METHOD_CONFIG[payment.payment_method];
-                const MethodIcon = methodConfig.icon;
+                const MethodIcon = PAYMENT_METHOD_ICONS[payment.payment_method];
                 return (
                   <>
                     <MethodIcon className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-600">Método: {methodConfig.label}</span>
+                    <span className="text-gray-600">{t("myPayments.card.method")}: {getPaymentMethodLabel(payment.payment_method)}</span>
                   </>
                 );
               })()}
@@ -193,21 +210,21 @@ export default function PlayerPaymentsPage() {
               className="w-full mt-2"
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              He pagado
+              {t("myPayments.card.iPaid")}
             </Button>
           )}
 
           {payment.status === 'en_revision' && (
             <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
               <Clock className="h-4 w-4 inline mr-2" />
-              Pendiente de verificación por el administrador
+              {t("myPayments.card.pendingVerification")}
             </div>
           )}
 
           {payment.status === 'pagado' && payment.admin_verified_at && (
             <div className="p-3 bg-emerald-50 rounded-lg text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4 inline mr-2" />
-              Verificado el {new Date(payment.admin_verified_at).toLocaleDateString('es-ES')}
+              {t("myPayments.card.verifiedOn", { date: new Date(payment.admin_verified_at).toLocaleDateString(dateLocale) })}
             </div>
           )}
         </div>
@@ -221,9 +238,9 @@ export default function PlayerPaymentsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Wallet className="h-6 w-6" />
-          Mis Pagos
+          {t("myPayments.title")}
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Gestiona los pagos de tus clases</p>
+        <p className="text-gray-500 text-sm mt-1">{t("myPayments.subtitle")}</p>
       </div>
 
       {/* Summary Card */}
@@ -231,7 +248,7 @@ export default function PlayerPaymentsPage() {
         <Card className="p-4 mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-amber-700">Total pendiente de pago</p>
+              <p className="text-sm font-medium text-amber-700">{t("myPayments.totalPending")}</p>
               <p className="text-2xl font-bold text-amber-900">{formatCurrency(totalPending)}</p>
             </div>
             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
@@ -246,15 +263,15 @@ export default function PlayerPaymentsPage() {
         <TabsList className="grid w-full grid-cols-3 mb-4">
           <TabsTrigger value="pendiente" className="flex items-center gap-1">
             <AlertCircle className="h-4 w-4" />
-            Pendientes ({pendingPayments.length})
+            {t("myPayments.tabs.pending")} ({pendingPayments.length})
           </TabsTrigger>
           <TabsTrigger value="en_revision" className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            En Revisión ({inReviewPayments.length})
+            {t("myPayments.tabs.inReview")} ({inReviewPayments.length})
           </TabsTrigger>
           <TabsTrigger value="pagado" className="flex items-center gap-1">
             <CheckCircle2 className="h-4 w-4" />
-            Pagados ({paidPayments.length})
+            {t("myPayments.tabs.paid")} ({paidPayments.length})
           </TabsTrigger>
         </TabsList>
 
@@ -262,7 +279,7 @@ export default function PlayerPaymentsPage() {
           {pendingPayments.length === 0 ? (
             <Card className="p-8 text-center border-dashed">
               <CheckCircle2 className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
-              <p className="text-gray-500">No tienes pagos pendientes</p>
+              <p className="text-gray-500">{t("myPayments.empty.noPending")}</p>
             </Card>
           ) : (
             pendingPayments.map(payment => (
@@ -275,7 +292,7 @@ export default function PlayerPaymentsPage() {
           {inReviewPayments.length === 0 ? (
             <Card className="p-8 text-center border-dashed">
               <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No hay pagos en revisión</p>
+              <p className="text-gray-500">{t("myPayments.empty.noInReview")}</p>
             </Card>
           ) : (
             inReviewPayments.map(payment => (
@@ -288,7 +305,7 @@ export default function PlayerPaymentsPage() {
           {paidPayments.length === 0 ? (
             <Card className="p-8 text-center border-dashed">
               <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No hay pagos realizados aún</p>
+              <p className="text-gray-500">{t("myPayments.empty.noPaid")}</p>
             </Card>
           ) : (
             paidPayments.map(payment => (
@@ -302,39 +319,39 @@ export default function PlayerPaymentsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Pago</DialogTitle>
+            <DialogTitle>{t("myPayments.dialog.title")}</DialogTitle>
             <DialogDescription>
-              Indica cómo has realizado el pago de {selectedPayment && formatCurrency(selectedPayment.amount)}
+              {t("myPayments.dialog.description", { amount: selectedPayment ? formatCurrency(selectedPayment.amount) : "" })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Método de pago *</Label>
+              <Label>{t("myPayments.dialog.paymentMethod")}</Label>
               <Select
                 value={paymentMethod}
                 onValueChange={(v: 'efectivo' | 'tarjeta' | 'bizum') => setPaymentMethod(v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el método de pago" />
+                  <SelectValue placeholder={t("myPayments.dialog.paymentMethodPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="efectivo">
                     <div className="flex items-center gap-2">
                       <Banknote className="h-4 w-4" />
-                      Efectivo
+                      {t("myPayments.paymentMethods.cash")}
                     </div>
                   </SelectItem>
                   <SelectItem value="tarjeta">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
-                      Tarjeta
+                      {t("myPayments.paymentMethods.card")}
                     </div>
                   </SelectItem>
                   <SelectItem value="bizum">
                     <div className="flex items-center gap-2">
                       <Smartphone className="h-4 w-4" />
-                      Bizum
+                      {t("myPayments.paymentMethods.bizum")}
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -342,9 +359,9 @@ export default function PlayerPaymentsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Notas (opcional)</Label>
+              <Label>{t("myPayments.dialog.notes")}</Label>
               <Textarea
-                placeholder="Añade cualquier información adicional..."
+                placeholder={t("myPayments.dialog.notesPlaceholder")}
                 value={studentNotes}
                 onChange={(e) => setStudentNotes(e.target.value)}
                 rows={2}
@@ -354,14 +371,14 @@ export default function PlayerPaymentsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
+              {t("myPayments.dialog.cancel")}
             </Button>
             <Button
               onClick={handleMarkAsPaid}
               disabled={!paymentMethod || markAsPaid.isPending}
             >
               {markAsPaid.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirmar Pago
+              {t("myPayments.dialog.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

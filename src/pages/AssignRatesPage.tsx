@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { ArrowLeft, Check, Loader2, Search, Users, Calendar, Euro } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,17 +30,16 @@ import {
   StudentWithAssignment,
 } from "@/hooks/useRateAssignments";
 
-const PERIODICITY_LABELS: Record<string, string> = {
-  mensual: "Mensual",
-  trimestral: "Trimestral",
-  semestral: "Semestral",
-  anual: "Anual",
-};
-
 export default function AssignRatesPage() {
+  const { t, i18n } = useTranslation();
   const { data: rates, isLoading: ratesLoading } = useActivePaymentRates();
   const { data: students, isLoading: studentsLoading } = useStudentsWithAssignments();
   const bulkAssign = useBulkAssignRate();
+
+  // Get translated periodicity label
+  const getPeriodicityLabel = (periodicity: string) => {
+    return t(`paymentRates.assign.periodicity.${periodicity}`, periodicity);
+  };
 
   // Form state
   const [selectedRateId, setSelectedRateId] = useState<string>("");
@@ -130,10 +130,13 @@ export default function AssignRatesPage() {
       return `${rate.fixed_price.toFixed(2)} €`;
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € / clase`;
+      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.assign.pricePerClass")}`;
     }
     return "-";
   };
+
+  // Get locale for date formatting
+  const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-6xl">
@@ -145,9 +148,9 @@ export default function AssignRatesPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Asignar Tarifas</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("paymentRates.assign.title")}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Selecciona una tarifa y asígnala a múltiples alumnos
+            {t("paymentRates.assign.subtitle")}
           </p>
         </div>
       </div>
@@ -158,21 +161,21 @@ export default function AssignRatesPage() {
           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
             1
           </div>
-          <h2 className="text-lg font-semibold">Seleccionar Tarifa</h2>
+          <h2 className="text-lg font-semibold">{t("paymentRates.assign.step1.title")}</h2>
         </div>
 
         {rates && rates.length > 0 ? (
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Tarifa a asignar *</Label>
+              <Label>{t("paymentRates.assign.step1.rateLabel")}</Label>
               <Select value={selectedRateId} onValueChange={setSelectedRateId}>
                 <SelectTrigger className="w-full max-w-md">
-                  <SelectValue placeholder="Selecciona una tarifa..." />
+                  <SelectValue placeholder={t("paymentRates.assign.step1.ratePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {rates.map((rate) => (
                     <SelectItem key={rate.id} value={rate.id}>
-                      {rate.name} - {formatPrice(rate)} ({PERIODICITY_LABELS[rate.periodicity]})
+                      {rate.name} - {formatPrice(rate)} ({getPeriodicityLabel(rate.periodicity)})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -185,19 +188,19 @@ export default function AssignRatesPage() {
                   <div className="flex items-center gap-2">
                     <Euro className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">
-                      <strong>Precio:</strong> {formatPrice(selectedRate)}
+                      <strong>{t("paymentRates.assign.step1.price")}:</strong> {formatPrice(selectedRate)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">
-                      <strong>Periodicidad:</strong>{" "}
-                      {PERIODICITY_LABELS[selectedRate.periodicity]}
+                      <strong>{t("paymentRates.assign.step1.periodicity")}:</strong>{" "}
+                      {getPeriodicityLabel(selectedRate.periodicity)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">
-                      <strong>Día de cobro:</strong> {selectedRate.billing_day}
+                      <strong>{t("paymentRates.assign.step1.billingDay")}:</strong> {selectedRate.billing_day}
                     </span>
                   </div>
                 </div>
@@ -207,7 +210,7 @@ export default function AssignRatesPage() {
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4 max-w-md">
               <div className="grid gap-2">
-                <Label htmlFor="start_date">Fecha Inicio *</Label>
+                <Label htmlFor="start_date">{t("paymentRates.assign.step1.startDate")}</Label>
                 <Input
                   id="start_date"
                   type="date"
@@ -217,7 +220,7 @@ export default function AssignRatesPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="end_date">Fecha Fin (opcional)</Label>
+                <Label htmlFor="end_date">{t("paymentRates.assign.step1.endDate")}</Label>
                 <Input
                   id="end_date"
                   type="date"
@@ -232,10 +235,10 @@ export default function AssignRatesPage() {
           <div className="text-center py-8">
             <Euro className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">
-              No hay tarifas activas. Crea una tarifa primero.
+              {t("paymentRates.assign.step1.noActiveRates")}
             </p>
             <Button asChild>
-              <Link to="/dashboard/payment-rates">Ir a Tarifas</Link>
+              <Link to="/dashboard/payment-rates">{t("paymentRates.assign.step1.goToRates")}</Link>
             </Button>
           </div>
         )}
@@ -248,10 +251,10 @@ export default function AssignRatesPage() {
             <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
               2
             </div>
-            <h2 className="text-lg font-semibold">Seleccionar Alumnos</h2>
+            <h2 className="text-lg font-semibold">{t("paymentRates.assign.step2.title")}</h2>
             {selectedStudents.size > 0 && (
               <Badge className="ml-2 bg-primary">
-                {selectedStudents.size} seleccionados
+                {t("paymentRates.assign.step2.selectedCount", { count: selectedStudents.size })}
               </Badge>
             )}
           </div>
@@ -261,7 +264,7 @@ export default function AssignRatesPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar por nombre o email..."
+                placeholder={t("paymentRates.assign.step2.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -277,9 +280,9 @@ export default function AssignRatesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="assigned">Con tarifa</SelectItem>
-                <SelectItem value="unassigned">Sin tarifa</SelectItem>
+                <SelectItem value="all">{t("paymentRates.assign.step2.filterAll")}</SelectItem>
+                <SelectItem value="assigned">{t("paymentRates.assign.step2.filterAssigned")}</SelectItem>
+                <SelectItem value="unassigned">{t("paymentRates.assign.step2.filterUnassigned")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -299,8 +302,8 @@ export default function AssignRatesPage() {
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
-                    <TableHead>Alumno</TableHead>
-                    <TableHead>Tarifa Actual</TableHead>
+                    <TableHead>{t("paymentRates.assign.step2.tableStudent")}</TableHead>
+                    <TableHead>{t("paymentRates.assign.step2.tableCurrentRate")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -330,11 +333,11 @@ export default function AssignRatesPage() {
                       <TableCell>
                         {student.current_assignment ? (
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                            {student.current_assignment.payment_rate?.name || "Tarifa asignada"}
+                            {student.current_assignment.payment_rate?.name || t("paymentRates.assign.step2.rateAssigned")}
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-gray-50 text-gray-500">
-                            Sin tarifa
+                            {t("paymentRates.assign.step2.noRate")}
                           </Badge>
                         )}
                       </TableCell>
@@ -348,8 +351,8 @@ export default function AssignRatesPage() {
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">
                 {searchTerm
-                  ? "No se encontraron alumnos con ese criterio"
-                  : "No hay alumnos registrados"}
+                  ? t("paymentRates.assign.step2.noStudentsFound")
+                  : t("paymentRates.assign.step2.noStudentsRegistered")}
               </p>
             </div>
           )}
@@ -363,31 +366,31 @@ export default function AssignRatesPage() {
             <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
               3
             </div>
-            <h2 className="text-lg font-semibold">Confirmar Asignación</h2>
+            <h2 className="text-lg font-semibold">{t("paymentRates.assign.step3.title")}</h2>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-gray-500">Tarifa</p>
+                <p className="text-gray-500">{t("paymentRates.assign.step3.rate")}</p>
                 <p className="font-medium">{selectedRate?.name}</p>
               </div>
               <div>
-                <p className="text-gray-500">Alumnos</p>
+                <p className="text-gray-500">{t("paymentRates.assign.step3.students")}</p>
                 <p className="font-medium">{selectedStudents.size}</p>
               </div>
               <div>
-                <p className="text-gray-500">Fecha Inicio</p>
+                <p className="text-gray-500">{t("paymentRates.assign.step3.startDate")}</p>
                 <p className="font-medium">
-                  {new Date(startDate).toLocaleDateString("es-ES")}
+                  {new Date(startDate).toLocaleDateString(dateLocale)}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500">Fecha Fin</p>
+                <p className="text-gray-500">{t("paymentRates.assign.step3.endDate")}</p>
                 <p className="font-medium">
                   {endDate
-                    ? new Date(endDate).toLocaleDateString("es-ES")
-                    : "Indefinido"}
+                    ? new Date(endDate).toLocaleDateString(dateLocale)
+                    : t("paymentRates.assign.step3.indefinite")}
                 </p>
               </div>
             </div>
@@ -398,7 +401,7 @@ export default function AssignRatesPage() {
               variant="outline"
               onClick={() => setSelectedStudents(new Set())}
             >
-              Cancelar
+              {t("paymentRates.assign.step3.cancel")}
             </Button>
             <Button
               onClick={handleAssign}
@@ -409,7 +412,7 @@ export default function AssignRatesPage() {
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              Asignar Tarifa
+              {t("paymentRates.assign.step3.assign")}
             </Button>
           </div>
         </Card>

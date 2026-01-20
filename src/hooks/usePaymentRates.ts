@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 
 // Types
 export interface PaymentRate {
@@ -116,11 +117,11 @@ export function useCreatePaymentRate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-rates'] });
-      toast.success('Tarifa creada correctamente');
+      toast.success(i18n.t('paymentRates.toasts.created'));
     },
     onError: (error: Error) => {
       console.error('Error creating payment rate:', error);
-      toast.error('Error al crear la tarifa');
+      toast.error(i18n.t('paymentRates.toasts.errorCreating'));
     },
   });
 }
@@ -153,11 +154,11 @@ export function useUpdatePaymentRate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-rates'] });
-      toast.success('Tarifa actualizada correctamente');
+      toast.success(i18n.t('paymentRates.toasts.updated'));
     },
     onError: (error: Error) => {
       console.error('Error updating payment rate:', error);
-      toast.error('Error al actualizar la tarifa');
+      toast.error(i18n.t('paymentRates.toasts.errorUpdating'));
     },
   });
 }
@@ -177,11 +178,11 @@ export function useDeletePaymentRate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-rates'] });
-      toast.success('Tarifa eliminada correctamente');
+      toast.success(i18n.t('paymentRates.toasts.deleted'));
     },
     onError: (error: Error) => {
       console.error('Error deleting payment rate:', error);
-      toast.error('Error al eliminar la tarifa. Puede que tenga asignaciones activas.');
+      toast.error(i18n.t('paymentRates.toasts.errorDeleting'));
     },
   });
 }
@@ -204,11 +205,11 @@ export function useTogglePaymentRateActive() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['payment-rates'] });
-      toast.success(data.is_active ? 'Tarifa activada' : 'Tarifa desactivada');
+      toast.success(data.is_active ? i18n.t('paymentRates.toasts.activated') : i18n.t('paymentRates.toasts.deactivated'));
     },
     onError: (error: Error) => {
       console.error('Error toggling payment rate:', error);
-      toast.error('Error al cambiar el estado de la tarifa');
+      toast.error(i18n.t('paymentRates.toasts.errorToggling'));
     },
   });
 }

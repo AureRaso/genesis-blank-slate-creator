@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -48,38 +49,25 @@ import {
   useRateAllAssignments,
 } from "@/hooks/usePaymentRateDetail";
 
-const PERIODICITY_LABELS: Record<string, string> = {
-  mensual: "Mensual",
-  trimestral: "Trimestral",
-  semestral: "Semestral",
-  anual: "Anual",
+const STATUS_COLORS: Record<string, string> = {
+  activa: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  pausada: "bg-amber-50 text-amber-700 border-amber-200",
+  finalizada: "bg-gray-50 text-gray-500 border-gray-200",
 };
 
-const RATE_TYPE_LABELS: Record<string, string> = {
-  fija: "Precio Fijo",
-  por_clase: "Por Clase",
-};
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  activa: { label: "Activa", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  pausada: { label: "Pausada", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  finalizada: { label: "Finalizada", color: "bg-gray-50 text-gray-500 border-gray-200" },
-};
-
-// Short month names for chips
-const MONTHS = [
-  { value: "01", label: "Ene", fullLabel: "Enero" },
-  { value: "02", label: "Feb", fullLabel: "Febrero" },
-  { value: "03", label: "Mar", fullLabel: "Marzo" },
-  { value: "04", label: "Abr", fullLabel: "Abril" },
-  { value: "05", label: "May", fullLabel: "Mayo" },
-  { value: "06", label: "Jun", fullLabel: "Junio" },
-  { value: "07", label: "Jul", fullLabel: "Julio" },
-  { value: "08", label: "Ago", fullLabel: "Agosto" },
-  { value: "09", label: "Sep", fullLabel: "Septiembre" },
-  { value: "10", label: "Oct", fullLabel: "Octubre" },
-  { value: "11", label: "Nov", fullLabel: "Noviembre" },
-  { value: "12", label: "Dic", fullLabel: "Diciembre" },
+const MONTH_KEYS = [
+  { value: "01", key: "jan" },
+  { value: "02", key: "feb" },
+  { value: "03", key: "mar" },
+  { value: "04", key: "apr" },
+  { value: "05", key: "may" },
+  { value: "06", key: "jun" },
+  { value: "07", key: "jul" },
+  { value: "08", key: "aug" },
+  { value: "09", key: "sep" },
+  { value: "10", key: "oct" },
+  { value: "11", key: "nov" },
+  { value: "12", key: "dec" },
 ];
 
 // Get current month value (01-12)
@@ -94,7 +82,46 @@ const getCurrentYear = () => {
 };
 
 export default function PaymentRateDetailPage() {
+  const { t } = useTranslation();
   const { rateId } = useParams<{ rateId: string }>();
+
+  // Helper functions for translations
+  const getPeriodicityLabel = (periodicity: string) => {
+    const labels: Record<string, string> = {
+      mensual: t("paymentRates.periodicity.monthly"),
+      trimestral: t("paymentRates.periodicity.quarterly"),
+      semestral: t("paymentRates.periodicity.semiannual"),
+      anual: t("paymentRates.periodicity.annual"),
+    };
+    return labels[periodicity] || periodicity;
+  };
+
+  const getRateTypeLabel = (rateType: string) => {
+    const labels: Record<string, string> = {
+      fija: t("paymentRates.rateTypes.fixed"),
+      por_clase: t("paymentRates.rateTypes.perClass"),
+    };
+    return labels[rateType] || rateType;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      activa: t("paymentRates.status.active"),
+      pausada: t("paymentRates.status.paused"),
+      finalizada: t("paymentRates.status.finished"),
+    };
+    return labels[status] || status;
+  };
+
+  const getMonthFullLabel = (monthValue: string) => {
+    const monthKey = MONTH_KEYS.find(m => m.value === monthValue)?.key || "jan";
+    return t(`months.${monthKey}.full`);
+  };
+
+  const getMonthShortLabel = (monthValue: string) => {
+    const monthKey = MONTH_KEYS.find(m => m.value === monthValue)?.key || "jan";
+    return t(`months.${monthKey}.short`);
+  };
 
   // Filter states
   const [studentSearch, setStudentSearch] = useState("");
@@ -168,7 +195,7 @@ export default function PaymentRateDetailPage() {
       return `${rate.fixed_price.toFixed(2)} €`;
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € / clase`;
+      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.detail.perClassSuffix")}`;
     }
     return "-";
   };
@@ -212,13 +239,16 @@ export default function PaymentRateDetailPage() {
       }
       // Month filter
       if (historyFilterMonth !== "all") {
-        const monthIndex = MONTHS.findIndex(m => m.fullLabel.toLowerCase().startsWith(month.month.toLowerCase().substring(0, 3)));
+        const monthIndex = MONTH_KEYS.findIndex(m => {
+          const fullLabel = t(`months.${m.key}.full`).toLowerCase();
+          return fullLabel.startsWith(month.month.toLowerCase().substring(0, 3));
+        });
         const monthValue = (monthIndex + 1).toString().padStart(2, '0');
         if (monthValue !== historyFilterMonth) return false;
       }
       return true;
     });
-  }, [paymentHistory, historyFilterMonth, historyFilterYear]);
+  }, [paymentHistory, historyFilterMonth, historyFilterYear, t]);
 
   // Calculate totals for payment history (filtered)
   const historyTotals = useMemo(() => {
@@ -271,8 +301,7 @@ export default function PaymentRateDetailPage() {
 
   // Get the label for current selected month in history
   const getCurrentHistoryMonthLabel = () => {
-    const monthObj = MONTHS.find(m => m.value === historyFilterMonth);
-    return monthObj ? `${monthObj.fullLabel} ${historyFilterYear}` : "";
+    return `${getMonthFullLabel(historyFilterMonth)} ${historyFilterYear}`;
   };
 
   if (isLoading) {
@@ -288,12 +317,12 @@ export default function PaymentRateDetailPage() {
       <div className="container mx-auto py-6 px-4 max-w-6xl">
         <Card className="p-12 text-center">
           <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Tarifa no encontrada</h3>
-          <p className="text-gray-500 text-sm mb-4">La tarifa que buscas no existe o ha sido eliminada.</p>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">{t("paymentRates.detail.rateNotFound")}</h3>
+          <p className="text-gray-500 text-sm mb-4">{t("paymentRates.detail.rateNotFoundDesc")}</p>
           <Button asChild>
             <Link to="/dashboard/payment-rates">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver a Tarifas
+              {t("paymentRates.detail.backToRates")}
             </Link>
           </Button>
         </Card>
@@ -308,8 +337,8 @@ export default function PaymentRateDetailPage() {
         <Button asChild variant="ghost" size="sm" className="mb-3 sm:mb-4 -ml-2">
           <Link to="/dashboard/payment-rates">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Volver a Tarifas</span>
-            <span className="sm:hidden">Volver</span>
+            <span className="hidden sm:inline">{t("paymentRates.detail.backToRates")}</span>
+            <span className="sm:hidden">{t("paymentRates.detail.back")}</span>
           </Link>
         </Button>
 
@@ -322,7 +351,7 @@ export default function PaymentRateDetailPage() {
                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                 : "bg-gray-50 text-gray-500 border-gray-200"
               }>
-                {rate.is_active ? "Activa" : "Inactiva"}
+                {rate.is_active ? t("paymentRates.status.active") : t("paymentRates.status.inactive")}
               </Badge>
             </div>
             {rate.description && (
@@ -332,7 +361,7 @@ export default function PaymentRateDetailPage() {
           <div>
             <p className="text-2xl font-bold text-gray-900">{formatPrice()}</p>
             <p className="text-xs text-gray-500">
-              {RATE_TYPE_LABELS[rate.rate_type]} · {PERIODICITY_LABELS[rate.periodicity]}
+              {getRateTypeLabel(rate.rate_type)} · {getPeriodicityLabel(rate.periodicity)}
             </p>
           </div>
         </div>
@@ -346,7 +375,7 @@ export default function PaymentRateDetailPage() {
                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                 : "bg-gray-50 text-gray-500 border-gray-200"
               }>
-                {rate.is_active ? "Activa" : "Inactiva"}
+                {rate.is_active ? t("paymentRates.status.active") : t("paymentRates.status.inactive")}
               </Badge>
             </div>
             {rate.description && (
@@ -356,7 +385,7 @@ export default function PaymentRateDetailPage() {
           <div className="text-right flex-shrink-0">
             <p className="text-3xl font-bold text-gray-900">{formatPrice()}</p>
             <p className="text-sm text-gray-500">
-              {RATE_TYPE_LABELS[rate.rate_type]} · {PERIODICITY_LABELS[rate.periodicity]}
+              {getRateTypeLabel(rate.rate_type)} · {getPeriodicityLabel(rate.periodicity)}
             </p>
           </div>
         </div>
@@ -367,9 +396,9 @@ export default function PaymentRateDetailPage() {
         <Card className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-white border-blue-100">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-blue-600 mb-1">Alumnos Activos</p>
+              <p className="text-xs font-medium text-blue-600 mb-1">{t("paymentRates.detail.stats.activeStudents")}</p>
               <p className="text-xl sm:text-2xl font-bold text-blue-900">{stats?.active_students || 0}</p>
-              <p className="text-xs text-blue-500 mt-1 truncate">de {stats?.total_assigned_students || 0} totales</p>
+              <p className="text-xs text-blue-500 mt-1 truncate">{t("paymentRates.detail.stats.ofTotal", { total: stats?.total_assigned_students || 0 })}</p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ml-2">
               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
@@ -380,9 +409,9 @@ export default function PaymentRateDetailPage() {
         <Card className="p-3 sm:p-4 bg-gradient-to-br from-violet-50 to-white border-violet-100">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-violet-600 mb-1">Total Facturado</p>
+              <p className="text-xs font-medium text-violet-600 mb-1">{t("paymentRates.detail.stats.totalBilled")}</p>
               <p className="text-xl sm:text-2xl font-bold text-violet-900 truncate">{formatCurrency(stats?.total_amount_billed || 0)}</p>
-              <p className="text-xs text-violet-500 mt-1">{stats?.total_payments_generated || 0} pagos</p>
+              <p className="text-xs text-violet-500 mt-1">{stats?.total_payments_generated || 0} {t("paymentRates.detail.stats.payments")}</p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 ml-2">
               <Euro className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600" />
@@ -393,9 +422,9 @@ export default function PaymentRateDetailPage() {
         <Card className="p-3 sm:p-4 bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-emerald-600 mb-1">Total Cobrado</p>
+              <p className="text-xs font-medium text-emerald-600 mb-1">{t("paymentRates.detail.stats.totalCollected")}</p>
               <p className="text-xl sm:text-2xl font-bold text-emerald-900 truncate">{formatCurrency(stats?.total_amount_paid || 0)}</p>
-              <p className="text-xs text-emerald-500 mt-1">{collectionRate}% tasa de cobro</p>
+              <p className="text-xs text-emerald-500 mt-1">{collectionRate}{t("paymentRates.detail.stats.collectionRate")}</p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 ml-2">
               <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
@@ -406,12 +435,12 @@ export default function PaymentRateDetailPage() {
         <Card className="p-3 sm:p-4 bg-gradient-to-br from-amber-50 to-white border-amber-100">
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-amber-600 mb-1">Pendiente</p>
+              <p className="text-xs font-medium text-amber-600 mb-1">{t("paymentRates.detail.stats.pending")}</p>
               <p className="text-xl sm:text-2xl font-bold text-amber-900 truncate">{formatCurrency(stats?.total_amount_pending || 0)}</p>
               <p className="text-xs text-amber-500 mt-1 truncate">
                 {stats?.average_payment_time_days
-                  ? `~${stats.average_payment_time_days} días prom.`
-                  : 'Sin datos'}
+                  ? t("paymentRates.detail.stats.avgDays", { days: stats.average_payment_time_days })
+                  : t("paymentRates.detail.stats.noData")}
               </p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 ml-2">
@@ -425,23 +454,23 @@ export default function PaymentRateDetailPage() {
       <Card className="p-3 sm:p-4 mb-4 sm:mb-6">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
           <Calendar className="h-4 w-4" />
-          Configuración
+          {t("paymentRates.detail.config.title")}
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
           <div>
-            <p className="text-gray-500 text-xs sm:text-sm">Día de cobro</p>
-            <p className="font-medium">Día {rate.billing_day}</p>
+            <p className="text-gray-500 text-xs sm:text-sm">{t("paymentRates.detail.config.billingDay")}</p>
+            <p className="font-medium">{t("paymentRates.detail.config.dayPrefix")} {rate.billing_day}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-xs sm:text-sm">Días para pagar</p>
-            <p className="font-medium">{rate.due_days} días</p>
+            <p className="text-gray-500 text-xs sm:text-sm">{t("paymentRates.detail.config.daysToPayLabel")}</p>
+            <p className="font-medium">{rate.due_days} {t("paymentRates.detail.config.days")}</p>
           </div>
           <div className="hidden sm:block">
-            <p className="text-gray-500 text-xs sm:text-sm">Recordatorio</p>
-            <p className="font-medium">{rate.grace_days} días antes</p>
+            <p className="text-gray-500 text-xs sm:text-sm">{t("paymentRates.detail.config.reminder")}</p>
+            <p className="font-medium">{rate.grace_days} {t("paymentRates.detail.config.daysBefore")}</p>
           </div>
           <div className="hidden sm:block">
-            <p className="text-gray-500 text-xs sm:text-sm">Creada</p>
+            <p className="text-gray-500 text-xs sm:text-sm">{t("paymentRates.detail.config.created")}</p>
             <p className="font-medium">{formatDate(rate.created_at)}</p>
           </div>
         </div>
@@ -452,19 +481,17 @@ export default function PaymentRateDetailPage() {
         <TabsList className="mb-4 w-full sm:w-auto flex">
           <TabsTrigger value="students" className="flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Alumnos</span>
-            <span className="sm:hidden">Alumnos</span>
+            <span>{t('paymentRates.detail.tabs.students')}</span>
             <span className="text-xs">({students?.length || 0})</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
             <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Historial de Pagos</span>
-            <span className="sm:hidden">Pagos</span>
+            <span className="hidden sm:inline">{t('paymentRates.detail.tabs.paymentHistory')}</span>
+            <span className="sm:hidden">{t('paymentRates.detail.tabs.payments')}</span>
           </TabsTrigger>
           <TabsTrigger value="assignments" className="flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
             <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Historial</span>
-            <span className="sm:hidden">Historial</span>
+            <span>{t('paymentRates.detail.tabs.history')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -476,7 +503,7 @@ export default function PaymentRateDetailPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar alumno..."
+                  placeholder={t('paymentRates.detail.students.searchPlaceholder')}
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
                   className="pl-9 h-9"
@@ -484,7 +511,7 @@ export default function PaymentRateDetailPage() {
               </div>
               {studentSearch && (
                 <p className="text-xs text-gray-500 mt-2">
-                  {filteredStudents.length} de {students?.length || 0} alumnos
+                  {t('paymentRates.detail.students.ofStudents', { count: filteredStudents.length, total: students?.length || 0 })}
                 </p>
               )}
             </div>
@@ -509,7 +536,7 @@ export default function PaymentRateDetailPage() {
                             <p className="text-sm text-gray-500 truncate">{student.email}</p>
                           )}
                           <p className="text-xs text-gray-400 mt-1">
-                            Desde {formatDate(student.assignment_start_date)}
+                            {t('paymentRates.detail.students.since')} {formatDate(student.assignment_start_date)}
                           </p>
                           {student.phone && (
                             <a
@@ -519,7 +546,7 @@ export default function PaymentRateDetailPage() {
                               className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
                             >
                               <WhatsAppIcon className="h-4 w-4" />
-                              <span>Abrir WhatsApp</span>
+                              <span>{t('paymentRates.detail.students.openWhatsApp')}</span>
                             </a>
                           )}
                         </div>
@@ -532,10 +559,10 @@ export default function PaymentRateDetailPage() {
                 <Table className="hidden sm:table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Alumno</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Teléfono</TableHead>
-                      <TableHead>Desde</TableHead>
+                      <TableHead>{t('paymentRates.detail.students.student')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.students.email')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.students.phone')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.students.since')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -557,7 +584,7 @@ export default function PaymentRateDetailPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 transition-all duration-200 text-xs font-medium border border-green-200 hover:border-green-300 hover:shadow-sm w-fit"
-                              title="Abrir WhatsApp"
+                              title={t('paymentRates.detail.students.openWhatsApp')}
                             >
                               <WhatsAppIcon className="h-3.5 w-3.5" />
                               <span>{student.phone}</span>
@@ -576,12 +603,12 @@ export default function PaymentRateDetailPage() {
               <div className="p-8 text-center">
                 <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">
-                  {studentSearch ? 'No se encontraron alumnos' : 'No hay alumnos con esta tarifa activa'}
+                  {studentSearch ? t('paymentRates.detail.students.noStudentsFound') : t('paymentRates.detail.students.noActiveStudents')}
                 </p>
                 {!studentSearch && (
                   <Button asChild variant="outline" className="mt-4">
                     <Link to="/dashboard/payment-rates/assign">
-                      Asignar Alumnos
+                      {t('paymentRates.detail.students.assignStudents')}
                     </Link>
                   </Button>
                 )}
@@ -635,7 +662,7 @@ export default function PaymentRateDetailPage() {
                       className="text-primary hover:text-white hover:bg-primary text-sm h-8 w-full"
                     >
                       <Calendar className="h-4 w-4 mr-1" />
-                      Ir al mes actual
+                      {t('paymentRates.detail.paymentHistory.goToCurrentMonth')}
                     </Button>
                   </div>
                 )}
@@ -649,7 +676,7 @@ export default function PaymentRateDetailPage() {
                       size="sm"
                       onClick={goToPreviousHistoryMonth}
                       className="h-9 px-2"
-                      title="Mes anterior"
+                      title={t('paymentRates.detail.paymentHistory.previousMonth')}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -663,13 +690,13 @@ export default function PaymentRateDetailPage() {
                       size="sm"
                       onClick={goToNextHistoryMonth}
                       className="h-9 px-2"
-                      title="Mes próximo"
+                      title={t('paymentRates.detail.paymentHistory.nextMonth')}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  {/* Mes actual button */}
+                  {/* Current month button */}
                   {isViewingDifferentPeriod && (
                     <Button
                       variant="ghost"
@@ -678,19 +705,19 @@ export default function PaymentRateDetailPage() {
                       className="text-primary hover:text-white hover:bg-primary text-sm h-9"
                     >
                       <Calendar className="h-4 w-4 mr-1" />
-                      Mes actual
+                      {t('paymentRates.detail.paymentHistory.currentMonth')}
                     </Button>
                   )}
 
                   {/* Results count */}
                   <span className="text-xs text-gray-500 ml-auto">
-                    {filteredPaymentHistory.length} {filteredPaymentHistory.length === 1 ? 'período' : 'períodos'}
+                    {filteredPaymentHistory.length} {t('paymentRates.detail.paymentHistory.period', { count: filteredPaymentHistory.length })}
                   </span>
                 </div>
 
                 {/* Mobile results count */}
                 <div className="mt-3 text-xs text-gray-500 sm:hidden text-center">
-                  {filteredPaymentHistory.length} {filteredPaymentHistory.length === 1 ? 'período encontrado' : 'períodos encontrados'}
+                  {filteredPaymentHistory.length} {t('paymentRates.detail.paymentHistory.periodFound', { count: filteredPaymentHistory.length })}
                 </div>
               </Card>
 
@@ -699,7 +726,7 @@ export default function PaymentRateDetailPage() {
                 <Card className="p-3 sm:p-4 text-center bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-emerald-600">Pagados</span>
+                    <span className="text-xs font-medium text-emerald-600">{t('paymentRates.detail.paymentHistory.paid')}</span>
                   </div>
                   <p className="text-2xl sm:text-3xl font-bold text-emerald-700">{historyTotals.paid}</p>
                   <p className="text-xs text-emerald-500 mt-1">
@@ -709,7 +736,7 @@ export default function PaymentRateDetailPage() {
                 <Card className="p-3 sm:p-4 text-center bg-gradient-to-br from-amber-50 to-white border-amber-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <AlertCircle className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-medium text-amber-600">Pendientes</span>
+                    <span className="text-xs font-medium text-amber-600">{t('paymentRates.detail.paymentHistory.pending')}</span>
                   </div>
                   <p className="text-2xl sm:text-3xl font-bold text-amber-700">{historyTotals.pending}</p>
                   <p className="text-xs text-amber-500 mt-1">
@@ -719,7 +746,7 @@ export default function PaymentRateDetailPage() {
                 <Card className="p-3 sm:p-4 text-center bg-gradient-to-br from-blue-50 to-white border-blue-100">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-blue-600">En Revisión</span>
+                    <span className="text-xs font-medium text-blue-600">{t('paymentRates.detail.paymentHistory.inReview')}</span>
                   </div>
                   <p className="text-2xl sm:text-3xl font-bold text-blue-700">{historyTotals.inReview}</p>
                   <p className="text-xs text-blue-500 mt-1">
@@ -732,7 +759,7 @@ export default function PaymentRateDetailPage() {
               <Card className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  Evolución de Facturación
+                  {t('paymentRates.detail.paymentHistory.billingEvolution')}
                 </h3>
 
                 {/* Modern Bar Chart */}
@@ -827,7 +854,7 @@ export default function PaymentRateDetailPage() {
                             <span className="text-sm font-semibold text-gray-900">{formatCurrency(month.total_amount)}</span>
                           </div>
                           <div className="w-20 text-right text-xs text-gray-500">
-                            {month.payment_count} pagos
+                            {month.payment_count} {t('paymentRates.detail.stats.payments')}
                           </div>
                         </div>
                       </div>
@@ -839,15 +866,15 @@ export default function PaymentRateDetailPage() {
                 <div className="flex flex-wrap justify-center gap-4 sm:gap-6 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
-                    <span className="text-xs sm:text-sm text-gray-600">Pagados</span>
+                    <span className="text-xs sm:text-sm text-gray-600">{t('paymentRates.detail.paymentHistory.paid')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
-                    <span className="text-xs sm:text-sm text-gray-600">Pendientes</span>
+                    <span className="text-xs sm:text-sm text-gray-600">{t('paymentRates.detail.paymentHistory.pending')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-400" />
-                    <span className="text-xs sm:text-sm text-gray-600">En Revisión</span>
+                    <span className="text-xs sm:text-sm text-gray-600">{t('paymentRates.detail.paymentHistory.inReview')}</span>
                   </div>
                 </div>
               </Card>
@@ -856,7 +883,7 @@ export default function PaymentRateDetailPage() {
               <Card className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <PieChart className="h-4 w-4 text-primary" />
-                  Tasa de Cobro Global
+                  {t('paymentRates.detail.paymentHistory.globalCollectionRate')}
                 </h3>
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   {/* Circular Progress */}
@@ -890,7 +917,7 @@ export default function PaymentRateDetailPage() {
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span className="text-3xl sm:text-4xl font-bold text-gray-900">{collectionRate}%</span>
-                      <span className="text-xs text-gray-500">cobrado</span>
+                      <span className="text-xs text-gray-500">{t('paymentRates.detail.paymentHistory.collected')}</span>
                     </div>
                   </div>
 
@@ -899,21 +926,21 @@ export default function PaymentRateDetailPage() {
                     <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                        <span className="text-sm text-emerald-700">Cobrado</span>
+                        <span className="text-sm text-emerald-700">{t('paymentRates.detail.paymentHistory.collectedAmount')}</span>
                       </div>
                       <span className="font-semibold text-emerald-700">{formatCurrency(stats?.total_amount_paid || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm text-amber-700">Pendiente</span>
+                        <span className="text-sm text-amber-700">{t('paymentRates.detail.paymentHistory.pendingAmount')}</span>
                       </div>
                       <span className="font-semibold text-amber-700">{formatCurrency(stats?.total_amount_pending || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Euro className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm text-gray-700">Total Facturado</span>
+                        <span className="text-sm text-gray-700">{t('paymentRates.detail.paymentHistory.totalBilled')}</span>
                       </div>
                       <span className="font-semibold text-gray-700">{formatCurrency(stats?.total_amount_billed || 0)}</span>
                     </div>
@@ -926,7 +953,7 @@ export default function PaymentRateDetailPage() {
                 <div className="p-4 border-b border-gray-100">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <History className="h-4 w-4 text-primary" />
-                    Detalle por Mes
+                    {t('paymentRates.detail.paymentHistory.monthDetail')}
                   </h3>
                 </div>
                 {/* Mobile list view */}
@@ -940,15 +967,15 @@ export default function PaymentRateDetailPage() {
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div className="flex items-center gap-1">
                           <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span className="text-gray-600">{month.paid_count} pagados</span>
+                          <span className="text-gray-600">{month.paid_count}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="w-2 h-2 rounded-full bg-amber-500" />
-                          <span className="text-gray-600">{month.pending_count} pend.</span>
+                          <span className="text-gray-600">{month.pending_count}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          <span className="text-gray-600">{month.in_review_count} rev.</span>
+                          <span className="text-gray-600">{month.in_review_count}</span>
                         </div>
                       </div>
                     </div>
@@ -958,12 +985,12 @@ export default function PaymentRateDetailPage() {
                 <Table className="hidden sm:table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Período</TableHead>
-                      <TableHead className="text-right">Importe Total</TableHead>
-                      <TableHead className="text-center">Total Pagos</TableHead>
-                      <TableHead className="text-center">Pagados</TableHead>
-                      <TableHead className="text-center">Pendientes</TableHead>
-                      <TableHead className="text-center">En Revisión</TableHead>
+                      <TableHead>{t('paymentRates.detail.paymentHistory.period')}</TableHead>
+                      <TableHead className="text-right">{t('paymentRates.detail.paymentHistory.totalAmount')}</TableHead>
+                      <TableHead className="text-center">{t('paymentRates.detail.paymentHistory.totalPayments')}</TableHead>
+                      <TableHead className="text-center">{t('paymentRates.detail.paymentHistory.paid')}</TableHead>
+                      <TableHead className="text-center">{t('paymentRates.detail.paymentHistory.pending')}</TableHead>
+                      <TableHead className="text-center">{t('paymentRates.detail.paymentHistory.inReview')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -996,7 +1023,7 @@ export default function PaymentRateDetailPage() {
           ) : (
             <Card className="p-8 text-center">
               <BarChart3 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No hay historial de pagos para esta tarifa</p>
+              <p className="text-gray-500">{t('paymentRates.detail.paymentHistory.noPaymentHistory')}</p>
             </Card>
           )}
         </TabsContent>
@@ -1010,7 +1037,7 @@ export default function PaymentRateDetailPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Buscar alumno..."
+                    placeholder={t('paymentRates.detail.assignments.searchPlaceholder')}
                     value={assignmentSearch}
                     onChange={(e) => setAssignmentSearch(e.target.value)}
                     className="pl-9 h-9"
@@ -1018,19 +1045,19 @@ export default function PaymentRateDetailPage() {
                 </div>
                 <Select value={assignmentStatusFilter} onValueChange={setAssignmentStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9">
-                    <SelectValue placeholder="Estado" />
+                    <SelectValue placeholder={t('paymentRates.detail.assignments.statusPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="activa">Activas</SelectItem>
-                    <SelectItem value="pausada">Pausadas</SelectItem>
-                    <SelectItem value="finalizada">Finalizadas</SelectItem>
+                    <SelectItem value="all">{t('paymentRates.detail.assignments.allStatuses')}</SelectItem>
+                    <SelectItem value="activa">{t('paymentRates.detail.assignments.active')}</SelectItem>
+                    <SelectItem value="pausada">{t('paymentRates.detail.assignments.paused')}</SelectItem>
+                    <SelectItem value="finalizada">{t('paymentRates.detail.assignments.finished')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {(assignmentSearch || assignmentStatusFilter !== "all") && (
                 <p className="text-xs text-gray-500">
-                  {filteredAssignments.length} de {allAssignments?.length || 0} asignaciones
+                  {t('paymentRates.detail.assignments.ofAssignments', { count: filteredAssignments.length, total: allAssignments?.length || 0 })}
                 </p>
               )}
             </div>
@@ -1040,25 +1067,26 @@ export default function PaymentRateDetailPage() {
                 {/* Mobile list view */}
                 <div className="sm:hidden divide-y divide-gray-100">
                   {filteredAssignments.map((assignment) => {
-                    const statusConfig = STATUS_LABELS[assignment.status] || STATUS_LABELS.finalizada;
+                    const statusColor = STATUS_COLORS[assignment.status] || STATUS_COLORS.finalizada;
+                    const statusLabel = getStatusLabel(assignment.status);
                     return (
                       <div key={assignment.id} className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-gray-900">
-                              {assignment.student_enrollment?.full_name || 'Sin nombre'}
+                              {assignment.student_enrollment?.full_name || t('paymentRates.detail.assignments.noName')}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              Desde: {formatDate(assignment.start_date)}
+                              {t('paymentRates.detail.assignments.from')} {formatDate(assignment.start_date)}
                             </p>
                             {assignment.end_date && (
                               <p className="text-xs text-gray-500">
-                                Hasta: {formatDate(assignment.end_date)}
+                                {t('paymentRates.detail.assignments.until')} {formatDate(assignment.end_date)}
                               </p>
                             )}
                           </div>
-                          <Badge className={statusConfig.color}>
-                            {statusConfig.label}
+                          <Badge className={statusColor}>
+                            {statusLabel}
                           </Badge>
                         </div>
                       </div>
@@ -1070,26 +1098,27 @@ export default function PaymentRateDetailPage() {
                 <Table className="hidden sm:table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Alumno</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Fecha Inicio</TableHead>
-                      <TableHead>Fecha Fin</TableHead>
-                      <TableHead>Asignado</TableHead>
+                      <TableHead>{t('paymentRates.detail.assignments.student')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.assignments.status')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.assignments.startDate')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.assignments.endDate')}</TableHead>
+                      <TableHead>{t('paymentRates.detail.assignments.assigned')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredAssignments.map((assignment) => {
-                      const statusConfig = STATUS_LABELS[assignment.status] || STATUS_LABELS.finalizada;
+                      const statusColor = STATUS_COLORS[assignment.status] || STATUS_COLORS.finalizada;
+                      const statusLabel = getStatusLabel(assignment.status);
                       return (
                         <TableRow key={assignment.id}>
                           <TableCell>
                             <span className="font-medium">
-                              {assignment.student_enrollment?.full_name || 'Sin nombre'}
+                              {assignment.student_enrollment?.full_name || t('paymentRates.detail.assignments.noName')}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Badge className={statusConfig.color}>
-                              {statusConfig.label}
+                            <Badge className={statusColor}>
+                              {statusLabel}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(assignment.start_date)}</TableCell>
@@ -1110,8 +1139,8 @@ export default function PaymentRateDetailPage() {
                 <History className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">
                   {assignmentSearch || assignmentStatusFilter !== "all"
-                    ? 'No se encontraron asignaciones'
-                    : 'No hay historial de asignaciones'}
+                    ? t('paymentRates.detail.assignments.noAssignmentsFound')
+                    : t('paymentRates.detail.assignments.noAssignmentHistory')}
                 </p>
               </div>
             )}

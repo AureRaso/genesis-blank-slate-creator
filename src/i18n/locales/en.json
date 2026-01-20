@@ -218,6 +218,394 @@
     "paymentControl": "Payment Control",
     "paymentRates": "Rates"
   },
+  "months": {
+    "jan": { "short": "Jan", "full": "January" },
+    "feb": { "short": "Feb", "full": "February" },
+    "mar": { "short": "Mar", "full": "March" },
+    "apr": { "short": "Apr", "full": "April" },
+    "may": { "short": "May", "full": "May" },
+    "jun": { "short": "Jun", "full": "June" },
+    "jul": { "short": "Jul", "full": "July" },
+    "aug": { "short": "Aug", "full": "August" },
+    "sep": { "short": "Sep", "full": "September" },
+    "oct": { "short": "Oct", "full": "October" },
+    "nov": { "short": "Nov", "full": "November" },
+    "dec": { "short": "Dec", "full": "December" }
+  },
+  "paymentRates": {
+    "title": "Payment Rates",
+    "subtitle": "Configure the rates that will be applied to students",
+    "newRate": "New Rate",
+    "assignRates": "Assign Rates",
+    "activateRate": "Activate rate",
+    "deactivateRate": "Deactivate rate",
+    "loading": "Loading rates...",
+    "empty": {
+      "title": "No rates created",
+      "description": "Create your first rate to start managing student payments",
+      "action": "Create First Rate"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "periodicity": "Periodicity",
+      "price": "Price",
+      "billingDay": "Billing Day",
+      "status": "Status",
+      "actions": "Actions",
+      "day": "Day"
+    },
+    "rateTypes": {
+      "fixed": "Fixed Price",
+      "perClass": "Per Class"
+    },
+    "periodicity": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "semiannual": "Semiannual",
+      "annual": "Annual"
+    },
+    "card": {
+      "billingDay": "Billing day",
+      "dueDays": "Due in {{days}} days",
+      "graceDays": "{{days}} days grace",
+      "studentsAssigned": "{{count}} students assigned",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "form": {
+      "createTitle": "Create Payment Rate",
+      "editTitle": "Edit Rate",
+      "editDescription": "Modify the rate data",
+      "createDescription": "Configure a new payment rate for your students",
+      "name": "Name",
+      "namePlaceholder": "e.g., Monthly Basic, Quarterly Premium",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of the rate...",
+      "rateType": "Rate type",
+      "periodicity": "Periodicity",
+      "fixedPrice": "Fixed price",
+      "pricePerClass": "Price per class",
+      "billingDay": "Billing day",
+      "billingDayHelp": "Day of the month when billing is generated",
+      "dueDays": "Days until due",
+      "dueDaysHelp": "Days from billing to payment due date",
+      "graceDays": "Grace days",
+      "graceDaysHelp": "Additional days after due date before marking as overdue",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create",
+      "saving": "Saving..."
+    },
+    "deleteDialog": {
+      "title": "Delete rate?",
+      "description": "This action cannot be undone. Students assigned to this rate will need to be reassigned.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "toasts": {
+      "created": "Rate created successfully",
+      "updated": "Rate updated successfully",
+      "deleted": "Rate deleted",
+      "activated": "Rate activated",
+      "deactivated": "Rate deactivated",
+      "errorCreating": "Error creating rate",
+      "errorUpdating": "Error updating rate",
+      "errorDeleting": "Error deleting rate. It may have active assignments.",
+      "errorToggling": "Error changing rate status"
+    },
+    "detail": {
+      "backToRates": "Back to Rates",
+      "back": "Back",
+      "rateNotFound": "Rate not found",
+      "rateNotFoundDesc": "The rate you are looking for does not exist or has been deleted.",
+      "perClassSuffix": "/ class",
+      "stats": {
+        "activeStudents": "Active Students",
+        "ofTotal": "of {{total}} total",
+        "totalBilled": "Total Billed",
+        "payments": "payments",
+        "totalCollected": "Total Collected",
+        "collectionRate": "% collection rate",
+        "pending": "Pending",
+        "avgDays": "~{{days}} days avg.",
+        "noData": "No data"
+      },
+      "config": {
+        "title": "Configuration",
+        "billingDay": "Billing day",
+        "dayPrefix": "Day",
+        "daysToPayLabel": "Days to pay",
+        "days": "days",
+        "reminder": "Reminder",
+        "daysBefore": "days before",
+        "created": "Created"
+      },
+      "tabs": {
+        "students": "Students",
+        "paymentHistory": "Payment History",
+        "payments": "Payments",
+        "history": "History"
+      },
+      "students": {
+        "searchPlaceholder": "Search student...",
+        "ofStudents": "{{count}} of {{total}} students",
+        "since": "Since",
+        "openWhatsApp": "Open WhatsApp",
+        "student": "Student",
+        "email": "Email",
+        "phone": "Phone",
+        "noStudentsFound": "No students found",
+        "noActiveStudents": "No students with this active rate",
+        "assignStudents": "Assign Students"
+      },
+      "paymentHistory": {
+        "goToCurrentMonth": "Go to current month",
+        "currentMonth": "Current month",
+        "previousMonth": "Previous month",
+        "nextMonth": "Next month",
+        "period": "period",
+        "period_one": "period",
+        "period_other": "periods",
+        "periodFound": "period found",
+        "periodFound_one": "period found",
+        "periodFound_other": "periods found",
+        "paid": "Paid",
+        "pending": "Pending",
+        "inReview": "In Review",
+        "billingEvolution": "Billing Evolution",
+        "globalCollectionRate": "Global Collection Rate",
+        "collected": "collected",
+        "collectedAmount": "Collected",
+        "pendingAmount": "Pending",
+        "totalBilled": "Total Billed",
+        "monthDetail": "Detail by Month",
+        "totalAmount": "Total Amount",
+        "totalPayments": "Total Payments",
+        "noPaymentHistory": "No payment history for this rate"
+      },
+      "assignments": {
+        "searchPlaceholder": "Search student...",
+        "statusPlaceholder": "Status",
+        "allStatuses": "All statuses",
+        "active": "Active",
+        "paused": "Paused",
+        "finished": "Finished",
+        "ofAssignments": "{{count}} of {{total}} assignments",
+        "noName": "No name",
+        "from": "From:",
+        "until": "Until:",
+        "student": "Student",
+        "status": "Status",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "assigned": "Assigned",
+        "noAssignmentsFound": "No assignments found",
+        "noAssignmentHistory": "No assignment history"
+      }
+    },
+    "assign": {
+      "title": "Assign Rates",
+      "subtitle": "Select a rate and assign it to multiple students",
+      "step1": {
+        "title": "Select Rate",
+        "rateLabel": "Rate to assign *",
+        "ratePlaceholder": "Select a rate...",
+        "price": "Price",
+        "periodicity": "Periodicity",
+        "billingDay": "Billing day",
+        "startDate": "Start Date *",
+        "endDate": "End Date (optional)",
+        "noActiveRates": "No active rates. Create a rate first.",
+        "goToRates": "Go to Rates"
+      },
+      "step2": {
+        "title": "Select Students",
+        "selectedCount": "{{count}} selected",
+        "searchPlaceholder": "Search by name or email...",
+        "filterAll": "All",
+        "filterAssigned": "With rate",
+        "filterUnassigned": "Without rate",
+        "tableStudent": "Student",
+        "tableCurrentRate": "Current Rate",
+        "rateAssigned": "Rate assigned",
+        "noRate": "No rate",
+        "noStudentsFound": "No students found with that criteria",
+        "noStudentsRegistered": "No students registered"
+      },
+      "step3": {
+        "title": "Confirm Assignment",
+        "rate": "Rate",
+        "students": "Students",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "indefinite": "Indefinite",
+        "cancel": "Cancel",
+        "assign": "Assign Rate"
+      },
+      "periodicity": {
+        "mensual": "Monthly",
+        "trimestral": "Quarterly",
+        "semestral": "Semiannual",
+        "anual": "Annual"
+      },
+      "pricePerClass": "/ class"
+    }
+  },
+  "paymentControl": {
+    "title": "Payment Control",
+    "subtitle": "Manage all student payments",
+    "rates": "Rates",
+    "generateMonthlyPayments": "Generate Monthly Payments",
+    "extraPayment": "Extra Payment",
+    "summary": {
+      "totalExpected": "Total Expected",
+      "payments": "payments",
+      "pending": "Pending",
+      "inReview": "In Review",
+      "paid": "Paid"
+    },
+    "filters": {
+      "searchPlaceholder": "Search student or concept...",
+      "filters": "Filters",
+      "all": "All",
+      "goToCurrentMonth": "Go to current month",
+      "currentMonth": "Current month",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "year": "Year:",
+      "month": "Month:",
+      "rate": "Rate:",
+      "allRates": "All rates",
+      "type": "Type:",
+      "allTypes": "All",
+      "normal": "Regular",
+      "extra": "Extras",
+      "clearFilters": "Clear filters",
+      "paymentsFound": "payments found"
+    },
+    "tabs": {
+      "pending": "Pending",
+      "inReview": "In Review",
+      "paid": "Paid"
+    },
+    "status": {
+      "pending": "Pending",
+      "inReview": "In Review",
+      "paid": "Paid"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "card": "Card",
+      "bizum": "Bizum"
+    },
+    "table": {
+      "student": "Student",
+      "amount": "Amount",
+      "details": "Details",
+      "status": "Status",
+      "action": "Action",
+      "noName": "No name",
+      "dueDate": "Due:",
+      "verified": "Verified",
+      "markAsPaid": "Mark paid",
+      "paid": "Paid",
+      "approve": "Approve",
+      "reject": "Reject",
+      "noPaymentsRegistered": "No payments registered",
+      "assignRatesToStart": "Assign rates to students to start managing their payments.",
+      "assignRates": "Assign Rates",
+      "noPaymentsInCategory": "No payments in this category",
+      "noPaymentsFound": "No payments found with that search criteria",
+      "showing": "Showing {{start}} - {{end}} of {{total}}",
+      "pageOf": "{{current}} of {{total}}"
+    },
+    "verifyDialog": {
+      "confirmPayment": "Confirm Payment",
+      "rejectPayment": "Reject Payment",
+      "confirmPaymentDesc": "Confirm payment of {{amount}} from {{name}}",
+      "rejectPaymentDesc": "The student will be notified of the rejection and must mark the payment again.",
+      "notes": "Notes",
+      "notesOptional": "(optional)",
+      "notesPlaceholderApprove": "Add notes about this verification...",
+      "notesPlaceholderReject": "Indicate the reason for rejection...",
+      "confirm": "Confirm",
+      "reject": "Reject"
+    },
+    "extraPaymentDialog": {
+      "title": "Add Extra Payment",
+      "description": "Create an additional payment for a student (e.g., single class, materials, etc.)",
+      "student": "Student",
+      "studentSearchPlaceholder": "Search student by name or email...",
+      "noStudentsFound": "No students found",
+      "concept": "Concept",
+      "conceptPlaceholder": "E.g., Single class, Materials, Tournament registration...",
+      "amount": "Amount (€)",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Add additional details...",
+      "createPayment": "Create Payment"
+    },
+    "toasts": {
+      "paymentVerified": "Payment verified successfully",
+      "paymentRejected": "Payment rejected",
+      "errorVerifying": "Error verifying payment",
+      "extraPaymentCreated": "Extra payment created successfully",
+      "errorCreatingExtra": "Error creating extra payment",
+      "paymentsGenerated": "{{count}} payments generated successfully",
+      "paymentsAlreadyExist": "Payments already exist for this period",
+      "noNewPayments": "No new payments were generated",
+      "noActiveAssignments": "No active assignments to generate payments",
+      "errorGenerating": "Error generating payments",
+      "paymentGenerated": "Payment generated successfully",
+      "errorGeneratingPayment": "Error generating payment"
+    }
+  },
+  "myPayments": {
+    "title": "My Payments",
+    "subtitle": "Manage your class payments",
+    "totalPending": "Total pending payment",
+    "tabs": {
+      "pending": "Pending",
+      "inReview": "In Review",
+      "paid": "Paid"
+    },
+    "status": {
+      "pending": "Pending",
+      "inReview": "In Review",
+      "paid": "Paid"
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "card": "Card",
+      "bizum": "Bizum"
+    },
+    "card": {
+      "issued": "Issued",
+      "dueDate": "Due",
+      "method": "Method",
+      "overdue": "Overdue by {{days}} days",
+      "dueToday": "Due today",
+      "dueInDays": "Due in {{days}} days",
+      "iPaid": "I paid",
+      "pendingVerification": "Pending admin verification",
+      "verifiedOn": "Verified on {{date}}"
+    },
+    "empty": {
+      "noPending": "No pending payments",
+      "noInReview": "No payments in review",
+      "noPaid": "No payments made yet"
+    },
+    "dialog": {
+      "title": "Confirm Payment",
+      "description": "Indicate how you made the payment of {{amount}}",
+      "paymentMethod": "Payment method *",
+      "paymentMethodPlaceholder": "Select payment method",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Add any additional information...",
+      "cancel": "Cancel",
+      "confirm": "Confirm Payment"
+    }
+  },
   "userMenu": {
     "superadmin": "Administrator",
     "admin": "Administrator",
