@@ -586,49 +586,61 @@ export const useUpdateStudentEnrollment = () => {
 
       console.log('✅ student_enrollments updated');
 
-      // 2. If updating level, also update the profiles table
-      if (data.level !== undefined) {
-        console.log('🔄 Also updating profile level...');
+      // 2. If updating level or club_id, also update the profiles table
+      if (data.level !== undefined || data.club_id !== undefined) {
+        console.log('🔄 Also updating profile...', { level: data.level, club_id: data.club_id });
 
-        // Get the student email from student_enrollments
+        // Get the student_profile_id from student_enrollments
         const { data: enrollment, error: getError } = await supabase
           .from("student_enrollments")
-          .select('email')
+          .select('student_profile_id, email')
           .eq('id', id)
           .single();
 
         if (getError) {
-          console.error('❌ Error getting enrollment email:', getError);
+          console.error('❌ Error getting enrollment:', getError);
           throw getError;
         }
 
-        console.log('📧 Student email:', enrollment.email);
+        // Use student_profile_id if available, otherwise try to find by email
+        let profileId = enrollment.student_profile_id;
 
-        // Get user_id from profiles using email
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select('id')
-          .eq('email', enrollment.email)
-          .single();
+        if (!profileId && enrollment.email) {
+          console.log('📧 No student_profile_id, trying to find profile by email:', enrollment.email);
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select('id')
+            .eq('email', enrollment.email)
+            .single();
 
-        if (profileError) {
-          console.error('❌ Error getting profile:', profileError);
-          // Don't throw, continue anyway
-        } else if (profile) {
-          console.log('👤 Updating profile for user_id:', profile.id);
+          if (profileError) {
+            console.error('❌ Error getting profile by email:', profileError);
+          } else if (profile) {
+            profileId = profile.id;
+          }
+        }
 
-          // Update the profile level
+        if (profileId) {
+          console.log('👤 Updating profile for user_id:', profileId);
+
+          // Build update object with only the fields that changed
+          const profileUpdate: { level?: number; club_id?: string } = {};
+          if (data.level !== undefined) profileUpdate.level = data.level;
+          if (data.club_id !== undefined) profileUpdate.club_id = data.club_id;
+
           const { error: updateProfileError } = await supabase
             .from("profiles")
-            .update({ level: data.level })
-            .eq('id', profile.id);
+            .update(profileUpdate)
+            .eq('id', profileId);
 
           if (updateProfileError) {
-            console.error('❌ Error updating profile level:', updateProfileError);
+            console.error('❌ Error updating profile:', updateProfileError);
             // Don't throw, enrollment was already updated
           } else {
-            console.log('✅ Profile level updated successfully');
+            console.log('✅ Profile updated successfully');
           }
+        } else {
+          console.log('⚠️ No profile found to update');
         }
       }
     },

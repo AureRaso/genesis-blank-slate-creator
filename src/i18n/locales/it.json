@@ -955,6 +955,7 @@
       "levelError": "Il livello deve essere un numero intero tra 1 e 10",
       "deleteStudent": "Elimina studente",
       "editName": "Modifica nome",
+      "editStudent": "Modifica studente",
       "openWhatsApp": "Apri conversazione WhatsApp",
       "deleteDialog": {
         "title": "Eliminare studente dal club?",
@@ -976,6 +977,13 @@
         "saving": "Salvataggio...",
         "success": "Nome aggiornato con successo"
       }
+    },
+    "studentEditModal": {
+      "title": "Modifica Studente",
+      "description": "Modifica i dati di {{name}}",
+      "fullName": "Nome Completo",
+      "club": "Club",
+      "selectClub": "Seleziona un club"
     }
   },
   "classes": {

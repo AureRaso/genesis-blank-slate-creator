@@ -53,12 +53,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import StudentEditModal from "@/components/StudentEditModal";
 
 const ITEMS_PER_PAGE = 25;
 
 const AdminStudentsList = () => {
   const { t } = useTranslation();
-  const { effectiveClubId } = useAuth();
+  const { effectiveClubId, isSuperAdmin, superAdminClubs } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
@@ -68,8 +69,7 @@ const AdminStudentsList = () => {
   const [editingLevel, setEditingLevel] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [studentToArchive, setStudentToArchive] = useState<StudentEnrollment | null>(null);
-  const [studentToEditName, setStudentToEditName] = useState<StudentEnrollment | null>(null);
-  const [newName, setNewName] = useState("");
+  const [studentToEdit, setStudentToEdit] = useState<StudentEnrollment | null>(null);
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(effectiveClubId);
   const { data: classTrainersFromHook = [] } = useClassTrainers(effectiveClubId);
@@ -547,12 +547,9 @@ const AdminStudentsList = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setStudentToEditName(student);
-                              setNewName(student.full_name);
-                            }}
+                            onClick={() => setStudentToEdit(student)}
                             className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            title={t('playersPage.adminStudentsList.editName')}
+                            title={t('playersPage.adminStudentsList.editStudent')}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -656,80 +653,14 @@ const AdminStudentsList = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Name Dialog */}
-      <Dialog open={!!studentToEditName} onOpenChange={(open) => !open && setStudentToEditName(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="h-5 w-5" />
-              {t('playersPage.adminStudentsList.editNameDialog.title')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('playersPage.adminStudentsList.editNameDialog.description', { name: studentToEditName?.full_name })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="full_name" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                {t('playersPage.adminStudentsList.editNameDialog.nameLabel')}
-              </Label>
-              <Input
-                id="full_name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={t('playersPage.adminStudentsList.editNameDialog.namePlaceholder')}
-                autoFocus
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setStudentToEditName(null)}
-            >
-              {t('playersPage.adminStudentsList.editNameDialog.cancel')}
-            </Button>
-            <Button
-              onClick={async () => {
-                if (!studentToEditName) return;
-
-                const trimmedName = newName.trim();
-                if (trimmedName.length < 2) {
-                  toast({
-                    title: t('common.error'),
-                    description: t('playersPage.adminStudentsList.editNameDialog.nameError'),
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                try {
-                  await updateStudentMutation.mutateAsync({
-                    id: studentToEditName.id,
-                    data: { full_name: trimmedName }
-                  });
-                  toast({
-                    title: t('common.success'),
-                    description: t('playersPage.adminStudentsList.editNameDialog.success'),
-                  });
-                  setStudentToEditName(null);
-                  setNewName("");
-                } catch (error) {
-                  console.error('Error updating name:', error);
-                }
-              }}
-              disabled={updateStudentMutation.isPending || newName.trim().length < 2}
-              className="bg-gradient-to-r from-primary to-primary/80"
-            >
-              {updateStudentMutation.isPending
-                ? t('playersPage.adminStudentsList.editNameDialog.saving')
-                : t('playersPage.adminStudentsList.editNameDialog.save')
-              }
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Student Modal */}
+      <StudentEditModal
+        student={studentToEdit}
+        isOpen={!!studentToEdit}
+        onClose={() => setStudentToEdit(null)}
+        isSuperAdmin={isSuperAdmin}
+        superAdminClubs={superAdminClubs}
+      />
     </div>
   );
 };
