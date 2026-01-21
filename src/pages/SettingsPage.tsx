@@ -6,12 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield, MoreVertical, Trash2 } from 'lucide-react';
+import { CheckCircle, CreditCard, ExternalLink, Settings, LogOut, AlertTriangle, Shield, MoreVertical, Trash2, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { PasswordChangeSection } from '@/components/PasswordChangeSection';
 import { canChangePassword, getAuthProviderMessageKey } from '@/utils/authProviders';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { LopiviReportDialog } from "@/components/LopiviReportDialog";
+import { WhatsAppActivationModal } from "@/components/WhatsAppActivationModal";
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -64,6 +67,11 @@ const SettingsPage = () => {
   const [showFinalDeleteDialog, setShowFinalDeleteDialog] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [showLopiviDialog, setShowLopiviDialog] = useState(false);
+  const [whatsappNotificationsEnabled, setWhatsappNotificationsEnabled] = useState(
+    (profile as any)?.whatsapp_opt_in_completed === true
+  );
+  const [updatingWhatsapp, setUpdatingWhatsapp] = useState(false);
+  const [showWhatsAppActivationModal, setShowWhatsAppActivationModal] = useState(false);
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0
@@ -155,6 +163,45 @@ const SettingsPage = () => {
       });
     }
   }, [profile, user]);
+
+  // Sync WhatsApp notifications state when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setWhatsappNotificationsEnabled((profile as any)?.whatsapp_opt_in_completed === true);
+    }
+  }, [profile]);
+
+  const handleWhatsappToggle = async (enabled: boolean) => {
+    if (enabled) {
+      // Show WhatsApp activation modal when enabling
+      setShowWhatsAppActivationModal(true);
+      return;
+    }
+
+    // Disable directly without modal
+    setUpdatingWhatsapp(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          whatsapp_opt_in_completed: false,
+          whatsapp_opt_in_dismissed: true,
+          whatsapp_opt_in_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile?.id);
+
+      if (error) throw error;
+
+      setWhatsappNotificationsEnabled(false);
+      toast.success(t('settings.notifications.whatsappDisabled'));
+    } catch (error) {
+      console.error('Error updating WhatsApp notifications:', error);
+      toast.error(t('settings.notifications.updateError'));
+    } finally {
+      setUpdatingWhatsapp(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setLoading(true);
@@ -407,6 +454,44 @@ const SettingsPage = () => {
           />
         </div>
 
+        {/* Notifications Section - Only for players and guardians */}
+        {(isPlayer || isGuardian) && (
+          <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
+                <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+                {t('settings.notifications.title')}
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                {t('settings.notifications.description')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <WhatsAppIcon className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="whatsapp-notifications" className="text-sm font-medium cursor-pointer">
+                      {t('settings.notifications.whatsappTitle')}
+                    </Label>
+                    <p className="text-xs text-gray-500">
+                      {t('settings.notifications.whatsappDescription')}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="whatsapp-notifications"
+                  checked={whatsappNotificationsEnabled}
+                  onCheckedChange={handleWhatsappToggle}
+                  disabled={updatingWhatsapp}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
 {/* Logout Section */}
         <div className="pt-4 border-t border-gray-200">
           <Button
@@ -492,6 +577,21 @@ const SettingsPage = () => {
             onOpenChange={setShowLopiviDialog}
             clubId={userClub.id}
             clubName={userClub.name}
+          />
+        )}
+
+        {/* WhatsApp Activation Modal */}
+        {showWhatsAppActivationModal && profile && (
+          <WhatsAppActivationModal
+            userName={profile.full_name || ''}
+            profileId={profile.id}
+            onCompleted={() => {
+              setShowWhatsAppActivationModal(false);
+              setWhatsappNotificationsEnabled(true);
+            }}
+            onDismissed={() => {
+              setShowWhatsAppActivationModal(false);
+            }}
           />
         )}
       </div>

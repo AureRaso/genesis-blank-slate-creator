@@ -1463,6 +1463,15 @@
       "google": "Has iniciado sesión con Google",
       "unknown": "Método de autenticación desconocido"
     },
+    "notifications": {
+      "title": "Notificaciones",
+      "description": "Gestiona cómo quieres recibir notificaciones",
+      "whatsappTitle": "Notificaciones de WhatsApp",
+      "whatsappDescription": "Recibe recordatorios de tus clases directamente en WhatsApp",
+      "whatsappEnabled": "Notificaciones de WhatsApp activadas",
+      "whatsappDisabled": "Notificaciones de WhatsApp desactivadas",
+      "updateError": "Error al actualizar las notificaciones"
+    },
     "deleteAccount": {
       "title": "Eliminar Cuenta",
       "description": "Eliminación permanente de tu cuenta",

@@ -1851,6 +1851,15 @@
       "google": "You are signed in with Google",
       "unknown": "Unknown authentication method"
     },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage how you want to receive notifications",
+      "whatsappTitle": "WhatsApp Notifications",
+      "whatsappDescription": "Receive class reminders directly on WhatsApp",
+      "whatsappEnabled": "WhatsApp notifications enabled",
+      "whatsappDisabled": "WhatsApp notifications disabled",
+      "updateError": "Error updating notifications"
+    },
     "deleteAccount": {
       "title": "Delete Account",
       "description": "Permanent account deletion",
