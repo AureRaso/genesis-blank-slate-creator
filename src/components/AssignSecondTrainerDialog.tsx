@@ -87,6 +87,97 @@ const AssignSecondTrainerDialog = ({
     }
   };
 
+  // Helper function to find all classes in a series based on:
+  // - Same club_id, name, start_time, trainer_profile_id
+  // - At least 1 common participant (not substitute)
+  const findSeriesClasses = async (classId: string): Promise<string[]> => {
+    console.log('[SERIES-DIALOG] Finding series for class:', classId);
+
+    // 1. Get the source class details
+    const { data: sourceClass, error: fetchError } = await supabase
+      .from("programmed_classes")
+      .select('id, club_id, name, start_time, trainer_profile_id')
+      .eq("id", classId)
+      .single();
+
+    if (fetchError || !sourceClass) {
+      console.error("[SERIES-DIALOG] Error fetching class:", fetchError);
+      return [classId];
+    }
+
+    console.log('[SERIES-DIALOG] Source class:', sourceClass);
+
+    // 2. Get non-substitute participants of the source class
+    const { data: sourceParticipants, error: participantsError } = await supabase
+      .from('class_participants')
+      .select('student_enrollment_id')
+      .eq('class_id', classId)
+      .eq('status', 'active')
+      .or('is_substitute.eq.false,is_substitute.is.null');
+
+    if (participantsError) {
+      console.error("[SERIES-DIALOG] Error fetching participants:", participantsError);
+      return [classId];
+    }
+
+    const sourceParticipantIds = sourceParticipants?.map(p => p.student_enrollment_id) || [];
+    console.log('[SERIES-DIALOG] Source participants:', sourceParticipantIds.length);
+
+    // If class has no non-substitute participants, return only this class
+    if (sourceParticipantIds.length === 0) {
+      console.log('[SERIES-DIALOG] No non-substitute participants, returning only source class');
+      return [classId];
+    }
+
+    // 3. Find candidate classes with same club + name + time + trainer
+    const { data: candidateClasses, error: candidatesError } = await supabase
+      .from('programmed_classes')
+      .select('id')
+      .eq('club_id', sourceClass.club_id)
+      .eq('name', sourceClass.name)
+      .eq('start_time', sourceClass.start_time)
+      .eq('trainer_profile_id', sourceClass.trainer_profile_id)
+      .eq('is_active', true);
+
+    if (candidatesError || !candidateClasses) {
+      console.error("[SERIES-DIALOG] Error fetching candidates:", candidatesError);
+      return [classId];
+    }
+
+    console.log('[SERIES-DIALOG] Candidates with same club+name+time+trainer:', candidateClasses.length);
+
+    // 4. Filter candidates: keep only those with at least 1 common participant
+    const seriesClassIds: string[] = [];
+
+    for (const candidate of candidateClasses) {
+      const { data: candidateParticipants } = await supabase
+        .from('class_participants')
+        .select('student_enrollment_id')
+        .eq('class_id', candidate.id)
+        .eq('status', 'active')
+        .or('is_substitute.eq.false,is_substitute.is.null');
+
+      const candidateParticipantIds = candidateParticipants?.map(p => p.student_enrollment_id) || [];
+
+      const hasCommonParticipant = candidateParticipantIds.some(id =>
+        sourceParticipantIds.includes(id)
+      );
+
+      console.log('[SERIES-DIALOG] Candidate', candidate.id, '- common:', hasCommonParticipant);
+
+      if (hasCommonParticipant) {
+        seriesClassIds.push(candidate.id);
+      }
+    }
+
+    if (seriesClassIds.length === 0) {
+      return [classId];
+    }
+
+    console.log('[SERIES-DIALOG] Final series classes:', seriesClassIds.length);
+    return seriesClassIds;
+  };
+
   const handleSave = async () => {
     if (!classData) return;
     if (!startTime) {
@@ -110,28 +201,58 @@ const AssignSecondTrainerDialog = ({
       // Format time as HH:MM:SS for database
       const formattedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
 
-      const updateData = {
-        trainer_profile_id: finalPrimaryTrainerId,
-        trainer_profile_id_2: newSecondTrainerId,
-        max_participants: maxParticipants,
-        start_time: formattedStartTime,
-      };
+      // Build update data with only changed fields for series update
+      const originalStartTime = classData.start_time?.slice(0, 5) || "";
+      const startTimeChanged = startTime !== originalStartTime;
 
       if (applyToSeries) {
-        // Update all classes in the series (same name, same club)
-        // Series = all classes with the same name in the same club
+        // Find all classes in the series using participant-based logic
+        const seriesClassIds = await findSeriesClasses(classData.id);
+
+        console.log('[SERIES-DIALOG] Updating', seriesClassIds.length, 'classes');
+
+        // Only include fields that actually changed to avoid overwriting other classes
+        const changedFields: Record<string, string | number | null> = {};
+
+        if (finalPrimaryTrainerId !== classData.trainer_profile_id) {
+          changedFields.trainer_profile_id = finalPrimaryTrainerId;
+        }
+        if (newSecondTrainerId !== (classData.trainer_profile_id_2 || null)) {
+          changedFields.trainer_profile_id_2 = newSecondTrainerId;
+        }
+        if (maxParticipants !== classData.max_participants) {
+          changedFields.max_participants = maxParticipants;
+        }
+        if (startTimeChanged) {
+          changedFields.start_time = formattedStartTime;
+        }
+
+        console.log('[SERIES-DIALOG] Changed fields:', changedFields);
+
+        if (Object.keys(changedFields).length === 0) {
+          toast.info("No hay cambios que guardar");
+          onOpenChange(false);
+          return;
+        }
+
+        // Update all classes in the series
         const { error } = await supabase
           .from("programmed_classes")
-          .update(updateData)
-          .eq("club_id", classData.club_id)
-          .eq("name", classData.name)
-          .eq("is_active", true);
+          .update(changedFields)
+          .in("id", seriesClassIds);
 
         if (error) throw error;
 
-        toast.success("Clase actualizada para toda la serie");
+        toast.success(`Clase actualizada para ${seriesClassIds.length} clase${seriesClassIds.length > 1 ? 's' : ''} de la serie`);
       } else {
-        // Update only this specific class
+        // Update only this specific class - send all fields
+        const updateData = {
+          trainer_profile_id: finalPrimaryTrainerId,
+          trainer_profile_id_2: newSecondTrainerId,
+          max_participants: maxParticipants,
+          start_time: formattedStartTime,
+        };
+
         const { error } = await supabase
           .from("programmed_classes")
           .update(updateData)
@@ -146,6 +267,7 @@ const AssignSecondTrainerDialog = ({
       queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
       queryClient.invalidateQueries({ queryKey: ["week-attendance"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["scheduled-classes"] });
 
       onOpenChange(false);
     } catch (error) {

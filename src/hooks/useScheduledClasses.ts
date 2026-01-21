@@ -230,6 +230,108 @@ export const useUpdateScheduledClass = () => {
   });
 };
 
+// Helper function to find all classes in a series based on:
+// - Same club_id, name, start_time, trainer_profile_id
+// - At least 1 common participant (not substitute)
+const findSeriesClasses = async (classId: string): Promise<{ id: string; start_date: string; end_date: string }[]> => {
+  console.log('[SERIES] Finding series for class:', classId);
+
+  // 1. Get the source class details
+  const { data: classData, error: fetchError } = await supabase
+    .from("programmed_classes")
+    .select('id, club_id, name, start_time, trainer_profile_id, start_date, end_date')
+    .eq("id", classId)
+    .single();
+
+  if (fetchError || !classData) {
+    console.error("[SERIES] Error fetching class for series identification:", fetchError);
+    return [];
+  }
+
+  console.log('[SERIES] Source class:', {
+    id: classData.id,
+    name: classData.name,
+    start_time: classData.start_time,
+    trainer_profile_id: classData.trainer_profile_id
+  });
+
+  // 2. Get non-substitute participants of the source class
+  // Use .or() to handle both false and null values for is_substitute
+  const { data: sourceParticipants, error: participantsError } = await supabase
+    .from('class_participants')
+    .select('student_enrollment_id, is_substitute')
+    .eq('class_id', classId)
+    .eq('status', 'active')
+    .or('is_substitute.eq.false,is_substitute.is.null');
+
+  if (participantsError) {
+    console.error("[SERIES] Error fetching source participants:", participantsError);
+    return [{ id: classData.id, start_date: classData.start_date, end_date: classData.end_date }];
+  }
+
+  const sourceParticipantIds = sourceParticipants?.map(p => p.student_enrollment_id) || [];
+  console.log('[SERIES] Source participants (non-substitute):', sourceParticipantIds.length, sourceParticipantIds);
+
+  // If class has no non-substitute participants, return only this class
+  if (sourceParticipantIds.length === 0) {
+    console.log('[SERIES] No non-substitute participants found, returning only source class');
+    return [{ id: classData.id, start_date: classData.start_date, end_date: classData.end_date }];
+  }
+
+  // 3. Find candidate classes with same club + name + time + trainer
+  const { data: candidateClasses, error: candidatesError } = await supabase
+    .from('programmed_classes')
+    .select('id, start_date, end_date, name, start_time')
+    .eq('club_id', classData.club_id)
+    .eq('name', classData.name)
+    .eq('start_time', classData.start_time)
+    .eq('trainer_profile_id', classData.trainer_profile_id)
+    .eq('is_active', true);
+
+  if (candidatesError || !candidateClasses) {
+    console.error("[SERIES] Error fetching candidate classes:", candidatesError);
+    return [{ id: classData.id, start_date: classData.start_date, end_date: classData.end_date }];
+  }
+
+  console.log('[SERIES] Candidate classes with same club+name+time+trainer:', candidateClasses.length);
+
+  // 4. Filter candidates: keep only those with at least 1 common participant
+  const seriesClasses: { id: string; start_date: string; end_date: string }[] = [];
+
+  for (const candidate of candidateClasses) {
+    // Get non-substitute participants of this candidate
+    // Use .or() to handle both false and null values for is_substitute
+    const { data: candidateParticipants } = await supabase
+      .from('class_participants')
+      .select('student_enrollment_id, is_substitute')
+      .eq('class_id', candidate.id)
+      .eq('status', 'active')
+      .or('is_substitute.eq.false,is_substitute.is.null');
+
+    const candidateParticipantIds = candidateParticipants?.map(p => p.student_enrollment_id) || [];
+
+    // Check if there's at least 1 common participant
+    const hasCommonParticipant = candidateParticipantIds.some(id =>
+      sourceParticipantIds.includes(id)
+    );
+
+    console.log('[SERIES] Candidate', candidate.id, '- participants:', candidateParticipantIds.length, '- common:', hasCommonParticipant);
+
+    if (hasCommonParticipant) {
+      seriesClasses.push({ id: candidate.id, start_date: candidate.start_date, end_date: candidate.end_date });
+    }
+  }
+
+  // If no matches found (shouldn't happen), at least return the source class
+  if (seriesClasses.length === 0) {
+    console.log('[SERIES] No matches found, returning only source class');
+    return [{ id: classData.id, start_date: classData.start_date, end_date: classData.end_date }];
+  }
+
+  console.log('[SERIES] Final series classes:', seriesClasses.length, seriesClasses.map(c => c.id));
+  return seriesClasses;
+};
+
 // Hook to delete a programmed class
 export const useDeleteScheduledClass = () => {
   const queryClient = useQueryClient();
@@ -237,29 +339,16 @@ export const useDeleteScheduledClass = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // First, get the class details to find all recurring instances
-      const { data: classData, error: fetchError } = await supabase
-        .from("programmed_classes")
-        .select('id, club_id, name, start_time')
-        .eq("id", id)
-        .single();
+      // Find all classes in the series using the new identification logic
+      // (same club + name + time + trainer + at least 1 common participant)
+      const seriesClasses = await findSeriesClasses(id);
 
-      if (fetchError) throw fetchError;
-      if (!classData) throw new Error("Clase no encontrada");
-
-      // Find all classes in the recurring series (same club_id, name, and start_time)
-      const { data: matchingClasses, error: matchError } = await supabase
-        .from('programmed_classes')
-        .select('id, name, start_time, club_id')
-        .eq('club_id', classData.club_id)
-        .eq('name', classData.name)
-        .eq('start_time', classData.start_time)
-        .eq('is_active', true);
-
-      if (matchError) throw matchError;
+      if (seriesClasses.length === 0) {
+        throw new Error("Clase no encontrada");
+      }
 
       // Delete all matching classes (soft delete by setting is_active to false)
-      const classIds = matchingClasses?.map(c => c.id) || [id];
+      const classIds = seriesClasses.map(c => c.id);
 
       const { error } = await supabase
         .from("programmed_classes")
@@ -288,32 +377,13 @@ export const useDeleteScheduledClass = () => {
 };
 
 // Hook to count classes in a series (for showing user how many will be affected)
+// Uses the new identification logic: same club + name + time + trainer + at least 1 common participant
 export const useSeriesClassCount = (classId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ["series-class-count", classId],
     queryFn: async () => {
-      // Get the class details to identify the series
-      const { data: classData, error: fetchError } = await supabase
-        .from("programmed_classes")
-        .select('club_id, name, start_time')
-        .eq("id", classId)
-        .single();
-
-      if (fetchError) throw fetchError;
-      if (!classData) return 1;
-
-      // Count all classes in the series
-      const { count, error: countError } = await supabase
-        .from('programmed_classes')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', classData.club_id)
-        .eq('name', classData.name)
-        .eq('start_time', classData.start_time)
-        .eq('is_active', true);
-
-      if (countError) throw countError;
-
-      return count || 1;
+      const seriesClasses = await findSeriesClasses(classId);
+      return seriesClasses.length;
     },
     enabled,
   });
@@ -340,6 +410,7 @@ export const calculateDaysDifference = (oldDay: string, newDay: string): number 
 };
 
 // Hook to update all classes in a series
+// Uses the new identification logic: same club + name + time + trainer + at least 1 common participant
 export const useUpdateScheduledClassSeries = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -356,27 +427,10 @@ export const useUpdateScheduledClassSeries = () => {
       originalDay?: string;
       newDay?: string;
     }) => {
-      // Get the class details to identify the series
-      const { data: classData, error: fetchError } = await supabase
-        .from("programmed_classes")
-        .select('club_id, name, start_time')
-        .eq("id", id)
-        .single();
+      // Find all classes in the series using the new identification logic
+      const seriesClasses = await findSeriesClasses(id);
 
-      if (fetchError) throw fetchError;
-      if (!classData) throw new Error("Clase no encontrada");
-
-      // Find all classes in the series
-      const { data: seriesClasses, error: seriesError } = await supabase
-        .from('programmed_classes')
-        .select('id, start_date, end_date')
-        .eq('club_id', classData.club_id)
-        .eq('name', classData.name)
-        .eq('start_time', classData.start_time)
-        .eq('is_active', true);
-
-      if (seriesError) throw seriesError;
-      if (!seriesClasses || seriesClasses.length === 0) {
+      if (seriesClasses.length === 0) {
         throw new Error("No se encontraron clases en la serie");
       }
 

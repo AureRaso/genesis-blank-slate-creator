@@ -106,6 +106,7 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
     e.preventDefault();
 
     try {
+      // Build full update data
       const updateData = {
         ...formData,
         level_from: levelType === 'numeric' ? formData.level_from : undefined,
@@ -115,20 +116,78 @@ export function EditClassModal({ class: cls, isOpen, onClose }: EditClassModalPr
       };
 
       if (updateScope === 'single') {
-        // Update only this class
+        // Update only this class - send all fields
         await updateClassMutation.mutateAsync({
           id: cls.id,
           data: updateData
         });
       } else {
         // Update all classes in the series
-        // For series update, we don't include start_date/end_date in updateData
-        // because each class will have its dates adjusted individually based on day change
-        const { start_date, end_date, ...seriesUpdateData } = updateData;
+        // IMPORTANT: Only send fields that actually changed to avoid overwriting
+        // other classes with values from this specific class
+        const changedFields: Record<string, any> = {};
+
+        // Compare each field with original class values
+        if (formData.name !== cls.name) {
+          changedFields.name = formData.name;
+        }
+        if (formData.start_time !== cls.start_time) {
+          changedFields.start_time = formData.start_time;
+        }
+        if (formData.duration_minutes !== cls.duration_minutes) {
+          changedFields.duration_minutes = formData.duration_minutes;
+        }
+        if (JSON.stringify(formData.days_of_week) !== JSON.stringify(cls.days_of_week)) {
+          changedFields.days_of_week = formData.days_of_week;
+        }
+        if (formData.is_open !== (cls.is_open ?? false)) {
+          changedFields.is_open = formData.is_open;
+        }
+
+        // Handle level fields based on levelType
+        if (levelType === 'numeric') {
+          if (formData.level_from !== cls.level_from) {
+            changedFields.level_from = formData.level_from;
+          }
+          if (formData.level_to !== cls.level_to) {
+            changedFields.level_to = formData.level_to;
+          }
+          // Clear custom_level if switching to numeric
+          if (cls.custom_level) {
+            changedFields.custom_level = null;
+          }
+        } else {
+          if (formData.custom_level !== (cls.custom_level || "")) {
+            changedFields.custom_level = formData.custom_level;
+          }
+          // Clear numeric levels if switching to custom
+          if (cls.level_from) {
+            changedFields.level_from = null;
+          }
+          if (cls.level_to) {
+            changedFields.level_to = null;
+          }
+        }
+
+        console.log('[EDIT] Original class:', {
+          name: cls.name,
+          start_time: cls.start_time,
+          duration_minutes: cls.duration_minutes,
+          days_of_week: cls.days_of_week
+        });
+        console.log('[EDIT] Form data:', formData);
+        console.log('[EDIT] Changed fields for series update:', changedFields);
+
+        // Only proceed if there are actual changes
+        if (Object.keys(changedFields).length === 0 && !dayHasChanged) {
+          console.log('[EDIT] No changes detected, skipping update');
+          onClose();
+          return;
+        }
 
         await updateSeriesMutation.mutateAsync({
           id: cls.id,
-          data: seriesUpdateData,
+          data: changedFields,
           originalDay: dayHasChanged ? originalDay : undefined,
           newDay: dayHasChanged ? currentDay : undefined
         });
