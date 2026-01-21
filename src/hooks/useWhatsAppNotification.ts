@@ -34,7 +34,7 @@ const MESSAGE_TRANSLATIONS: Record<string, {
   dateLocale: string;
 }> = {
   'es': {
-    absenceTitle: '🎾 ¡Plaza en clase de recuperación disponible!',
+    absenceTitle: '🎾 ¡Plaza en clase disponible!',
     freeSpotTitle: (slots) => `🎾 ¡${slots === 1 ? '1 plaza disponible' : `${slots} plazas disponibles`} en clase!`,
     dateLabel: 'Fecha',
     timeLabel: 'Hora',
@@ -45,7 +45,7 @@ const MESSAGE_TRANSLATIONS: Record<string, {
     dateLocale: 'es-ES'
   },
   'en': {
-    absenceTitle: '🎾 Spot available in make-up class!',
+    absenceTitle: '🎾 Spot available in class!',
     freeSpotTitle: (slots) => `🎾 ${slots === 1 ? '1 spot available' : `${slots} spots available`} in class!`,
     dateLabel: 'Date',
     timeLabel: 'Time',
@@ -56,7 +56,7 @@ const MESSAGE_TRANSLATIONS: Record<string, {
     dateLocale: 'en-US'
   },
   'it': {
-    absenceTitle: '🎾 Posto disponibile nella lezione di recupero!',
+    absenceTitle: '🎾 Posto disponibile nella lezione!',
     freeSpotTitle: (slots) => `🎾 ${slots === 1 ? '1 posto disponibile' : `${slots} posti disponibili`} nella lezione!`,
     dateLabel: 'Data',
     timeLabel: 'Ora',
