@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useClassWaitlist, useAcceptFromWaitlist, useRejectFromWaitlist } from "@/hooks/useClassWaitlist";
-import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
+import { useStudentBehaviorMetrics } from "@/hooks/useStudentBehaviorMetrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +24,9 @@ interface WaitlistManagementProps {
   className: string;
 }
 
-// Component to display student behavior metrics
+// Component to display student behavior metrics (numbers only, no badge)
 const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnrollmentId: string; classId: string }) => {
   const { data: metrics, isLoading } = useStudentBehaviorMetrics(studentEnrollmentId, classId);
-  const badge = getReliabilityBadge(metrics);
 
   if (isLoading) {
     return (
@@ -46,18 +45,6 @@ const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnroll
     <div className="mt-3 pt-3 border-t border-gray-200">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-semibold text-gray-700">📊 Historial de asistencia:</span>
-        <Badge
-          variant="outline"
-          className={`text-[10px] px-1.5 py-0 h-4 ${
-            badge.color === 'green' ? 'bg-green-100 text-green-700 border-green-300' :
-            badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
-            badge.color === 'red' ? 'bg-red-100 text-red-700 border-red-300' :
-            badge.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-300' :
-            'bg-gray-100 text-gray-700 border-gray-300'
-          }`}
-        >
-          {badge.emoji} {badge.text}
-        </Badge>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -74,9 +61,9 @@ const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnroll
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Circle className="h-3.5 w-3.5 text-red-600" />
+          <Circle className="h-3.5 w-3.5 text-orange-500" />
           <span className="text-gray-600">Avisos anticipados:</span>
-          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
+          <span className="font-semibold">{metrics.early_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1.5">

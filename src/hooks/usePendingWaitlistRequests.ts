@@ -185,29 +185,59 @@ export const useApproveWaitlistRequest = () => {
 
       if (updateError) throw updateError;
 
-      // Get other pending entries BEFORE expiring them (for rejection notifications)
-      const { data: otherPendingEntries } = await supabase
-        .from('class_waitlist')
-        .select('id, student_enrollment_id')
-        .eq('class_id', classId)
-        .eq('class_date', waitlistEntry.class_date)
-        .eq('status', 'pending')
-        .neq('id', waitlistId);
+      // Get max_participants for the class
+      const { data: classInfo } = await supabase
+        .from('programmed_classes')
+        .select('max_participants')
+        .eq('id', classId)
+        .single();
 
-      // Expire other pending entries for this class/date
-      if (otherPendingEntries && otherPendingEntries.length > 0) {
-        console.log(`📊 [WAITLIST] Expiring ${otherPendingEntries.length} other pending entries`);
-        const { error: expireError } = await supabase
+      const maxParticipants = classInfo?.max_participants || 8;
+
+      // Check remaining spots AFTER accepting the student
+      const { count: newActiveCount } = await supabase
+        .from('class_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('class_id', classId)
+        .eq('status', 'active')
+        .neq('absence_confirmed', true);
+
+      const remainingSpots = maxParticipants - (newActiveCount || 0);
+      console.log(`📊 [WAITLIST] After accepting: ${newActiveCount}/${maxParticipants} participants, ${remainingSpots} spots remaining`);
+
+      // Only expire other pending entries if the class is NOW full
+      let expiredEntries: { id: string; student_enrollment_id: string }[] = [];
+
+      if (remainingSpots <= 0) {
+        console.log('📊 [WAITLIST] Class is full - expiring other pending entries');
+
+        // Get other pending entries before expiring (for rejection notifications)
+        const { data: otherPendingEntries } = await supabase
           .from('class_waitlist')
-          .update({ status: 'expired' })
+          .select('id, student_enrollment_id')
           .eq('class_id', classId)
           .eq('class_date', waitlistEntry.class_date)
           .eq('status', 'pending')
           .neq('id', waitlistId);
 
-        if (expireError) {
-          console.error('Error expiring other waitlist entries:', expireError);
+        if (otherPendingEntries && otherPendingEntries.length > 0) {
+          // Expire other pending entries for this class/date
+          const { error: expireError } = await supabase
+            .from('class_waitlist')
+            .update({ status: 'expired' })
+            .eq('class_id', classId)
+            .eq('class_date', waitlistEntry.class_date)
+            .eq('status', 'pending')
+            .neq('id', waitlistId);
+
+          if (expireError) {
+            console.error('Error expiring other waitlist entries:', expireError);
+          }
+
+          expiredEntries = otherPendingEntries;
         }
+      } else {
+        console.log(`📊 [WAITLIST] Class still has ${remainingSpots} spots - NOT expiring other entries`);
       }
 
       // Return data needed for notifications
@@ -216,7 +246,8 @@ export const useApproveWaitlistRequest = () => {
         classId,
         studentEnrollmentId: waitlistEntry.student_enrollment_id,
         classDate: waitlistEntry.class_date,
-        expiredEntries: otherPendingEntries || []
+        expiredEntries,
+        remainingSpots
       };
     },
     onSuccess: async (result) => {
