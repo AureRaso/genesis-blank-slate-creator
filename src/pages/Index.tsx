@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Home, AlertTriangle, Users, GraduationCap, UserCheck, Calendar, UserPlus, CalendarPlus, Bell, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Activity, Check, X, Wallet, Loader2, Circle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useStudentBehaviorMetrics, getReliabilityBadge } from "@/hooks/useStudentBehaviorMetrics";
+import { useStudentBehaviorMetrics } from "@/hooks/useStudentBehaviorMetrics";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -47,8 +47,6 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
     studentEnrollmentId,
     PLACEHOLDER_CLASS_ID
   );
-  const badge = getReliabilityBadge(metrics);
-
   if (isLoading) {
     return (
       <div className="mt-2 pt-2 border-t border-gray-200">
@@ -66,18 +64,6 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
     <div className="mt-2 pt-2 border-t border-gray-200">
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-xs font-semibold text-gray-700">📊 {t('common.history')}:</span>
-        <Badge
-          variant="outline"
-          className={`text-[10px] px-1.5 py-0 h-4 ${
-            badge.color === 'green' ? 'bg-green-100 text-green-700 border-green-300' :
-            badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
-            badge.color === 'red' ? 'bg-red-100 text-red-700 border-red-300' :
-            badge.color === 'blue' ? 'bg-blue-100 text-blue-700 border-blue-300' :
-            'bg-gray-100 text-gray-700 border-gray-300'
-          }`}
-        >
-          {badge.emoji} {badge.text}
-        </Badge>
       </div>
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
@@ -94,9 +80,9 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
         </div>
 
         <div className="flex items-center gap-1">
-          <Circle className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <Circle className="h-3 w-3 text-orange-500 flex-shrink-0" />
           <span className="text-gray-600">{t('common.early')}:</span>
-          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
+          <span className="font-semibold">{metrics.early_notice_absences}</span>
         </div>
 
         <div className="flex items-center gap-1">
