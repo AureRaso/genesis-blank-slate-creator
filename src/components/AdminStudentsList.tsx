@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +90,38 @@ const AdminStudentsList = () => {
   // ============================================
   const { data: multiClubEmails } = useMultiClubStudentEmails();
   const isMultiClubStudent = (email: string) => multiClubEmails?.has(email) ?? false;
+
+  // Determinar si estamos en vista "Todos los clubes" (solo superadmin sin club seleccionado)
+  const isViewingAllClubs = isSuperAdmin && !effectiveClubId;
+
+  // Filtrar duplicados cuando superadmin ve todos los clubes
+  // Agrupa por email y se queda con una sola inscripción, contando cuántos clubes tiene
+  interface StudentWithClubCount extends StudentEnrollment {
+    clubCount?: number;
+  }
+
+  const uniqueStudents = useMemo<StudentWithClubCount[]>(() => {
+    if (!isViewingAllClubs) {
+      // Club específico seleccionado: mostrar todas las inscripciones normalmente
+      return students;
+    }
+
+    // Vista "Todos los clubes": agrupar por email, mostrar solo una vez
+    const emailMap = new Map<string, StudentWithClubCount>();
+    students.forEach(student => {
+      if (!emailMap.has(student.email)) {
+        emailMap.set(student.email, {
+          ...student,
+          clubCount: 1
+        });
+      } else {
+        const existing = emailMap.get(student.email)!;
+        existing.clubCount = (existing.clubCount || 1) + 1;
+      }
+    });
+
+    return Array.from(emailMap.values());
+  }, [students, isViewingAllClubs]);
   // ============================================
   // MULTI-CLUB FEATURE - END
   // ============================================
@@ -157,7 +189,10 @@ const AdminStudentsList = () => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, periodFilter, trainerFilter, sortOrder]);
 
-  const filteredAndSortedStudents = students
+  // ============================================
+  // MULTI-CLUB FEATURE - Usar uniqueStudents para evitar duplicados en "Todos los clubes"
+  // ============================================
+  const filteredAndSortedStudents = uniqueStudents
     .filter((student) => {
       const normalizedSearch = normalizeText(searchTerm);
       const matchesSearch = normalizeText(student.full_name).includes(normalizedSearch) ||
@@ -539,14 +574,15 @@ const AdminStudentsList = () => {
                         {/* Columna 3: Club */}
                         <div className="col-span-1 md:col-span-2 flex items-start md:items-center">
                           <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate">{student.club_name}</span>
-                            </div>
                             {/* ============================================ */}
-                            {/* MULTI-CLUB FEATURE - Badge START */}
+                            {/* MULTI-CLUB FEATURE - Club display START */}
+                            {/* Cuando superadmin ve "Todos los clubes": */}
+                            {/* - Multi-club: mostrar solo badge "Multi-club" (sin nombre de club) */}
+                            {/* - No multi-club: mostrar nombre de club normal */}
+                            {/* Cuando ve un club específico: comportamiento normal */}
                             {/* ============================================ */}
-                            {isMultiClubStudent(student.email) && (
+                            {isViewingAllClubs && isMultiClubStudent(student.email) ? (
+                              // Vista "Todos los clubes" + estudiante multi-club: solo badge
                               <Badge
                                 variant="outline"
                                 className="text-xs w-fit gap-1 bg-purple-50 text-purple-700 border-purple-200"
@@ -554,9 +590,26 @@ const AdminStudentsList = () => {
                                 <Users2 className="h-3 w-3" />
                                 Multi-club
                               </Badge>
+                            ) : (
+                              // Club específico o estudiante no multi-club: mostrar nombre + badge si aplica
+                              <>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                  <span className="truncate">{student.club_name}</span>
+                                </div>
+                                {isMultiClubStudent(student.email) && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs w-fit gap-1 bg-purple-50 text-purple-700 border-purple-200"
+                                  >
+                                    <Users2 className="h-3 w-3" />
+                                    Multi-club
+                                  </Badge>
+                                )}
+                              </>
                             )}
                             {/* ============================================ */}
-                            {/* MULTI-CLUB FEATURE - Badge END */}
+                            {/* MULTI-CLUB FEATURE - Club display END */}
                             {/* ============================================ */}
                           </div>
                         </div>
@@ -579,15 +632,22 @@ const AdminStudentsList = () => {
 
                         {/* Columna 5: Acciones */}
                         <div className="col-span-1 md:col-span-1 flex items-start md:items-center justify-start gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setStudentToEdit(student)}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            title={t('playersPage.adminStudentsList.editStudent')}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          {/* ============================================ */}
+                          {/* MULTI-CLUB FEATURE - Hide edit when viewing all clubs */}
+                          {/* El botón de editar se oculta cuando superadmin ve "Todos los clubes" */}
+                          {/* porque no está claro cuál inscripción editar si el alumno tiene varias */}
+                          {/* ============================================ */}
+                          {!isViewingAllClubs && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setStudentToEdit(student)}
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              title={t('playersPage.adminStudentsList.editStudent')}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
