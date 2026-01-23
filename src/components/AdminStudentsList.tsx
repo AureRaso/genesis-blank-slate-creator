@@ -24,9 +24,17 @@ import {
   Trash2,
   Pencil,
   User,
-  GraduationCap
+  GraduationCap,
+  Users2  // MULTI-CLUB FEATURE
 } from "lucide-react";
-import { useAdminStudentEnrollments, StudentEnrollment, useUpdateStudentEnrollment, useClassTrainers, ClassTrainer } from "@/hooks/useStudentEnrollments";
+import {
+  useAdminStudentEnrollments,
+  StudentEnrollment,
+  useUpdateStudentEnrollment,
+  useClassTrainers,
+  ClassTrainer,
+  useMultiClubStudentEmails  // MULTI-CLUB FEATURE
+} from "@/hooks/useStudentEnrollments";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useArchiveStudent } from "@/hooks/useArchiveStudent";
@@ -75,6 +83,16 @@ const AdminStudentsList = () => {
   const { data: classTrainersFromHook = [] } = useClassTrainers(effectiveClubId);
   const updateStudentMutation = useUpdateStudentEnrollment();
   const archiveStudentMutation = useArchiveStudent();
+
+  // ============================================
+  // MULTI-CLUB FEATURE - START
+  // Hook para detectar alumnos en múltiples clubes
+  // ============================================
+  const { data: multiClubEmails } = useMultiClubStudentEmails();
+  const isMultiClubStudent = (email: string) => multiClubEmails?.has(email) ?? false;
+  // ============================================
+  // MULTI-CLUB FEATURE - END
+  // ============================================
 
   // Get unique trainer IDs from all students' class_trainer_ids
   const uniqueTrainerIdsFromStudents = [...new Set(
@@ -520,9 +538,26 @@ const AdminStudentsList = () => {
 
                         {/* Columna 3: Club */}
                         <div className="col-span-1 md:col-span-2 flex items-start md:items-center">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="truncate">{student.club_name}</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{student.club_name}</span>
+                            </div>
+                            {/* ============================================ */}
+                            {/* MULTI-CLUB FEATURE - Badge START */}
+                            {/* ============================================ */}
+                            {isMultiClubStudent(student.email) && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs w-fit gap-1 bg-purple-50 text-purple-700 border-purple-200"
+                              >
+                                <Users2 className="h-3 w-3" />
+                                Multi-club
+                              </Badge>
+                            )}
+                            {/* ============================================ */}
+                            {/* MULTI-CLUB FEATURE - Badge END */}
+                            {/* ============================================ */}
                           </div>
                         </div>
 

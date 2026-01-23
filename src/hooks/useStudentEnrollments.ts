@@ -802,3 +802,191 @@ export const useClassTrainers = (clubId?: string) => {
     },
   });
 };
+
+// ============================================
+// MULTI-CLUB FEATURE - START
+// Fecha: 2024-01
+// Descripción: Hooks para gestionar alumnos en múltiples clubes
+// Para revertir: Eliminar todo el bloque desde aquí hasta MULTI-CLUB FEATURE - END
+// ============================================
+
+/**
+ * Hook para obtener todas las inscripciones de un alumno por email
+ * Permite ver en qué clubes está inscrito un alumno
+ */
+export const useStudentClubEnrollments = (email: string) => {
+  return useQuery({
+    queryKey: ['student-club-enrollments', email],
+    queryFn: async () => {
+      if (!email) return [];
+
+      const { data, error } = await supabase
+        .from('student_enrollments')
+        .select(`
+          id,
+          club_id,
+          status,
+          full_name,
+          level,
+          clubs:club_id(id, name)
+        `)
+        .eq('email', email)
+        .neq('status', 'inactive');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!email,
+  });
+};
+
+/**
+ * Hook para añadir un alumno a otro club (crear inscripción duplicada)
+ * Copia los datos base de la inscripción original
+ */
+export const useAddStudentToClub = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sourceEnrollment,
+      targetClubId,
+    }: {
+      sourceEnrollment: StudentEnrollment;
+      targetClubId: string;
+    }) => {
+      // Verificar que no existe ya una inscripción en ese club
+      const { data: existing } = await supabase
+        .from('student_enrollments')
+        .select('id')
+        .eq('email', sourceEnrollment.email)
+        .eq('club_id', targetClubId)
+        .neq('status', 'inactive')
+        .maybeSingle();
+
+      if (existing) {
+        throw new Error('El alumno ya tiene una inscripción activa en este club');
+      }
+
+      // Crear inscripción duplicada con los datos base
+      const { data, error } = await supabase
+        .from('student_enrollments')
+        .insert({
+          email: sourceEnrollment.email,
+          full_name: sourceEnrollment.full_name,
+          phone: sourceEnrollment.phone,
+          level: sourceEnrollment.level,
+          club_id: targetClubId,
+          status: 'active',
+          weekly_days: sourceEnrollment.weekly_days || [],
+          preferred_times: sourceEnrollment.preferred_times || [],
+          enrollment_period: sourceEnrollment.enrollment_period || 'mensual',
+          trainer_profile_id: sourceEnrollment.trainer_profile_id,
+          created_by_profile_id: sourceEnrollment.created_by_profile_id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-student-enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['student-club-enrollments'] });
+      toast({
+        title: 'Alumno añadido al club',
+        description: 'Se ha creado la inscripción en el nuevo club correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo añadir el alumno al club',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+/**
+ * Hook para eliminar un alumno de un club (archivar inscripción)
+ * No elimina físicamente, solo cambia el status a 'inactive'
+ */
+export const useRemoveStudentFromClub = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      enrollmentId,
+    }: {
+      enrollmentId: string;
+    }) => {
+      const { error } = await supabase
+        .from('student_enrollments')
+        .update({ status: 'inactive' })
+        .eq('id', enrollmentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-student-enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['student-club-enrollments'] });
+      toast({
+        title: 'Alumno eliminado del club',
+        description: 'La inscripción ha sido archivada correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo eliminar el alumno del club',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+/**
+ * Hook para obtener los emails de alumnos que están en múltiples clubes
+ * Útil para mostrar un badge "Multi-club" en la lista de alumnos
+ */
+export const useMultiClubStudentEmails = () => {
+  return useQuery({
+    queryKey: ['multi-club-student-emails'],
+    queryFn: async () => {
+      // Obtener todas las inscripciones activas
+      const { data, error } = await supabase
+        .from('student_enrollments')
+        .select('email, club_id')
+        .neq('status', 'inactive');
+
+      if (error) throw error;
+
+      // Contar cuántos clubes tiene cada email
+      const emailClubCount = new Map<string, Set<string>>();
+
+      (data || []).forEach(enrollment => {
+        if (!emailClubCount.has(enrollment.email)) {
+          emailClubCount.set(enrollment.email, new Set());
+        }
+        emailClubCount.get(enrollment.email)!.add(enrollment.club_id);
+      });
+
+      // Filtrar solo los emails con más de un club
+      const multiClubEmails = new Set<string>();
+      emailClubCount.forEach((clubs, email) => {
+        if (clubs.size > 1) {
+          multiClubEmails.add(email);
+        }
+      });
+
+      return multiClubEmails;
+    },
+  });
+};
+
+// ============================================
+// MULTI-CLUB FEATURE - END
+// ============================================

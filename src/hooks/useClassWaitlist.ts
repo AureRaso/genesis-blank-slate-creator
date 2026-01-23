@@ -69,13 +69,31 @@ export const useCanJoinWaitlist = (classId: string, classDate: string) => {
       }
 
       // 4. Get user's enrollment for this club
-      if (profile.club_id && profile.club_id !== classData.club_id) {
-        return {
-          canJoin: false,
-          reason: 'wrong_club',
-          message: 'No perteneces al club de esta clase'
-        };
-      }
+      // ============================================
+      // MULTI-CLUB FEATURE - START
+      // Fecha: 2024-01
+      // Descripción: Permite a alumnos con inscripciones en múltiples clubes
+      //              unirse a listas de espera de cualquiera de sus clubes.
+      // Cambio: Se reemplaza la validación de profile.club_id (singular)
+      //         por una búsqueda en student_enrollments (permite múltiples).
+      // Para revertir: Descomentar el bloque ORIGINAL y comentar el bloque NUEVO
+      // ============================================
+
+      // ORIGINAL - Validación con profile.club_id (singular)
+      // if (profile.club_id && profile.club_id !== classData.club_id) {
+      //   return {
+      //     canJoin: false,
+      //     reason: 'wrong_club',
+      //     message: 'No perteneces al club de esta clase'
+      //   };
+      // }
+
+      // NUEVO - Validación con student_enrollments (permite multi-club)
+      // La validación real se hace en las líneas siguientes (búsqueda de enrollments)
+      // Si no tiene inscripción en el club de la clase, será bloqueado con 'no_enrollment'
+      // ============================================
+      // MULTI-CLUB FEATURE - END
+      // ============================================
 
       const { data: enrollments } = await supabase
         .from('student_enrollments')
