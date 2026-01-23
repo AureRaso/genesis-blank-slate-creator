@@ -29,6 +29,7 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
   'a66741f0-7ac3-4c1b-a7ca-5601959527aa', // KM Pádel
+  'e4ca00ff-63af-4d8c-a5bf-db67bc382c6a', // Sportres Padel Academy
 ];
 
 // Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)
@@ -316,6 +317,7 @@ serve(async (req) => {
   }
 
   try {
+    // Note: Timeout extended to 150s in config.toml for Pro plan
     console.log('🔄 Starting attendance reminder job...');
 
     const now = new Date();
@@ -552,12 +554,12 @@ serve(async (req) => {
           if (whatsappSent) {
             totalWhatsAppSent++;
           }
-          // Delay for WhatsApp rate limiting (2s for Kapso/Meta API - templates are pre-approved)
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Delay for WhatsApp rate limiting (1s for Kapso/Meta API - templates are pre-approved, ~80 msgs/min allowed)
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
-        await new Promise(resolve => setTimeout(resolve, 600));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
