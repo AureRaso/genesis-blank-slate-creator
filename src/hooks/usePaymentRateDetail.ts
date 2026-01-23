@@ -255,8 +255,8 @@ export function useRateAllAssignments(rateId: string | undefined) {
   });
 }
 
-// Hook to remove a rate assignment (change status to 'finalizada')
-export function useRemoveRateAssignment(rateId: string | undefined) {
+// Hook to unlink a rate assignment (soft action - change status to 'finalizada')
+export function useUnlinkRateAssignment(rateId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -278,8 +278,54 @@ export function useRemoveRateAssignment(rateId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['payment-rate-all-assignments', rateId] });
     },
     onError: (error) => {
-      console.error('Error removing rate assignment:', error);
-      toast.error('Error al quitar la tarifa');
+      console.error('Error unlinking rate assignment:', error);
+      toast.error('Error al desvincular la tarifa');
+    },
+  });
+}
+
+// Hook to delete a rate assignment permanently (hard delete - removes assignment AND payments)
+export function useDeleteRateAssignment(rateId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (assignmentId: string) => {
+      // First, get the student_enrollment_id from the assignment to delete related payments
+      const { data: assignment, error: fetchError } = await supabase
+        .from('student_rate_assignments')
+        .select('student_enrollment_id')
+        .eq('id', assignmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete all payments for this student with this rate
+      const { error: paymentsError } = await supabase
+        .from('student_payments')
+        .delete()
+        .eq('payment_rate_id', rateId)
+        .eq('student_enrollment_id', assignment.student_enrollment_id);
+
+      if (paymentsError) throw paymentsError;
+
+      // Delete the assignment itself
+      const { error: assignmentError } = await supabase
+        .from('student_rate_assignments')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (assignmentError) throw assignmentError;
+    },
+    onSuccess: () => {
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-students', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-stats', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-all-assignments', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-history', rateId] });
+    },
+    onError: (error) => {
+      console.error('Error deleting rate assignment:', error);
+      toast.error('Error al eliminar el alumno');
     },
   });
 }

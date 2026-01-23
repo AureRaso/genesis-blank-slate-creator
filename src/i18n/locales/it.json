@@ -356,12 +356,26 @@
         "email": "Email",
         "phone": "Telefono",
         "actions": "Azioni",
-        "removeRate": "Rimuovi tariffa",
-        "removeSuccess": "Tariffa rimossa da {{name}}",
-        "removeDialog": {
-          "title": "Rimuovere la tariffa dallo studente?",
-          "description": "Sei sicuro di voler rimuovere questa tariffa da {{name}}? Lo studente non avrà più questa tariffa assegnata.",
-          "confirm": "Rimuovi tariffa"
+        "unlinkStudent": "Scollega",
+        "deleteStudent": "Elimina",
+        "unlinkSuccess": "{{name}} scollegato dalla tariffa",
+        "deleteSuccess": "{{name}} eliminato permanentemente dallo storico",
+        "unlinkDialog": {
+          "title": "Scollegare lo studente dalla tariffa?",
+          "description": "Sei sicuro di voler scollegare {{name}} da questa tariffa? Lo studente rimarrà nello storico ma non avrà più la tariffa attiva.",
+          "confirm": "Scollega"
+        },
+        "deleteDialog": {
+          "title": "Eliminare lo studente dallo storico?",
+          "description": "Sei sicuro di voler eliminare permanentemente {{name}} da questa tariffa?",
+          "warning": "Questa azione eliminerà anche tutti i pagamenti generati per questo studente con questa tariffa. Questa azione NON può essere annullata.",
+          "continue": "Continua"
+        },
+        "deleteConfirmDialog": {
+          "title": "Conferma eliminazione permanente",
+          "description": "Stai per eliminare permanentemente {{name}} e tutti i suoi pagamenti associati a questa tariffa.",
+          "typeInstruction": "Per confermare, digita ELIMINAR nel campo sottostante:",
+          "confirm": "Elimina permanentemente"
         },
         "noStudentsFound": "Nessuno studente trovato",
         "noActiveStudents": "Nessuno studente con questa tariffa attiva",
@@ -439,7 +453,18 @@
         "rateAssigned": "Tariffa assegnata",
         "noRate": "Nessuna tariffa",
         "noStudentsFound": "Nessuno studente trovato con questi criteri",
-        "noStudentsRegistered": "Nessuno studente registrato"
+        "noStudentsRegistered": "Nessuno studente registrato",
+        "filterByType": "Filtra per tipo",
+        "filterTypeAll": "Tutti",
+        "filterTypePlayers": "Giocatori",
+        "filterTypeMinors": "Minori",
+        "filterTypeParents": "Genitori",
+        "filterByHours": "Ore settimanali",
+        "filterHoursAll": "Tutte",
+        "filterHoursNone": "Nessuna lezione",
+        "tableWeeklyHours": "Ore/sett",
+        "showingResults": "Visualizzando {{filtered}} di {{total}} studenti",
+        "clearFilters": "Pulisci filtri"
       },
       "step3": {
         "title": "Conferma Assegnazione",

@@ -1732,12 +1732,26 @@
         "email": "Email",
         "phone": "Teléfono",
         "actions": "Acciones",
-        "removeRate": "Quitar tarifa",
-        "removeSuccess": "Tarifa quitada de {{name}}",
-        "removeDialog": {
-          "title": "¿Quitar tarifa del alumno?",
-          "description": "¿Estás seguro de que quieres quitar esta tarifa de {{name}}? El alumno dejará de tener esta tarifa asignada.",
-          "confirm": "Quitar tarifa"
+        "unlinkStudent": "Desvincular",
+        "deleteStudent": "Eliminar",
+        "unlinkSuccess": "{{name}} desvinculado de la tarifa",
+        "deleteSuccess": "{{name}} eliminado permanentemente del historial",
+        "unlinkDialog": {
+          "title": "¿Desvincular alumno de la tarifa?",
+          "description": "¿Estás seguro de que quieres desvincular a {{name}} de esta tarifa? El alumno quedará en el historial pero dejará de tener la tarifa activa.",
+          "confirm": "Desvincular"
+        },
+        "deleteDialog": {
+          "title": "¿Eliminar alumno del historial?",
+          "description": "¿Estás seguro de que quieres eliminar permanentemente a {{name}} de esta tarifa?",
+          "warning": "Esta acción eliminará también todos los pagos generados para este alumno con esta tarifa. Esta acción NO se puede deshacer.",
+          "continue": "Continuar"
+        },
+        "deleteConfirmDialog": {
+          "title": "Confirmar eliminación permanente",
+          "description": "Vas a eliminar permanentemente a {{name}} y todos sus pagos asociados a esta tarifa.",
+          "typeInstruction": "Para confirmar, escribe ELIMINAR en el campo de abajo:",
+          "confirm": "Eliminar permanentemente"
         },
         "noStudentsFound": "No se encontraron alumnos",
         "noActiveStudents": "No hay alumnos con esta tarifa activa",
@@ -1815,7 +1829,18 @@
         "rateAssigned": "Tarifa asignada",
         "noRate": "Sin tarifa",
         "noStudentsFound": "No se encontraron alumnos con ese criterio",
-        "noStudentsRegistered": "No hay alumnos registrados"
+        "noStudentsRegistered": "No hay alumnos registrados",
+        "filterByType": "Filtrar por tipo",
+        "filterTypeAll": "Todos",
+        "filterTypePlayers": "Jugadores",
+        "filterTypeMinors": "Menores",
+        "filterTypeParents": "Padres",
+        "filterByHours": "Horas semanales",
+        "filterHoursAll": "Todas",
+        "filterHoursNone": "Sin clases",
+        "tableWeeklyHours": "Horas/sem",
+        "showingResults": "Mostrando {{filtered}} de {{total}} alumnos",
+        "clearFilters": "Limpiar filtros"
       },
       "step3": {
         "title": "Confirmar Asignación",

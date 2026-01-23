@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Check, Loader2, Search, Users, Calendar, Euro } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, Users, Calendar, Euro, Clock, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
@@ -50,6 +50,27 @@ export default function AssignRatesPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAssigned, setFilterAssigned] = useState<"all" | "assigned" | "unassigned">("all");
+  const [filterUserType, setFilterUserType] = useState<"all" | "minors" | "parents" | "players">("all");
+  const [filterWeeklyHours, setFilterWeeklyHours] = useState<"all" | "0" | "1-2" | "3-4" | "5+">("all");
+
+  // Check if any filter is active (excluding search)
+  const hasActiveFilters = filterAssigned !== "all" || filterUserType !== "all" || filterWeeklyHours !== "all";
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setFilterAssigned("all");
+    setFilterUserType("all");
+    setFilterWeeklyHours("all");
+  };
+
+  // Helper function to determine user type based on email prefix
+  const getUserType = (email: string): "minors" | "parents" | "players" => {
+    const emailLower = email.toLowerCase();
+    if (emailLower.startsWith("child")) return "minors";
+    if (emailLower.startsWith("guardian")) return "parents";
+    return "players";
+  };
 
   // Get selected rate details
   const selectedRate = useMemo(() => {
@@ -75,18 +96,61 @@ export default function AssignRatesPage() {
         matchesAssignment = !student.current_assignment;
       }
 
-      return matchesSearch && matchesAssignment;
-    });
-  }, [students, searchTerm, filterAssigned]);
+      // User type filter
+      let matchesUserType = true;
+      if (filterUserType !== "all") {
+        matchesUserType = getUserType(student.email) === filterUserType;
+      }
 
-  // Handle select all
+      // Weekly hours filter
+      let matchesWeeklyHours = true;
+      if (filterWeeklyHours !== "all") {
+        const hours = student.weekly_hours;
+        switch (filterWeeklyHours) {
+          case "0":
+            matchesWeeklyHours = hours === 0;
+            break;
+          case "1-2":
+            matchesWeeklyHours = hours > 0 && hours <= 2;
+            break;
+          case "3-4":
+            matchesWeeklyHours = hours > 2 && hours <= 4;
+            break;
+          case "5+":
+            matchesWeeklyHours = hours > 4;
+            break;
+        }
+      }
+
+      return matchesSearch && matchesAssignment && matchesUserType && matchesWeeklyHours;
+    });
+  }, [students, searchTerm, filterAssigned, filterUserType, filterWeeklyHours]);
+
+  // Calculate selection state for filtered students
+  const filteredSelectionState = useMemo(() => {
+    if (filteredStudents.length === 0) return { allSelected: false, someSelected: false, selectedCount: 0 };
+
+    const selectedInFiltered = filteredStudents.filter(s => selectedStudents.has(s.id));
+    const selectedCount = selectedInFiltered.length;
+    const allSelected = selectedCount === filteredStudents.length;
+    const someSelected = selectedCount > 0 && !allSelected;
+
+    return { allSelected, someSelected, selectedCount };
+  }, [filteredStudents, selectedStudents]);
+
+  // Handle select all - only affects filtered students, preserves other selections
   const handleSelectAll = (checked: boolean) => {
+    const newSelected = new Set(selectedStudents);
+
     if (checked) {
-      const allIds = filteredStudents.map((s) => s.id);
-      setSelectedStudents(new Set(allIds));
+      // Add all filtered students to selection
+      filteredStudents.forEach(s => newSelected.add(s.id));
     } else {
-      setSelectedStudents(new Set());
+      // Remove only filtered students from selection
+      filteredStudents.forEach(s => newSelected.delete(s.id));
     }
+
+    setSelectedStudents(newSelected);
   };
 
   // Handle individual selection
@@ -260,31 +324,140 @@ export default function AssignRatesPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={t("paymentRates.assign.step2.searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder={t("paymentRates.assign.step2.searchPlaceholder")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select
+                value={filterAssigned}
+                onValueChange={(v: "all" | "assigned" | "unassigned") =>
+                  setFilterAssigned(v)
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("paymentRates.assign.step2.filterAll")}</SelectItem>
+                  <SelectItem value="assigned">{t("paymentRates.assign.step2.filterAssigned")}</SelectItem>
+                  <SelectItem value="unassigned">{t("paymentRates.assign.step2.filterUnassigned")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select
-              value={filterAssigned}
-              onValueChange={(v: "all" | "assigned" | "unassigned") =>
-                setFilterAssigned(v)
-              }
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("paymentRates.assign.step2.filterAll")}</SelectItem>
-                <SelectItem value="assigned">{t("paymentRates.assign.step2.filterAssigned")}</SelectItem>
-                <SelectItem value="unassigned">{t("paymentRates.assign.step2.filterUnassigned")}</SelectItem>
-              </SelectContent>
-            </Select>
+
+            {/* User Type Filter Chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-gray-500 mr-1 self-center">
+                {t("paymentRates.assign.step2.filterByType")}:
+              </span>
+              <Button
+                variant={filterUserType === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("all")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeAll")}
+              </Button>
+              <Button
+                variant={filterUserType === "players" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("players")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypePlayers")}
+              </Button>
+              <Button
+                variant={filterUserType === "minors" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("minors")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeMinors")}
+              </Button>
+              <Button
+                variant={filterUserType === "parents" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("parents")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeParents")}
+              </Button>
+            </div>
+
+            {/* Weekly Hours Filter Chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-gray-500 mr-1 self-center">
+                {t("paymentRates.assign.step2.filterByHours")}:
+              </span>
+              <Button
+                variant={filterWeeklyHours === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("all")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterHoursAll")}
+              </Button>
+              <Button
+                variant={filterWeeklyHours === "0" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("0")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterHoursNone")}
+              </Button>
+              <Button
+                variant={filterWeeklyHours === "1-2" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("1-2")}
+                className="h-7 text-xs"
+              >
+                1-2h
+              </Button>
+              <Button
+                variant={filterWeeklyHours === "3-4" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("3-4")}
+                className="h-7 text-xs"
+              >
+                3-4h
+              </Button>
+              <Button
+                variant={filterWeeklyHours === "5+" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("5+")}
+                className="h-7 text-xs"
+              >
+                5h+
+              </Button>
+            </div>
+
+            {/* Results counter and clear filters */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-sm text-gray-500">
+                {t("paymentRates.assign.step2.showingResults", {
+                  filtered: filteredStudents.length,
+                  total: students?.length || 0
+                })}
+              </span>
+              {(hasActiveFilters || searchTerm) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-gray-500 hover:text-gray-700 h-7 text-xs"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  {t("paymentRates.assign.step2.clearFilters")}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Students Table */}
@@ -294,15 +467,24 @@ export default function AssignRatesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">
-                      <Checkbox
-                        checked={
-                          filteredStudents.length > 0 &&
-                          filteredStudents.every((s) => selectedStudents.has(s.id))
-                        }
-                        onCheckedChange={handleSelectAll}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={
+                            filteredSelectionState.allSelected
+                              ? true
+                              : filteredSelectionState.someSelected
+                              ? "indeterminate"
+                              : false
+                          }
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                          ({filteredStudents.length})
+                        </span>
+                      </div>
                     </TableHead>
                     <TableHead>{t("paymentRates.assign.step2.tableStudent")}</TableHead>
+                    <TableHead className="text-center">{t("paymentRates.assign.step2.tableWeeklyHours")}</TableHead>
                     <TableHead>{t("paymentRates.assign.step2.tableCurrentRate")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -319,15 +501,23 @@ export default function AssignRatesPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 hidden sm:flex items-center justify-center">
                             <span className="text-sm font-medium text-primary">
                               {student.full_name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div>
                             <p className="font-medium">{student.full_name}</p>
-                            <p className="text-xs text-gray-500">{student.email}</p>
+                            <p className="text-xs text-gray-500 hidden sm:block">{student.email}</p>
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <span className={`text-sm font-medium ${student.weekly_hours === 0 ? 'text-gray-400' : 'text-gray-700'}`}>
+                            {student.weekly_hours}h
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>

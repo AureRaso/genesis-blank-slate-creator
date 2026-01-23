@@ -356,12 +356,26 @@
         "email": "Email",
         "phone": "Phone",
         "actions": "Actions",
-        "removeRate": "Remove rate",
-        "removeSuccess": "Rate removed from {{name}}",
-        "removeDialog": {
-          "title": "Remove rate from student?",
-          "description": "Are you sure you want to remove this rate from {{name}}? The student will no longer have this rate assigned.",
-          "confirm": "Remove rate"
+        "unlinkStudent": "Unlink",
+        "deleteStudent": "Delete",
+        "unlinkSuccess": "{{name}} unlinked from rate",
+        "deleteSuccess": "{{name}} permanently deleted from history",
+        "unlinkDialog": {
+          "title": "Unlink student from rate?",
+          "description": "Are you sure you want to unlink {{name}} from this rate? The student will remain in history but will no longer have the active rate.",
+          "confirm": "Unlink"
+        },
+        "deleteDialog": {
+          "title": "Delete student from history?",
+          "description": "Are you sure you want to permanently delete {{name}} from this rate?",
+          "warning": "This action will also delete all payments generated for this student with this rate. This action CANNOT be undone.",
+          "continue": "Continue"
+        },
+        "deleteConfirmDialog": {
+          "title": "Confirm permanent deletion",
+          "description": "You are about to permanently delete {{name}} and all their payments associated with this rate.",
+          "typeInstruction": "To confirm, type ELIMINAR in the field below:",
+          "confirm": "Delete permanently"
         },
         "noStudentsFound": "No students found",
         "noActiveStudents": "No students with this active rate",
@@ -439,7 +453,18 @@
         "rateAssigned": "Rate assigned",
         "noRate": "No rate",
         "noStudentsFound": "No students found with that criteria",
-        "noStudentsRegistered": "No students registered"
+        "noStudentsRegistered": "No students registered",
+        "filterByType": "Filter by type",
+        "filterTypeAll": "All",
+        "filterTypePlayers": "Players",
+        "filterTypeMinors": "Minors",
+        "filterTypeParents": "Parents",
+        "filterByHours": "Weekly hours",
+        "filterHoursAll": "All",
+        "filterHoursNone": "No classes",
+        "tableWeeklyHours": "Hours/wk",
+        "showingResults": "Showing {{filtered}} of {{total}} students",
+        "clearFilters": "Clear filters"
       },
       "step3": {
         "title": "Confirm Assignment",

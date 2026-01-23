@@ -20,6 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UserMinus,
+  Trash2,
+  Unlink,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { Card } from "@/components/ui/card";
@@ -58,7 +60,8 @@ import {
   useRateStats,
   useRatePaymentHistory,
   useRateAllAssignments,
-  useRemoveRateAssignment,
+  useUnlinkRateAssignment,
+  useDeleteRateAssignment,
   RateDetailStudent,
 } from "@/hooks/usePaymentRateDetail";
 import { toast } from "sonner";
@@ -148,15 +151,21 @@ export default function PaymentRateDetailPage() {
   const [historyFilterMonth, setHistoryFilterMonth] = useState<string>(getCurrentMonth());
   const [historyFilterYear, setHistoryFilterYear] = useState<string>(getCurrentYear());
 
-  // Remove rate confirmation dialog state
-  const [studentToRemove, setStudentToRemove] = useState<RateDetailStudent | null>(null);
+  // Unlink rate confirmation dialog state
+  const [studentToUnlink, setStudentToUnlink] = useState<RateDetailStudent | null>(null);
+
+  // Delete rate confirmation dialog states (two-step confirmation)
+  const [studentToDelete, setStudentToDelete] = useState<RateDetailStudent | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
   const { data: rate, isLoading: isLoadingRate } = usePaymentRate(rateId);
   const { data: students, isLoading: isLoadingStudents } = useRateStudents(rateId);
   const { data: stats, isLoading: isLoadingStats } = useRateStats(rateId);
   const { data: paymentHistory, isLoading: isLoadingHistory } = useRatePaymentHistory(rateId);
   const { data: allAssignments } = useRateAllAssignments(rateId);
-  const removeRateAssignment = useRemoveRateAssignment(rateId);
+  const unlinkRateAssignment = useUnlinkRateAssignment(rateId);
+  const deleteRateAssignment = useDeleteRateAssignment(rateId);
 
   const isLoading = isLoadingRate || isLoadingStats;
 
@@ -227,17 +236,45 @@ export default function PaymentRateDetailPage() {
     return `34${digits}`;
   };
 
-  // Handle remove rate assignment confirmation
-  const handleConfirmRemoveRate = async () => {
-    if (!studentToRemove) return;
+  // Handle unlink rate assignment confirmation (soft action)
+  const handleConfirmUnlink = async () => {
+    if (!studentToUnlink) return;
 
     try {
-      await removeRateAssignment.mutateAsync(studentToRemove.assignment_id);
-      toast.success(t('paymentRates.detail.students.removeSuccess', { name: studentToRemove.full_name }));
-      setStudentToRemove(null);
+      await unlinkRateAssignment.mutateAsync(studentToUnlink.assignment_id);
+      toast.success(t('paymentRates.detail.students.unlinkSuccess', { name: studentToUnlink.full_name }));
+      setStudentToUnlink(null);
     } catch (error) {
       // Error is handled in the hook
     }
+  };
+
+  // Handle first step of delete (open second confirmation dialog)
+  const handleOpenDeleteConfirmation = () => {
+    if (!studentToDelete) return;
+    setShowDeleteConfirmation(true);
+  };
+
+  // Handle final delete confirmation (hard delete)
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete || deleteConfirmationText !== 'ELIMINAR') return;
+
+    try {
+      await deleteRateAssignment.mutateAsync(studentToDelete.assignment_id);
+      toast.success(t('paymentRates.detail.students.deleteSuccess', { name: studentToDelete.full_name }));
+      setStudentToDelete(null);
+      setShowDeleteConfirmation(false);
+      setDeleteConfirmationText("");
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
+  // Reset delete state when closing dialogs
+  const handleCloseDeleteDialog = () => {
+    setStudentToDelete(null);
+    setShowDeleteConfirmation(false);
+    setDeleteConfirmationText("");
   };
 
   // Calculate collection rate
@@ -584,11 +621,20 @@ export default function PaymentRateDetailPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setStudentToRemove(student)}
+                              onClick={() => setStudentToUnlink(student)}
+                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                            >
+                              <Unlink className="h-4 w-4 mr-1" />
+                              {t('paymentRates.detail.students.unlinkStudent')}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setStudentToDelete(student)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                             >
-                              <UserMinus className="h-4 w-4 mr-1" />
-                              {t('paymentRates.detail.students.removeRate')}
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              {t('paymentRates.detail.students.deleteStudent')}
                             </Button>
                           </div>
                         </div>
@@ -638,15 +684,26 @@ export default function PaymentRateDetailPage() {
                         </TableCell>
                         <TableCell>{formatDate(student.assignment_start_date)}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setStudentToRemove(student)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title={t('paymentRates.detail.students.removeRate')}
-                          >
-                            <UserMinus className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setStudentToUnlink(student)}
+                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                              title={t('paymentRates.detail.students.unlinkStudent')}
+                            >
+                              <Unlink className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setStudentToDelete(student)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title={t('paymentRates.detail.students.deleteStudent')}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1202,26 +1259,91 @@ export default function PaymentRateDetailPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Remove Rate Confirmation Dialog */}
-      <AlertDialog open={!!studentToRemove} onOpenChange={(open) => !open && setStudentToRemove(null)}>
+      {/* Unlink Student Confirmation Dialog (soft action - amber) */}
+      <AlertDialog open={!!studentToUnlink} onOpenChange={(open) => !open && setStudentToUnlink(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('paymentRates.detail.students.removeDialog.title')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('paymentRates.detail.students.unlinkDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('paymentRates.detail.students.removeDialog.description', { name: studentToRemove?.full_name })}
+              {t('paymentRates.detail.students.unlinkDialog.description', { name: studentToUnlink?.full_name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmRemoveRate}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={removeRateAssignment.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmUnlink();
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+              disabled={unlinkRateAssignment.isPending}
             >
-              {removeRateAssignment.isPending ? (
+              {unlinkRateAssignment.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              {t('paymentRates.detail.students.removeDialog.confirm')}
+              {t('paymentRates.detail.students.unlinkDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Student First Confirmation Dialog (hard delete - red) */}
+      <AlertDialog open={!!studentToDelete && !showDeleteConfirmation} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.students.deleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>{t('paymentRates.detail.students.deleteDialog.description', { name: studentToDelete?.full_name })}</p>
+              <p className="text-red-600 font-medium">{t('paymentRates.detail.students.deleteDialog.warning')}</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleOpenDeleteConfirmation();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('paymentRates.detail.students.deleteDialog.continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Student Second Confirmation Dialog (requires typing ELIMINAR) */}
+      <AlertDialog open={showDeleteConfirmation} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.students.deleteConfirmDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>{t('paymentRates.detail.students.deleteConfirmDialog.description', { name: studentToDelete?.full_name })}</p>
+              <p className="text-sm text-gray-600">{t('paymentRates.detail.students.deleteConfirmDialog.typeInstruction')}</p>
+              <Input
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value.toUpperCase())}
+                placeholder="ELIMINAR"
+                className="font-mono text-center tracking-widest"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowDeleteConfirmation(false); setDeleteConfirmationText(""); }}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteConfirmationText !== 'ELIMINAR' || deleteRateAssignment.isPending}
+            >
+              {deleteRateAssignment.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {t('paymentRates.detail.students.deleteConfirmDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

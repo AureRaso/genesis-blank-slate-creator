@@ -31,6 +31,7 @@ export interface StudentWithAssignment {
   phone: string | null;
   club_id: string;
   current_assignment?: RateAssignment | null;
+  weekly_hours: number; // Calculated from class_participants and programmed_classes
 }
 
 export interface CreateAssignmentInput {
@@ -45,6 +46,61 @@ export interface BulkAssignmentInput {
   payment_rate_id: string;
   start_date: string;
   end_date?: string | null;
+}
+
+// Helper function to calculate weekly hours from class participations
+// Groups classes by day_of_week + start_time to avoid counting duplicate sessions
+function calculateWeeklyHours(
+  participations: Array<{
+    programmed_class: {
+      id: string;
+      duration_minutes: number;
+      days_of_week: string[];
+      is_active: boolean;
+      recurrence_type: string | null;
+      start_date: string | null;
+      end_date: string | null;
+      start_time: string | null;
+    } | null;
+  }>
+): number {
+  let totalMinutes = 0;
+
+  // Use a Set to track unique class slots (day + time) to avoid counting duplicate sessions
+  // Multiple classes on the same day/time are considered the same weekly slot
+  const processedSlots = new Set<string>();
+
+  participations.forEach((p) => {
+    const programmedClass = p.programmed_class;
+    if (!programmedClass || !programmedClass.is_active) return;
+
+    const durationMinutes = programmedClass.duration_minutes || 60;
+    const recurrenceType = programmedClass.recurrence_type || 'weekly';
+    const startTime = programmedClass.start_time || '00:00';
+
+    // For each day of the week this class occurs
+    const daysOfWeek = programmedClass.days_of_week || [];
+    daysOfWeek.forEach(day => {
+      // Create a unique key for this time slot (day + time)
+      const slotKey = `${day}-${startTime}`;
+
+      // Skip if we've already counted this slot
+      if (processedSlots.has(slotKey)) return;
+      processedSlots.add(slotKey);
+
+      // Count based on recurrence type
+      if (recurrenceType === 'weekly') {
+        totalMinutes += durationMinutes;
+      } else if (recurrenceType === 'biweekly') {
+        // Biweekly = every 2 weeks, so average per week is half
+        totalMinutes += durationMinutes / 2;
+      }
+      // 'once' classes are not counted as they're not weekly recurring
+    });
+  });
+
+  // Convert to hours, rounded to 1 decimal place
+  return Math.round((totalMinutes / 60) * 10) / 10;
 }
 
 // Fetch students with their current rate assignment
@@ -80,15 +136,45 @@ export function useStudentsWithAssignments(clubId?: string) {
 
       if (assignmentsError) throw assignmentsError;
 
+      // Fetch class participations for these students to calculate weekly hours
+      const { data: classParticipants, error: participantsError } = await supabase
+        .from('class_participants')
+        .select(`
+          student_enrollment_id,
+          programmed_class:programmed_classes(
+            id,
+            duration_minutes,
+            days_of_week,
+            is_active,
+            recurrence_type,
+            start_date,
+            end_date,
+            start_time
+          )
+        `)
+        .in('student_enrollment_id', studentIds)
+        .eq('status', 'active');
+
+      if (participantsError) throw participantsError;
+
       // Map assignments to students
       const assignmentsByStudent = new Map<string, RateAssignment>();
       assignments?.forEach(a => {
         assignmentsByStudent.set(a.student_enrollment_id, a as RateAssignment);
       });
 
+      // Group class participations by student
+      const participationsByStudent = new Map<string, typeof classParticipants>();
+      classParticipants?.forEach(p => {
+        const existing = participationsByStudent.get(p.student_enrollment_id) || [];
+        existing.push(p);
+        participationsByStudent.set(p.student_enrollment_id, existing);
+      });
+
       return students.map(student => ({
         ...student,
         current_assignment: assignmentsByStudent.get(student.id) || null,
+        weekly_hours: calculateWeeklyHours(participationsByStudent.get(student.id) || []),
       })) as StudentWithAssignment[];
     },
     enabled: !!targetClubId,
