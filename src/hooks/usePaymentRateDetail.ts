@@ -1,10 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { PaymentRate } from "./usePaymentRates";
 
 // Types
 export interface RateDetailStudent {
   id: string;
+  assignment_id: string;
   full_name: string;
   email: string;
   phone: string | null;
@@ -87,6 +89,7 @@ export function useRateStudents(rateId: string | undefined) {
 
       return (data || []).map(assignment => ({
         id: assignment.student_enrollment?.id || '',
+        assignment_id: assignment.id,
         full_name: assignment.student_enrollment?.full_name || 'Sin nombre',
         email: assignment.student_enrollment?.email || '',
         phone: assignment.student_enrollment?.phone || null,
@@ -249,5 +252,34 @@ export function useRateAllAssignments(rateId: string | undefined) {
       return data || [];
     },
     enabled: !!rateId,
+  });
+}
+
+// Hook to remove a rate assignment (change status to 'finalizada')
+export function useRemoveRateAssignment(rateId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const { error } = await supabase
+        .from('student_rate_assignments')
+        .update({
+          status: 'finalizada',
+          end_date: new Date().toISOString().split('T')[0],
+        })
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-students', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-stats', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-all-assignments', rateId] });
+    },
+    onError: (error) => {
+      console.error('Error removing rate assignment:', error);
+      toast.error('Error al quitar la tarifa');
+    },
   });
 }

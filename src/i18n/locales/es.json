@@ -1731,6 +1731,14 @@
         "student": "Alumno",
         "email": "Email",
         "phone": "Teléfono",
+        "actions": "Acciones",
+        "removeRate": "Quitar tarifa",
+        "removeSuccess": "Tarifa quitada de {{name}}",
+        "removeDialog": {
+          "title": "¿Quitar tarifa del alumno?",
+          "description": "¿Estás seguro de que quieres quitar esta tarifa de {{name}}? El alumno dejará de tener esta tarifa asignada.",
+          "confirm": "Quitar tarifa"
+        },
         "noStudentsFound": "No se encontraron alumnos",
         "noActiveStudents": "No hay alumnos con esta tarifa activa",
         "assignStudents": "Asignar Alumnos"

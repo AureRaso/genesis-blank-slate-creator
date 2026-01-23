@@ -18,7 +18,8 @@ import {
   X,
   PieChart,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  UserMinus,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { Card } from "@/components/ui/card";
@@ -42,12 +43,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   usePaymentRate,
   useRateStudents,
   useRateStats,
   useRatePaymentHistory,
   useRateAllAssignments,
+  useRemoveRateAssignment,
+  RateDetailStudent,
 } from "@/hooks/usePaymentRateDetail";
+import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
   activa: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -134,11 +148,15 @@ export default function PaymentRateDetailPage() {
   const [historyFilterMonth, setHistoryFilterMonth] = useState<string>(getCurrentMonth());
   const [historyFilterYear, setHistoryFilterYear] = useState<string>(getCurrentYear());
 
+  // Remove rate confirmation dialog state
+  const [studentToRemove, setStudentToRemove] = useState<RateDetailStudent | null>(null);
+
   const { data: rate, isLoading: isLoadingRate } = usePaymentRate(rateId);
   const { data: students, isLoading: isLoadingStudents } = useRateStudents(rateId);
   const { data: stats, isLoading: isLoadingStats } = useRateStats(rateId);
   const { data: paymentHistory, isLoading: isLoadingHistory } = useRatePaymentHistory(rateId);
   const { data: allAssignments } = useRateAllAssignments(rateId);
+  const removeRateAssignment = useRemoveRateAssignment(rateId);
 
   const isLoading = isLoadingRate || isLoadingStats;
 
@@ -207,6 +225,19 @@ export default function PaymentRateDetailPage() {
       return digits;
     }
     return `34${digits}`;
+  };
+
+  // Handle remove rate assignment confirmation
+  const handleConfirmRemoveRate = async () => {
+    if (!studentToRemove) return;
+
+    try {
+      await removeRateAssignment.mutateAsync(studentToRemove.assignment_id);
+      toast.success(t('paymentRates.detail.students.removeSuccess', { name: studentToRemove.full_name }));
+      setStudentToRemove(null);
+    } catch (error) {
+      // Error is handled in the hook
+    }
   };
 
   // Calculate collection rate
@@ -538,17 +569,28 @@ export default function PaymentRateDetailPage() {
                           <p className="text-xs text-gray-400 mt-1">
                             {t('paymentRates.detail.students.since')} {formatDate(student.assignment_start_date)}
                           </p>
-                          {student.phone && (
-                            <a
-                              href={`https://wa.me/${formatPhoneForWhatsApp(student.phone)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
+                            {student.phone && (
+                              <a
+                                href={`https://wa.me/${formatPhoneForWhatsApp(student.phone)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
+                              >
+                                <WhatsAppIcon className="h-4 w-4" />
+                                <span>{t('paymentRates.detail.students.openWhatsApp')}</span>
+                              </a>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setStudentToRemove(student)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                             >
-                              <WhatsAppIcon className="h-4 w-4" />
-                              <span>{t('paymentRates.detail.students.openWhatsApp')}</span>
-                            </a>
-                          )}
+                              <UserMinus className="h-4 w-4 mr-1" />
+                              {t('paymentRates.detail.students.removeRate')}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -563,6 +605,7 @@ export default function PaymentRateDetailPage() {
                       <TableHead>{t('paymentRates.detail.students.email')}</TableHead>
                       <TableHead>{t('paymentRates.detail.students.phone')}</TableHead>
                       <TableHead>{t('paymentRates.detail.students.since')}</TableHead>
+                      <TableHead className="text-right">{t('paymentRates.detail.students.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -594,6 +637,17 @@ export default function PaymentRateDetailPage() {
                           )}
                         </TableCell>
                         <TableCell>{formatDate(student.assignment_start_date)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setStudentToRemove(student)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title={t('paymentRates.detail.students.removeRate')}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1147,6 +1201,31 @@ export default function PaymentRateDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Remove Rate Confirmation Dialog */}
+      <AlertDialog open={!!studentToRemove} onOpenChange={(open) => !open && setStudentToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('paymentRates.detail.students.removeDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('paymentRates.detail.students.removeDialog.description', { name: studentToRemove?.full_name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemoveRate}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={removeRateAssignment.isPending}
+            >
+              {removeRateAssignment.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {t('paymentRates.detail.students.removeDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

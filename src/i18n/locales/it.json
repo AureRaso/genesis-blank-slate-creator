@@ -355,6 +355,14 @@
         "student": "Studente",
         "email": "Email",
         "phone": "Telefono",
+        "actions": "Azioni",
+        "removeRate": "Rimuovi tariffa",
+        "removeSuccess": "Tariffa rimossa da {{name}}",
+        "removeDialog": {
+          "title": "Rimuovere la tariffa dallo studente?",
+          "description": "Sei sicuro di voler rimuovere questa tariffa da {{name}}? Lo studente non avrà più questa tariffa assegnata.",
+          "confirm": "Rimuovi tariffa"
+        },
         "noStudentsFound": "Nessuno studente trovato",
         "noActiveStudents": "Nessuno studente con questa tariffa attiva",
         "assignStudents": "Assegna Studenti"

@@ -355,6 +355,14 @@
         "student": "Student",
         "email": "Email",
         "phone": "Phone",
+        "actions": "Actions",
+        "removeRate": "Remove rate",
+        "removeSuccess": "Rate removed from {{name}}",
+        "removeDialog": {
+          "title": "Remove rate from student?",
+          "description": "Are you sure you want to remove this rate from {{name}}? The student will no longer have this rate assigned.",
+          "confirm": "Remove rate"
+        },
         "noStudentsFound": "No students found",
         "noActiveStudents": "No students with this active rate",
         "assignStudents": "Assign Students"
