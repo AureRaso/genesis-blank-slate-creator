@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { Capacitor } from '@capacitor/core';
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
@@ -163,7 +164,7 @@ function App() {
   return (
     <Router>
         <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/auth" replace /> : <LandingPage />} />
               <Route path="/landing" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
