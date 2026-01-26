@@ -51,7 +51,7 @@ export default function AssignRatesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAssigned, setFilterAssigned] = useState<"all" | "assigned" | "unassigned">("all");
   const [filterUserType, setFilterUserType] = useState<"all" | "minors" | "parents" | "players">("all");
-  const [filterWeeklyHours, setFilterWeeklyHours] = useState<"all" | "0" | "1-2" | "3-4" | "5+">("all");
+  const [filterWeeklyHours, setFilterWeeklyHours] = useState<"all" | "0" | "1" | "2" | "3-4" | "5+">("all");
 
   // Check if any filter is active (excluding search)
   const hasActiveFilters = filterAssigned !== "all" || filterUserType !== "all" || filterWeeklyHours !== "all";
@@ -110,14 +110,17 @@ export default function AssignRatesPage() {
           case "0":
             matchesWeeklyHours = hours === 0;
             break;
-          case "1-2":
-            matchesWeeklyHours = hours > 0 && hours <= 2;
+          case "1":
+            matchesWeeklyHours = hours > 0 && hours <= 1.5;
+            break;
+          case "2":
+            matchesWeeklyHours = hours > 1.5 && hours <= 2.5;
             break;
           case "3-4":
-            matchesWeeklyHours = hours > 2 && hours <= 4;
+            matchesWeeklyHours = hours > 2.5 && hours <= 4.5;
             break;
           case "5+":
-            matchesWeeklyHours = hours > 4;
+            matchesWeeklyHours = hours > 4.5;
             break;
         }
       }
@@ -516,12 +519,20 @@ export default function AssignRatesPage() {
                 {t("paymentRates.assign.step2.filterHoursNone")}
               </Button>
               <Button
-                variant={filterWeeklyHours === "1-2" ? "default" : "outline"}
+                variant={filterWeeklyHours === "1" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilterWeeklyHours("1-2")}
+                onClick={() => setFilterWeeklyHours("1")}
                 className="h-7 text-xs"
               >
-                1-2h
+                1h
+              </Button>
+              <Button
+                variant={filterWeeklyHours === "2" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterWeeklyHours("2")}
+                className="h-7 text-xs"
+              >
+                2h
               </Button>
               <Button
                 variant={filterWeeklyHours === "3-4" ? "default" : "outline"}
