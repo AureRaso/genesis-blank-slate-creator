@@ -569,8 +569,13 @@ export default function AdminPaymentControlPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => generateMonthlyPayments.mutate()}
-            disabled={generateMonthlyPayments.isPending}
+            onClick={() => {
+              // Pass the selected month (0-indexed) and year to the mutation
+              const monthIndex = filterMonth !== "all" ? parseInt(filterMonth) - 1 : new Date().getMonth();
+              const yearNum = filterYear !== "all" ? parseInt(filterYear) : new Date().getFullYear();
+              generateMonthlyPayments.mutate({ month: monthIndex, year: yearNum });
+            }}
+            disabled={generateMonthlyPayments.isPending || filterMonth === "all" || filterYear === "all"}
           >
             {generateMonthlyPayments.isPending ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

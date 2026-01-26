@@ -1840,7 +1840,9 @@
         "filterHoursNone": "Sin clases",
         "tableWeeklyHours": "Horas/sem",
         "showingResults": "Mostrando {{filtered}} de {{total}} alumnos",
-        "clearFilters": "Limpiar filtros"
+        "clearFilters": "Limpiar filtros",
+        "suggested": "Sugerida",
+        "assignSuggested": "Asignar sugeridas ({{count}})"
       },
       "step3": {
         "title": "Confirmar Asignación",

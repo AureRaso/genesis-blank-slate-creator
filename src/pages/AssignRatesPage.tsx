@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Check, Loader2, Search, Users, Calendar, Euro, Clock, X } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, Users, Calendar, Euro, Clock, X, Sparkles, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
@@ -125,6 +125,91 @@ export default function AssignRatesPage() {
       return matchesSearch && matchesAssignment && matchesUserType && matchesWeeklyHours;
     });
   }, [students, searchTerm, filterAssigned, filterUserType, filterWeeklyHours]);
+
+  // ============================================================
+  // AUTO-SUGGESTION FEATURE (isolated for easy removal)
+  // ============================================================
+
+  // Extract hours range from rate name (e.g., "Tarifa 1h" -> { min: 0.5, max: 1.5 })
+  const extractHoursFromRateName = (rateName: string): { min: number; max: number } | null => {
+    // Match patterns like "1h", "2h", "1.5h", "1-2h", "1 hora", "2 horas"
+    const singleHourMatch = rateName.match(/(\d+(?:\.\d+)?)\s*h(?:ora)?s?\b/i);
+    const rangeMatch = rateName.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*h/i);
+
+    if (rangeMatch) {
+      const minHours = parseFloat(rangeMatch[1]);
+      const maxHours = parseFloat(rangeMatch[2]);
+      return { min: minHours, max: maxHours };
+    }
+
+    if (singleHourMatch) {
+      const hours = parseFloat(singleHourMatch[1]);
+      // Create a range around the value (±0.5h tolerance)
+      return { min: Math.max(0, hours - 0.5), max: hours + 0.5 };
+    }
+
+    return null;
+  };
+
+  // Find suggested rate for a student based on their weekly hours
+  const getSuggestedRate = (weeklyHours: number): PaymentRate | null => {
+    if (!rates || rates.length === 0 || weeklyHours === 0) return null;
+
+    for (const rate of rates) {
+      const hoursRange = extractHoursFromRateName(rate.name);
+      if (hoursRange && weeklyHours >= hoursRange.min && weeklyHours <= hoursRange.max) {
+        return rate;
+      }
+    }
+
+    return null;
+  };
+
+  // Get filtered students with suggestions
+  const filteredStudentsWithSuggestions = useMemo(() => {
+    return filteredStudents.map(student => ({
+      ...student,
+      suggestedRate: getSuggestedRate(student.weekly_hours),
+    }));
+  }, [filteredStudents, rates]);
+
+  // Count students without rate but with suggestion (for bulk action)
+  const studentsWithSuggestionsNoRate = useMemo(() => {
+    if (!students || !rates) return [];
+    return students
+      .filter(s => !s.current_assignment)
+      .map(s => ({ ...s, suggestedRate: getSuggestedRate(s.weekly_hours) }))
+      .filter(s => s.suggestedRate);
+  }, [students, rates]);
+
+  // Handle bulk assign suggested rates
+  const handleAssignSuggested = async () => {
+    if (studentsWithSuggestionsNoRate.length === 0) return;
+
+    // Group students by suggested rate
+    const studentsByRate = new Map<string, string[]>();
+    studentsWithSuggestionsNoRate.forEach(student => {
+      if (student.suggestedRate) {
+        const rateId = student.suggestedRate.id;
+        const existing = studentsByRate.get(rateId) || [];
+        existing.push(student.id);
+        studentsByRate.set(rateId, existing);
+      }
+    });
+
+    // Assign each group
+    for (const [rateId, studentIds] of studentsByRate) {
+      await bulkAssign.mutateAsync({
+        student_enrollment_ids: studentIds,
+        payment_rate_id: rateId,
+        start_date: startDate,
+        end_date: endDate || null,
+      });
+    }
+  };
+  // ============================================================
+  // END AUTO-SUGGESTION FEATURE
+  // ============================================================
 
   // Calculate selection state for filtered students
   const filteredSelectionState = useMemo(() => {
@@ -311,15 +396,33 @@ export default function AssignRatesPage() {
       {/* Step 2: Select Students */}
       {selectedRateId && (
         <Card className="p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
-              2
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                2
+              </div>
+              <h2 className="text-lg font-semibold">{t("paymentRates.assign.step2.title")}</h2>
+              {selectedStudents.size > 0 && (
+                <Badge className="ml-2 bg-primary">
+                  {t("paymentRates.assign.step2.selectedCount", { count: selectedStudents.size })}
+                </Badge>
+              )}
             </div>
-            <h2 className="text-lg font-semibold">{t("paymentRates.assign.step2.title")}</h2>
-            {selectedStudents.size > 0 && (
-              <Badge className="ml-2 bg-primary">
-                {t("paymentRates.assign.step2.selectedCount", { count: selectedStudents.size })}
-              </Badge>
+            {/* Auto-suggestion bulk action button */}
+            {studentsWithSuggestionsNoRate.length > 0 && (
+              <Button
+                onClick={handleAssignSuggested}
+                disabled={bulkAssign.isPending}
+                variant="outline"
+                className="bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
+              >
+                {bulkAssign.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Zap className="h-4 w-4 mr-2" />
+                )}
+                {t("paymentRates.assign.step2.assignSuggested", { count: studentsWithSuggestionsNoRate.length })}
+              </Button>
             )}
           </div>
 
@@ -489,7 +592,7 @@ export default function AssignRatesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredStudents.map((student) => (
+                  {filteredStudentsWithSuggestions.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell>
                         <Checkbox
@@ -521,15 +624,27 @@ export default function AssignRatesPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {student.current_assignment ? (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                            {student.current_assignment.payment_rate?.name || t("paymentRates.assign.step2.rateAssigned")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-gray-50 text-gray-500">
-                            {t("paymentRates.assign.step2.noRate")}
-                          </Badge>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {student.current_assignment ? (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">
+                              {student.current_assignment.payment_rate?.name || t("paymentRates.assign.step2.rateAssigned")}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-500 w-fit">
+                              {t("paymentRates.assign.step2.noRate")}
+                            </Badge>
+                          )}
+                          {/* Suggestion badge - only show if no current assignment and has suggestion */}
+                          {!student.current_assignment && student.suggestedRate && (
+                            <Badge
+                              variant="outline"
+                              className="bg-violet-50 text-violet-700 border-violet-200 w-fit text-xs"
+                            >
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              {t("paymentRates.assign.step2.suggested")}: {student.suggestedRate.name}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

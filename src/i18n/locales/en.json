@@ -464,7 +464,9 @@
         "filterHoursNone": "No classes",
         "tableWeeklyHours": "Hours/wk",
         "showingResults": "Showing {{filtered}} of {{total}} students",
-        "clearFilters": "Clear filters"
+        "clearFilters": "Clear filters",
+        "suggested": "Suggested",
+        "assignSuggested": "Assign suggested ({{count}})"
       },
       "step3": {
         "title": "Confirm Assignment",

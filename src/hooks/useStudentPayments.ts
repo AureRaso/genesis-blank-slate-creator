@@ -366,19 +366,22 @@ export function useGeneratePayment() {
   });
 }
 
-// Generate payments for all active assignments in a club for current period
+// Generate payments for all active assignments in a club for a specific period
 export function useGenerateMonthlyPayments() {
   const queryClient = useQueryClient();
   const { effectiveClubId } = useAuth();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ month, year }: { month?: number; year?: number } = {}) => {
       if (!effectiveClubId) throw new Error('No club selected');
 
-      // Get current month period
+      // Use provided month/year or default to current
       const now = new Date();
-      const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const targetMonth = month !== undefined ? month : now.getMonth();
+      const targetYear = year !== undefined ? year : now.getFullYear();
+
+      const periodStart = new Date(targetYear, targetMonth, 1);
+      const periodEnd = new Date(targetYear, targetMonth + 1, 0);
 
       const periodStartStr = periodStart.toISOString().split('T')[0];
       const periodEndStr = periodEnd.toISOString().split('T')[0];
