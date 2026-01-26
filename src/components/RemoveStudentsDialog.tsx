@@ -77,6 +77,7 @@ export function RemoveStudentsDialog({
         if (participant) {
           console.log('📤 Calling bulkRemoveMutation for:', {
             student_enrollment_id: participant.student_enrollment_id,
+            class_id: classId,
             club_id: clubId,
             class_name: className,
             class_start_time: classStartTime,
@@ -84,6 +85,7 @@ export function RemoveStudentsDialog({
 
           await bulkRemoveMutation.mutateAsync({
             student_enrollment_id: participant.student_enrollment_id,
+            class_id: classId,
             club_id: clubId,
             class_name: className,
             class_start_time: classStartTime,

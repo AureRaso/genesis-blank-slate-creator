@@ -83,6 +83,7 @@ const BulkEnrollStudentSearch = ({
     try {
       await bulkEnrollMutation.mutateAsync({
         student_enrollment_id: studentEnrollmentId,
+        class_id: classId,
         club_id: clubId,
         class_name: className,
         class_start_time: classStartTime,

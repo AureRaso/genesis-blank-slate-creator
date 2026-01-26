@@ -142,6 +142,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
         const paymentInfo = paymentData[studentId] || {};
         await bulkEnrollMutation.mutateAsync({
           student_enrollment_id: studentId,
+          class_id: cls.id,
           club_id: cls.club_id,
           class_name: cls.name,
           class_start_time: cls.start_time,
@@ -260,6 +261,7 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
                           try {
                             await bulkRemoveMutation.mutateAsync({
                               student_enrollment_id: participant.student_enrollment_id,
+                              class_id: cls.id,
                               club_id: cls.club_id,
                               class_name: cls.name,
                               class_start_time: cls.start_time
