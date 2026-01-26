@@ -28,7 +28,6 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '6fde47fc-c531-4d5e-a54a-025fcd2a4f9c', // X El Padel Lepe
   '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
-  'a66741f0-7ac3-4c1b-a7ca-5601959527aa', // KM Pádel
   'e4ca00ff-63af-4d8c-a5bf-db67bc382c6a', // Sportres Padel Academy
 ];
 
