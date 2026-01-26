@@ -360,6 +360,12 @@
         "deleteStudent": "Delete",
         "unlinkSuccess": "{{name}} unlinked from rate",
         "deleteSuccess": "{{name}} permanently deleted from history",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} selected",
+        "bulkUnlink": "Unlink",
+        "bulkDelete": "Delete",
+        "bulkUnlinkSuccess": "{{count}} students unlinked from rate",
+        "bulkDeleteSuccess": "{{count}} students permanently deleted",
         "unlinkDialog": {
           "title": "Unlink student from rate?",
           "description": "Are you sure you want to unlink {{name}} from this rate? The student will remain in history but will no longer have the active rate.",
@@ -374,6 +380,23 @@
         "deleteConfirmDialog": {
           "title": "Confirm permanent deletion",
           "description": "You are about to permanently delete {{name}} and all their payments associated with this rate.",
+          "typeInstruction": "To confirm, type ELIMINAR in the field below:",
+          "confirm": "Delete permanently"
+        },
+        "bulkUnlinkDialog": {
+          "title": "Unlink selected students?",
+          "description": "Are you sure you want to unlink {{count}} students from this rate? The students will remain in history but will no longer have the active rate.",
+          "confirm": "Unlink all"
+        },
+        "bulkDeleteDialog": {
+          "title": "Delete students from history?",
+          "description": "Are you sure you want to permanently delete {{count}} students from this rate?",
+          "warning": "This action will also delete all payments generated for these students with this rate. This action CANNOT be undone.",
+          "continue": "Continue"
+        },
+        "bulkDeleteConfirmDialog": {
+          "title": "Confirm permanent deletion",
+          "description": "You are about to permanently delete {{count}} students and all their payments associated with this rate.",
           "typeInstruction": "To confirm, type ELIMINAR in the field below:",
           "confirm": "Delete permanently"
         },

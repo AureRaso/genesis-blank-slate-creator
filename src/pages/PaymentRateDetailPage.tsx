@@ -28,6 +28,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -147,6 +148,9 @@ export default function PaymentRateDetailPage() {
   const [assignmentSearch, setAssignmentSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Multi-select state for students
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+
   // Payment history filter states - default to current month/year
   const [historyFilterMonth, setHistoryFilterMonth] = useState<string>(getCurrentMonth());
   const [historyFilterYear, setHistoryFilterYear] = useState<string>(getCurrentYear());
@@ -158,6 +162,13 @@ export default function PaymentRateDetailPage() {
   const [studentToDelete, setStudentToDelete] = useState<RateDetailStudent | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+
+  // Bulk action states
+  const [showBulkUnlinkDialog, setShowBulkUnlinkDialog] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showBulkDeleteConfirmation, setShowBulkDeleteConfirmation] = useState(false);
+  const [bulkDeleteConfirmationText, setBulkDeleteConfirmationText] = useState("");
+  const [isBulkActionPending, setIsBulkActionPending] = useState(false);
 
   const { data: rate, isLoading: isLoadingRate } = usePaymentRate(rateId);
   const { data: students, isLoading: isLoadingStudents } = useRateStudents(rateId);
@@ -275,6 +286,98 @@ export default function PaymentRateDetailPage() {
     setStudentToDelete(null);
     setShowDeleteConfirmation(false);
     setDeleteConfirmationText("");
+  };
+
+  // Multi-select helper functions
+  const filteredSelectionState = useMemo(() => {
+    if (filteredStudents.length === 0) return { allSelected: false, someSelected: false, selectedCount: 0 };
+
+    const selectedInFiltered = filteredStudents.filter(s => selectedStudents.has(s.id));
+    const selectedCount = selectedInFiltered.length;
+    const allSelected = selectedCount === filteredStudents.length;
+    const someSelected = selectedCount > 0 && !allSelected;
+
+    return { allSelected, someSelected, selectedCount };
+  }, [filteredStudents, selectedStudents]);
+
+  const handleSelectAll = (checked: boolean) => {
+    const newSelected = new Set(selectedStudents);
+
+    if (checked) {
+      filteredStudents.forEach(s => newSelected.add(s.id));
+    } else {
+      filteredStudents.forEach(s => newSelected.delete(s.id));
+    }
+
+    setSelectedStudents(newSelected);
+  };
+
+  const handleSelectStudent = (studentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedStudents);
+    if (checked) {
+      newSelected.add(studentId);
+    } else {
+      newSelected.delete(studentId);
+    }
+    setSelectedStudents(newSelected);
+  };
+
+  // Get selected students data
+  const selectedStudentsData = useMemo(() => {
+    if (!students) return [];
+    return students.filter(s => selectedStudents.has(s.id));
+  }, [students, selectedStudents]);
+
+  // Bulk unlink handler
+  const handleBulkUnlink = async () => {
+    if (selectedStudentsData.length === 0) return;
+
+    setIsBulkActionPending(true);
+    try {
+      for (const student of selectedStudentsData) {
+        await unlinkRateAssignment.mutateAsync(student.assignment_id);
+      }
+      toast.success(t('paymentRates.detail.students.bulkUnlinkSuccess', { count: selectedStudentsData.length }));
+      setSelectedStudents(new Set());
+      setShowBulkUnlinkDialog(false);
+    } catch (error) {
+      // Error is handled in the hook
+    } finally {
+      setIsBulkActionPending(false);
+    }
+  };
+
+  // Bulk delete handler (first step)
+  const handleOpenBulkDeleteConfirmation = () => {
+    setShowBulkDeleteConfirmation(true);
+  };
+
+  // Bulk delete handler (final)
+  const handleBulkDelete = async () => {
+    if (selectedStudentsData.length === 0 || bulkDeleteConfirmationText !== 'ELIMINAR') return;
+
+    setIsBulkActionPending(true);
+    try {
+      for (const student of selectedStudentsData) {
+        await deleteRateAssignment.mutateAsync(student.assignment_id);
+      }
+      toast.success(t('paymentRates.detail.students.bulkDeleteSuccess', { count: selectedStudentsData.length }));
+      setSelectedStudents(new Set());
+      setShowBulkDeleteDialog(false);
+      setShowBulkDeleteConfirmation(false);
+      setBulkDeleteConfirmationText("");
+    } catch (error) {
+      // Error is handled in the hook
+    } finally {
+      setIsBulkActionPending(false);
+    }
+  };
+
+  // Reset bulk delete state
+  const handleCloseBulkDeleteDialog = () => {
+    setShowBulkDeleteDialog(false);
+    setShowBulkDeleteConfirmation(false);
+    setBulkDeleteConfirmationText("");
   };
 
   // Calculate collection rate
@@ -566,22 +669,83 @@ export default function PaymentRateDetailPage() {
         {/* Students Tab */}
         <TabsContent value="students">
           <Card>
-            {/* Search Filter */}
+            {/* Search Filter and Bulk Actions */}
             <div className="p-3 sm:p-4 border-b border-gray-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={t('paymentRates.detail.students.searchPlaceholder')}
-                  value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
+              <div className="flex flex-col gap-3">
+                {/* Search bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder={t('paymentRates.detail.students.searchPlaceholder')}
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
+
+                {/* Selection bar and bulk actions */}
+                {filteredStudents.length > 0 && (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={
+                            filteredSelectionState.allSelected
+                              ? true
+                              : filteredSelectionState.someSelected
+                              ? "indeterminate"
+                              : false
+                          }
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-sm text-gray-600">
+                          {filteredSelectionState.selectedCount > 0
+                            ? t('paymentRates.detail.students.selectedCount', { count: filteredSelectionState.selectedCount })
+                            : t('paymentRates.detail.students.selectAll')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bulk action buttons - show when any selected */}
+                    {selectedStudents.size > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowBulkUnlinkDialog(true)}
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                        >
+                          <Unlink className="h-4 w-4 mr-1" />
+                          {t('paymentRates.detail.students.bulkUnlink')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowBulkDeleteDialog(true)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {t('paymentRates.detail.students.bulkDelete')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedStudents(new Set())}
+                          className="text-gray-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {studentSearch && (
+                  <p className="text-xs text-gray-500">
+                    {t('paymentRates.detail.students.ofStudents', { count: filteredStudents.length, total: students?.length || 0 })}
+                  </p>
+                )}
               </div>
-              {studentSearch && (
-                <p className="text-xs text-gray-500 mt-2">
-                  {t('paymentRates.detail.students.ofStudents', { count: filteredStudents.length, total: students?.length || 0 })}
-                </p>
-              )}
             </div>
 
             {isLoadingStudents ? (
@@ -595,6 +759,13 @@ export default function PaymentRateDetailPage() {
                   {filteredStudents.map((student) => (
                     <div key={student.id} className="p-4">
                       <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedStudents.has(student.id)}
+                          onCheckedChange={(checked) =>
+                            handleSelectStudent(student.id, checked as boolean)
+                          }
+                          className="mt-3"
+                        />
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <User className="h-5 w-5 text-primary" />
                         </div>
@@ -647,6 +818,7 @@ export default function PaymentRateDetailPage() {
                 <Table className="hidden sm:table">
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12"></TableHead>
                       <TableHead>{t('paymentRates.detail.students.student')}</TableHead>
                       <TableHead>{t('paymentRates.detail.students.email')}</TableHead>
                       <TableHead>{t('paymentRates.detail.students.phone')}</TableHead>
@@ -656,7 +828,15 @@ export default function PaymentRateDetailPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
+                      <TableRow key={student.id} className={selectedStudents.has(student.id) ? "bg-primary/5" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedStudents.has(student.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectStudent(student.id, checked as boolean)
+                            }
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1344,6 +1524,96 @@ export default function PaymentRateDetailPage() {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               {t('paymentRates.detail.students.deleteConfirmDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Unlink Confirmation Dialog */}
+      <AlertDialog open={showBulkUnlinkDialog} onOpenChange={(open) => !open && setShowBulkUnlinkDialog(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('paymentRates.detail.students.bulkUnlinkDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('paymentRates.detail.students.bulkUnlinkDialog.description', { count: selectedStudents.size })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkUnlink();
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+              disabled={isBulkActionPending}
+            >
+              {isBulkActionPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {t('paymentRates.detail.students.bulkUnlinkDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete First Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteDialog && !showBulkDeleteConfirmation} onOpenChange={(open) => !open && handleCloseBulkDeleteDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.students.bulkDeleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>{t('paymentRates.detail.students.bulkDeleteDialog.description', { count: selectedStudents.size })}</p>
+              <p className="text-red-600 font-medium">{t('paymentRates.detail.students.bulkDeleteDialog.warning')}</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleOpenBulkDeleteConfirmation();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('paymentRates.detail.students.bulkDeleteDialog.continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Second Confirmation Dialog (requires typing ELIMINAR) */}
+      <AlertDialog open={showBulkDeleteConfirmation} onOpenChange={(open) => !open && handleCloseBulkDeleteDialog()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.students.bulkDeleteConfirmDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>{t('paymentRates.detail.students.bulkDeleteConfirmDialog.description', { count: selectedStudents.size })}</p>
+              <p className="text-sm text-gray-600">{t('paymentRates.detail.students.bulkDeleteConfirmDialog.typeInstruction')}</p>
+              <Input
+                value={bulkDeleteConfirmationText}
+                onChange={(e) => setBulkDeleteConfirmationText(e.target.value.toUpperCase())}
+                placeholder="ELIMINAR"
+                className="font-mono text-center tracking-widest"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowBulkDeleteConfirmation(false); setBulkDeleteConfirmationText(""); }}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkDelete();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={bulkDeleteConfirmationText !== 'ELIMINAR' || isBulkActionPending}
+            >
+              {isBulkActionPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {t('paymentRates.detail.students.bulkDeleteConfirmDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

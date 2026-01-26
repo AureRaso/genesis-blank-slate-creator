@@ -1736,6 +1736,12 @@
         "deleteStudent": "Eliminar",
         "unlinkSuccess": "{{name}} desvinculado de la tarifa",
         "deleteSuccess": "{{name}} eliminado permanentemente del historial",
+        "selectAll": "Seleccionar todos",
+        "selectedCount": "{{count}} seleccionados",
+        "bulkUnlink": "Desvincular",
+        "bulkDelete": "Eliminar",
+        "bulkUnlinkSuccess": "{{count}} alumnos desvinculados de la tarifa",
+        "bulkDeleteSuccess": "{{count}} alumnos eliminados permanentemente",
         "unlinkDialog": {
           "title": "¿Desvincular alumno de la tarifa?",
           "description": "¿Estás seguro de que quieres desvincular a {{name}} de esta tarifa? El alumno quedará en el historial pero dejará de tener la tarifa activa.",
@@ -1750,6 +1756,23 @@
         "deleteConfirmDialog": {
           "title": "Confirmar eliminación permanente",
           "description": "Vas a eliminar permanentemente a {{name}} y todos sus pagos asociados a esta tarifa.",
+          "typeInstruction": "Para confirmar, escribe ELIMINAR en el campo de abajo:",
+          "confirm": "Eliminar permanentemente"
+        },
+        "bulkUnlinkDialog": {
+          "title": "¿Desvincular alumnos seleccionados?",
+          "description": "¿Estás seguro de que quieres desvincular a {{count}} alumnos de esta tarifa? Los alumnos quedarán en el historial pero dejarán de tener la tarifa activa.",
+          "confirm": "Desvincular todos"
+        },
+        "bulkDeleteDialog": {
+          "title": "¿Eliminar alumnos del historial?",
+          "description": "¿Estás seguro de que quieres eliminar permanentemente a {{count}} alumnos de esta tarifa?",
+          "warning": "Esta acción eliminará también todos los pagos generados para estos alumnos con esta tarifa. Esta acción NO se puede deshacer.",
+          "continue": "Continuar"
+        },
+        "bulkDeleteConfirmDialog": {
+          "title": "Confirmar eliminación permanente",
+          "description": "Vas a eliminar permanentemente a {{count}} alumnos y todos sus pagos asociados a esta tarifa.",
           "typeInstruction": "Para confirmar, escribe ELIMINAR en el campo de abajo:",
           "confirm": "Eliminar permanentemente"
         },
