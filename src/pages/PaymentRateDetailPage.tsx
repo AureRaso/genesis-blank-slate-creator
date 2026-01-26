@@ -757,57 +757,50 @@ export default function PaymentRateDetailPage() {
                 {/* Mobile list view */}
                 <div className="sm:hidden divide-y divide-gray-100">
                   {filteredStudents.map((student) => (
-                    <div key={student.id} className="p-4">
-                      <div className="flex items-start gap-3">
+                    <div key={student.id} className="p-3">
+                      <div className="flex items-center gap-3">
                         <Checkbox
                           checked={selectedStudents.has(student.id)}
                           onCheckedChange={(checked) =>
                             handleSelectStudent(student.id, checked as boolean)
                           }
-                          className="mt-3"
                         />
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <User className="h-5 w-5 text-primary" />
-                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900">{student.full_name}</p>
-                          {student.email && (
-                            <p className="text-sm text-gray-500 truncate">{student.email}</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-400">
                             {t('paymentRates.detail.students.since')} {formatDate(student.assignment_start_date)}
                           </p>
-                          <div className="flex items-center gap-2 mt-3 flex-wrap">
-                            {student.phone && (
-                              <a
-                                href={`https://wa.me/${formatPhoneForWhatsApp(student.phone)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
-                              >
-                                <WhatsAppIcon className="h-4 w-4" />
-                                <span>{t('paymentRates.detail.students.openWhatsApp')}</span>
-                              </a>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setStudentToUnlink(student)}
-                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200"
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {student.phone && (
+                            <a
+                              href={`https://wa.me/${formatPhoneForWhatsApp(student.phone)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors border border-green-200"
+                              title={t('paymentRates.detail.students.openWhatsApp')}
                             >
-                              <Unlink className="h-4 w-4 mr-1" />
-                              {t('paymentRates.detail.students.unlinkStudent')}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setStudentToDelete(student)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              {t('paymentRates.detail.students.deleteStudent')}
-                            </Button>
-                          </div>
+                              <WhatsAppIcon className="h-4 w-4" />
+                            </a>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setStudentToUnlink(student)}
+                            className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                            title={t('paymentRates.detail.students.unlinkStudent')}
+                          >
+                            <Unlink className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setStudentToDelete(student)}
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title={t('paymentRates.detail.students.deleteStudent')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
