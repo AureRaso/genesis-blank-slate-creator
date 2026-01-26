@@ -1892,6 +1892,8 @@
       "allTypes": "Todos",
       "normal": "Normales",
       "extra": "Extras",
+      "status": "Estado:",
+      "allStatuses": "Todos",
       "clearFilters": "Limpiar filtros",
       "paymentsFound": "pagos encontrados"
     },

@@ -516,6 +516,8 @@
       "allTypes": "All",
       "normal": "Regular",
       "extra": "Extras",
+      "status": "Status:",
+      "allStatuses": "All",
       "clearFilters": "Clear filters",
       "paymentsFound": "payments found"
     },

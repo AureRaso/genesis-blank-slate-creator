@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X } from "lucide-react";
+import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -134,7 +134,38 @@ export default function AdminPaymentControlPage() {
   const [filterYear, setFilterYear] = useState<string>(getCurrentYear());
   const [filterRateId, setFilterRateId] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all"); // all, normal, extra
+  const [filterStatus, setFilterStatus] = useState<string>("all"); // all, pendiente, pagado
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  // Sort states
+  type SortField = 'name' | 'amount' | null;
+  type SortDirection = 'asc' | 'desc';
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Handle sort toggle
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction or reset
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Get sort icon for a field
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />;
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1" />
+      : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
 
   // Month navigation functions
   const goToPreviousMonth = () => {
@@ -188,7 +219,7 @@ export default function AdminPaymentControlPage() {
   }, [payments]);
 
   // Check if non-default filters are active (month/year defaults don't count)
-  const hasNonDefaultFilters = filterRateId !== "all" || filterType !== "all";
+  const hasNonDefaultFilters = filterRateId !== "all" || filterType !== "all" || filterStatus !== "all";
 
   // Check if viewing different period than current
   const isViewingDifferentPeriod = filterMonth !== getCurrentMonth() || filterYear !== getCurrentYear();
@@ -204,6 +235,9 @@ export default function AdminPaymentControlPage() {
   const clearAdditionalFilters = () => {
     setFilterRateId("all");
     setFilterType("all");
+    setFilterStatus("all");
+    setSortField(null);
+    setSortDirection('asc');
     setCurrentPage(1);
   };
 
@@ -275,14 +309,48 @@ export default function AdminPaymentControlPage() {
         if (filterType === "normal" && payment.is_extra_payment) return false;
       }
 
+      // Status filter
+      if (filterStatus !== "all") {
+        if (filterStatus === "pendiente" && payment.status !== 'pendiente') return false;
+        if (filterStatus === "pagado" && payment.status !== 'pagado') return false;
+      }
+
       return true;
     });
-  }, [payments, searchTerm, filterMonth, filterYear, filterRateId, filterType]);
+  }, [payments, searchTerm, filterMonth, filterYear, filterRateId, filterType, filterStatus]);
 
-  // Filter payments by status
-  const pendingPayments = filteredPayments.filter(p => p.status === 'pendiente');
-  const inReviewPayments = filteredPayments.filter(p => p.status === 'en_revision');
-  const paidPayments = filteredPayments.filter(p => p.status === 'pagado');
+  // Sort function for payments
+  const sortPayments = (paymentsToSort: StudentPayment[]) => {
+    if (!sortField) return paymentsToSort;
+
+    return [...paymentsToSort].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortField === 'name') {
+        const nameA = a.student_enrollment?.full_name?.toLowerCase() || '';
+        const nameB = b.student_enrollment?.full_name?.toLowerCase() || '';
+        comparison = nameA.localeCompare(nameB);
+      } else if (sortField === 'amount') {
+        comparison = a.amount - b.amount;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  // Filter payments by status and apply sorting
+  const pendingPayments = useMemo(() =>
+    sortPayments(filteredPayments.filter(p => p.status === 'pendiente')),
+    [filteredPayments, sortField, sortDirection]
+  );
+  const inReviewPayments = useMemo(() =>
+    sortPayments(filteredPayments.filter(p => p.status === 'en_revision')),
+    [filteredPayments, sortField, sortDirection]
+  );
+  const paidPayments = useMemo(() =>
+    sortPayments(filteredPayments.filter(p => p.status === 'pagado')),
+    [filteredPayments, sortField, sortDirection]
+  );
 
   // Filter students for extra payment search
   const filteredStudents = useMemo(() => {
@@ -872,6 +940,34 @@ export default function AdminPaymentControlPage() {
               </div>
             </div>
 
+            {/* Status filter chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500 font-medium w-16">{t("paymentControl.filters.status")}</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "all", label: t("paymentControl.filters.allStatuses") },
+                  { value: "pendiente", label: t("paymentControl.status.pending"), color: "amber" },
+                  { value: "pagado", label: t("paymentControl.status.paid"), color: "emerald" },
+                ].map(status => (
+                  <button
+                    key={status.value}
+                    onClick={() => { setFilterStatus(status.value); handleFilterChange(); }}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                      filterStatus === status.value
+                        ? status.value === 'pendiente'
+                          ? 'bg-amber-600 text-white'
+                          : status.value === 'pagado'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-gray-800 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {status.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Clear filters button */}
             {hasNonDefaultFilters && (
               <div className="flex justify-end">
@@ -948,10 +1044,22 @@ export default function AdminPaymentControlPage() {
                       />
                     </th>
                     <th className="py-3 px-2 sm:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("paymentControl.table.student")}
+                      <button
+                        className="flex items-center hover:text-gray-700 transition-colors"
+                        onClick={() => handleSort('name')}
+                      >
+                        {t("paymentControl.table.student")}
+                        {getSortIcon('name')}
+                      </button>
                     </th>
                     <th className="py-3 px-2 sm:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("paymentControl.table.amount")}
+                      <button
+                        className="flex items-center justify-center w-full hover:text-gray-700 transition-colors"
+                        onClick={() => handleSort('amount')}
+                      >
+                        {t("paymentControl.table.amount")}
+                        {getSortIcon('amount')}
+                      </button>
                     </th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       {t("paymentControl.table.details")}
