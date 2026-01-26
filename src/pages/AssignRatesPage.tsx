@@ -51,7 +51,7 @@ export default function AssignRatesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAssigned, setFilterAssigned] = useState<"all" | "assigned" | "unassigned">("all");
   const [filterUserType, setFilterUserType] = useState<"all" | "minors" | "parents" | "players">("all");
-  const [filterWeeklyHours, setFilterWeeklyHours] = useState<"all" | "0" | "1" | "2" | "3-4" | "5+">("all");
+  const [filterWeeklyHours, setFilterWeeklyHours] = useState<string>("all");
 
   // Check if any filter is active (excluding search)
   const hasActiveFilters = filterAssigned !== "all" || filterUserType !== "all" || filterWeeklyHours !== "all";
@@ -76,6 +76,41 @@ export default function AssignRatesPage() {
   const selectedRate = useMemo(() => {
     return rates?.find((r) => r.id === selectedRateId) || null;
   }, [rates, selectedRateId]);
+
+  // Calculate available weekly hours options based on students data
+  const availableHoursOptions = useMemo(() => {
+    if (!students || students.length === 0) return [];
+
+    // Get unique hour values rounded to nearest 0.5
+    const hoursSet = new Set<number>();
+    students.forEach(student => {
+      const roundedHours = Math.round(student.weekly_hours * 2) / 2; // Round to 0.5
+      hoursSet.add(roundedHours);
+    });
+
+    // Convert to sorted array
+    const uniqueHours = Array.from(hoursSet).sort((a, b) => a - b);
+
+    // Create filter options - each unique hour value becomes an option
+    const options: { value: string; label: string; min: number; max: number }[] = [];
+
+    uniqueHours.forEach(hours => {
+      if (hours === 0) {
+        options.push({ value: "0", label: t("paymentRates.assign.step2.filterHoursNone"), min: 0, max: 0 });
+      } else {
+        // Format label based on value
+        const label = hours % 1 === 0 ? `${hours}h` : `${hours}h`;
+        options.push({
+          value: hours.toString(),
+          label,
+          min: hours - 0.25, // Small tolerance for filtering
+          max: hours + 0.25
+        });
+      }
+    });
+
+    return options;
+  }, [students, t]);
 
   // Filter students
   const filteredStudents = useMemo(() => {
@@ -102,32 +137,23 @@ export default function AssignRatesPage() {
         matchesUserType = getUserType(student.email) === filterUserType;
       }
 
-      // Weekly hours filter
+      // Weekly hours filter - dynamic based on available options
       let matchesWeeklyHours = true;
       if (filterWeeklyHours !== "all") {
         const hours = student.weekly_hours;
-        switch (filterWeeklyHours) {
-          case "0":
+        const option = availableHoursOptions.find(opt => opt.value === filterWeeklyHours);
+        if (option) {
+          if (option.value === "0") {
             matchesWeeklyHours = hours === 0;
-            break;
-          case "1":
-            matchesWeeklyHours = hours > 0 && hours <= 1.5;
-            break;
-          case "2":
-            matchesWeeklyHours = hours > 1.5 && hours <= 2.5;
-            break;
-          case "3-4":
-            matchesWeeklyHours = hours > 2.5 && hours <= 4.5;
-            break;
-          case "5+":
-            matchesWeeklyHours = hours > 4.5;
-            break;
+          } else {
+            matchesWeeklyHours = hours >= option.min && hours <= option.max;
+          }
         }
       }
 
       return matchesSearch && matchesAssignment && matchesUserType && matchesWeeklyHours;
     });
-  }, [students, searchTerm, filterAssigned, filterUserType, filterWeeklyHours]);
+  }, [students, searchTerm, filterAssigned, filterUserType, filterWeeklyHours, availableHoursOptions]);
 
   // ============================================================
   // AUTO-SUGGESTION FEATURE (isolated for easy removal)
@@ -497,60 +523,33 @@ export default function AssignRatesPage() {
               </Button>
             </div>
 
-            {/* Weekly Hours Filter Chips */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-gray-500 mr-1 self-center">
-                {t("paymentRates.assign.step2.filterByHours")}:
-              </span>
-              <Button
-                variant={filterWeeklyHours === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("all")}
-                className="h-7 text-xs"
-              >
-                {t("paymentRates.assign.step2.filterHoursAll")}
-              </Button>
-              <Button
-                variant={filterWeeklyHours === "0" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("0")}
-                className="h-7 text-xs"
-              >
-                {t("paymentRates.assign.step2.filterHoursNone")}
-              </Button>
-              <Button
-                variant={filterWeeklyHours === "1" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("1")}
-                className="h-7 text-xs"
-              >
-                1h
-              </Button>
-              <Button
-                variant={filterWeeklyHours === "2" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("2")}
-                className="h-7 text-xs"
-              >
-                2h
-              </Button>
-              <Button
-                variant={filterWeeklyHours === "3-4" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("3-4")}
-                className="h-7 text-xs"
-              >
-                3-4h
-              </Button>
-              <Button
-                variant={filterWeeklyHours === "5+" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterWeeklyHours("5+")}
-                className="h-7 text-xs"
-              >
-                5h+
-              </Button>
-            </div>
+            {/* Weekly Hours Filter Chips - Dynamic based on club's students */}
+            {availableHoursOptions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-gray-500 mr-1 self-center">
+                  {t("paymentRates.assign.step2.filterByHours")}:
+                </span>
+                <Button
+                  variant={filterWeeklyHours === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterWeeklyHours("all")}
+                  className="h-7 text-xs"
+                >
+                  {t("paymentRates.assign.step2.filterHoursAll")}
+                </Button>
+                {availableHoursOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={filterWeeklyHours === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterWeeklyHours(option.value)}
+                    className="h-7 text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            )}
 
             {/* Results counter and clear filters */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
