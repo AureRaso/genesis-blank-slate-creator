@@ -66,9 +66,9 @@ function calculateWeeklyHours(
 ): number {
   let totalMinutes = 0;
 
-  // Use a Set to track unique class slots (day + time) to avoid counting duplicate sessions
-  // Multiple classes on the same day/time are considered the same weekly slot
-  const processedSlots = new Set<string>();
+  // Use a Map to track unique class slots (day + time) with their duration and recurrence type
+  // Key: "day-time", Value: { duration, recurrenceType, count }
+  const slotInfo = new Map<string, { duration: number; recurrenceType: string; count: number }>();
 
   participations.forEach((p) => {
     const programmedClass = p.programmed_class;
@@ -84,19 +84,35 @@ function calculateWeeklyHours(
       // Create a unique key for this time slot (day + time)
       const slotKey = `${day}-${startTime}`;
 
-      // Skip if we've already counted this slot
-      if (processedSlots.has(slotKey)) return;
-      processedSlots.add(slotKey);
-
-      // Count based on recurrence type
-      if (recurrenceType === 'weekly') {
-        totalMinutes += durationMinutes;
-      } else if (recurrenceType === 'biweekly') {
-        // Biweekly = every 2 weeks, so average per week is half
-        totalMinutes += durationMinutes / 2;
+      const existing = slotInfo.get(slotKey);
+      if (existing) {
+        // Increment count for this slot
+        existing.count++;
+        // If any class in this slot is 'weekly', treat the whole slot as weekly
+        if (recurrenceType === 'weekly') {
+          existing.recurrenceType = 'weekly';
+        } else if (recurrenceType === 'biweekly' && existing.recurrenceType === 'once') {
+          existing.recurrenceType = 'biweekly';
+        }
+      } else {
+        slotInfo.set(slotKey, { duration: durationMinutes, recurrenceType, count: 1 });
       }
-      // 'once' classes are not counted as they're not weekly recurring
     });
+  });
+
+  // Now calculate total minutes based on slot info
+  slotInfo.forEach(({ duration, recurrenceType, count }) => {
+    if (recurrenceType === 'weekly') {
+      totalMinutes += duration;
+    } else if (recurrenceType === 'biweekly') {
+      // Biweekly = every 2 weeks, so average per week is half
+      totalMinutes += duration / 2;
+    } else if (recurrenceType === 'once' && count >= 2) {
+      // Multiple 'once' classes in the same slot indicate a recurring pattern
+      // Treat as weekly
+      totalMinutes += duration;
+    }
+    // Single 'once' class is not counted as it's truly a one-time event
   });
 
   // Convert to hours, rounded to 1 decimal place
