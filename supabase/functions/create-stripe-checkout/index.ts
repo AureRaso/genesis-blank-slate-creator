@@ -34,7 +34,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const { club_id, success_url, cancel_url } = await req.json();
+    const { club_id, success_url, cancel_url, user_id } = await req.json();
 
     if (!club_id) {
       throw new Error("club_id es requerido");
@@ -58,24 +58,81 @@ serve(async (req) => {
       throw new Error("Club no encontrado");
     }
 
-    // Contar jugadores del club (profiles con role='player' y club_id)
-    const playerCountResponse = await fetch(
-      `${supabaseUrl}/rest/v1/profiles?club_id=eq.${club_id}&role=eq.player&select=id`,
-      {
-        headers: {
-          "apikey": supabaseServiceKey,
-          "Authorization": `Bearer ${supabaseServiceKey}`,
-          "Prefer": "count=exact",
-        },
+    // Verificar si el usuario es superadmin
+    let isSuperadmin = false;
+    let clubIds: string[] = [club_id];
+
+    if (user_id) {
+      const profileResponse = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${user_id}&select=role`,
+        {
+          headers: {
+            "apikey": supabaseServiceKey,
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+        }
+      );
+      const profiles = await profileResponse.json();
+      isSuperadmin = profiles[0]?.role === 'superadmin';
+
+      // Si es superadmin, obtener todos sus clubes
+      if (isSuperadmin) {
+        const adminClubsResponse = await fetch(
+          `${supabaseUrl}/rest/v1/admin_clubs?admin_profile_id=eq.${user_id}&select=club_id`,
+          {
+            headers: {
+              "apikey": supabaseServiceKey,
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+          }
+        );
+        const adminClubs = await adminClubsResponse.json();
+        if (adminClubs && adminClubs.length > 0) {
+          clubIds = adminClubs.map((ac: { club_id: string }) => ac.club_id);
+        }
+        console.log(`Superadmin con ${clubIds.length} clubes`);
       }
-    );
+    }
 
-    const playerCountHeader = playerCountResponse.headers.get("content-range");
-    const playerCount = playerCountHeader
-      ? parseInt(playerCountHeader.split("/")[1] || "0", 10)
-      : 0;
+    // Contar jugadores (de todos los clubes si es superadmin, o solo del club actual)
+    let playerCount = 0;
 
-    console.log(`Club ${club.name} tiene ${playerCount} jugadores`);
+    if (isSuperadmin && clubIds.length > 1) {
+      // Superadmin: contar de todos sus clubes
+      const clubIdsFilter = clubIds.map(id => `"${id}"`).join(',');
+      const playerCountResponse = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?club_id=in.(${clubIdsFilter})&role=eq.player&select=id`,
+        {
+          headers: {
+            "apikey": supabaseServiceKey,
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+            "Prefer": "count=exact",
+          },
+        }
+      );
+      const playerCountHeader = playerCountResponse.headers.get("content-range");
+      playerCount = playerCountHeader
+        ? parseInt(playerCountHeader.split("/")[1] || "0", 10)
+        : 0;
+      console.log(`Total jugadores en ${clubIds.length} clubes: ${playerCount}`);
+    } else {
+      // Admin normal: contar solo del club actual
+      const playerCountResponse = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?club_id=eq.${club_id}&role=eq.player&select=id`,
+        {
+          headers: {
+            "apikey": supabaseServiceKey,
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+            "Prefer": "count=exact",
+          },
+        }
+      );
+      const playerCountHeader = playerCountResponse.headers.get("content-range");
+      playerCount = playerCountHeader
+        ? parseInt(playerCountHeader.split("/")[1] || "0", 10)
+        : 0;
+      console.log(`Club ${club.name} tiene ${playerCount} jugadores`);
+    }
 
     // Obtener todos los planes de suscripción ordenados por max_players
     const plansResponse = await fetch(

@@ -18,7 +18,8 @@ const StripePaymentPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Obtener el plan de suscripción recomendado según número de jugadores
-  const { playerCount, recommendedPlan, isLoading: planLoading } = useClubSubscriptionPlan(profile?.club_id);
+  const { playerCount, recommendedPlan, isLoading: planLoading, clubCount } = useClubSubscriptionPlan(profile?.club_id);
+  const isSuperadmin = profile?.role === 'superadmin';
 
   // Obtener información del club
   const { data: club, isLoading: clubLoading } = useQuery({
@@ -83,6 +84,7 @@ const StripePaymentPage = () => {
         {
           body: {
             club_id: profile?.club_id,
+            user_id: profile?.id,
             success_url: `${window.location.origin}/dashboard/payment?success=true`,
             cancel_url: `${window.location.origin}/dashboard/payment?canceled=true`,
           },
@@ -350,7 +352,11 @@ const StripePaymentPage = () => {
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    Tu club tiene <span className="font-semibold">{playerCount}</span> jugadores registrados
+                    {isSuperadmin && clubCount && clubCount > 1 ? (
+                      <>Tus <span className="font-semibold">{clubCount}</span> clubes tienen <span className="font-semibold">{playerCount}</span> jugadores registrados en total</>
+                    ) : (
+                      <>Tu club tiene <span className="font-semibold">{playerCount}</span> jugadores registrados</>
+                    )}
                   </span>
                 </div>
               </div>
