@@ -88,7 +88,7 @@ const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {profile.role === 'admin' && (
+        {(profile.role === 'admin' || profile.role === 'superadmin') && (
           <DropdownMenuItem asChild>
             <a href="/dashboard/payment">
               <Wallet className="mr-2 h-4 w-4" />
