@@ -216,8 +216,6 @@ export interface BulkEnrollmentData {
 // - Same club_id, name, start_time, trainer_profile_id
 // - At least 1 common participant (not substitute)
 const findSeriesClassIds = async (classId: string): Promise<string[]> => {
-  console.log('[SERIES-PARTICIPANTS] Finding series for class:', classId);
-
   // 1. Get the source class details
   const { data: sourceClass, error: fetchError } = await supabase
     .from("programmed_classes")
@@ -226,11 +224,8 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
     .single();
 
   if (fetchError || !sourceClass) {
-    console.error("[SERIES-PARTICIPANTS] Error fetching class:", fetchError);
     return [classId];
   }
-
-  console.log('[SERIES-PARTICIPANTS] Source class:', sourceClass);
 
   // 2. Get non-substitute participants of the source class
   const { data: sourceParticipants, error: participantsError } = await supabase
@@ -241,16 +236,13 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
     .or('is_substitute.eq.false,is_substitute.is.null');
 
   if (participantsError) {
-    console.error("[SERIES-PARTICIPANTS] Error fetching participants:", participantsError);
     return [classId];
   }
 
   const sourceParticipantIds = sourceParticipants?.map(p => p.student_enrollment_id) || [];
-  console.log('[SERIES-PARTICIPANTS] Source participants:', sourceParticipantIds.length);
 
   // If class has no non-substitute participants, return only this class
   if (sourceParticipantIds.length === 0) {
-    console.log('[SERIES-PARTICIPANTS] No non-substitute participants, returning only source class');
     return [classId];
   }
 
@@ -265,11 +257,8 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
     .eq('is_active', true);
 
   if (candidatesError || !candidateClasses) {
-    console.error("[SERIES-PARTICIPANTS] Error fetching candidates:", candidatesError);
     return [classId];
   }
-
-  console.log('[SERIES-PARTICIPANTS] Candidates with same club+name+time+trainer:', candidateClasses.length);
 
   // 4. Filter candidates: keep only those with at least 1 common participant
   const seriesClassIds: string[] = [];
@@ -288,8 +277,6 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
       sourceParticipantIds.includes(id)
     );
 
-    console.log('[SERIES-PARTICIPANTS] Candidate', candidate.id, '- common:', hasCommonParticipant);
-
     if (hasCommonParticipant) {
       seriesClassIds.push(candidate.id);
     }
@@ -299,7 +286,6 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
     return [classId];
   }
 
-  console.log('[SERIES-PARTICIPANTS] Final series classes:', seriesClassIds.length);
   return seriesClassIds;
 };
 
@@ -313,16 +299,12 @@ export const useBulkEnrollToRecurringClass = () => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
-      console.log('🔵 Starting bulk enrollment:', enrollmentData);
-
       // Step 1: Find all classes in the series using participant-based identification
       const seriesClassIds = await findSeriesClassIds(enrollmentData.class_id);
 
       if (seriesClassIds.length === 0) {
         throw new Error('No se encontraron clases en la serie recurrente');
       }
-
-      console.log(`✅ Found ${seriesClassIds.length} classes in series (participant-based)`);
 
       // Step 2: Get class details for the classes we'll enroll in
       const { data: matchingClasses, error: classesError } = await supabase
@@ -331,7 +313,6 @@ export const useBulkEnrollToRecurringClass = () => {
         .in('id', seriesClassIds);
 
       if (classesError || !matchingClasses) {
-        console.error('❌ Error fetching class details:', classesError);
         throw classesError;
       }
 
@@ -343,15 +324,11 @@ export const useBulkEnrollToRecurringClass = () => {
         .in('class_id', seriesClassIds);
 
       if (enrollmentError) {
-        console.error('❌ Error checking existing enrollments:', enrollmentError);
         throw enrollmentError;
       }
 
       const existingClassIds = new Set(existingEnrollments?.map(e => e.class_id) || []);
       const classesToEnroll = matchingClasses.filter(c => !existingClassIds.has(c.id));
-
-      console.log(`📝 Student already enrolled in ${existingClassIds.size} classes`);
-      console.log(`➕ Will enroll in ${classesToEnroll.length} new classes`);
 
       if (classesToEnroll.length === 0) {
         throw new Error('El alumno ya está inscrito en todas las clases de esta serie');
@@ -380,11 +357,8 @@ export const useBulkEnrollToRecurringClass = () => {
         .select();
 
       if (insertError) {
-        console.error('❌ Error inserting participants:', insertError);
         throw insertError;
       }
-
-      console.log(`✅ Successfully enrolled student in ${insertedData?.length || 0} classes`);
 
       return {
         enrolled: insertedData?.length || 0,
@@ -430,16 +404,12 @@ export const useBulkRemoveFromRecurringClass = () => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
-      console.log('🔵 Starting bulk removal:', removalData);
-
       // Step 1: Find all classes in the series using participant-based identification
       const seriesClassIds = await findSeriesClassIds(removalData.class_id);
 
       if (seriesClassIds.length === 0) {
         throw new Error('No se encontraron clases en la serie recurrente');
       }
-
-      console.log(`✅ Found ${seriesClassIds.length} classes in series (participant-based)`);
 
       // Step 2: Find all enrollments for this student in these classes
       const { data: enrollments, error: enrollmentError } = await supabase
@@ -449,15 +419,12 @@ export const useBulkRemoveFromRecurringClass = () => {
         .in('class_id', seriesClassIds);
 
       if (enrollmentError) {
-        console.error('❌ Error fetching enrollments:', enrollmentError);
         throw enrollmentError;
       }
 
       if (!enrollments || enrollments.length === 0) {
         throw new Error('El alumno no está inscrito en ninguna clase de esta serie');
       }
-
-      console.log(`📝 Found ${enrollments.length} enrollments to remove`);
 
       // Step 3: Delete all enrollments (hard delete) - one by one to avoid RLS issues
       let successCount = 0;
@@ -470,7 +437,6 @@ export const useBulkRemoveFromRecurringClass = () => {
           .eq('id', enrollment.id);
 
         if (deleteError) {
-          console.error(`❌ Error deleting participant ${enrollment.id}:`, deleteError);
           errors.push(deleteError);
         } else {
           successCount++;
@@ -480,8 +446,6 @@ export const useBulkRemoveFromRecurringClass = () => {
       if (errors.length > 0) {
         throw new Error(`Failed to delete ${errors.length} out of ${enrollments.length} enrollments`);
       }
-
-      console.log(`✅ Successfully removed student from ${successCount} classes`);
 
       return {
         removed: enrollments.length,

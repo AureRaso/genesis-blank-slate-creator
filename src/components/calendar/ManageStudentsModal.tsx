@@ -23,8 +23,6 @@ interface ManageStudentsModalProps {
 }
 
 export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStudentsModalProps) {
-  console.log('🔵 ManageStudentsModal rendered - isOpen:', isOpen, 'class:', cls.name);
-  
   const { toast } = useToast();
   const { profile, isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,21 +33,11 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
     paymentStatus?: string;
     paymentNotes?: string;
   }>>({});
-  
-  console.log('🔵 User role check:', { isAdmin, profileRole: profile?.role, profileId: profile?.id });
-  
+
   // Use appropriate hook based on user role - show ALL students for admin
-  const { data: allStudents, isLoading: studentsLoading, error: studentsError } = isAdmin 
-    ? useAdminStudentEnrollments() 
+  const { data: allStudents, isLoading: studentsLoading, error: studentsError } = isAdmin
+    ? useAdminStudentEnrollments()
     : useStudentEnrollments();
-  
-  console.log('🔵 Hook results:', {
-    allStudentsCount: allStudents?.length || 0,
-    studentsError: studentsError?.message,
-    studentsLoading,
-    isAdmin,
-    profileRole: profile?.role
-  });
   
   const { data: currentParticipants, isLoading: participantsLoading } = useClassParticipants(cls.id);
   const updateMutation = useUpdateClassParticipant();
@@ -58,24 +46,10 @@ export function ManageStudentsModal({ class: cls, isOpen, onClose }: ManageStude
   const bulkRemoveMutation = useBulkRemoveFromRecurringClass();
 
   // Filter students by search term and exclude current participants
-  const availableStudents = allStudents?.filter(student => 
+  const availableStudents = allStudents?.filter(student =>
     !currentParticipants?.some(p => p.student_enrollment_id === student.id) &&
     student.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
-
-  console.log('🔵 Final filtering results:', {
-    classClubId: cls.club_id,
-    allStudentsCount: allStudents?.length || 0,
-    currentParticipantsCount: currentParticipants?.length || 0,
-    availableStudentsCount: availableStudents.length,
-    firstFewStudents: allStudents?.slice(0, 3).map(s => ({ 
-      id: s.id, 
-      name: s.full_name, 
-      club_id: s.club_id 
-    })),
-    currentParticipantsIds: currentParticipants?.map(p => p.student_enrollment_id),
-    searchTerm
-  });
 
   const handleStudentToggle = (studentId: string, checked: boolean) => {
     const newSelected = new Set(selectedStudents);

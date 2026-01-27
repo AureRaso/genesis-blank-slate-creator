@@ -64,25 +64,12 @@ export function RemoveStudentsDialog({
       return;
     }
 
-    console.log('🗑️ Starting student removal process...');
-    console.log('Selected students:', Array.from(selectedStudents));
-    console.log('Remove params:', { clubId, className, classStartTime });
-
     try {
       // Remove each selected student from all recurring classes
       for (const participantId of Array.from(selectedStudents)) {
         const participant = participants.find(p => p.id === participantId);
-        console.log('🔍 Processing participant:', participant);
 
         if (participant) {
-          console.log('📤 Calling bulkRemoveMutation for:', {
-            student_enrollment_id: participant.student_enrollment_id,
-            class_id: classId,
-            club_id: clubId,
-            class_name: className,
-            class_start_time: classStartTime,
-          });
-
           await bulkRemoveMutation.mutateAsync({
             student_enrollment_id: participant.student_enrollment_id,
             class_id: classId,
@@ -90,12 +77,8 @@ export function RemoveStudentsDialog({
             class_name: className,
             class_start_time: classStartTime,
           });
-
-          console.log('✅ Successfully removed participant:', participant.student_enrollment?.full_name);
         }
       }
-
-      console.log('✅ All students removed successfully');
 
       toast({
         title: "Alumnos eliminados",
@@ -107,7 +90,6 @@ export function RemoveStudentsDialog({
       setShowConfirmDialog(false);
       onClose();
     } catch (error) {
-      console.error('❌ Error removing students:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "No se pudieron eliminar los alumnos. Inténtalo de nuevo.",

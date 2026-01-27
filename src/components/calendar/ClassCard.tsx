@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil, Calendar, X } from "lucide-react";
+import { Users, Clock, Edit, Settings, UserPlus, UserMinus, Trash2, Pencil, Calendar, X, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -618,7 +618,12 @@ function AdminClassDetailsModal({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRemoveParticipant} disabled={bulkRemoveMutation.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {bulkRemoveMutation.isPending ? "Eliminando..." : "Sí, eliminar de toda la serie"}
+              {bulkRemoveMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : "Sí, eliminar de toda la serie"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
