@@ -63,6 +63,63 @@ function formatDateLocalized(dateStr: string, language: string = 'es'): string {
 }
 
 /**
+ * Check if email is a temporary/dependent email
+ */
+function isTempEmail(email: string): boolean {
+  return email?.includes('@temp.padelock.com') || email?.startsWith('temp_');
+}
+
+/**
+ * Get guardian phone for a dependent student (by their temp email)
+ * This looks up the guardian through account_dependents table
+ */
+async function getGuardianPhone(
+  supabaseClient: any,
+  tempEmail: string
+): Promise<string | null> {
+  try {
+    // First, find the profile with this temp email
+    const { data: childProfile, error: childError } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('email', tempEmail)
+      .single();
+
+    if (childError || !childProfile) {
+      console.log(`   No profile found for temp email: ${tempEmail}`);
+      return null;
+    }
+
+    // Then find the guardian through account_dependents
+    const { data: guardianData, error: guardianError } = await supabaseClient
+      .from('account_dependents')
+      .select(`
+        guardian:guardian_profile_id (
+          phone,
+          email
+        )
+      `)
+      .eq('dependent_profile_id', childProfile.id)
+      .single();
+
+    if (guardianError || !guardianData?.guardian) {
+      console.log(`   No guardian found for dependent: ${tempEmail}`);
+      return null;
+    }
+
+    const guardianPhone = (guardianData.guardian as any)?.phone;
+    if (guardianPhone) {
+      console.log(`   ✓ Found guardian phone for ${tempEmail}: ${guardianPhone}`);
+    }
+    return guardianPhone || null;
+
+  } catch (error) {
+    console.error(`   Error looking up guardian for ${tempEmail}:`, error);
+    return null;
+  }
+}
+
+/**
  * Send WhatsApp template message via Kapso API for class cancellation
  * Templates per language:
  *   - ES: class_cancellation
@@ -294,10 +351,20 @@ serve(async (req) => {
       const student = (participant as any).student_enrollments;
 
       // Use phone from student_enrollments, fallback to profiles table
-      const studentPhone = student?.phone || profilePhones[student?.email];
+      let studentPhone = student?.phone || profilePhones[student?.email];
+
+      // If no phone found and it's a temp email (dependent), try to get guardian's phone
+      if (!studentPhone && student?.email && isTempEmail(student.email)) {
+        console.log(`📱 Temp email detected for ${student.email}, looking up guardian phone...`);
+        const guardianPhone = await getGuardianPhone(supabaseClient, student.email);
+        if (guardianPhone) {
+          studentPhone = guardianPhone;
+          console.log(`   ✓ Will use guardian phone: ${guardianPhone}`);
+        }
+      }
 
       if (!studentPhone) {
-        console.log(`⚠ Skipping ${student?.email || 'unknown'}: no phone number in student_enrollments or profiles`);
+        console.log(`⚠ Skipping ${student?.email || 'unknown'}: no phone number in student_enrollments, profiles, or guardian`);
         results.push({
           email: student?.email,
           success: false,
