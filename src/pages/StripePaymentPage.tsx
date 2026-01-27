@@ -3,11 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CreditCard, CheckCircle2, AlertCircle, Building2, XCircle } from "lucide-react";
+import { Loader2, CreditCard, CheckCircle2, AlertCircle, Building2, XCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useClubSubscriptionPlan } from "@/hooks/useClubSubscriptionPlan";
 
 const StripePaymentPage = () => {
   const { profile } = useAuth();
@@ -15,6 +16,9 @@ const StripePaymentPage = () => {
   const [loading, setLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Obtener el plan de suscripción recomendado según número de jugadores
+  const { playerCount, recommendedPlan, isLoading: planLoading } = useClubSubscriptionPlan(profile?.club_id);
 
   // Obtener información del club
   const { data: club, isLoading: clubLoading } = useQuery({
@@ -176,7 +180,7 @@ const StripePaymentPage = () => {
   const success = urlParams.get("success");
   const canceled = urlParams.get("canceled");
 
-  if (clubLoading || subscriptionLoading) {
+  if (clubLoading || subscriptionLoading || planLoading) {
     return (
       <div className="container mx-auto p-6 max-w-4xl">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -323,19 +327,34 @@ const StripePaymentPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">Mensualidad del Club</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pago mensual recurrente
-                </p>
+            {/* Info del plan según jugadores */}
+            {recommendedPlan && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg text-primary">{recommendedPlan.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Hasta {recommendedPlan.max_players} jugadores
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-primary">
+                      {(recommendedPlan.price_monthly * 1.21).toFixed(2).replace('.', ',')} €
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {recommendedPlan.price_monthly.toFixed(2).replace('.', ',')} € + 21% IVA
+                    </p>
+                    <p className="text-sm text-muted-foreground">por mes</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    Tu club tiene <span className="font-semibold">{playerCount}</span> jugadores registrados
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold">€121.00</p>
-                <p className="text-xs text-muted-foreground">€100.00 + 21% IVA</p>
-                <p className="text-sm text-muted-foreground">por mes</p>
-              </div>
-            </div>
+            )}
 
             <div className="border-t pt-4">
               <h4 className="font-semibold mb-2">Incluye:</h4>

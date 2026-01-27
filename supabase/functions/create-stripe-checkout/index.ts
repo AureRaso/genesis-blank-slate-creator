@@ -7,6 +7,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper to get subscription plan based on player count
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  max_players: number;
+  price_monthly: number;
+  stripe_price_id: string;
+  stripe_product_id: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -30,15 +40,6 @@ serve(async (req) => {
       throw new Error("club_id es requerido");
     }
 
-    // Aquí deberías obtener el precio desde tu base de datos o configuración
-    // Por ahora usaremos un precio fijo, pero deberías configurarlo en Stripe
-    // y guardar el price_id en tu base de datos o en variables de entorno
-    const priceId = Deno.env.get("STRIPE_MONTHLY_PRICE_ID");
-
-    if (!priceId) {
-      throw new Error("STRIPE_MONTHLY_PRICE_ID no está configurada. Configura el precio en Stripe y guarda el ID en las variables de entorno.");
-    }
-
     // Obtener información del club desde Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -56,6 +57,55 @@ serve(async (req) => {
     if (!club) {
       throw new Error("Club no encontrado");
     }
+
+    // Contar jugadores del club (profiles con role='player' y club_id)
+    const playerCountResponse = await fetch(
+      `${supabaseUrl}/rest/v1/profiles?club_id=eq.${club_id}&role=eq.player&select=id`,
+      {
+        headers: {
+          "apikey": supabaseServiceKey,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+          "Prefer": "count=exact",
+        },
+      }
+    );
+
+    const playerCountHeader = playerCountResponse.headers.get("content-range");
+    const playerCount = playerCountHeader
+      ? parseInt(playerCountHeader.split("/")[1] || "0", 10)
+      : 0;
+
+    console.log(`Club ${club.name} tiene ${playerCount} jugadores`);
+
+    // Obtener todos los planes de suscripción ordenados por max_players
+    const plansResponse = await fetch(
+      `${supabaseUrl}/rest/v1/subscription_plans?is_active=eq.true&select=*&order=max_players.asc`,
+      {
+        headers: {
+          "apikey": supabaseServiceKey,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+      }
+    );
+
+    const plans: SubscriptionPlan[] = await plansResponse.json();
+
+    if (!plans || plans.length === 0) {
+      throw new Error("No hay planes de suscripción configurados");
+    }
+
+    // Seleccionar el plan adecuado según el número de jugadores
+    // El plan correcto es el primero cuyo max_players >= playerCount
+    let selectedPlan = plans.find(plan => plan.max_players >= playerCount);
+
+    // Si el club tiene más jugadores que el plan más grande, usar el plan más grande
+    if (!selectedPlan) {
+      selectedPlan = plans[plans.length - 1];
+    }
+
+    console.log(`Plan seleccionado: ${selectedPlan.name} (${selectedPlan.stripe_price_id})`);
+
+    const priceId = selectedPlan.stripe_price_id;
 
     // Buscar si ya existe un customer en Stripe para este club
     const subscriptionResponse = await fetch(
@@ -106,10 +156,14 @@ serve(async (req) => {
       },
       metadata: {
         club_id: club_id,
+        subscription_plan_id: selectedPlan.id,
+        plan_name: selectedPlan.name,
       },
       subscription_data: {
         metadata: {
           club_id: club_id,
+          subscription_plan_id: selectedPlan.id,
+          plan_name: selectedPlan.name,
         },
       },
     });

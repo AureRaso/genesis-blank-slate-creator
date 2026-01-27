@@ -95,7 +95,9 @@ serve(async (req) => {
 
           logStep("Fetched subscription details", {
             currentPeriodStart: subscription.current_period_start,
-            currentPeriodEnd: subscription.current_period_end
+            currentPeriodEnd: subscription.current_period_end,
+            planId: session.metadata.subscription_plan_id,
+            planName: session.metadata.plan_name
           });
 
           // Create or update club subscription with full details
@@ -106,6 +108,11 @@ serve(async (req) => {
             status: 'active',
             updated_at: new Date().toISOString()
           };
+
+          // Add subscription_plan_id if available
+          if (session.metadata.subscription_plan_id) {
+            subscriptionData.subscription_plan_id = session.metadata.subscription_plan_id;
+          }
 
           // Add period dates if available
           if (subscription.current_period_start) {
