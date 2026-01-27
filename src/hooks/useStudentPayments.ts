@@ -154,6 +154,19 @@ export function useVerifyStudentPayment() {
         .single();
 
       if (error) throw error;
+
+      // Send confirmation email when payment is verified as paid
+      if (status === 'pagado') {
+        try {
+          await supabase.functions.invoke('send-payment-confirmation', {
+            body: { paymentId },
+          });
+        } catch (emailError) {
+          // Log but don't fail the mutation if email fails
+          console.error('Error sending confirmation email:', emailError);
+        }
+      }
+
       return data;
     },
     onSuccess: (data) => {
