@@ -46,6 +46,7 @@ const COUNTRIES = [
   { code: "JP", name: "Japón", flag: "🇯🇵", prefix: "+81", minDigits: 10, maxDigits: 10 },
   { code: "IN", name: "India", flag: "🇮🇳", prefix: "+91", minDigits: 10, maxDigits: 10 },
   { code: "MY", name: "Malasia", flag: "🇲🇾", prefix: "+60", minDigits: 9, maxDigits: 10 },
+  { code: "GT", name: "Guatemala", flag: "🇬🇹", prefix: "+502", minDigits: 8, maxDigits: 8 },
   { code: "AU", name: "Australia", flag: "🇦🇺", prefix: "+61", minDigits: 9, maxDigits: 9 },
   { code: "NZ", name: "Nueva Zelanda", flag: "🇳🇿", prefix: "+64", minDigits: 9, maxDigits: 10 },
   { code: "ZA", name: "Sudáfrica", flag: "🇿🇦", prefix: "+27", minDigits: 9, maxDigits: 9 },
