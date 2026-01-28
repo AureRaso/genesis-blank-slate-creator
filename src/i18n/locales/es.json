@@ -1994,6 +1994,11 @@
       "errorGenerating": "Error al generar los pagos",
       "paymentGenerated": "Pago generado correctamente",
       "errorGeneratingPayment": "Error al generar el pago"
+    },
+    "deleteDialog": {
+      "title": "Eliminar pago",
+      "description": "¿Estás seguro de que quieres eliminar el pago de {{amount}} de {{name}}? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar"
     }
   },
   "myPayments": {

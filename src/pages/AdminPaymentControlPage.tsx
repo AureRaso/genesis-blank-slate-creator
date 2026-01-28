@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Wallet, FileText, ChevronLeft, ChevronRight, Clock, CheckCircle2, AlertCircle, Search, Plus, Settings, Calendar, Banknote, CreditCard, Smartphone, RefreshCw, Filter, X, ArrowUpDown, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ import {
   useVerifyStudentPayment,
   useCreateExtraPayment,
   useGenerateMonthlyPayments,
+  useDeleteStudentPayment,
   StudentPayment,
 } from "@/hooks/useStudentPayments";
 import { useStudentsWithAssignments } from "@/hooks/useRateAssignments";
@@ -90,6 +91,7 @@ export default function AdminPaymentControlPage() {
   const verifyPayment = useVerifyStudentPayment();
   const createExtraPayment = useCreateExtraPayment();
   const generateMonthlyPayments = useGenerateMonthlyPayments();
+  const deletePayment = useDeleteStudentPayment();
 
   // Get locale for date formatting
   const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
@@ -262,6 +264,10 @@ export default function AdminPaymentControlPage() {
   const [extraPaymentAmount, setExtraPaymentAmount] = useState("");
   const [extraPaymentDescription, setExtraPaymentDescription] = useState("");
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+
+  // Delete Payment Dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<StudentPayment | null>(null);
 
   // Reset to page 1 when active tab changes
   useEffect(() => {
@@ -467,6 +473,19 @@ export default function AdminPaymentControlPage() {
     setIsExtraPaymentDialogOpen(false);
   };
 
+  const openDeleteDialog = (payment: StudentPayment) => {
+    setPaymentToDelete(payment);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeletePayment = async () => {
+    if (!paymentToDelete) return;
+
+    await deletePayment.mutateAsync(paymentToDelete.id);
+    setIsDeleteDialogOpen(false);
+    setPaymentToDelete(null);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', {
       minimumFractionDigits: 2,
@@ -600,11 +619,24 @@ export default function AdminPaymentControlPage() {
               </Button>
             </div>
           )}
-          {payment.status === 'pagado' && payment.admin_verified_at && (
-            <span className="text-xs text-gray-500">
-              <span className="hidden sm:inline">{t("paymentControl.table.verified")} {formatDate(payment.admin_verified_at)}</span>
-              <CheckCircle2 className="h-4 w-4 text-emerald-500 sm:hidden mx-auto" />
-            </span>
+          {payment.status === 'pagado' && (
+            <div className="flex items-center justify-center gap-2">
+              {payment.admin_verified_at && (
+                <span className="text-xs text-gray-500">
+                  <span className="hidden sm:inline">{t("paymentControl.table.verified")} {formatDate(payment.admin_verified_at)}</span>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 sm:hidden" />
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-white hover:bg-red-500 h-7 w-7 p-0"
+                onClick={() => openDeleteDialog(payment)}
+                title={t("paymentControl.deleteDialog.title")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </td>
       </tr>
@@ -1249,6 +1281,34 @@ export default function AdminPaymentControlPage() {
             >
               {createExtraPayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {t("paymentControl.extraPaymentDialog.createPayment")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Payment Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("paymentControl.deleteDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {t("paymentControl.deleteDialog.description", {
+                amount: paymentToDelete ? formatCurrency(paymentToDelete.amount) : '',
+                name: paymentToDelete?.student_enrollment?.full_name || ''
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletePayment}
+              disabled={deletePayment.isPending}
+            >
+              {deletePayment.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              {t("paymentControl.deleteDialog.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

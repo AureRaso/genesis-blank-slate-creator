@@ -591,6 +591,11 @@
       "errorGenerating": "Errore nella generazione dei pagamenti",
       "paymentGenerated": "Pagamento generato correttamente",
       "errorGeneratingPayment": "Errore nella generazione del pagamento"
+    },
+    "deleteDialog": {
+      "title": "Elimina pagamento",
+      "description": "Sei sicuro di voler eliminare il pagamento di {{amount}} di {{name}}? Questa azione non può essere annullata.",
+      "confirm": "Elimina"
     }
   },
   "myPayments": {

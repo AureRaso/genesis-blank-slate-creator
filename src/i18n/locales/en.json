@@ -618,6 +618,11 @@
       "errorGenerating": "Error generating payments",
       "paymentGenerated": "Payment generated successfully",
       "errorGeneratingPayment": "Error generating payment"
+    },
+    "deleteDialog": {
+      "title": "Delete payment",
+      "description": "Are you sure you want to delete the {{amount}} payment from {{name}}? This action cannot be undone.",
+      "confirm": "Delete"
     }
   },
   "myPayments": {
