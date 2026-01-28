@@ -590,7 +590,9 @@
       "noActiveAssignments": "Nessuna assegnazione attiva per generare pagamenti",
       "errorGenerating": "Errore nella generazione dei pagamenti",
       "paymentGenerated": "Pagamento generato correttamente",
-      "errorGeneratingPayment": "Errore nella generazione del pagamento"
+      "errorGeneratingPayment": "Errore nella generazione del pagamento",
+      "deleted": "Pagamento eliminato correttamente",
+      "errorDeleting": "Errore nell'eliminazione del pagamento"
     },
     "deleteDialog": {
       "title": "Elimina pagamento",

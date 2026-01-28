@@ -1993,7 +1993,9 @@
       "noActiveAssignments": "No hay asignaciones activas para generar pagos",
       "errorGenerating": "Error al generar los pagos",
       "paymentGenerated": "Pago generado correctamente",
-      "errorGeneratingPayment": "Error al generar el pago"
+      "errorGeneratingPayment": "Error al generar el pago",
+      "deleted": "Pago eliminado correctamente",
+      "errorDeleting": "Error al eliminar el pago"
     },
     "deleteDialog": {
       "title": "Eliminar pago",

@@ -617,7 +617,9 @@
       "noActiveAssignments": "No active assignments to generate payments",
       "errorGenerating": "Error generating payments",
       "paymentGenerated": "Payment generated successfully",
-      "errorGeneratingPayment": "Error generating payment"
+      "errorGeneratingPayment": "Error generating payment",
+      "deleted": "Payment deleted successfully",
+      "errorDeleting": "Error deleting payment"
     },
     "deleteDialog": {
       "title": "Delete payment",
