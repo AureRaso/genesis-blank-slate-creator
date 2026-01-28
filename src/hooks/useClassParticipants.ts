@@ -214,7 +214,7 @@ export interface BulkEnrollmentData {
 
 // Helper function to find all classes in a series based on:
 // - Same club_id, name, start_time, trainer_profile_id
-// - At least 1 common participant (not substitute)
+// - At least 1 common participant (not substitute) - OR all candidates if source class is empty
 const findSeriesClassIds = async (classId: string): Promise<string[]> => {
   // 1. Get the source class details
   const { data: sourceClass, error: fetchError } = await supabase
@@ -227,7 +227,21 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
     return [classId];
   }
 
-  // 2. Get non-substitute participants of the source class
+  // 2. Find candidate classes with same club + name + time + trainer
+  const { data: candidateClasses, error: candidatesError } = await supabase
+    .from('programmed_classes')
+    .select('id')
+    .eq('club_id', sourceClass.club_id)
+    .eq('name', sourceClass.name)
+    .eq('start_time', sourceClass.start_time)
+    .eq('trainer_profile_id', sourceClass.trainer_profile_id)
+    .eq('is_active', true);
+
+  if (candidatesError || !candidateClasses || candidateClasses.length === 0) {
+    return [classId];
+  }
+
+  // 3. Get non-substitute participants of the source class
   const { data: sourceParticipants, error: participantsError } = await supabase
     .from('class_participants')
     .select('student_enrollment_id')
@@ -241,26 +255,12 @@ const findSeriesClassIds = async (classId: string): Promise<string[]> => {
 
   const sourceParticipantIds = sourceParticipants?.map(p => p.student_enrollment_id) || [];
 
-  // If class has no non-substitute participants, return only this class
+  // 4. If class has no non-substitute participants, return ALL candidates (same club+name+time+trainer)
   if (sourceParticipantIds.length === 0) {
-    return [classId];
+    return candidateClasses.map(c => c.id);
   }
 
-  // 3. Find candidate classes with same club + name + time + trainer
-  const { data: candidateClasses, error: candidatesError } = await supabase
-    .from('programmed_classes')
-    .select('id')
-    .eq('club_id', sourceClass.club_id)
-    .eq('name', sourceClass.name)
-    .eq('start_time', sourceClass.start_time)
-    .eq('trainer_profile_id', sourceClass.trainer_profile_id)
-    .eq('is_active', true);
-
-  if (candidatesError || !candidateClasses) {
-    return [classId];
-  }
-
-  // 4. Filter candidates: keep only those with at least 1 common participant
+  // 5. If has participants, filter candidates: keep only those with at least 1 common participant
   const seriesClassIds: string[] = [];
 
   for (const candidate of candidateClasses) {
