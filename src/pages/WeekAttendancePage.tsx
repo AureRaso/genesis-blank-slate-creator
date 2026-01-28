@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses, useDeleteClass } from "@/hooks/useTodayAttendance";
+import { useTodayAttendance, useTrainerMarkAttendance, useTrainerMarkAbsence, useTrainerClearStatus, useRemoveParticipant, useCancelClass, useCancelledClasses, useDeleteClassSeries } from "@/hooks/useTodayAttendance";
 import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useSendCancellationNotification } from "@/hooks/useCancellationNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
@@ -234,7 +234,7 @@ const WeekAttendancePage = () => {
   const clearStatus = useTrainerClearStatus();
   const removeParticipant = useRemoveParticipant();
   const cancelClass = useCancelClass();
-  const deleteClass = useDeleteClass();
+  const deleteClass = useDeleteClassSeries();
   const { data: cancelledClasses = [] } = useCancelledClasses(startDateStr, endDateStr);
   const sendCancellationNotification = useSendCancellationNotification();
 

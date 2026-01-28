@@ -603,6 +603,189 @@ export const useDeleteClass = () => {
   });
 };
 
+// Helper function to find all classes in a series based on:
+// - Same club_id, name, start_time, trainer_profile_id
+// - At least 1 common participant (not substitute)
+const findSeriesClasses = async (classId: string): Promise<{ id: string }[]> => {
+  console.log('[SERIES-DELETE] Finding series for class:', classId);
+
+  // 1. Get the source class details
+  const { data: classData, error: fetchError } = await supabase
+    .from("programmed_classes")
+    .select('id, club_id, name, start_time, trainer_profile_id')
+    .eq("id", classId)
+    .single();
+
+  if (fetchError || !classData) {
+    console.error("[SERIES-DELETE] Error fetching class for series identification:", fetchError);
+    return [{ id: classId }];
+  }
+
+  console.log('[SERIES-DELETE] Source class:', {
+    id: classData.id,
+    name: classData.name,
+    start_time: classData.start_time,
+    trainer_profile_id: classData.trainer_profile_id
+  });
+
+  // 2. Get non-substitute participants of the source class
+  const { data: sourceParticipants, error: participantsError } = await supabase
+    .from('class_participants')
+    .select('student_enrollment_id, is_substitute')
+    .eq('class_id', classId)
+    .eq('status', 'active')
+    .or('is_substitute.eq.false,is_substitute.is.null');
+
+  if (participantsError) {
+    console.error("[SERIES-DELETE] Error fetching source participants:", participantsError);
+    return [{ id: classId }];
+  }
+
+  const sourceParticipantIds = sourceParticipants?.map(p => p.student_enrollment_id) || [];
+  console.log('[SERIES-DELETE] Source participants (non-substitute):', sourceParticipantIds.length);
+
+  // If class has no non-substitute participants, return only this class
+  if (sourceParticipantIds.length === 0) {
+    console.log('[SERIES-DELETE] No non-substitute participants found, returning only source class');
+    return [{ id: classId }];
+  }
+
+  // 3. Find candidate classes with same club + name + time + trainer
+  const { data: candidateClasses, error: candidatesError } = await supabase
+    .from('programmed_classes')
+    .select('id, name, start_time')
+    .eq('club_id', classData.club_id)
+    .eq('name', classData.name)
+    .eq('start_time', classData.start_time)
+    .eq('trainer_profile_id', classData.trainer_profile_id)
+    .eq('is_active', true);
+
+  if (candidatesError || !candidateClasses) {
+    console.error("[SERIES-DELETE] Error fetching candidate classes:", candidatesError);
+    return [{ id: classId }];
+  }
+
+  console.log('[SERIES-DELETE] Candidate classes with same club+name+time+trainer:', candidateClasses.length);
+
+  // 4. Filter candidates: keep only those with at least 1 common participant
+  const seriesClasses: { id: string }[] = [];
+
+  for (const candidate of candidateClasses) {
+    // Get non-substitute participants of this candidate
+    const { data: candidateParticipants } = await supabase
+      .from('class_participants')
+      .select('student_enrollment_id, is_substitute')
+      .eq('class_id', candidate.id)
+      .eq('status', 'active')
+      .or('is_substitute.eq.false,is_substitute.is.null');
+
+    const candidateParticipantIds = candidateParticipants?.map(p => p.student_enrollment_id) || [];
+
+    // Check if there's at least 1 common participant
+    const hasCommonParticipant = candidateParticipantIds.some(id =>
+      sourceParticipantIds.includes(id)
+    );
+
+    if (hasCommonParticipant) {
+      seriesClasses.push({ id: candidate.id });
+    }
+  }
+
+  // If no matches found, at least return the source class
+  if (seriesClasses.length === 0) {
+    console.log('[SERIES-DELETE] No matches found, returning only source class');
+    return [{ id: classId }];
+  }
+
+  console.log('[SERIES-DELETE] Final series classes:', seriesClasses.length, seriesClasses.map(c => c.id));
+  return seriesClasses;
+};
+
+// Hook para eliminar serie completa de clases recurrentes (hard delete)
+export const useDeleteClassSeries = () => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ classId }: { classId: string }) => {
+      console.log('🗑️ [SERIES-DELETE] Starting deletion for class:', classId);
+
+      if (!profile?.id) throw new Error('Usuario no autenticado');
+
+      // Find all classes in the series
+      const seriesClasses = await findSeriesClasses(classId);
+      const classIds = seriesClasses.map(c => c.id);
+
+      console.log(`🔍 [SERIES-DELETE] Found ${classIds.length} classes in series:`, classIds);
+
+      // Delete all related records for each class in the series
+      for (const id of classIds) {
+        // 1. Delete attendance records
+        const { error: attendanceError } = await supabase
+          .from('class_attendance_records')
+          .delete()
+          .eq('programmed_class_id', id);
+
+        if (attendanceError) {
+          console.error(`[SERIES-DELETE] Error deleting attendance for class ${id}:`, attendanceError);
+        }
+
+        // 2. Delete participants
+        const { error: participantsError } = await supabase
+          .from('class_participants')
+          .delete()
+          .eq('class_id', id);
+
+        if (participantsError) {
+          console.error(`[SERIES-DELETE] Error deleting participants for class ${id}:`, participantsError);
+        }
+
+        // 3. Delete cancellation records
+        const { error: cancelledError } = await supabase
+          .from('cancelled_classes')
+          .delete()
+          .eq('programmed_class_id', id);
+
+        if (cancelledError) {
+          console.error(`[SERIES-DELETE] Error deleting cancelled records for class ${id}:`, cancelledError);
+        }
+
+        // 4. Delete the programmed class
+        const { error: classError } = await supabase
+          .from('programmed_classes')
+          .delete()
+          .eq('id', id);
+
+        if (classError) {
+          console.error(`[SERIES-DELETE] Error deleting class ${id}:`, classError);
+          throw classError;
+        }
+
+        console.log(`✅ [SERIES-DELETE] Class ${id} deleted completely`);
+      }
+
+      return { deletedCount: classIds.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-class-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['cancelled-classes'] });
+      queryClient.invalidateQueries({ queryKey: ['programmed-classes'] });
+      queryClient.invalidateQueries({ queryKey: ['scheduled-classes'] });
+
+      if (data.deletedCount > 1) {
+        toast.success(`✓ ${data.deletedCount} clases de la serie eliminadas correctamente`);
+      } else {
+        toast.success('✓ Clase eliminada correctamente');
+      }
+    },
+    onError: (error: any) => {
+      console.error('[SERIES-DELETE] Error:', error);
+      toast.error('Error al eliminar las clases');
+    },
+  });
+};
+
 // Hook para obtener clases canceladas
 export const useCancelledClasses = (startDate?: string, endDate?: string) => {
   const { profile } = useAuth();
