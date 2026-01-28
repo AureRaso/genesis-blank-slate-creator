@@ -490,8 +490,56 @@ export function useGenerateMonthlyPayments() {
             errors.push({ assignment: assignment.id, error: String(err) });
           }
         }
-        // For per-class rates, we need to count classes - skip for now
-        // (will be implemented with automation)
+        // For per-class rates, count classes in the period and generate payment
+        else if (rate.rate_type === 'por_clase' && rate.price_per_class) {
+          try {
+            // Count classes attended by this student in the period
+            const { data: classesData, error: classesError } = await supabase
+              .from('class_participants')
+              .select(`
+                id,
+                programmed_class:programmed_classes!inner(
+                  id,
+                  start_date
+                )
+              `)
+              .eq('student_enrollment_id', assignment.student_enrollment_id)
+              .eq('status', 'active');
+
+            if (classesError) {
+              errors.push({ assignment: assignment.id, error: classesError.message });
+              continue;
+            }
+
+            // Filter classes within the period
+            const classesInPeriod = classesData?.filter(cp => {
+              const classDate = (cp.programmed_class as any)?.start_date;
+              return classDate && classDate >= periodStartStr && classDate <= periodEndStr;
+            }) || [];
+
+            const classesCount = classesInPeriod.length;
+
+            // Skip if no classes in this period
+            if (classesCount === 0) {
+              continue;
+            }
+
+            const { data, error } = await supabase.rpc('generate_payment_for_assignment', {
+              p_assignment_id: assignment.id,
+              p_period_start: periodStartStr,
+              p_period_end: periodEndStr,
+              p_classes_count: classesCount,
+            });
+
+            if (error) {
+              errors.push({ assignment: assignment.id, error: error.message });
+            } else {
+              results.push(data);
+            }
+          } catch (err) {
+            errors.push({ assignment: assignment.id, error: String(err) });
+          }
+        }
       }
 
       return { generated: results.length, errors, skipped: existingAssignmentIds.size };

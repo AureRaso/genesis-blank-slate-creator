@@ -144,7 +144,7 @@ export default function PaymentRatesPage() {
       return `${rate.fixed_price.toFixed(2)} €`;
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € / ${t("paymentRates.detail.overview.perClass")}`;
+      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.detail.perClassSuffix")}`;
     }
     return "-";
   };
