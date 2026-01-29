@@ -1,4 +1,4 @@
-import { HelpCircle, Check, X, Clock, Ban } from "lucide-react";
+import { HelpCircle, Check, X, Clock, Ban, UserPlus } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +32,10 @@ export const AttendanceLegendTooltip = () => {
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
               <span>{t('playersPage.adminStudentsList.attendance.lateNotice')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+              <span>{t('playersPage.adminStudentsList.attendance.substitute')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Ban className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />

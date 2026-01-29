@@ -1016,6 +1016,7 @@
         "attended": "Confirmed attendance",
         "noShows": "No-show (confirmed but didn't attend)",
         "lateNotice": "Late notice (<5h before)",
+        "substitute": "Attended as substitute",
         "cancelledByAcademy": "Cancelled by academy"
       },
       "detailModal": {
@@ -1024,6 +1025,7 @@
         "attended": "Attended",
         "noShows": "No-shows",
         "lateNotices": "Late notices",
+        "substituteAttendances": "As substitute",
         "cancelledByAcademy": "Cancelled",
         "confirmations": "Confirmations",
         "accepted": "Accepted",

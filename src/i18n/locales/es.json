@@ -561,6 +561,7 @@
         "attended": "Asistencias confirmadas",
         "noShows": "No vino (confirmó pero faltó)",
         "lateNotice": "Aviso tardío (<5h antes)",
+        "substitute": "Asistió como sustituto",
         "cancelledByAcademy": "Canceladas por la academia"
       },
       "detailModal": {
@@ -569,6 +570,7 @@
         "attended": "Asistió",
         "noShows": "No vino",
         "lateNotices": "Avisos tardíos",
+        "substituteAttendances": "Como sustituto",
         "cancelledByAcademy": "Canceladas",
         "confirmations": "Confirmaciones",
         "accepted": "Aceptadas",

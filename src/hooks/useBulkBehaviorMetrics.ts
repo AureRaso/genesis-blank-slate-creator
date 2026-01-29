@@ -8,6 +8,7 @@ export interface BulkBehaviorMetric {
   early_notice_absences: number;
   total_absences: number;
   club_cancelled_classes: number;
+  substitute_attendances: number;
 }
 
 /**
@@ -26,6 +27,24 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
       // Using the placeholder UUID to get global metrics across all classes
       const GLOBAL_CLASS_ID = '00000000-0000-0000-0000-000000000000';
 
+      // Also fetch substitute attendance counts in a single query
+      const { data: substituteCounts, error: subError } = await supabase
+        .from('class_participants')
+        .select('student_enrollment_id')
+        .in('student_enrollment_id', studentEnrollmentIds)
+        .eq('is_substitute', true);
+
+      if (subError) {
+        console.error('Error fetching substitute counts:', subError);
+      }
+
+      // Count substitutes per student
+      const substituteCountMap = new Map<string, number>();
+      (substituteCounts || []).forEach(row => {
+        const count = substituteCountMap.get(row.student_enrollment_id) || 0;
+        substituteCountMap.set(row.student_enrollment_id, count + 1);
+      });
+
       const results = await Promise.all(
         studentEnrollmentIds.map(async (enrollmentId) => {
           try {
@@ -40,6 +59,8 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
               return null;
             }
 
+            const substituteAttendances = substituteCountMap.get(enrollmentId) || 0;
+
             if (!data || data.length === 0) {
               return {
                 student_enrollment_id: enrollmentId,
@@ -47,13 +68,15 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
                 late_notice_absences: 0,
                 early_notice_absences: 0,
                 total_absences: 0,
-                club_cancelled_classes: 0
+                club_cancelled_classes: 0,
+                substitute_attendances: substituteAttendances
               };
             }
 
             return {
               student_enrollment_id: enrollmentId,
-              ...data[0]
+              ...data[0],
+              substitute_attendances: substituteAttendances
             };
           } catch (err) {
             console.error(`Exception fetching metrics for student ${enrollmentId}:`, err);

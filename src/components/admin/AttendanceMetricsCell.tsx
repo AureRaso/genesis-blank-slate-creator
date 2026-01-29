@@ -1,4 +1,4 @@
-import { Check, X, Clock, Ban } from "lucide-react";
+import { Check, X, Clock, Ban, UserPlus } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +29,7 @@ export const AttendanceMetricsCell = ({ score, behavior }: AttendanceMetricsCell
   const noShows = score?.no_show_when_confirmed ?? 0;
   const lateNotices = behavior?.late_notice_absences ?? 0;
   const cancelledByAcademy = score?.classes_cancelled_by_academy ?? behavior?.club_cancelled_classes ?? 0;
+  const substituteAttendances = behavior?.substitute_attendances ?? 0;
 
   return (
     <TooltipProvider>
@@ -71,6 +72,21 @@ export const AttendanceMetricsCell = ({ score, behavior }: AttendanceMetricsCell
             {t('playersPage.adminStudentsList.attendance.lateNotice')}
           </TooltipContent>
         </Tooltip>
+
+        {/* Substitute attendances - only show if > 0 */}
+        {substituteAttendances > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex items-center gap-0.5 text-blue-500 font-medium cursor-default">
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>{substituteAttendances}</span>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t('playersPage.adminStudentsList.attendance.substitute')}
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Cancelled by academy - only show if > 0 */}
         {cancelledByAcademy > 0 && (

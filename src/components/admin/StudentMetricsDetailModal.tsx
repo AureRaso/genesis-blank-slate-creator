@@ -21,6 +21,7 @@ import {
   User,
   Calendar,
   MessageSquare,
+  UserPlus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -124,7 +125,7 @@ export const StudentMetricsDetailModal = ({
                   {t('playersPage.adminStudentsList.detailModal.attendanceMetrics')}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <MetricItem
                   icon={<Check className="h-4 w-4 text-green-600" />}
                   label={t('playersPage.adminStudentsList.detailModal.attended')}
@@ -142,6 +143,12 @@ export const StudentMetricsDetailModal = ({
                   label={t('playersPage.adminStudentsList.detailModal.lateNotices')}
                   value={behavior?.late_notice_absences ?? 0}
                   color={behavior?.late_notice_absences ? 'text-orange-500' : 'text-gray-500'}
+                />
+                <MetricItem
+                  icon={<UserPlus className="h-4 w-4 text-blue-500" />}
+                  label={t('playersPage.adminStudentsList.detailModal.substituteAttendances')}
+                  value={behavior?.substitute_attendances ?? 0}
+                  color={behavior?.substitute_attendances ? 'text-blue-500' : 'text-gray-500'}
                 />
                 <MetricItem
                   icon={<Ban className="h-4 w-4 text-gray-400" />}
