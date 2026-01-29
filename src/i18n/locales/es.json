@@ -542,14 +542,54 @@
       "sort": {
         "label": "Ordenar",
         "arrival": "Orden de llegada",
-        "alphabetical": "Alfabético (A-Z)"
+        "alphabetical": "Alfabético (A-Z)",
+        "scoreDesc": "Score (mayor a menor)",
+        "scoreAsc": "Score (menor a mayor)",
+        "noShowsDesc": "Más no-shows"
       },
       "tableHeaders": {
         "student": "Alumno",
         "contact": "Contacto",
         "club": "Club",
-        "enrollment": "Matrícula",
+        "attendance": "Asistencia",
+        "score": "Score",
         "actions": "Acciones"
+      },
+      "attendance": {
+        "noData": "Sin datos",
+        "legendTitle": "Leyenda de asistencia",
+        "attended": "Asistencias confirmadas",
+        "noShows": "No vino (confirmó pero faltó)",
+        "lateNotice": "Aviso tardío (<5h antes)",
+        "cancelledByAcademy": "Canceladas por la academia"
+      },
+      "detailModal": {
+        "title": "Métricas de Asistencia",
+        "attendanceMetrics": "Métricas de asistencia",
+        "attended": "Asistió",
+        "noShows": "No vino",
+        "lateNotices": "Avisos tardíos",
+        "cancelledByAcademy": "Canceladas",
+        "confirmations": "Confirmaciones",
+        "accepted": "Aceptadas",
+        "rejected": "Rechazadas",
+        "noResponse": "Sin respuesta",
+        "fulfillmentRate": "Tasa de Cumplimiento",
+        "fulfillmentRateDesc": "Porcentaje de veces que asistió cuando confirmó",
+        "communicationRate": "Tasa de Comunicación",
+        "communicationRateDesc": "Porcentaje de clases en las que respondió",
+        "negativeStreak": "Racha Negativa Detectada",
+        "negativeStreakDesc": "{{count}} de las últimas 3 clases: confirmó pero no asistió",
+        "trendPositive": "Tendencia positiva",
+        "trendNegative": "Tendencia negativa",
+        "trendNeutral": "Tendencia estable",
+        "viewFullScores": "Ver historial completo",
+        "category": {
+          "excellent": "Excelente",
+          "good": "Bueno",
+          "regular": "Regular",
+          "problematic": "Problemático"
+        }
       },
       "emptyState": {
         "noStudents": "No hay alumnos inscritos",

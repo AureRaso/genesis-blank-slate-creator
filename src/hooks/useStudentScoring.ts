@@ -217,7 +217,31 @@ export const useAllStudentScores = (clubId?: string) => {
     queryFn: async () => {
       if (!profile?.id) throw new Error('Usuario no autenticado');
 
-      let query = supabase
+      // First, get student enrollments for the club(s)
+      let enrollmentsQuery = supabase
+        .from('student_enrollments')
+        .select('id')
+        .neq('status', 'inactive');
+
+      if (clubId) {
+        enrollmentsQuery = enrollmentsQuery.eq('club_id', clubId);
+      }
+
+      const { data: enrollments, error: enrollmentsError } = await enrollmentsQuery;
+
+      if (enrollmentsError) {
+        console.error('❌ Error fetching enrollments:', enrollmentsError);
+        throw enrollmentsError;
+      }
+
+      if (!enrollments || enrollments.length === 0) {
+        return [];
+      }
+
+      const enrollmentIds = enrollments.map(e => e.id);
+
+      // Now fetch scores for those enrollments
+      const { data, error } = await supabase
         .from('student_attendance_scores')
         .select(`
           *,
@@ -227,21 +251,15 @@ export const useAllStudentScores = (clubId?: string) => {
             club_id
           )
         `)
+        .in('student_enrollment_id', enrollmentIds)
         .order('score', { ascending: false });
-
-      // Filtrar por club si se especifica
-      if (clubId) {
-        query = query.eq('student_enrollment.club_id', clubId);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error('❌ Error fetching student scores:', error);
         throw error;
       }
 
-      return data as StudentScoreWithDetails[];
+      return (data || []) as StudentScoreWithDetails[];
     },
     enabled: !!profile?.id,
   });

@@ -997,14 +997,54 @@
       "sort": {
         "label": "Sort",
         "arrival": "Arrival order",
-        "alphabetical": "Alphabetical (A-Z)"
+        "alphabetical": "Alphabetical (A-Z)",
+        "scoreDesc": "Score (high to low)",
+        "scoreAsc": "Score (low to high)",
+        "noShowsDesc": "Most no-shows"
       },
       "tableHeaders": {
         "student": "Student",
         "contact": "Contact",
         "club": "Club",
-        "enrollment": "Enrollment",
+        "attendance": "Attendance",
+        "score": "Score",
         "actions": "Actions"
+      },
+      "attendance": {
+        "noData": "No data",
+        "legendTitle": "Attendance legend",
+        "attended": "Confirmed attendance",
+        "noShows": "No-show (confirmed but didn't attend)",
+        "lateNotice": "Late notice (<5h before)",
+        "cancelledByAcademy": "Cancelled by academy"
+      },
+      "detailModal": {
+        "title": "Attendance Metrics",
+        "attendanceMetrics": "Attendance metrics",
+        "attended": "Attended",
+        "noShows": "No-shows",
+        "lateNotices": "Late notices",
+        "cancelledByAcademy": "Cancelled",
+        "confirmations": "Confirmations",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "noResponse": "No response",
+        "fulfillmentRate": "Fulfillment Rate",
+        "fulfillmentRateDesc": "Percentage of times they attended when confirmed",
+        "communicationRate": "Communication Rate",
+        "communicationRateDesc": "Percentage of classes they responded to",
+        "negativeStreak": "Negative Streak Detected",
+        "negativeStreakDesc": "{{count}} of last 3 classes: confirmed but didn't attend",
+        "trendPositive": "Positive trend",
+        "trendNegative": "Negative trend",
+        "trendNeutral": "Stable trend",
+        "viewFullScores": "View full history",
+        "category": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "regular": "Regular",
+          "problematic": "Problematic"
+        }
       },
       "emptyState": {
         "noStudents": "No enrolled students",

@@ -8,11 +8,6 @@ import {
   Users,
   Search,
   Mail,
-  Calendar,
-  Clock,
-  Euro,
-  Phone,
-  CheckCircle,
   AlertTriangle,
   Building2,
   Edit,
@@ -23,7 +18,6 @@ import {
   ChevronRight,
   Trash2,
   Pencil,
-  User,
   GraduationCap,
   Users2  // MULTI-CLUB FEATURE
 } from "lucide-react";
@@ -62,6 +56,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import StudentEditModal from "@/components/StudentEditModal";
+import { useAllStudentScores, type StudentScoreWithDetails } from "@/hooks/useStudentScoring";
+import { useBulkBehaviorMetrics, type BulkBehaviorMetric } from "@/hooks/useBulkBehaviorMetrics";
+import { AttendanceLegendTooltip } from "@/components/admin/AttendanceLegendTooltip";
+import { AttendanceMetricsCell } from "@/components/admin/AttendanceMetricsCell";
+import { ScoreBadge } from "@/components/admin/ScoreBadge";
+import { StudentMetricsDetailModal } from "@/components/admin/StudentMetricsDetailModal";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -78,11 +78,37 @@ const AdminStudentsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [studentToArchive, setStudentToArchive] = useState<StudentEnrollment | null>(null);
   const [studentToEdit, setStudentToEdit] = useState<StudentEnrollment | null>(null);
+  const [studentForMetrics, setStudentForMetrics] = useState<{
+    student: StudentEnrollment;
+    score: StudentScoreWithDetails | null;
+    behavior: BulkBehaviorMetric | null;
+  } | null>(null);
 
   const { data: students = [], isLoading, error } = useAdminStudentEnrollments(effectiveClubId);
   const { data: classTrainersFromHook = [] } = useClassTrainers(effectiveClubId);
   const updateStudentMutation = useUpdateStudentEnrollment();
   const archiveStudentMutation = useArchiveStudent();
+
+  // Fetch attendance scores for all students
+  const { data: allScores = [] } = useAllStudentScores(effectiveClubId);
+
+  // Create lookup maps for O(1) access
+  const scoresByEnrollmentId = useMemo(() => {
+    return new Map(allScores.map(s => [s.student_enrollment_id, s]));
+  }, [allScores]);
+
+  // Get student enrollment IDs for bulk behavior metrics fetch
+  const studentEnrollmentIds = useMemo(() => {
+    return students.map(s => s.id);
+  }, [students]);
+
+  // Fetch behavior metrics (late notices, etc.) for all students
+  const { data: behaviorMetrics = [] } = useBulkBehaviorMetrics(studentEnrollmentIds);
+
+  // Create lookup map for behavior metrics
+  const behaviorByEnrollmentId = useMemo(() => {
+    return new Map(behaviorMetrics.map(b => [b.student_enrollment_id, b]));
+  }, [behaviorMetrics]);
 
   // ============================================
   // MULTI-CLUB FEATURE - START
@@ -204,14 +230,23 @@ const AdminStudentsList = () => {
       return matchesSearch && matchesStatus && matchesPeriod && matchesTrainer;
     })
     .sort((a, b) => {
-      if (sortOrder === "alphabetical") {
-        // Ordenar alfabéticamente por nombre
-        return a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' });
-      } else {
-        // Ordenar por orden de llegada (created_at descendente - más recientes primero)
-        // Si no hay created_at, usar el orden original
-        if (!a.created_at || !b.created_at) return 0;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      const scoreA = scoresByEnrollmentId.get(a.id);
+      const scoreB = scoresByEnrollmentId.get(b.id);
+
+      switch (sortOrder) {
+        case "alphabetical":
+          return a.full_name.localeCompare(b.full_name, 'es', { sensitivity: 'base' });
+        case "arrival":
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "score_desc":
+          return (scoreB?.score ?? 0) - (scoreA?.score ?? 0);
+        case "score_asc":
+          return (scoreA?.score ?? 0) - (scoreB?.score ?? 0);
+        case "noshows_desc":
+          return (scoreB?.no_show_when_confirmed ?? 0) - (scoreA?.no_show_when_confirmed ?? 0);
+        default:
+          return 0;
       }
     });
 
@@ -405,7 +440,7 @@ const AdminStudentsList = () => {
 
             {/* Sort order */}
             <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <div className="flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder={t('playersPage.adminStudentsList.sort.label')} />
@@ -414,6 +449,9 @@ const AdminStudentsList = () => {
               <SelectContent>
                 <SelectItem value="alphabetical">{t('playersPage.adminStudentsList.sort.alphabetical')}</SelectItem>
                 <SelectItem value="arrival">{t('playersPage.adminStudentsList.sort.arrival')}</SelectItem>
+                <SelectItem value="score_desc">{t('playersPage.adminStudentsList.sort.scoreDesc')}</SelectItem>
+                <SelectItem value="score_asc">{t('playersPage.adminStudentsList.sort.scoreAsc')}</SelectItem>
+                <SelectItem value="noshows_desc">{t('playersPage.adminStudentsList.sort.noShowsDesc')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -465,12 +503,16 @@ const AdminStudentsList = () => {
             <Card>
               <CardContent className="p-0">
                 {/* Table Header - Desktop only */}
-                <div className="hidden md:grid md:grid-cols-11 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
+                <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-muted/50 border-b font-medium text-sm text-muted-foreground">
                   <div className="col-span-3">{t('playersPage.adminStudentsList.tableHeaders.student')}</div>
-                  <div className="col-span-3">{t('playersPage.adminStudentsList.tableHeaders.contact')}</div>
+                  <div className="col-span-2">{t('playersPage.adminStudentsList.tableHeaders.contact')}</div>
                   <div className="col-span-2">{t('playersPage.adminStudentsList.tableHeaders.club')}</div>
-                  <div className="col-span-2">{t('playersPage.adminStudentsList.tableHeaders.enrollment')}</div>
-                  <div className="col-span-1">{t('playersPage.adminStudentsList.tableHeaders.actions')}</div>
+                  <div className="col-span-2 flex items-center gap-1">
+                    {t('playersPage.adminStudentsList.tableHeaders.attendance')}
+                    <AttendanceLegendTooltip />
+                  </div>
+                  <div className="col-span-1">{t('playersPage.adminStudentsList.tableHeaders.score')}</div>
+                  <div className="col-span-2 text-right">{t('playersPage.adminStudentsList.tableHeaders.actions')}</div>
                 </div>
 
                 {/* Table Body */}
@@ -483,10 +525,18 @@ const AdminStudentsList = () => {
                       .join('')
                       .toUpperCase();
 
+                    const studentScore = scoresByEnrollmentId.get(student.id);
+                    const studentBehavior = behaviorByEnrollmentId.get(student.id);
+
                     return (
                       <div
                         key={student.id}
-                        className="grid grid-cols-1 md:grid-cols-11 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
+                        className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => setStudentForMetrics({
+                          student,
+                          score: studentScore || null,
+                          behavior: studentBehavior || null
+                        })}
                       >
                         {/* Columna 1: Alumno (Nombre + Nivel + Estado) */}
                         <div className="col-span-1 md:col-span-3 flex items-start gap-3">
@@ -552,10 +602,10 @@ const AdminStudentsList = () => {
                         </div>
 
                         {/* Columna 2: Contacto */}
-                        <div className="col-span-1 md:col-span-3 flex flex-col gap-1.5 text-sm">
+                        <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="truncate">{student.email}</span>
+                            <span className="truncate text-xs">{student.email}</span>
                           </div>
                           {student.phone && (
                             <a
@@ -564,6 +614,7 @@ const AdminStudentsList = () => {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 transition-all duration-200 text-xs font-medium border border-green-200 hover:border-green-300 hover:shadow-sm w-fit"
                               title={t('playersPage.adminStudentsList.openWhatsApp')}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <WhatsAppIcon className="h-3.5 w-3.5" />
                               <span>{student.phone}</span>
@@ -614,24 +665,21 @@ const AdminStudentsList = () => {
                           </div>
                         </div>
 
-                        {/* Columna 4: Info de Matrícula */}
-                        <div className="col-span-1 md:col-span-2 flex flex-col gap-1.5 text-sm">
-                          {student.enrollment_period && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span>{getPeriodLabel(student.enrollment_period)}</span>
-                            </div>
-                          )}
-                          {student.first_payment && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Euro className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="font-medium text-foreground">{student.first_payment}€</span>
-                            </div>
-                          )}
+                        {/* Columna 4: Asistencia */}
+                        <div className="col-span-1 md:col-span-2 flex items-center">
+                          <AttendanceMetricsCell
+                            score={studentScore}
+                            behavior={studentBehavior}
+                          />
                         </div>
 
-                        {/* Columna 5: Acciones */}
-                        <div className="col-span-1 md:col-span-1 flex items-start md:items-center justify-start gap-1">
+                        {/* Columna 5: Score */}
+                        <div className="col-span-1 md:col-span-1 flex items-center">
+                          <ScoreBadge score={studentScore} />
+                        </div>
+
+                        {/* Columna 6: Acciones */}
+                        <div className="col-span-1 md:col-span-2 flex items-start md:items-center justify-end gap-1">
                           {/* ============================================ */}
                           {/* MULTI-CLUB FEATURE - Hide edit when viewing all clubs */}
                           {/* El botón de editar se oculta cuando superadmin ve "Todos los clubes" */}
@@ -641,7 +689,10 @@ const AdminStudentsList = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setStudentToEdit(student)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setStudentToEdit(student);
+                              }}
                               className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
                               title={t('playersPage.adminStudentsList.editStudent')}
                             >
@@ -651,7 +702,10 @@ const AdminStudentsList = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setStudentToArchive(student)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStudentToArchive(student);
+                            }}
                             className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             title={t('playersPage.adminStudentsList.deleteStudent')}
                           >
@@ -755,6 +809,15 @@ const AdminStudentsList = () => {
         onClose={() => setStudentToEdit(null)}
         isSuperAdmin={isSuperAdmin}
         superAdminClubs={superAdminClubs}
+      />
+
+      {/* Student Metrics Detail Modal */}
+      <StudentMetricsDetailModal
+        student={studentForMetrics?.student || null}
+        score={studentForMetrics?.score || null}
+        behavior={studentForMetrics?.behavior || null}
+        isOpen={!!studentForMetrics}
+        onClose={() => setStudentForMetrics(null)}
       />
     </div>
   );
