@@ -35,6 +35,8 @@ import {
 } from "@/hooks/useStudentPayments";
 import { useStudentsWithAssignments } from "@/hooks/useRateAssignments";
 import { usePaymentRates } from "@/hooks/usePaymentRates";
+import { useClubs } from "@/hooks/useClubs";
+import { formatCurrency } from "@/lib/currency";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -88,10 +90,14 @@ export default function AdminPaymentControlPage() {
   const { data: payments, isLoading } = useAdminStudentPayments();
   const { data: students } = useStudentsWithAssignments();
   const { data: rates } = usePaymentRates();
+  const { data: clubs } = useClubs();
   const verifyPayment = useVerifyStudentPayment();
   const createExtraPayment = useCreateExtraPayment();
   const generateMonthlyPayments = useGenerateMonthlyPayments();
   const deletePayment = useDeleteStudentPayment();
+
+  // Get club currency (default to EUR)
+  const clubCurrency = clubs?.[0]?.currency || 'EUR';
 
   // Get locale for date formatting
   const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
@@ -486,11 +492,8 @@ export default function AdminPaymentControlPage() {
     setPaymentToDelete(null);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount) + ' €';
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, clubCurrency);
   };
 
   const formatDate = (dateStr: string) => {
@@ -553,7 +556,7 @@ export default function AdminPaymentControlPage() {
           </div>
         </td>
         <td className="py-3 px-2 sm:px-4 text-center">
-          <span className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(payment.amount)}</span>
+          <span className="font-semibold text-gray-900 text-sm sm:text-base">{formatAmount(payment.amount)}</span>
         </td>
         <td className="py-3 px-4 hidden md:table-cell">
           <div className="flex flex-col gap-1">
@@ -695,7 +698,7 @@ export default function AdminPaymentControlPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-gradient-to-br from-violet-50 to-white border-violet-100">
           <p className="text-xs font-medium text-violet-600 mb-1">{t("paymentControl.summary.totalExpected")}</p>
-          <p className="text-xl font-bold text-violet-900">{formatCurrency(totalExpected)}</p>
+          <p className="text-xl font-bold text-violet-900">{formatAmount(totalExpected)}</p>
           <p className="text-xs text-violet-500 mt-1">{filteredPayments.length} {t("paymentControl.summary.payments")}</p>
         </Card>
 
@@ -703,7 +706,7 @@ export default function AdminPaymentControlPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-amber-600 mb-1">{t("paymentControl.summary.pending")}</p>
-              <p className="text-xl font-bold text-amber-900">{formatCurrency(totalPending)}</p>
+              <p className="text-xl font-bold text-amber-900">{formatAmount(totalPending)}</p>
               <p className="text-xs text-amber-500 mt-1">{pendingPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
@@ -716,7 +719,7 @@ export default function AdminPaymentControlPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-blue-600 mb-1">{t("paymentControl.summary.inReview")}</p>
-              <p className="text-xl font-bold text-blue-900">{formatCurrency(totalInReview)}</p>
+              <p className="text-xl font-bold text-blue-900">{formatAmount(totalInReview)}</p>
               <p className="text-xs text-blue-500 mt-1">{inReviewPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -729,7 +732,7 @@ export default function AdminPaymentControlPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-emerald-600 mb-1">{t("paymentControl.summary.paid")}</p>
-              <p className="text-xl font-bold text-emerald-900">{formatCurrency(totalPaid)}</p>
+              <p className="text-xl font-bold text-emerald-900">{formatAmount(totalPaid)}</p>
               <p className="text-xs text-emerald-500 mt-1">{paidPayments.length} {t("paymentControl.summary.payments")}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -1133,7 +1136,7 @@ export default function AdminPaymentControlPage() {
             </DialogTitle>
             <DialogDescription>
               {dialogAction === 'approve' && dialogPayment
-                ? t("paymentControl.verifyDialog.confirmPaymentDesc", { amount: formatCurrency(dialogPayment.amount), name: dialogPayment.student_enrollment?.full_name })
+                ? t("paymentControl.verifyDialog.confirmPaymentDesc", { amount: formatAmount(dialogPayment.amount), name: dialogPayment.student_enrollment?.full_name })
                 : t("paymentControl.verifyDialog.rejectPaymentDesc")}
             </DialogDescription>
           </DialogHeader>
@@ -1293,7 +1296,7 @@ export default function AdminPaymentControlPage() {
             <DialogTitle>{t("paymentControl.deleteDialog.title")}</DialogTitle>
             <DialogDescription>
               {t("paymentControl.deleteDialog.description", {
-                amount: paymentToDelete ? formatCurrency(paymentToDelete.amount) : '',
+                amount: paymentToDelete ? formatAmount(paymentToDelete.amount) : '',
                 name: paymentToDelete?.student_enrollment?.full_name || ''
               })}
             </DialogDescription>

@@ -21,11 +21,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { formatCurrency } from "@/lib/currency";
 
 interface MonthlyPaymentCardProps {
   payment: MonthlyPaymentWithDetails;
   onMarkAsPaid: (paymentId: string, paymentMethod: string, notes?: string) => void;
   isLoading?: boolean;
+  currency?: string;
 }
 
 const MONTH_NAMES = [
@@ -33,7 +35,7 @@ const MONTH_NAMES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading }: MonthlyPaymentCardProps) => {
+export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading, currency = 'EUR' }: MonthlyPaymentCardProps) => {
   const [showDialog, setShowDialog] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -98,7 +100,7 @@ export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading }: Monthly
 
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <CreditCard className="w-4 h-4" />
-              <span>{payment.price_per_class.toFixed(2)} € por clase</span>
+              <span>{formatCurrency(payment.price_per_class, currency)} por clase</span>
             </div>
           </div>
 
@@ -106,7 +108,7 @@ export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading }: Monthly
           <div className="pt-2 border-t">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Total:</span>
-              <span className="text-2xl font-bold text-gray-900">{payment.total_amount.toFixed(2)} €</span>
+              <span className="text-2xl font-bold text-gray-900">{formatCurrency(payment.total_amount, currency)}</span>
             </div>
           </div>
 
@@ -203,7 +205,7 @@ export const MonthlyPaymentCard = ({ payment, onMarkAsPaid, isLoading }: Monthly
           <DialogHeader>
             <DialogTitle>Confirmar Pago</DialogTitle>
             <DialogDescription>
-              Confirma que has realizado el pago de {payment.total_amount.toFixed(2)} € para {payment.total_classes} {payment.total_classes === 1 ? 'clase' : 'clases'} del mes de {MONTH_NAMES[payment.month - 1]}.
+              Confirma que has realizado el pago de {formatCurrency(payment.total_amount, currency)} para {payment.total_classes} {payment.total_classes === 1 ? 'clase' : 'clases'} del mes de {MONTH_NAMES[payment.month - 1]}.
             </DialogDescription>
           </DialogHeader>
 

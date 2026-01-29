@@ -23,6 +23,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useMyPayments, useMarkPaymentAsPaid, StudentPayment } from "@/hooks/useStudentPayments";
+import { useClubs } from "@/hooks/useClubs";
+import { formatCurrency } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pendiente: "bg-amber-50 text-amber-700 border-amber-200",
@@ -45,7 +47,11 @@ const PAYMENT_METHOD_ICONS = {
 export default function PlayerPaymentsPage() {
   const { t, i18n } = useTranslation();
   const { data: payments, isLoading } = useMyPayments();
+  const { data: clubs } = useClubs();
   const markAsPaid = useMarkPaymentAsPaid();
+
+  // Get club currency (default to EUR)
+  const clubCurrency = clubs?.[0]?.currency || 'EUR';
 
   // Get locale for date formatting
   const dateLocale = i18n.language === "en" ? "en-US" : i18n.language === "it" ? "it-IT" : "es-ES";
@@ -111,11 +117,8 @@ export default function PlayerPaymentsPage() {
     setSelectedPayment(null);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) + ' €';
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, clubCurrency);
   };
 
   const getDaysUntilDue = (dueDate: string) => {
@@ -166,7 +169,7 @@ export default function PlayerPaymentsPage() {
           <div className="flex items-center gap-2">
             <Euro className="h-5 w-5 text-primary" />
             <span className="text-2xl font-bold text-gray-900">
-              {formatCurrency(payment.amount)}
+              {formatAmount(payment.amount)}
             </span>
           </div>
 
@@ -249,7 +252,7 @@ export default function PlayerPaymentsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-amber-700">{t("myPayments.totalPending")}</p>
-              <p className="text-2xl font-bold text-amber-900">{formatCurrency(totalPending)}</p>
+              <p className="text-2xl font-bold text-amber-900">{formatAmount(totalPending)}</p>
             </div>
             <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
               <AlertCircle className="h-6 w-6 text-amber-600" />

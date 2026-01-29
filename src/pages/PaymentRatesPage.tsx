@@ -50,6 +50,8 @@ import {
   PaymentRate,
   CreatePaymentRateInput,
 } from "@/hooks/usePaymentRates";
+import { useClubs } from "@/hooks/useClubs";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Link } from "react-router-dom";
 
 
@@ -69,10 +71,14 @@ export default function PaymentRatesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: rates, isLoading } = usePaymentRates();
+  const { data: clubs } = useClubs();
   const createRate = useCreatePaymentRate();
   const updateRate = useUpdatePaymentRate();
   const deleteRate = useDeletePaymentRate();
   const toggleActive = useTogglePaymentRateActive();
+
+  // Get club currency (default to EUR)
+  const clubCurrency = clubs?.[0]?.currency || 'EUR';
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -141,10 +147,10 @@ export default function PaymentRatesPage() {
 
   const formatPrice = (rate: PaymentRate) => {
     if (rate.rate_type === "fija" && rate.fixed_price) {
-      return `${rate.fixed_price.toFixed(2)} €`;
+      return formatCurrency(rate.fixed_price, clubCurrency);
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.detail.perClassSuffix")}`;
+      return `${formatCurrency(rate.price_per_class, clubCurrency)} ${t("paymentRates.detail.perClassSuffix")}`;
     }
     return "-";
   };
@@ -388,8 +394,8 @@ export default function PaymentRatesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="price">
                   {formData.rate_type === "fija"
-                    ? `${t("paymentRates.form.fixedPrice")} (€) *`
-                    : `${t("paymentRates.form.pricePerClass")} (€) *`}
+                    ? `${t("paymentRates.form.fixedPrice")} (${getCurrencySymbol(clubCurrency)}) *`
+                    : `${t("paymentRates.form.pricePerClass")} (${getCurrencySymbol(clubCurrency)}) *`}
                 </Label>
                 <Input
                   id="price"

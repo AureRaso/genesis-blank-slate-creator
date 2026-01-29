@@ -65,6 +65,8 @@ import {
   useDeleteRateAssignment,
   RateDetailStudent,
 } from "@/hooks/usePaymentRateDetail";
+import { useClubs } from "@/hooks/useClubs";
+import { formatCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -102,6 +104,10 @@ const getCurrentYear = () => {
 export default function PaymentRateDetailPage() {
   const { t } = useTranslation();
   const { rateId } = useParams<{ rateId: string }>();
+  const { data: clubs } = useClubs();
+
+  // Get club currency (default to EUR)
+  const clubCurrency = clubs?.[0]?.currency || 'EUR';
 
   // Helper functions for translations
   const getPeriodicityLabel = (periodicity: string) => {
@@ -212,11 +218,8 @@ export default function PaymentRateDetailPage() {
     return filtered;
   }, [allAssignments, assignmentStatusFilter, assignmentSearch]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) + ' €';
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, clubCurrency);
   };
 
   const formatDate = (dateStr: string) => {
@@ -230,10 +233,10 @@ export default function PaymentRateDetailPage() {
   const formatPrice = () => {
     if (!rate) return "-";
     if (rate.rate_type === "fija" && rate.fixed_price) {
-      return `${rate.fixed_price.toFixed(2)} €`;
+      return formatCurrency(rate.fixed_price, clubCurrency);
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.detail.perClassSuffix")}`;
+      return `${formatCurrency(rate.price_per_class, clubCurrency)} ${t("paymentRates.detail.perClassSuffix")}`;
     }
     return "-";
   };
@@ -581,7 +584,7 @@ export default function PaymentRateDetailPage() {
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-violet-600 mb-1">{t("paymentRates.detail.stats.totalBilled")}</p>
-              <p className="text-xl sm:text-2xl font-bold text-violet-900 truncate">{formatCurrency(stats?.total_amount_billed || 0)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-violet-900 truncate">{formatAmount(stats?.total_amount_billed || 0)}</p>
               <p className="text-xs text-violet-500 mt-1">{stats?.total_payments_generated || 0} {t("paymentRates.detail.stats.payments")}</p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 ml-2">
@@ -594,7 +597,7 @@ export default function PaymentRateDetailPage() {
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-emerald-600 mb-1">{t("paymentRates.detail.stats.totalCollected")}</p>
-              <p className="text-xl sm:text-2xl font-bold text-emerald-900 truncate">{formatCurrency(stats?.total_amount_paid || 0)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-emerald-900 truncate">{formatAmount(stats?.total_amount_paid || 0)}</p>
               <p className="text-xs text-emerald-500 mt-1">{collectionRate}{t("paymentRates.detail.stats.collectionRate")}</p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 ml-2">
@@ -607,7 +610,7 @@ export default function PaymentRateDetailPage() {
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-amber-600 mb-1">{t("paymentRates.detail.stats.pending")}</p>
-              <p className="text-xl sm:text-2xl font-bold text-amber-900 truncate">{formatCurrency(stats?.total_amount_pending || 0)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-amber-900 truncate">{formatAmount(stats?.total_amount_pending || 0)}</p>
               <p className="text-xs text-amber-500 mt-1 truncate">
                 {stats?.average_payment_time_days
                   ? t("paymentRates.detail.stats.avgDays", { days: stats.average_payment_time_days })
@@ -1059,7 +1062,7 @@ export default function PaymentRateDetailPage() {
                         <div className="sm:hidden">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-sm font-medium text-gray-700">{month.month} {month.year}</span>
-                            <span className="text-sm font-semibold text-gray-900">{formatCurrency(month.total_amount)}</span>
+                            <span className="text-sm font-semibold text-gray-900">{formatAmount(month.total_amount)}</span>
                           </div>
                           <div className="h-6 bg-gray-100 rounded-lg overflow-hidden flex">
                             {paidPercent > 0 && (
@@ -1135,7 +1138,7 @@ export default function PaymentRateDetailPage() {
                             )}
                           </div>
                           <div className="w-28 text-right">
-                            <span className="text-sm font-semibold text-gray-900">{formatCurrency(month.total_amount)}</span>
+                            <span className="text-sm font-semibold text-gray-900">{formatAmount(month.total_amount)}</span>
                           </div>
                           <div className="w-20 text-right text-xs text-gray-500">
                             {month.payment_count} {t('paymentRates.detail.stats.payments')}
@@ -1212,21 +1215,21 @@ export default function PaymentRateDetailPage() {
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         <span className="text-sm text-emerald-700">{t('paymentRates.detail.paymentHistory.collectedAmount')}</span>
                       </div>
-                      <span className="font-semibold text-emerald-700">{formatCurrency(stats?.total_amount_paid || 0)}</span>
+                      <span className="font-semibold text-emerald-700">{formatAmount(stats?.total_amount_paid || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
                         <span className="text-sm text-amber-700">{t('paymentRates.detail.paymentHistory.pendingAmount')}</span>
                       </div>
-                      <span className="font-semibold text-amber-700">{formatCurrency(stats?.total_amount_pending || 0)}</span>
+                      <span className="font-semibold text-amber-700">{formatAmount(stats?.total_amount_pending || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Euro className="h-4 w-4 text-gray-600" />
                         <span className="text-sm text-gray-700">{t('paymentRates.detail.paymentHistory.totalBilled')}</span>
                       </div>
-                      <span className="font-semibold text-gray-700">{formatCurrency(stats?.total_amount_billed || 0)}</span>
+                      <span className="font-semibold text-gray-700">{formatAmount(stats?.total_amount_billed || 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -1246,7 +1249,7 @@ export default function PaymentRateDetailPage() {
                     <div key={index} className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900">{month.month} {month.year}</span>
-                        <span className="font-semibold text-gray-900">{formatCurrency(month.total_amount)}</span>
+                        <span className="font-semibold text-gray-900">{formatAmount(month.total_amount)}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <div className="flex items-center gap-1">
@@ -1281,7 +1284,7 @@ export default function PaymentRateDetailPage() {
                     {filteredPaymentHistory.map((month, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">{month.month} {month.year}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(month.total_amount)}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatAmount(month.total_amount)}</TableCell>
                         <TableCell className="text-center">{month.payment_count}</TableCell>
                         <TableCell className="text-center">
                           <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-sm">

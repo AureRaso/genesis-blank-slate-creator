@@ -29,12 +29,18 @@ import {
   useBulkAssignRate,
   StudentWithAssignment,
 } from "@/hooks/useRateAssignments";
+import { useClubs } from "@/hooks/useClubs";
+import { formatCurrency } from "@/lib/currency";
 
 export default function AssignRatesPage() {
   const { t, i18n } = useTranslation();
   const { data: rates, isLoading: ratesLoading } = useActivePaymentRates();
   const { data: students, isLoading: studentsLoading } = useStudentsWithAssignments();
+  const { data: clubs } = useClubs();
   const bulkAssign = useBulkAssignRate();
+
+  // Get club currency (default to EUR)
+  const clubCurrency = clubs?.[0]?.currency || 'EUR';
 
   // Get translated periodicity label
   const getPeriodicityLabel = (periodicity: string) => {
@@ -305,10 +311,10 @@ export default function AssignRatesPage() {
 
   const formatPrice = (rate: PaymentRate) => {
     if (rate.rate_type === "fija" && rate.fixed_price) {
-      return `${rate.fixed_price.toFixed(2)} €`;
+      return formatCurrency(rate.fixed_price, clubCurrency);
     }
     if (rate.rate_type === "por_clase" && rate.price_per_class) {
-      return `${rate.price_per_class.toFixed(2)} € ${t("paymentRates.assign.pricePerClass")}`;
+      return `${formatCurrency(rate.price_per_class, clubCurrency)} ${t("paymentRates.assign.pricePerClass")}`;
     }
     return "-";
   };

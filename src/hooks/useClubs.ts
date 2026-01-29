@@ -11,6 +11,7 @@ export type Club = {
   court_types: string[];
   description?: string;
   status?: string;
+  currency?: string; // ISO 4217 currency code (EUR, USD, MXN, etc.)
   created_by_profile_id: string;
   created_at: string;
   updated_at: string;
