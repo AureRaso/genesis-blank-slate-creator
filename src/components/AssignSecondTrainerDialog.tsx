@@ -18,8 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Settings, Users } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Settings, Users, Building2, AlertTriangle } from "lucide-react";
 import { useTrainersByClubFixed } from "@/hooks/useTrainers";
+import { useAdminClubs } from "@/hooks/useClubs";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,31 +50,50 @@ const AssignSecondTrainerDialog = ({
   onOpenChange,
   classData,
 }: AssignSecondTrainerDialogProps) => {
+  const { isSuperAdmin } = useAuth();
   const [primaryTrainerId, setPrimaryTrainerId] = useState<string>("");
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>("none");
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
   const [startTime, setStartTime] = useState<string>("09:00");
   const [applyToSeries, setApplyToSeries] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // Get clubs for superadmin
+  const { data: clubs, isLoading: loadingClubs } = useAdminClubs();
+
+  // Use selectedClubId for trainers (allows dynamic switching when club changes)
   const { data: trainers, isLoading: loadingTrainers } = useTrainersByClubFixed(
-    classData?.club_id || ""
+    selectedClubId || classData?.club_id || ""
   );
 
-  // Store the original trainer_profile_id to use as fallback
+  // Store the original values for comparison
   const originalTrainerId = classData?.trainer_profile_id || "";
+  const originalClubId = classData?.club_id || "";
+
+  // Check if club has changed
+  const clubChanged = selectedClubId !== originalClubId;
 
   // Reset state when dialog opens with new class data
   useEffect(() => {
     if (open && classData) {
       setPrimaryTrainerId(classData.trainer_profile_id || "");
       setSelectedTrainerId(classData.trainer_profile_id_2 || "none");
+      setSelectedClubId(classData.club_id || "");
       setMaxParticipants(classData.max_participants || 4);
       setStartTime(classData.start_time?.slice(0, 5) || "09:00");
       setApplyToSeries(false);
     }
   }, [open, classData]);
+
+  // When club changes, reset trainer selections (trainers are club-specific)
+  const handleClubChange = (newClubId: string) => {
+    setSelectedClubId(newClubId);
+    // Reset trainers since they belong to a different club now
+    setPrimaryTrainerId("");
+    setSelectedTrainerId("none");
+  };
 
   // Filter out the primary trainer from the second trainer list
   const availableSecondTrainers = trainers?.filter(
@@ -186,13 +208,25 @@ const AssignSecondTrainerDialog = ({
     }
 
     // Use the selected primary trainer, or fall back to the original if not changed
-    // primaryTrainerId could be empty if user didn't change it, so use originalTrainerId
-    const finalPrimaryTrainerId = primaryTrainerId || originalTrainerId;
+    // But if club changed, trainer MUST be selected (can't use original from different club)
+    const finalPrimaryTrainerId = clubChanged ? primaryTrainerId : (primaryTrainerId || originalTrainerId);
 
-    // Only show error if there's truly no trainer (neither selected nor original)
+    // Validate trainer selection
     if (!finalPrimaryTrainerId) {
-      toast.error("Debes seleccionar un profesor titular");
+      toast.error(clubChanged
+        ? "Debes seleccionar un profesor del nuevo club"
+        : "Debes seleccionar un profesor titular"
+      );
       return;
+    }
+
+    // If club changed, validate that trainer belongs to the new club
+    if (clubChanged) {
+      const trainerBelongsToNewClub = trainers?.some(t => t.profile_id === finalPrimaryTrainerId);
+      if (!trainerBelongsToNewClub) {
+        toast.error("El profesor seleccionado no pertenece al club destino");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -214,6 +248,10 @@ const AssignSecondTrainerDialog = ({
         // Only include fields that actually changed to avoid overwriting other classes
         const changedFields: Record<string, string | number | null> = {};
 
+        // Add club_id if changed (superadmin only)
+        if (clubChanged) {
+          changedFields.club_id = selectedClubId;
+        }
         if (finalPrimaryTrainerId !== classData.trainer_profile_id) {
           changedFields.trainer_profile_id = finalPrimaryTrainerId;
         }
@@ -243,15 +281,21 @@ const AssignSecondTrainerDialog = ({
 
         if (error) throw error;
 
-        toast.success(`Clase actualizada para ${seriesClassIds.length} clase${seriesClassIds.length > 1 ? 's' : ''} de la serie`);
+        const clubChangeMsg = clubChanged ? " y movidas al nuevo club" : "";
+        toast.success(`${seriesClassIds.length} clase${seriesClassIds.length > 1 ? 's' : ''} actualizada${seriesClassIds.length > 1 ? 's' : ''}${clubChangeMsg}`);
       } else {
         // Update only this specific class - send all fields
-        const updateData = {
+        const updateData: Record<string, string | number | null> = {
           trainer_profile_id: finalPrimaryTrainerId,
           trainer_profile_id_2: newSecondTrainerId,
           max_participants: maxParticipants,
           start_time: formattedStartTime,
         };
+
+        // Add club_id if changed (superadmin only)
+        if (clubChanged) {
+          updateData.club_id = selectedClubId;
+        }
 
         const { error } = await supabase
           .from("programmed_classes")
@@ -260,7 +304,8 @@ const AssignSecondTrainerDialog = ({
 
         if (error) throw error;
 
-        toast.success("Clase actualizada correctamente");
+        const clubChangeMsg = clubChanged ? " y movida al nuevo club" : "";
+        toast.success(`Clase actualizada correctamente${clubChangeMsg}`);
       }
 
       // Invalidate queries to refresh the data
@@ -271,8 +316,8 @@ const AssignSecondTrainerDialog = ({
 
       onOpenChange(false);
     } catch (error) {
-      console.error("Error updating second trainer:", error);
-      toast.error("Error al actualizar el segundo profesor");
+      console.error("Error updating class:", error);
+      toast.error("Error al actualizar la clase");
     } finally {
       setIsLoading(false);
     }
@@ -298,9 +343,46 @@ const AssignSecondTrainerDialog = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Club selector - only visible for superadmin */}
+          {isSuperAdmin && clubs && clubs.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="club-select" className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Cambiar de club
+              </Label>
+              <Select
+                value={selectedClubId}
+                onValueChange={handleClubChange}
+                disabled={loadingClubs || isLoading}
+              >
+                <SelectTrigger id="club-select">
+                  <SelectValue placeholder="Seleccionar club" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map((club) => (
+                    <SelectItem key={club.id} value={club.id}>
+                      {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Warning when club changes */}
+              {clubChanged && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    <strong>Atención:</strong> Al cambiar de club, debes seleccionar un nuevo profesor del club destino.
+                    Los participantes actuales se mantendrán aunque pertenezcan al club original.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="primary-trainer-select" className="text-sm font-medium">
-              Cambiar profesor titular
+              {clubChanged ? "Seleccionar profesor del nuevo club" : "Cambiar profesor titular"}
             </Label>
             <Select
               value={primaryTrainerId}
