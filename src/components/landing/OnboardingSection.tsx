@@ -1,4 +1,4 @@
-import { Upload, Settings, Users, Coffee, Gift } from "lucide-react";
+import { Upload, Settings, Users, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
@@ -67,24 +67,6 @@ const OnboardingSection = () => {
                 </div>
               );
             })}
-          </div>
-
-          {/* Trial Guarantee Box */}
-          <div className="bg-playtomic-orange/20 backdrop-blur-sm border-2 border-playtomic-orange rounded-2xl p-8 text-center">
-            <div className="max-w-3xl mx-auto">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-playtomic-orange rounded-full mb-4">
-                <Gift className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-white">
-                {t("landing.onboarding.trialTitle")}
-              </h3>
-              <p className="text-lg text-white mb-2 font-medium">
-                {t("landing.onboarding.trialDesc1")}
-              </p>
-              <p className="text-gray-100">
-                {t("landing.onboarding.trialDesc2")}
-              </p>
-            </div>
           </div>
 
           {/* CTA */}
