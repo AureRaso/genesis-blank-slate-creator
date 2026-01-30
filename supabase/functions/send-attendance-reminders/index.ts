@@ -320,45 +320,47 @@ serve(async (req) => {
     console.log('🔄 Starting attendance reminder job...');
 
     const now = new Date();
+    console.log(`⏰ Current UTC time: ${now.toISOString()}`);
 
-    // Get current time in Spain timezone (Europe/Madrid)
-    const spainTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
-    const spainTime = new Date(spainTimeStr);
-    const currentHour = spainTime.getHours();
-    const currentMinutes = spainTime.getMinutes();
-
-    console.log(`⏰ Current time in Spain: ${spainTime.toLocaleString()}, ${currentHour}:${currentMinutes.toString().padStart(2, '0')}`);
-
-    // Calculate the 24-hour window: classes starting between 24h and 24h30m from now
-    // This way, with cron running every 30 min, each class gets exactly one reminder
-    const twentyFourHoursFromNow = new Date(spainTime.getTime() + 24 * 60 * 60 * 1000);
-    const twentyFourAndHalfHoursFromNow = new Date(spainTime.getTime() + (24 * 60 + 30) * 60 * 1000);
-
-    // Get the target date (could be tomorrow or day after if it's late)
-    const targetDate = twentyFourHoursFromNow.toISOString().split('T')[0];
-
-    // Get target time window in HH:MM format
-    const windowStartTime = `${twentyFourHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
-    const windowEndTime = `${twentyFourAndHalfHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourAndHalfHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
-
-    console.log(`🎯 Looking for classes on ${targetDate} between ${windowStartTime} and ${windowEndTime}`);
-
-    // Get target day of week in Spanish format (support both accented and unaccented)
-    const dayOfWeekNumber = twentyFourHoursFromNow.getDay();
-    const daysMap: { [key: number]: string[] } = {
-      0: ['domingo'],
-      1: ['lunes'],
-      2: ['martes'],
-      3: ['miercoles', 'miércoles'],
-      4: ['jueves'],
-      5: ['viernes'],
-      6: ['sabado', 'sábado']
+    // Helper function to get time in a specific timezone
+    const getTimeInTimezone = (date: Date, timezone: string): Date => {
+      try {
+        const timeStr = date.toLocaleString('en-US', { timeZone: timezone });
+        return new Date(timeStr);
+      } catch (e) {
+        // Fallback to Europe/Madrid if timezone is invalid
+        console.warn(`⚠️ Invalid timezone "${timezone}", falling back to Europe/Madrid`);
+        const timeStr = date.toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
+        return new Date(timeStr);
+      }
     };
-    const targetDayNames = daysMap[dayOfWeekNumber] || [];
 
-    console.log(`📅 Target day: ${targetDate} (${targetDayNames.join(' or ')})`);
+    // Helper function to calculate 24h window for a specific timezone
+    const get24hWindowForTimezone = (timezone: string) => {
+      const localTime = getTimeInTimezone(now, timezone);
+      const twentyFourHoursFromNow = new Date(localTime.getTime() + 24 * 60 * 60 * 1000);
+      const twentyFourAndHalfHoursFromNow = new Date(localTime.getTime() + (24 * 60 + 30) * 60 * 1000);
 
-    // 1. Get all active programmed classes for tomorrow
+      const targetDate = twentyFourHoursFromNow.toISOString().split('T')[0];
+      const windowStartTime = `${twentyFourHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+      const windowEndTime = `${twentyFourAndHalfHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourAndHalfHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+
+      const dayOfWeekNumber = twentyFourHoursFromNow.getDay();
+      const daysMap: { [key: number]: string[] } = {
+        0: ['domingo'],
+        1: ['lunes'],
+        2: ['martes'],
+        3: ['miercoles', 'miércoles'],
+        4: ['jueves'],
+        5: ['viernes'],
+        6: ['sabado', 'sábado']
+      };
+      const targetDayNames = daysMap[dayOfWeekNumber] || [];
+
+      return { targetDate, windowStartTime, windowEndTime, targetDayNames, localTime };
+    };
+
+    // 1. Get all active programmed classes with their club timezone
     const { data: classes, error: classesError} = await supabase
       .from('programmed_classes')
       .select(`
@@ -367,27 +369,28 @@ serve(async (req) => {
         start_time,
         duration_minutes,
         days_of_week,
+        start_date,
+        end_date,
         club_id,
         clubs:club_id (
           name,
           id,
-          default_language
+          default_language,
+          timezone
         )
       `)
-      .eq('is_active', true)
-      .lte('start_date', targetDate)
-      .gte('end_date', targetDate);
+      .eq('is_active', true);
 
     if (classesError) {
       throw new Error(`Error fetching classes: ${classesError.message}`);
     }
 
-    console.log(`📚 Found ${classes?.length || 0} active classes in date range`);
+    console.log(`📚 Found ${classes?.length || 0} active classes total`);
 
     if (!classes || classes.length === 0) {
       return new Response(JSON.stringify({
         success: true,
-        message: 'No classes found for tomorrow',
+        message: 'No active classes found',
         remindersSent: 0
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -395,18 +398,26 @@ serve(async (req) => {
       });
     }
 
-    // Filter classes that:
-    // 1. Match target day of week (support both accented and unaccented)
-    // 2. Start within the 30-minute window (24h to 24h30m from now)
-    const targetClasses = classes.filter(cls => {
+    // Filter classes based on their club's timezone
+    // Each class is evaluated against its own club's local time
+    const targetClasses: Array<{ cls: typeof classes[0]; targetDate: string }> = [];
+
+    for (const cls of classes) {
+      const clubTimezone = (cls.clubs as any)?.timezone || 'Europe/Madrid';
+      const { targetDate, windowStartTime, windowEndTime, targetDayNames, localTime } = get24hWindowForTimezone(clubTimezone);
+
+      // Check if class is within its date range
+      if (cls.start_date > targetDate || cls.end_date < targetDate) {
+        continue;
+      }
+
       const daysOfWeek = cls.days_of_week || [];
 
-      // Check if class is scheduled for target day
+      // Check if class is scheduled for target day (in club's timezone)
       const matchesDay = targetDayNames.some((dayName: string) => daysOfWeek.includes(dayName));
 
       if (!matchesDay) {
-        console.log(`⏭️ Skipping ${cls.name} - not scheduled for ${targetDayNames.join('/')} (scheduled for: ${daysOfWeek.join(', ')})`);
-        return false;
+        continue;
       }
 
       // Check if class time falls within the 30-minute window
@@ -414,42 +425,48 @@ serve(async (req) => {
       const isInTimeWindow = classTime >= windowStartTime && classTime < windowEndTime;
 
       if (!isInTimeWindow) {
-        console.log(`⏭️ Skipping ${cls.name} at ${classTime} - outside window ${windowStartTime}-${windowEndTime}`);
-        return false;
+        continue;
       }
 
-      console.log(`✅ Including ${cls.name} at ${classTime} - within 24h window`);
-      return true;
-    });
+      console.log(`✅ Including ${cls.name} at ${classTime} (${clubTimezone}) - within 24h window [${windowStartTime}-${windowEndTime}]`);
+      targetClasses.push({ cls, targetDate });
+    }
 
-    console.log(`🎯 Found ${targetClasses.length} classes starting in ~24 hours`);
+    console.log(`🎯 Found ${targetClasses.length} classes starting in ~24 hours (across all timezones)`);
 
     // Filter out cancelled classes
-    const classIds = targetClasses.map(c => c.id);
+    const classIds = targetClasses.map(c => c.cls.id);
+    const allTargetDates = [...new Set(targetClasses.map(c => c.targetDate))];
+
     const { data: cancelledData } = await supabase
       .from('cancelled_classes')
-      .select('class_id')
+      .select('class_id, cancelled_date')
       .in('class_id', classIds)
-      .eq('cancelled_date', targetDate);
+      .in('cancelled_date', allTargetDates);
 
-    const cancelledClassIds = new Set(cancelledData?.map(c => c.class_id) || []);
+    // Create a set of cancelled class+date combinations
+    const cancelledSet = new Set(
+      cancelledData?.map(c => `${c.class_id}_${c.cancelled_date}`) || []
+    );
 
-    const activeTargetClasses = targetClasses.filter(cls => {
-      if (cancelledClassIds.has(cls.id)) {
-        console.log(`⏭️ Skipping cancelled class: ${cls.name} at ${cls.start_time}`);
+    const activeTargetClasses = targetClasses.filter(({ cls, targetDate }) => {
+      const key = `${cls.id}_${targetDate}`;
+      if (cancelledSet.has(key)) {
+        console.log(`⏭️ Skipping cancelled class: ${cls.name} at ${cls.start_time} on ${targetDate}`);
         return false;
       }
       return true;
     });
 
-    console.log(`📋 Processing ${activeTargetClasses.length} active classes (${cancelledClassIds.size} cancelled)`);
+    console.log(`📋 Processing ${activeTargetClasses.length} active classes (${cancelledSet.size} cancelled)`);
 
     let totalRemindersSent = 0;
     let totalWhatsAppSent = 0;
 
     // 2. For each target class, send reminders to all active participants
-    for (const classInfo of activeTargetClasses) {
-      console.log(`\n📋 Processing class: ${classInfo.name} at ${classInfo.start_time}`);
+    for (const { cls: classInfo, targetDate } of activeTargetClasses) {
+      const clubTimezone = (classInfo.clubs as any)?.timezone || 'Europe/Madrid';
+      console.log(`\n📋 Processing class: ${classInfo.name} at ${classInfo.start_time} (${clubTimezone}) for ${targetDate}`);
 
       // Get all active participants for this class who haven't confirmed absence
       // We send reminders to everyone who is confirmed (auto or manual) to remind them
@@ -570,7 +587,7 @@ serve(async (req) => {
       remindersSent: totalRemindersSent,
       whatsappSent: totalWhatsAppSent,
       classesProcessed: activeTargetClasses.length,
-      cancelledClassesSkipped: cancelledClassIds.size
+      cancelledClassesSkipped: cancelledSet.size
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
