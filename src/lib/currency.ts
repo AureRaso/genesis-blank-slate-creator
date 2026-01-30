@@ -12,7 +12,8 @@ export type CurrencyCode =
   | 'BRL'  // Brazilian Real
   | 'MYR'  // Malaysian Ringgit
   | 'CRC'  // Costa Rican Colon
-  | 'VES'; // Venezuelan Bolivar
+  | 'VES'  // Venezuelan Bolivar
+  | 'GTQ'; // Guatemalan Quetzal
 
 export interface CurrencyInfo {
   code: CurrencyCode;
@@ -33,6 +34,7 @@ export const CURRENCIES: Record<CurrencyCode, CurrencyInfo> = {
   MYR: { code: 'MYR', symbol: 'RM', name: 'Ringgit Malayo', position: 'before' },
   CRC: { code: 'CRC', symbol: '₡', name: 'Colón Costarricense', position: 'before' },
   VES: { code: 'VES', symbol: 'Bs.', name: 'Bolívar Venezolano', position: 'before' },
+  GTQ: { code: 'GTQ', symbol: 'Q', name: 'Quetzal Guatemalteco', position: 'before' },
 };
 
 // List of currencies for select dropdowns
