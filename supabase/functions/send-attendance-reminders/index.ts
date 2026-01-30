@@ -382,9 +382,7 @@ serve(async (req) => {
       };
       const targetDayNames = weekdayMap[target24h.weekday] || [];
 
-      console.log(`🌍 Timezone ${timezone}: now=${localNow.hours}:${localNow.minutes.toString().padStart(2, '0')}, target=${targetDate} [${windowStartTime}-${windowEndTime}] (${target24h.weekday})`);
-
-      return { targetDate, windowStartTime, windowEndTime, targetDayNames };
+      return { targetDate, windowStartTime, windowEndTime, targetDayNames, localNowStr: `${localNow.hours}:${localNow.minutes.toString().padStart(2, '0')}` };
     };
 
     // 1. Get all active programmed classes with their club timezone
@@ -429,9 +427,18 @@ serve(async (req) => {
     // Each class is evaluated against its own club's local time
     const targetClasses: Array<{ cls: typeof classes[0]; targetDate: string }> = [];
 
+    // Only log timezone once per unique timezone to reduce spam
+    const loggedTimezones = new Set<string>();
+
     for (const cls of classes) {
       const clubTimezone = (cls.clubs as any)?.timezone || 'Europe/Madrid';
-      const { targetDate, windowStartTime, windowEndTime, targetDayNames } = get24hWindowForTimezone(clubTimezone);
+      const { targetDate, windowStartTime, windowEndTime, targetDayNames, localNowStr } = get24hWindowForTimezone(clubTimezone);
+
+      // Only log each timezone once
+      if (!loggedTimezones.has(clubTimezone)) {
+        loggedTimezones.add(clubTimezone);
+        console.log(`🌍 Timezone ${clubTimezone}: now=${localNowStr}, target=${targetDate} [${windowStartTime}-${windowEndTime}]`);
+      }
 
       // Check if class is within its date range
       if (cls.start_date > targetDate || cls.end_date < targetDate) {
@@ -444,6 +451,10 @@ serve(async (req) => {
       const matchesDay = targetDayNames.some((dayName: string) => daysOfWeek.includes(dayName));
 
       if (!matchesDay) {
+        // Debug: log classes that pass date filter but fail day filter
+        if (cls.name.toLowerCase().includes('test') || cls.name.toLowerCase().includes('prueba')) {
+          console.log(`🔍 DEBUG ${cls.name}: date OK, but day mismatch. Class days: [${daysOfWeek.join(', ')}], target days: [${targetDayNames.join(', ')}]`);
+        }
         continue;
       }
 
@@ -452,6 +463,10 @@ serve(async (req) => {
       const isInTimeWindow = classTime >= windowStartTime && classTime < windowEndTime;
 
       if (!isInTimeWindow) {
+        // Debug: log classes that pass day filter but fail time filter
+        if (cls.name.toLowerCase().includes('test') || cls.name.toLowerCase().includes('prueba')) {
+          console.log(`🔍 DEBUG ${cls.name}: day OK, but time mismatch. Class time: ${classTime}, window: [${windowStartTime}-${windowEndTime}]`);
+        }
         continue;
       }
 
