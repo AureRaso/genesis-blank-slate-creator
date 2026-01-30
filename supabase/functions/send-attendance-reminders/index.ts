@@ -29,6 +29,7 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
   'e4ca00ff-63af-4d8c-a5bf-db67bc382c6a', // Sportres Padel Academy
+  'bdc107d7-4cd8-4586-ab49-fa489ab27794', // Leyon NM pádel Academy
 ];
 
 // Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)
