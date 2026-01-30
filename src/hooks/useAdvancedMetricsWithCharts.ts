@@ -8,8 +8,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface MonthlyData {
-  month: string;
+interface TrendData {
+  label: string;
   users: number;
   clubs: number;
   enrollments: number;
@@ -33,7 +33,7 @@ interface GrowthMetrics {
     clubsGrowth: number;
     classesGrowth: number;
   };
-  monthlyTrend: MonthlyData[];
+  monthlyTrend: TrendData[];
 }
 
 interface EngagementMetrics {
@@ -135,45 +135,91 @@ export const useAdvancedMetricsWithCharts = (monthsRange: number = 6) => {
         ? ((currentMonthClasses! - lastMonthClasses) / lastMonthClasses) * 100
         : 0;
 
-      // Generar datos de los últimos N meses para el gráfico
-      const monthlyTrend: MonthlyData[] = [];
-      for (let i = monthsRange - 1; i >= 0; i--) {
-        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-        const monthName = monthStart.toLocaleDateString("es-ES", { month: "short" });
+      // Generar datos para el gráfico
+      const monthlyTrend: TrendData[] = [];
 
-        const { count: monthUsers } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", monthStart.toISOString())
-          .lte("created_at", monthEnd.toISOString());
+      if (monthsRange === 1) {
+        // Para 1 mes: mostrar datos por día del mes actual
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const currentDay = now.getDate();
 
-        const { count: monthClubs } = await supabase
-          .from("clubs")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", monthStart.toISOString())
-          .lte("created_at", monthEnd.toISOString());
+        for (let day = 1; day <= currentDay; day++) {
+          const dayStart = new Date(now.getFullYear(), now.getMonth(), day, 0, 0, 0);
+          const dayEnd = new Date(now.getFullYear(), now.getMonth(), day, 23, 59, 59);
 
-        const { count: monthEnrollments } = await supabase
-          .from("student_enrollments")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", monthStart.toISOString())
-          .lte("created_at", monthEnd.toISOString());
+          const { count: dayUsers } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", dayStart.toISOString())
+            .lte("created_at", dayEnd.toISOString());
 
-        const { count: monthClasses } = await supabase
-          .from("programmed_classes")
-          .select("*", { count: "exact", head: true })
-          .gte("start_date", monthStart.toISOString().split("T")[0])
-          .lte("start_date", monthEnd.toISOString().split("T")[0]);
+          const { count: dayClubs } = await supabase
+            .from("clubs")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", dayStart.toISOString())
+            .lte("created_at", dayEnd.toISOString());
 
-        monthlyTrend.push({
-          month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-          users: monthUsers || 0,
-          clubs: monthClubs || 0,
-          enrollments: monthEnrollments || 0,
-          classes: monthClasses || 0,
-          revenue: 0, // Placeholder
-        });
+          const { count: dayEnrollments } = await supabase
+            .from("student_enrollments")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", dayStart.toISOString())
+            .lte("created_at", dayEnd.toISOString());
+
+          const dayDateStr = dayStart.toISOString().split("T")[0];
+          const { count: dayClasses } = await supabase
+            .from("programmed_classes")
+            .select("*", { count: "exact", head: true })
+            .eq("start_date", dayDateStr);
+
+          monthlyTrend.push({
+            label: day.toString(),
+            users: dayUsers || 0,
+            clubs: dayClubs || 0,
+            enrollments: dayEnrollments || 0,
+            classes: dayClasses || 0,
+            revenue: 0,
+          });
+        }
+      } else {
+        // Para múltiples meses: mostrar datos por mes
+        for (let i = monthsRange - 1; i >= 0; i--) {
+          const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+          const monthName = monthStart.toLocaleDateString("es-ES", { month: "short" });
+
+          const { count: monthUsers } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", monthStart.toISOString())
+            .lte("created_at", monthEnd.toISOString());
+
+          const { count: monthClubs } = await supabase
+            .from("clubs")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", monthStart.toISOString())
+            .lte("created_at", monthEnd.toISOString());
+
+          const { count: monthEnrollments } = await supabase
+            .from("student_enrollments")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", monthStart.toISOString())
+            .lte("created_at", monthEnd.toISOString());
+
+          const { count: monthClasses } = await supabase
+            .from("programmed_classes")
+            .select("*", { count: "exact", head: true })
+            .gte("start_date", monthStart.toISOString().split("T")[0])
+            .lte("start_date", monthEnd.toISOString().split("T")[0]);
+
+          monthlyTrend.push({
+            label: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+            users: monthUsers || 0,
+            clubs: monthClubs || 0,
+            enrollments: monthEnrollments || 0,
+            classes: monthClasses || 0,
+            revenue: 0,
+          });
+        }
       }
 
       return {

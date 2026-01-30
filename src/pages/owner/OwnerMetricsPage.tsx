@@ -11,6 +11,7 @@ import { useAdvancedMetricsWithCharts } from "@/hooks/useAdvancedMetricsWithChar
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, Users, Building2, Calendar, Activity, GraduationCap } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   LineChart,
   Line,
@@ -33,6 +34,9 @@ type TimeRange = 1 | 3 | 6 | 12;
 
 export const OwnerMetricsPage = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>(6);
+  const [showUsers, setShowUsers] = useState(true);
+  const [showClubs, setShowClubs] = useState(true);
+  const [showClasses, setShowClasses] = useState(true);
 
   const {
     growthMetrics,
@@ -196,14 +200,20 @@ export const OwnerMetricsPage = () => {
           </div>
         )}
 
-        {/* Gráfico de Tendencia Mensual */}
+        {/* Gráfico de Tendencia */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl">Tendencia de Crecimiento (Últimos {timeRange} Meses)</CardTitle>
+                <CardTitle className="text-xl">
+                  {timeRange === 1
+                    ? "Tendencia de Crecimiento (Mes Actual por Días)"
+                    : `Tendencia de Crecimiento (Últimos ${timeRange} Meses)`}
+                </CardTitle>
                 <CardDescription>
-                  Evolución de usuarios, clubes y clases programadas mensuales
+                  {timeRange === 1
+                    ? "Evolución diaria de usuarios, clubes y clases programadas"
+                    : "Evolución de usuarios, clubes y clases programadas mensuales"}
                 </CardDescription>
               </div>
               <div className="flex gap-2">
@@ -243,6 +253,40 @@ export const OwnerMetricsPage = () => {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Filtros de series */}
+            <div className="flex flex-wrap gap-4 mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={showUsers}
+                  onCheckedChange={(checked) => setShowUsers(checked === true)}
+                />
+                <span className="text-sm font-medium flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.primary }}></span>
+                  Usuarios
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={showClubs}
+                  onCheckedChange={(checked) => setShowClubs(checked === true)}
+                />
+                <span className="text-sm font-medium flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.secondary }}></span>
+                  Clubes
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={showClasses}
+                  onCheckedChange={(checked) => setShowClasses(checked === true)}
+                />
+                <span className="text-sm font-medium flex items-center gap-1">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.tertiary }}></span>
+                  Clases
+                </span>
+              </label>
+            </div>
+
             {growthLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-playtomic-orange"></div>
@@ -265,7 +309,7 @@ export const OwnerMetricsPage = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis dataKey="month" stroke="#64748B" />
+                  <XAxis dataKey="label" stroke="#64748B" />
                   <YAxis stroke="#64748B" />
                   <Tooltip
                     contentStyle={{
@@ -274,31 +318,36 @@ export const OwnerMetricsPage = () => {
                       borderRadius: "8px",
                     }}
                   />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="users"
-                    stroke={COLORS.primary}
-                    fillOpacity={1}
-                    fill="url(#colorUsers)"
-                    name="Usuarios"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="clubs"
-                    stroke={COLORS.secondary}
-                    fillOpacity={1}
-                    fill="url(#colorClubs)"
-                    name="Clubes"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="classes"
-                    stroke={COLORS.tertiary}
-                    fillOpacity={1}
-                    fill="url(#colorClasses)"
-                    name="Clases"
-                  />
+                  {showUsers && (
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke={COLORS.primary}
+                      fillOpacity={1}
+                      fill="url(#colorUsers)"
+                      name="Usuarios"
+                    />
+                  )}
+                  {showClubs && (
+                    <Area
+                      type="monotone"
+                      dataKey="clubs"
+                      stroke={COLORS.secondary}
+                      fillOpacity={1}
+                      fill="url(#colorClubs)"
+                      name="Clubes"
+                    />
+                  )}
+                  {showClasses && (
+                    <Area
+                      type="monotone"
+                      dataKey="classes"
+                      stroke={COLORS.tertiary}
+                      fillOpacity={1}
+                      fill="url(#colorClasses)"
+                      name="Clases"
+                    />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             )}
