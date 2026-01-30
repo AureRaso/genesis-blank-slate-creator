@@ -286,7 +286,10 @@ const WeekAttendancePage = () => {
 
     // Filtrar por día seleccionado
     if (selectedDate) {
-      const selectedDayName = getDayOfWeekInSpanish(new Date(selectedDate));
+      // Parsear fecha manualmente para evitar problemas de zona horaria
+      // new Date("yyyy-MM-dd") interpreta como UTC, causando día incorrecto en zonas negativas
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const selectedDayName = getDayOfWeekInSpanish(new Date(year, month - 1, day));
       result = result.filter(cls => cls.days_of_week?.includes(selectedDayName));
     }
 
