@@ -385,7 +385,17 @@ serve(async (req) => {
       return { targetDate, windowStartTime, windowEndTime, targetDayNames, localNowStr: `${localNow.hours}:${localNow.minutes.toString().padStart(2, '0')}` };
     };
 
+    // Calculate target dates for all possible timezones (today+1 and today+2 to cover all cases)
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const dayAfter = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const dayAfterStr = dayAfter.toISOString().split('T')[0];
+    const todayStr = now.toISOString().split('T')[0];
+
+    console.log(`📅 Fetching classes with end_date >= ${todayStr} and start_date <= ${dayAfterStr}`);
+
     // 1. Get all active programmed classes with their club timezone
+    // Filter by date range to reduce results (class must be valid for tomorrow or day after)
     const { data: classes, error: classesError} = await supabase
       .from('programmed_classes')
       .select(`
@@ -404,7 +414,9 @@ serve(async (req) => {
           timezone
         )
       `)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .gte('end_date', todayStr)
+      .lte('start_date', dayAfterStr);
 
     if (classesError) {
       throw new Error(`Error fetching classes: ${classesError.message}`);
