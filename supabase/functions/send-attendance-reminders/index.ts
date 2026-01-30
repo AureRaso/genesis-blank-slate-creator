@@ -322,42 +322,69 @@ serve(async (req) => {
     const now = new Date();
     console.log(`⏰ Current UTC time: ${now.toISOString()}`);
 
-    // Helper function to get time in a specific timezone
-    const getTimeInTimezone = (date: Date, timezone: string): Date => {
+    // Helper function to get local time components in a specific timezone
+    // Returns { year, month, day, hours, minutes, dayOfWeek } in that timezone
+    const getLocalTimeComponents = (date: Date, timezone: string) => {
       try {
-        const timeStr = date.toLocaleString('en-US', { timeZone: timezone });
-        return new Date(timeStr);
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          weekday: 'short'
+        });
+
+        const parts = formatter.formatToParts(date);
+        const get = (type: string) => parts.find(p => p.type === type)?.value || '';
+
+        return {
+          year: parseInt(get('year')),
+          month: parseInt(get('month')),
+          day: parseInt(get('day')),
+          hours: parseInt(get('hour')),
+          minutes: parseInt(get('minute')),
+          weekday: get('weekday') // 'Mon', 'Tue', etc.
+        };
       } catch (e) {
-        // Fallback to Europe/Madrid if timezone is invalid
         console.warn(`⚠️ Invalid timezone "${timezone}", falling back to Europe/Madrid`);
-        const timeStr = date.toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
-        return new Date(timeStr);
+        return getLocalTimeComponents(date, 'Europe/Madrid');
       }
     };
 
     // Helper function to calculate 24h window for a specific timezone
     const get24hWindowForTimezone = (timezone: string) => {
-      const localTime = getTimeInTimezone(now, timezone);
-      const twentyFourHoursFromNow = new Date(localTime.getTime() + 24 * 60 * 60 * 1000);
-      const twentyFourAndHalfHoursFromNow = new Date(localTime.getTime() + (24 * 60 + 30) * 60 * 1000);
+      // Get current time in the club's timezone
+      const localNow = getLocalTimeComponents(now, timezone);
 
-      const targetDate = twentyFourHoursFromNow.toISOString().split('T')[0];
-      const windowStartTime = `${twentyFourHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
-      const windowEndTime = `${twentyFourAndHalfHoursFromNow.getHours().toString().padStart(2, '0')}:${twentyFourAndHalfHoursFromNow.getMinutes().toString().padStart(2, '0')}`;
+      // Add 24 hours to the UTC time, then get the components in the target timezone
+      const twentyFourHoursFromNowUTC = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const twentyFourAndHalfHoursFromNowUTC = new Date(now.getTime() + (24 * 60 + 30) * 60 * 1000);
 
-      const dayOfWeekNumber = twentyFourHoursFromNow.getDay();
-      const daysMap: { [key: number]: string[] } = {
-        0: ['domingo'],
-        1: ['lunes'],
-        2: ['martes'],
-        3: ['miercoles', 'miércoles'],
-        4: ['jueves'],
-        5: ['viernes'],
-        6: ['sabado', 'sábado']
+      const target24h = getLocalTimeComponents(twentyFourHoursFromNowUTC, timezone);
+      const target24h30 = getLocalTimeComponents(twentyFourAndHalfHoursFromNowUTC, timezone);
+
+      const targetDate = `${target24h.year}-${target24h.month.toString().padStart(2, '0')}-${target24h.day.toString().padStart(2, '0')}`;
+      const windowStartTime = `${target24h.hours.toString().padStart(2, '0')}:${target24h.minutes.toString().padStart(2, '0')}`;
+      const windowEndTime = `${target24h30.hours.toString().padStart(2, '0')}:${target24h30.minutes.toString().padStart(2, '0')}`;
+
+      // Map weekday to Spanish day names
+      const weekdayMap: { [key: string]: string[] } = {
+        'Sun': ['domingo'],
+        'Mon': ['lunes'],
+        'Tue': ['martes'],
+        'Wed': ['miercoles', 'miércoles'],
+        'Thu': ['jueves'],
+        'Fri': ['viernes'],
+        'Sat': ['sabado', 'sábado']
       };
-      const targetDayNames = daysMap[dayOfWeekNumber] || [];
+      const targetDayNames = weekdayMap[target24h.weekday] || [];
 
-      return { targetDate, windowStartTime, windowEndTime, targetDayNames, localTime };
+      console.log(`🌍 Timezone ${timezone}: now=${localNow.hours}:${localNow.minutes.toString().padStart(2, '0')}, target=${targetDate} [${windowStartTime}-${windowEndTime}] (${target24h.weekday})`);
+
+      return { targetDate, windowStartTime, windowEndTime, targetDayNames };
     };
 
     // 1. Get all active programmed classes with their club timezone
@@ -404,7 +431,7 @@ serve(async (req) => {
 
     for (const cls of classes) {
       const clubTimezone = (cls.clubs as any)?.timezone || 'Europe/Madrid';
-      const { targetDate, windowStartTime, windowEndTime, targetDayNames, localTime } = get24hWindowForTimezone(clubTimezone);
+      const { targetDate, windowStartTime, windowEndTime, targetDayNames } = get24hWindowForTimezone(clubTimezone);
 
       // Check if class is within its date range
       if (cls.start_date > targetDate || cls.end_date < targetDate) {
