@@ -33,6 +33,8 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
   'e4ca00ff-63af-4d8c-a5bf-db67bc382c6a', // Sportres Padel Academy
   'bdc107d7-4cd8-4586-ab49-fa489ab27794', // Leyon NM pádel Academy
+  '190cfb4c-d923-49d8-bb75-93bbda82f97d', // Matchpadel Academy Matchpadel
+  'ec23d10f-0a14-4699-a50d-87c5e65d6417', // Matchpadel Academy Solopadel
 ];
 
 // Multi-language message templates
