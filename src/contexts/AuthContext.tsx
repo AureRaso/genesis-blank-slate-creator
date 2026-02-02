@@ -259,8 +259,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isSubscriptionActive = data.clubs?.is_subscription_active ?? true;
 
         if (!isSubscriptionActive && data.club_id) {
-          // Prevent infinite loop - only redirect if not already on blocked page
-          if (window.location.pathname !== '/subscription-blocked') {
+          // Admins and superadmins can access payment page to renew subscription
+          const isAdminUser = data.role === 'admin' || data.role === 'superadmin';
+          const isPaymentPage = window.location.pathname === '/dashboard/payment';
+
+          // Prevent infinite loop - only redirect if not already on blocked page or payment page (for admins)
+          if (window.location.pathname !== '/subscription-blocked' && !(isAdminUser && isPaymentPage)) {
             window.location.href = '/subscription-blocked';
             return;
           }
