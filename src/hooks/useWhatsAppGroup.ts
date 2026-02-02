@@ -70,19 +70,24 @@ export const useWhatsAppGroup = (clubId?: string, trainerId?: string) => {
  * Hook to get ALL active WhatsApp groups for admins
  * Used when admin needs to select which group to notify
  * @param clubId - Optional club ID to filter groups by club
+ * @param clubIds - Optional array of club IDs (for superadmin with "all clubs" selected)
  */
-export const useAllWhatsAppGroups = (clubId?: string) => {
+export const useAllWhatsAppGroups = (clubId?: string, clubIds?: string[]) => {
   return useQuery({
-    queryKey: ["all-whatsapp-groups", clubId],
+    queryKey: ["all-whatsapp-groups", clubId, clubIds],
     queryFn: async () => {
       let query = supabase
         .from("whatsapp_groups")
         .select("*")
         .eq("is_active", true);
 
-      // Filter by club_id if provided
+      // Filter by single club_id if provided
       if (clubId) {
         query = query.eq("club_id", clubId);
+      }
+      // Filter by multiple club_ids for superadmin "all clubs" view
+      else if (clubIds && clubIds.length > 0) {
+        query = query.in("club_id", clubIds);
       }
 
       const { data, error } = await query.order("group_name", { ascending: true });
@@ -91,9 +96,17 @@ export const useAllWhatsAppGroups = (clubId?: string) => {
         throw error;
       }
 
-      return data as WhatsAppGroupData[];
+      // Remove duplicates by group_chat_id (same WhatsApp group in multiple clubs)
+      const uniqueGroups = data?.reduce((acc, group) => {
+        if (!acc.some(g => g.group_chat_id === group.group_chat_id)) {
+          acc.push(group);
+        }
+        return acc;
+      }, [] as typeof data) || [];
+
+      return uniqueGroups as WhatsAppGroupData[];
     },
-    enabled: !!clubId, // Only fetch if clubId is provided
+    enabled: !!(clubId || (clubIds && clubIds.length > 0)),
   });
 };
 

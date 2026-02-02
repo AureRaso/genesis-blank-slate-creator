@@ -89,7 +89,7 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
 };
 
 const WeekAttendancePage = () => {
-  const { profile, isAdmin, effectiveClubId } = useAuth();
+  const { profile, isAdmin, effectiveClubId, isSuperAdmin, superAdminClubs } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 })); // Monday
   // Por defecto, seleccionar el día actual
   const [selectedDate, setSelectedDate] = useState<string | null>(() => format(new Date(), 'yyyy-MM-dd'));
@@ -108,7 +108,11 @@ const WeekAttendancePage = () => {
   const confirmationsMap = attendanceData?.confirmationsMap || new Map();
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(effectiveClubId);
+  // For superadmin with "all clubs" selected, pass all their club IDs
+  const superAdminClubIds = isSuperAdmin && !effectiveClubId
+    ? superAdminClubs.map(c => c.id)
+    : undefined;
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(effectiveClubId, superAdminClubIds);
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;

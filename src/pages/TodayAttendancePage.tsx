@@ -80,13 +80,17 @@ const isLateAbsenceNotice = (participant: any, classStartTime: string, selectedD
 };
 
 const TodayAttendancePage = () => {
-  const { profile, isAdmin, effectiveClubId } = useAuth();
+  const { profile, isAdmin, effectiveClubId, isSuperAdmin, superAdminClubs } = useAuth();
   const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format for queries
   const { data: attendanceData, isLoading, error, isFetching } = useTodayAttendance();
   const classes = attendanceData?.classes;
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup, isLoading: loadingWhatsAppGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(effectiveClubId);
+  // For superadmin with "all clubs" selected, pass all their club IDs
+  const superAdminClubIds = isSuperAdmin && !effectiveClubId
+    ? superAdminClubs.map(c => c.id)
+    : undefined;
+  const { data: allWhatsAppGroups, isLoading: loadingAllGroups } = useAllWhatsAppGroups(effectiveClubId, superAdminClubIds);
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;

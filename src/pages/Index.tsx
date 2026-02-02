@@ -138,7 +138,7 @@ const Index = () => {
   const { data: classesWithAbsences } = useClassesWithAbsences(effectiveClubId, superAdminClubIds);
   const { mutate: sendWhatsApp, isPending: isSendingWhatsApp } = useSendWhatsAppNotification();
   const { data: whatsappGroup } = useCurrentUserWhatsAppGroup();
-  const { data: allWhatsAppGroups } = useAllWhatsAppGroups(effectiveClubId);
+  const { data: allWhatsAppGroups } = useAllWhatsAppGroups(effectiveClubId, superAdminClubIds);
 
   // Fetch pending waitlist requests
   const { data: waitlistRequests } = usePendingWaitlistRequests(effectiveClubId, superAdminClubIds);
