@@ -11,45 +11,45 @@ import { es } from "date-fns/locale";
 import { useClubSubscriptionPlan } from "@/hooks/useClubSubscriptionPlan";
 
 const StripePaymentPage = () => {
-  const { profile } = useAuth();
+  const { profile, effectiveClubId } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Obtener el plan de suscripción recomendado según número de jugadores
-  const { playerCount, recommendedPlan, isLoading: planLoading, clubCount } = useClubSubscriptionPlan(profile?.club_id);
+  const { playerCount, recommendedPlan, isLoading: planLoading, clubCount } = useClubSubscriptionPlan(effectiveClubId);
   const isSuperadmin = profile?.role === 'superadmin';
 
   // Obtener información del club
   const { data: club, isLoading: clubLoading } = useQuery({
-    queryKey: ["club", profile?.club_id],
+    queryKey: ["club", effectiveClubId],
     queryFn: async () => {
-      if (!profile?.club_id) return null;
+      if (!effectiveClubId) return null;
 
       const { data, error } = await supabase
         .from("clubs")
         .select("*")
-        .eq("id", profile.club_id)
+        .eq("id", effectiveClubId)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!profile?.club_id,
+    enabled: !!effectiveClubId,
   });
 
   // Obtener el estado de la suscripción actual (si existe)
   const { data: subscription, isLoading: subscriptionLoading, refetch: refetchSubscription } = useQuery({
-    queryKey: ["subscription", profile?.club_id],
+    queryKey: ["subscription", effectiveClubId],
     queryFn: async () => {
-      if (!profile?.club_id) return null;
+      if (!effectiveClubId) return null;
 
       // Primero intentar obtener una suscripción activa
       const { data: activeData, error: activeError } = await supabase
         .from("club_subscriptions")
         .select("*")
-        .eq("club_id", profile.club_id)
+        .eq("club_id", effectiveClubId)
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
@@ -62,7 +62,7 @@ const StripePaymentPage = () => {
       const { data, error } = await supabase
         .from("club_subscriptions")
         .select("*")
-        .eq("club_id", profile.club_id)
+        .eq("club_id", effectiveClubId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -70,7 +70,7 @@ const StripePaymentPage = () => {
       if (error && error.code !== "PGRST116") throw error; // PGRST116 es "no rows returned"
       return data;
     },
-    enabled: !!profile?.club_id,
+    enabled: !!effectiveClubId,
   });
 
   const handleProceedToPayment = async () => {
@@ -83,7 +83,7 @@ const StripePaymentPage = () => {
         "create-stripe-checkout",
         {
           body: {
-            club_id: profile?.club_id,
+            club_id: effectiveClubId,
             user_id: profile?.id,
             success_url: `${window.location.origin}/dashboard/payment?success=true`,
             cancel_url: `${window.location.origin}/dashboard/payment?canceled=true`,
