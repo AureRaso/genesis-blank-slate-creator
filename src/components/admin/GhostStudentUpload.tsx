@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Upload, Download, FileText, Ghost, Plus, Trash2, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminClubs } from "@/hooks/useClubs";
-import { useProgrammedClasses } from "@/hooks/useProgrammedClasses";
 import { useCreateGhostEnrollments, CreateGhostEnrollmentData } from "@/hooks/useStudentEnrollments";
 import { toast } from "@/hooks/use-toast";
 
@@ -31,7 +30,6 @@ interface ValidationResult {
 
 const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
   const [selectedClubId, setSelectedClubId] = useState<string>("");
-  const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<GhostRow[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -45,7 +43,6 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
 
   const { isAdmin } = useAuth();
   const { data: adminClubs, isLoading: clubsLoading } = useAdminClubs();
-  const { data: classes, isLoading: classesLoading } = useProgrammedClasses(selectedClubId || undefined);
   const createGhosts = useCreateGhostEnrollments();
 
   const downloadTemplate = () => {
@@ -229,7 +226,6 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
 
       const result = await createGhosts.mutateAsync({
         ghosts: ghostsData,
-        classId: selectedClassId || undefined,
       });
 
       setProgress(100);
@@ -249,9 +245,6 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
 
   const validRows = parsedData.filter((row) => validateRow(row).valid);
   const invalidRows = parsedData.filter((row) => !validateRow(row).valid);
-
-  // Filter classes: only active, future classes for the selected club
-  const availableClasses = (classes || []).filter(c => c.name);
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -276,7 +269,7 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
         {isAdmin && (
           <div className="space-y-2">
             <Label htmlFor="club-select">Selecciona el club *</Label>
-            <Select value={selectedClubId} onValueChange={(val) => { setSelectedClubId(val); setSelectedClassId(""); }} disabled={clubsLoading}>
+            <Select value={selectedClubId} onValueChange={setSelectedClubId} disabled={clubsLoading}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={clubsLoading ? "Cargando clubes..." : "Selecciona un club"} />
               </SelectTrigger>
@@ -284,26 +277,6 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
                 {adminClubs?.map((club) => (
                   <SelectItem key={club.id} value={club.id}>
                     {club.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Class Selection */}
-        {selectedClubId && (
-          <div className="space-y-2">
-            <Label htmlFor="class-select">Asignar a clase (opcional)</Label>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId} disabled={classesLoading}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={classesLoading ? "Cargando clases..." : "Sin asignar a clase"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sin asignar a clase</SelectItem>
-                {availableClasses.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.start_time} ({cls.days_of_week?.join(', ')})
                   </SelectItem>
                 ))}
               </SelectContent>
