@@ -19,7 +19,8 @@ import {
   Trash2,
   Pencil,
   GraduationCap,
-  Users2  // MULTI-CLUB FEATURE
+  Users2,  // MULTI-CLUB FEATURE
+  Ghost
 } from "lucide-react";
 import {
   useAdminStudentEnrollments,
@@ -72,6 +73,7 @@ const AdminStudentsList = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("all");
   const [trainerFilter, setTrainerFilter] = useState<string>("all");
+  const [ghostFilter, setGhostFilter] = useState<string>("all"); // "all" | "ghost" | "registered"
   const [sortOrder, setSortOrder] = useState<string>("alphabetical"); // "arrival" or "alphabetical"
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [editingLevel, setEditingLevel] = useState<string>("");
@@ -213,7 +215,7 @@ const AdminStudentsList = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, periodFilter, trainerFilter, sortOrder]);
+  }, [searchTerm, statusFilter, periodFilter, trainerFilter, ghostFilter, sortOrder]);
 
   // ============================================
   // MULTI-CLUB FEATURE - Usar uniqueStudents para evitar duplicados en "Todos los clubes"
@@ -226,8 +228,11 @@ const AdminStudentsList = () => {
       const matchesStatus = statusFilter === "all" || student.status === statusFilter;
       const matchesPeriod = periodFilter === "all" || (student.enrollment_period || "").toLowerCase() === periodFilter;
       const matchesTrainer = trainerFilter === "all" || (student.class_trainer_ids?.includes(trainerFilter) ?? false);
+      const matchesGhost = ghostFilter === "all" ||
+        (ghostFilter === "ghost" && student.is_ghost === true) ||
+        (ghostFilter === "registered" && !student.is_ghost);
 
-      return matchesSearch && matchesStatus && matchesPeriod && matchesTrainer;
+      return matchesSearch && matchesStatus && matchesPeriod && matchesTrainer && matchesGhost;
     })
     .sort((a, b) => {
       const scoreA = scoresByEnrollmentId.get(a.id);
@@ -438,6 +443,21 @@ const AdminStudentsList = () => {
               </SelectContent>
             </Select>
 
+            {/* Ghost filter */}
+            <Select value={ghostFilter} onValueChange={setGhostFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <div className="flex items-center gap-2">
+                  <Ghost className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Tipo de alumno" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="registered">Registrados</SelectItem>
+                <SelectItem value="ghost">Fantasmas</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Sort order */}
             <Select value={sortOrder} onValueChange={setSortOrder}>
               <SelectTrigger className="w-full sm:w-[200px]">
@@ -546,9 +566,17 @@ const AdminStudentsList = () => {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-base truncate mb-1">
-                              {student.full_name}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-base truncate">
+                                {student.full_name}
+                              </h3>
+                              {student.is_ghost && (
+                                <Badge variant="outline" className="text-xs gap-1 bg-gray-100 text-gray-600 border-gray-300 flex-shrink-0">
+                                  <Ghost className="h-3 w-3" />
+                                  Fantasma
+                                </Badge>
+                              )}
+                            </div>
 
                             <div className="flex items-center gap-2 flex-wrap">
                               {/* Nivel editable */}

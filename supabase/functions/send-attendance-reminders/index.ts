@@ -540,7 +540,8 @@ serve(async (req) => {
             id,
             full_name,
             email,
-            student_profile_id
+            student_profile_id,
+            is_ghost
           )
         `)
         .eq('class_id', classInfo.id)
@@ -564,6 +565,12 @@ serve(async (req) => {
 
         if (!enrollment || !enrollment.email) {
           console.warn(`⚠️ No enrollment data for participant ${participant.id}`);
+          continue;
+        }
+
+        // Skip ghost enrollments - they don't have a real account to receive notifications
+        if (enrollment.is_ghost) {
+          console.log(`👻 Skipping ghost enrollment: ${enrollment.full_name} (${participant.id})`);
           continue;
         }
 

@@ -12,6 +12,8 @@ import ClubCodeInput from "@/components/ClubCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { PhoneInput } from "@/components/PhoneInput";
+import { findGhostMatch, claimGhostEnrollment, GhostMatchResult } from "@/hooks/useGhostMatch";
+import GhostMatchModal from "@/components/auth/GhostMatchModal";
 
 export const CompleteProfile = () => {
   const { t } = useTranslation();
@@ -22,6 +24,10 @@ export const CompleteProfile = () => {
   const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
   const [clubError, setClubError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [ghostMatch, setGhostMatch] = useState<GhostMatchResult | null>(null);
+  const [showGhostModal, setShowGhostModal] = useState(false);
+  const [ghostClaimLoading, setGhostClaimLoading] = useState(false);
+  const [ghostRejected, setGhostRejected] = useState(false);
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -142,6 +148,23 @@ export const CompleteProfile = () => {
       });
 
       if (!existingEnrollment) {
+        // Check for ghost match by phone before creating a new enrollment
+        // Skip if user already rejected a ghost match this session
+        if (!ghostRejected) {
+          console.log('🔧 CompleteProfile - Checking for ghost match by phone:', phone);
+          const ghost = await findGhostMatch(phone, selectedClubId);
+
+          if (ghost) {
+            console.log('🔧 CompleteProfile - Ghost match found:', ghost);
+            setGhostMatch(ghost);
+            setShowGhostModal(true);
+            setIsLoading(false);
+            return; // Stop here, the modal will handle the rest
+          }
+        }
+
+        console.log('🔧 CompleteProfile - No ghost match, creating new enrollment');
+
         // First, try to get a trainer from the selected club
         console.log('🔧 CompleteProfile - Finding trainer for club:', selectedClubId);
 
@@ -262,6 +285,51 @@ export const CompleteProfile = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGhostConfirm = async () => {
+    if (!ghostMatch || !user) return;
+    setGhostClaimLoading(true);
+
+    try {
+      const success = await claimGhostEnrollment(ghostMatch.enrollmentId, user.id, user.email);
+
+      if (success) {
+        toast({
+          title: "¡Vinculado correctamente!",
+          description: `Te has vinculado como alumno de ${ghostMatch.clubName}`,
+        });
+
+        setShowGhostModal(false);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.href = "/dashboard";
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo vincular. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('🔧 CompleteProfile - Error claiming ghost:', error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setGhostClaimLoading(false);
+    }
+  };
+
+  const handleGhostReject = () => {
+    setShowGhostModal(false);
+    setGhostMatch(null);
+    setGhostRejected(true);
+    toast({
+      title: "Sin problema",
+      description: "Pulsa el botón de completar perfil para continuar con tu registro",
+    });
   };
 
   return (
@@ -386,6 +454,17 @@ export const CompleteProfile = () => {
           <p>{t('authPage.completeProfile.footer')}</p>
         </div>
       </div>
+
+      {/* Ghost Match Modal */}
+      {ghostMatch && (
+        <GhostMatchModal
+          open={showGhostModal}
+          match={ghostMatch}
+          loading={ghostClaimLoading}
+          onConfirm={handleGhostConfirm}
+          onReject={handleGhostReject}
+        />
+      )}
     </div>
   );
 };

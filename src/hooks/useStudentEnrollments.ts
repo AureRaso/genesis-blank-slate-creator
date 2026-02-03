@@ -25,6 +25,10 @@ export interface StudentEnrollment {
   status: string;
   created_at: string;
   updated_at: string;
+  // Ghost profile fields
+  is_ghost?: boolean;
+  ghost_created_at?: string;
+  ghost_matched_at?: string;
   // Club information
   club_name?: string;
   club_status?: string;
@@ -351,6 +355,120 @@ export const useCreateStudentEnrollment = () => {
         description: `${data.full_name} ha sido inscrito correctamente. Puede acceder con su email y contraseña: 123456`,
         duration: 8000,
       });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export interface CreateGhostEnrollmentData {
+  full_name: string;
+  phone: string;
+  level: number;
+  club_id: string;
+  email?: string;
+}
+
+export const useCreateGhostEnrollments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ghosts, classId }: { ghosts: CreateGhostEnrollmentData[]; classId?: string }) => {
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) throw new Error("No authenticated user");
+
+      const results = { success: 0, failed: 0, errors: [] as Array<{ name: string; error: string }> };
+
+      for (const ghost of ghosts) {
+        try {
+          // Check if phone already exists as ghost in this club
+          const { data: existing } = await supabase
+            .from("student_enrollments")
+            .select("id, full_name")
+            .eq("phone", ghost.phone)
+            .eq("club_id", ghost.club_id)
+            .eq("is_ghost", true)
+            .maybeSingle();
+
+          if (existing) {
+            results.failed++;
+            results.errors.push({ name: ghost.full_name, error: `Teléfono ya registrado como fantasma (${existing.full_name})` });
+            continue;
+          }
+
+          // Create ghost enrollment - NO user account created
+          const { data: enrollment, error: enrollError } = await supabase
+            .from("student_enrollments")
+            .insert({
+              full_name: ghost.full_name,
+              phone: ghost.phone,
+              email: ghost.email || '',
+              level: ghost.level,
+              club_id: ghost.club_id,
+              trainer_profile_id: profile.user.id,
+              created_by_profile_id: profile.user.id,
+              is_ghost: true,
+              ghost_created_at: new Date().toISOString(),
+              weekly_days: [],
+              preferred_times: [],
+              enrollment_period: 'mensual',
+              status: 'active',
+            })
+            .select()
+            .single();
+
+          if (enrollError) throw enrollError;
+
+          // If a class was specified, add as participant
+          if (classId && enrollment) {
+            const { data: classData } = await supabase
+              .from("programmed_classes")
+              .select("start_date")
+              .eq("id", classId)
+              .single();
+
+            await supabase
+              .from("class_participants")
+              .insert({
+                class_id: classId,
+                student_enrollment_id: enrollment.id,
+                status: 'active',
+                payment_status: 'pending',
+                payment_verified: false,
+                amount_paid: 0,
+                total_amount_due: 0,
+                attendance_confirmed_for_date: classData?.start_date || null,
+                attendance_confirmed_at: new Date().toISOString(),
+                confirmed_by_trainer: false,
+              });
+          }
+
+          results.success++;
+        } catch (err: any) {
+          results.failed++;
+          results.errors.push({ name: ghost.full_name, error: err.message });
+        }
+      }
+
+      return results;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-student-enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["players"] });
+      queryClient.invalidateQueries({ queryKey: ["class-participants"] });
+      if (data.success > 0) {
+        toast({
+          title: "Perfiles fantasma creados",
+          description: `${data.success} alumno(s) pre-registrado(s) correctamente.${data.failed > 0 ? ` ${data.failed} fallido(s).` : ''}`,
+          duration: 8000,
+        });
+      }
     },
     onError: (error: any) => {
       toast({

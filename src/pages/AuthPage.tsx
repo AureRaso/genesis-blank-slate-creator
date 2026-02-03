@@ -15,6 +15,8 @@ import padelockLogo from "@/assets/PadeLock_D5Red.png";
 import { supabase } from "@/integrations/supabase/client";
 import { LopiviModal } from "@/components/LopiviModal";
 import { PhoneInput } from "@/components/PhoneInput";
+import { findGhostMatch, claimGhostEnrollment, GhostMatchResult } from "@/hooks/useGhostMatch";
+import GhostMatchModal from "@/components/auth/GhostMatchModal";
 
 export const AuthPage = () => {
   const { t } = useTranslation();
@@ -44,6 +46,11 @@ export const AuthPage = () => {
   // Estados para LOPIVI
   const [lopiviAccepted, setLopiviAccepted] = useState(false);
   const [showLopiviModal, setShowLopiviModal] = useState(false);
+
+  // Estados para ghost match
+  const [ghostMatch, setGhostMatch] = useState<GhostMatchResult | null>(null);
+  const [showGhostModal, setShowGhostModal] = useState(false);
+  const [ghostClaimLoading, setGhostClaimLoading] = useState(false);
 
   const {
     signIn,
@@ -155,6 +162,24 @@ export const AuthPage = () => {
           if (profile.role === 'player' && (!profile.club_id || !profile.level)) {
             safeRedirect("/complete-profile");
             return;
+          }
+
+          // Check for ghost match for newly registered players
+          if (profile.role === 'player' && profile.club_id && profile.phone) {
+            try {
+              const ghost = await findGhostMatch(profile.phone, profile.club_id);
+              if (ghost) {
+                console.log('👻 Ghost match found for new player:', ghost);
+                setGhostMatch(ghost);
+                setShowGhostModal(true);
+                setIsVerifyingAccount(false);
+                clearTimeout(timeoutId);
+                return; // Don't redirect yet, show modal first
+              }
+            } catch (ghostError) {
+              console.error('Error checking ghost match:', ghostError);
+              // Don't block registration on ghost match failure
+            }
           }
 
           // Check for redirect URL
@@ -363,6 +388,46 @@ export const AuthPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGhostConfirm = async () => {
+    if (!ghostMatch || !user) return;
+    setGhostClaimLoading(true);
+
+    try {
+      const success = await claimGhostEnrollment(ghostMatch.enrollmentId, user.id, user.email);
+
+      if (success) {
+        toast({
+          title: "¡Vinculado correctamente!",
+          description: `Te has vinculado como alumno de ${ghostMatch.clubName}`,
+        });
+
+        setShowGhostModal(false);
+        navigate("/dashboard", { replace: true });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo vincular. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('AuthPage - Error claiming ghost:', error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setGhostClaimLoading(false);
+    }
+  };
+
+  const handleGhostReject = () => {
+    setShowGhostModal(false);
+    setGhostMatch(null);
+    navigate("/dashboard", { replace: true });
   };
 
   // Show loading screen while verifying account
@@ -883,6 +948,17 @@ export const AuthPage = () => {
         open={showLopiviModal}
         onOpenChange={setShowLopiviModal}
       />
+
+      {/* Ghost Match Modal */}
+      {ghostMatch && (
+        <GhostMatchModal
+          open={showGhostModal}
+          match={ghostMatch}
+          loading={ghostClaimLoading}
+          onConfirm={handleGhostConfirm}
+          onReject={handleGhostReject}
+        />
+      )}
     </div>
   );
 };
