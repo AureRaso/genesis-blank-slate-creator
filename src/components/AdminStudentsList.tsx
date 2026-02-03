@@ -446,10 +446,7 @@ const AdminStudentsList = () => {
             {/* Ghost filter */}
             <Select value={ghostFilter} onValueChange={setGhostFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <div className="flex items-center gap-2">
-                  <Ghost className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Tipo de alumno" />
-                </div>
+                <SelectValue placeholder="Tipo de alumno" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
