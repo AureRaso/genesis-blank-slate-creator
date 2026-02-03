@@ -378,11 +378,34 @@ export const useCreateGhostEnrollments = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ghosts, classId }: { ghosts: CreateGhostEnrollmentData[]; classId?: string }) => {
+    mutationFn: async ({ ghosts }: { ghosts: CreateGhostEnrollmentData[] }) => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
       const results = { success: 0, failed: 0, errors: [] as Array<{ name: string; error: string }> };
+
+      // Fetch club info and admin name once for WhatsApp notifications
+      const clubId = ghosts[0]?.club_id;
+      let clubName = '';
+      let clubCode = '';
+      let trainerName = '';
+
+      if (clubId) {
+        const { data: clubData } = await supabase
+          .from("clubs")
+          .select("name, club_code")
+          .eq("id", clubId)
+          .single();
+        clubName = clubData?.name || '';
+        clubCode = clubData?.club_code || '';
+
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", profile.user.id)
+          .single();
+        trainerName = profileData?.full_name || '';
+      }
 
       for (const ghost of ghosts) {
         try {
@@ -424,28 +447,21 @@ export const useCreateGhostEnrollments = () => {
 
           if (enrollError) throw enrollError;
 
-          // If a class was specified, add as participant
-          if (classId && enrollment) {
-            const { data: classData } = await supabase
-              .from("programmed_classes")
-              .select("start_date")
-              .eq("id", classId)
-              .single();
-
-            await supabase
-              .from("class_participants")
-              .insert({
-                class_id: classId,
-                student_enrollment_id: enrollment.id,
-                status: 'active',
-                payment_status: 'pending',
-                payment_verified: false,
-                amount_paid: 0,
-                total_amount_due: 0,
-                attendance_confirmed_for_date: classData?.start_date || null,
-                attendance_confirmed_at: new Date().toISOString(),
-                confirmed_by_trainer: false,
+          // Send WhatsApp welcome message via Kapso
+          if (enrollment && clubName && clubCode) {
+            try {
+              await supabase.functions.invoke('send-ghost-welcome-kapso', {
+                body: {
+                  phone: ghost.phone,
+                  studentName: ghost.full_name,
+                  trainerName,
+                  clubName,
+                  clubCode,
+                },
               });
+            } catch (whatsappErr) {
+              console.error('WhatsApp welcome failed (non-blocking):', whatsappErr);
+            }
           }
 
           results.success++;
