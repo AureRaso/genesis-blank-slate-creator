@@ -27,6 +27,7 @@ export interface TodayAttendanceClass {
     student_enrollment: {
       full_name: string;
       email: string;
+      is_ghost?: boolean;
     };
     attendance_confirmed_for_date: string | null;
     attendance_confirmed_at: string | null;
@@ -116,7 +117,8 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
             joined_from_waitlist_at,
             student_enrollment:student_enrollments!student_enrollment_id(
               full_name,
-              email
+              email,
+              is_ghost
             )
           )
         `)
