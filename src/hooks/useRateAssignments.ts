@@ -48,78 +48,7 @@ export interface BulkAssignmentInput {
   end_date?: string | null;
 }
 
-// Helper function to calculate weekly hours from class participations
-// Groups classes by day_of_week + start_time to avoid counting duplicate sessions
-function calculateWeeklyHours(
-  participations: Array<{
-    programmed_class: {
-      id: string;
-      duration_minutes: number;
-      days_of_week: string[];
-      is_active: boolean;
-      recurrence_type: string | null;
-      start_date: string | null;
-      end_date: string | null;
-      start_time: string | null;
-    } | null;
-  }>
-): number {
-  let totalMinutes = 0;
-
-  // Use a Map to track unique class slots (day + time) with their duration and recurrence type
-  // Key: "day-time", Value: { duration, recurrenceType, count }
-  const slotInfo = new Map<string, { duration: number; recurrenceType: string; count: number }>();
-
-  participations.forEach((p) => {
-    const programmedClass = p.programmed_class;
-    if (!programmedClass || !programmedClass.is_active) return;
-
-    const durationMinutes = programmedClass.duration_minutes || 60;
-    const recurrenceType = programmedClass.recurrence_type || 'weekly';
-    const startTime = programmedClass.start_time || '00:00';
-
-    // For each day of the week this class occurs
-    const daysOfWeek = programmedClass.days_of_week || [];
-    daysOfWeek.forEach(day => {
-      // Create a unique key for this time slot (day + time)
-      const slotKey = `${day}-${startTime}`;
-
-      const existing = slotInfo.get(slotKey);
-      if (existing) {
-        // Increment count for this slot
-        existing.count++;
-        // If any class in this slot is 'weekly', treat the whole slot as weekly
-        if (recurrenceType === 'weekly') {
-          existing.recurrenceType = 'weekly';
-        } else if (recurrenceType === 'biweekly' && existing.recurrenceType === 'once') {
-          existing.recurrenceType = 'biweekly';
-        }
-      } else {
-        slotInfo.set(slotKey, { duration: durationMinutes, recurrenceType, count: 1 });
-      }
-    });
-  });
-
-  // Now calculate total minutes based on slot info
-  slotInfo.forEach(({ duration, recurrenceType, count }) => {
-    if (recurrenceType === 'weekly') {
-      totalMinutes += duration;
-    } else if (recurrenceType === 'biweekly') {
-      // Biweekly = every 2 weeks, so average per week is half
-      totalMinutes += duration / 2;
-    } else if (recurrenceType === 'once' && count >= 2) {
-      // Multiple 'once' classes in the same slot indicate a recurring pattern
-      // Treat as weekly
-      totalMinutes += duration;
-    }
-    // Single 'once' class is not counted as it's truly a one-time event
-  });
-
-  // Convert to hours, rounded to 1 decimal place
-  return Math.round((totalMinutes / 60) * 10) / 10;
-}
-
-// Fetch students with their current rate assignment
+// Fetch students with their current rate assignment and weekly hours
 export function useStudentsWithAssignments(clubId?: string) {
   const { effectiveClubId } = useAuth();
   const targetClubId = clubId || effectiveClubId;
@@ -138,59 +67,112 @@ export function useStudentsWithAssignments(clubId?: string) {
 
       if (studentsError) throw studentsError;
 
-      // Fetch active assignments for these students
+      // Fetch assignments in batches to avoid URL length limits
       const studentIds = students.map(s => s.id);
+      const BATCH_SIZE = 50;
+      const allAssignments: RateAssignment[] = [];
 
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from('student_rate_assignments')
-        .select(`
-          *,
-          payment_rate:payment_rates(*)
-        `)
-        .in('student_enrollment_id', studentIds)
-        .eq('status', 'activa');
+      for (let i = 0; i < studentIds.length; i += BATCH_SIZE) {
+        const batch = studentIds.slice(i, i + BATCH_SIZE);
+        const { data, error } = await supabase
+          .from('student_rate_assignments')
+          .select(`*, payment_rate:payment_rates(*)`)
+          .in('student_enrollment_id', batch)
+          .eq('status', 'activa');
+        if (error) throw error;
+        if (data) allAssignments.push(...(data as RateAssignment[]));
+      }
 
-      if (assignmentsError) throw assignmentsError;
+      // Fetch class participations in batches to avoid PostgREST 1000-row limit
+      // (a club with 100 students can have 3000+ participations)
+      // Use small batches (10 students) and internal pagination to guarantee completeness
+      interface ParticipationRow {
+        student_enrollment_id: string;
+        class_id: string;
+        programmed_class: {
+          id: string;
+          days_of_week: string[] | null;
+          start_time: string;
+          duration_minutes: number;
+          is_active: boolean;
+        } | null;
+      }
+      const allParticipations: ParticipationRow[] = [];
+      const PARTICIPATION_BATCH = 10; // Smaller batches to stay under 1000-row limit
+      const PAGE_SIZE = 1000;
 
-      // Fetch class participations for these students to calculate weekly hours
-      const { data: classParticipants, error: participantsError } = await supabase
-        .from('class_participants')
-        .select(`
-          student_enrollment_id,
-          programmed_class:programmed_classes(
-            id,
-            duration_minutes,
-            days_of_week,
-            is_active,
-            recurrence_type,
-            start_date,
-            end_date,
-            start_time
-          )
-        `)
-        .in('student_enrollment_id', studentIds)
-        .eq('status', 'active');
+      for (let i = 0; i < studentIds.length; i += PARTICIPATION_BATCH) {
+        const batch = studentIds.slice(i, i + PARTICIPATION_BATCH);
+        // Paginate within each batch to handle cases where even 10 students exceed 1000 rows
+        let offset = 0;
+        let hasMore = true;
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('class_participants')
+            .select('student_enrollment_id, class_id, programmed_class:programmed_classes(id, days_of_week, start_time, duration_minutes, is_active)')
+            .in('student_enrollment_id', batch)
+            .eq('status', 'active')
+            .range(offset, offset + PAGE_SIZE - 1);
+          if (error) throw error;
+          if (data) {
+            allParticipations.push(...(data as ParticipationRow[]));
+            hasMore = data.length === PAGE_SIZE;
+            offset += PAGE_SIZE;
+          } else {
+            hasMore = false;
+          }
+        }
+      }
 
-      if (participantsError) throw participantsError;
+      // Calculate weekly hours per student from participations
+      const hoursByStudent = new Map<string, number>();
+      const studentParticipations = new Map<string, ParticipationRow[]>();
+
+      allParticipations.forEach(p => {
+        if (!p.programmed_class || !p.programmed_class.is_active) return;
+        const list = studentParticipations.get(p.student_enrollment_id) || [];
+        list.push(p);
+        studentParticipations.set(p.student_enrollment_id, list);
+      });
+
+      studentParticipations.forEach((participations, studentId) => {
+        // Deduplicate by class_id
+        const uniqueClasses = new Map<string, ParticipationRow>();
+        participations.forEach(p => {
+          if (!uniqueClasses.has(p.class_id)) {
+            uniqueClasses.set(p.class_id, p);
+          }
+        });
+
+        // Expand days_of_week and deduplicate by day+time slot
+        const uniqueSlots = new Set<string>();
+        let totalMinutes = 0;
+
+        uniqueClasses.forEach(p => {
+          const pc = p.programmed_class!;
+          const days = pc.days_of_week || [];
+          days.forEach(day => {
+            const slotKey = `${day}|${pc.start_time}`;
+            if (!uniqueSlots.has(slotKey)) {
+              uniqueSlots.add(slotKey);
+              totalMinutes += pc.duration_minutes;
+            }
+          });
+        });
+
+        hoursByStudent.set(studentId, Math.round((totalMinutes / 60) * 10) / 10);
+      });
 
       // Map assignments to students
       const assignmentsByStudent = new Map<string, RateAssignment>();
-      assignments?.forEach(a => {
-        assignmentsByStudent.set(a.student_enrollment_id, a as RateAssignment);
-      });
-
-      // Group class participations by student
-      const participationsByStudent = new Map<string, typeof classParticipants>();
-      classParticipants?.forEach(p => {
-        const existing = participationsByStudent.get(p.student_enrollment_id) || [];
-        existing.push(p);
-        participationsByStudent.set(p.student_enrollment_id, existing);
+      allAssignments.forEach(a => {
+        assignmentsByStudent.set(a.student_enrollment_id, a);
       });
 
       return students.map(student => ({
         ...student,
         current_assignment: assignmentsByStudent.get(student.id) || null,
-        weekly_hours: calculateWeeklyHours(participationsByStudent.get(student.id) || []),
+        weekly_hours: hoursByStudent.get(student.id) || 0,
       })) as StudentWithAssignment[];
     },
     enabled: !!targetClubId,
