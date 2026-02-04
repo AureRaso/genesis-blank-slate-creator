@@ -393,11 +393,12 @@ export function useGenerateMonthlyPayments() {
       const targetMonth = month !== undefined ? month : now.getMonth();
       const targetYear = year !== undefined ? year : now.getFullYear();
 
-      const periodStart = new Date(targetYear, targetMonth, 1);
-      const periodEnd = new Date(targetYear, targetMonth + 1, 0);
-
-      const periodStartStr = periodStart.toISOString().split('T')[0];
-      const periodEndStr = periodEnd.toISOString().split('T')[0];
+      // Build date strings directly to avoid timezone conversion issues
+      // (new Date().toISOString() converts to UTC, shifting dates back by 1 day in UTC+ timezones)
+      const mm = String(targetMonth + 1).padStart(2, '0');
+      const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+      const periodStartStr = `${targetYear}-${mm}-01`;
+      const periodEndStr = `${targetYear}-${mm}-${String(lastDay).padStart(2, '0')}`;
 
       // Get all active assignments with their rates
       const { data: assignments, error: assignmentsError } = await supabase
