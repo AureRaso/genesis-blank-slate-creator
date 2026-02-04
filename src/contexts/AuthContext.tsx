@@ -291,6 +291,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               localStorage.setItem(SELECTED_CLUB_KEY, clubs[0].id);
             }
           }
+
+          // Check subscription for superadmin's assigned clubs
+          if (clubs.length > 0) {
+            const clubIds = clubs.map(c => c.id);
+            const { data: clubsData } = await supabase
+              .from('clubs')
+              .select('id, is_subscription_active')
+              .in('id', clubIds);
+
+            const allInactive = clubsData && clubsData.length > 0 &&
+              clubsData.every(c => c.is_subscription_active === false);
+
+            if (allInactive) {
+              const isPaymentPage = window.location.pathname === '/dashboard/payment';
+              if (window.location.pathname !== '/subscription-blocked' && !isPaymentPage) {
+                window.location.href = '/subscription-blocked';
+                return;
+              }
+            }
+          }
         } else {
           // Not a superadmin, clear superadmin state
           setSuperAdminClubs([]);

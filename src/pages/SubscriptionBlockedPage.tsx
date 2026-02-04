@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SubscriptionBlockedPage = () => {
   const { profile, signOut } = useAuth();
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
 
   const handleGoToPayment = () => {
     window.location.href = "/dashboard/payment";
