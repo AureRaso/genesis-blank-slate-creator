@@ -1864,7 +1864,27 @@
         "endDate": "Fecha Fin",
         "assigned": "Asignado",
         "noAssignmentsFound": "No se encontraron asignaciones",
-        "noAssignmentHistory": "No hay historial de asignaciones"
+        "noAssignmentHistory": "No hay historial de asignaciones",
+        "deleteSuccess": "Registro de {{name}} eliminado del historial",
+        "selectedCount": "{{count}} seleccionados",
+        "bulkDelete": "Eliminar seleccionados",
+        "bulkDeleteSuccess": "{{count}} registros eliminados del historial",
+        "deleteDialog": {
+          "title": "Eliminar registro del historial",
+          "description": "Se eliminará el registro de {{name}} y todos los pagos asociados a esta asignación. Esta acción no se puede deshacer."
+        },
+        "bulkDeleteDialog": {
+          "title": "¿Eliminar {{count}} registros del historial?",
+          "description": "Se eliminarán {{count}} registros finalizados y todos sus pagos asociados.",
+          "warning": "Esta acción eliminará también todos los pagos generados para estos alumnos con esta tarifa. Esta acción NO se puede deshacer.",
+          "continue": "Continuar"
+        },
+        "bulkDeleteConfirmDialog": {
+          "title": "Confirmar eliminación masiva",
+          "description": "Vas a eliminar permanentemente {{count}} registros y todos sus pagos asociados.",
+          "typeInstruction": "Escribe ELIMINAR para confirmar:",
+          "confirm": "Eliminar permanentemente"
+        }
       }
     },
     "assign": {

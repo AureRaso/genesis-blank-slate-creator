@@ -446,7 +446,27 @@
         "endDate": "End Date",
         "assigned": "Assigned",
         "noAssignmentsFound": "No assignments found",
-        "noAssignmentHistory": "No assignment history"
+        "noAssignmentHistory": "No assignment history",
+        "deleteSuccess": "{{name}}'s record deleted from history",
+        "selectedCount": "{{count}} selected",
+        "bulkDelete": "Delete selected",
+        "bulkDeleteSuccess": "{{count}} records deleted from history",
+        "deleteDialog": {
+          "title": "Delete history record",
+          "description": "This will delete {{name}}'s record and all associated payments for this assignment. This action cannot be undone."
+        },
+        "bulkDeleteDialog": {
+          "title": "Delete {{count}} history records?",
+          "description": "This will delete {{count}} finalized records and all their associated payments.",
+          "warning": "This action will also delete all payments generated for these students with this rate. This action CANNOT be undone.",
+          "continue": "Continue"
+        },
+        "bulkDeleteConfirmDialog": {
+          "title": "Confirm bulk deletion",
+          "description": "You are about to permanently delete {{count}} records and all their associated payments.",
+          "typeInstruction": "Type ELIMINAR to confirm:",
+          "confirm": "Delete permanently"
+        }
       }
     },
     "assign": {

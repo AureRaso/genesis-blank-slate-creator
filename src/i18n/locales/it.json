@@ -423,7 +423,27 @@
         "endDate": "Data Fine",
         "assigned": "Assegnato",
         "noAssignmentsFound": "Nessuna assegnazione trovata",
-        "noAssignmentHistory": "Nessuno storico assegnazioni"
+        "noAssignmentHistory": "Nessuno storico assegnazioni",
+        "deleteSuccess": "Record di {{name}} eliminato dallo storico",
+        "selectedCount": "{{count}} selezionati",
+        "bulkDelete": "Elimina selezionati",
+        "bulkDeleteSuccess": "{{count}} record eliminati dallo storico",
+        "deleteDialog": {
+          "title": "Elimina record dallo storico",
+          "description": "Verrà eliminato il record di {{name}} e tutti i pagamenti associati a questa assegnazione. Questa azione non può essere annullata."
+        },
+        "bulkDeleteDialog": {
+          "title": "Eliminare {{count}} record dallo storico?",
+          "description": "Verranno eliminati {{count}} record terminati e tutti i pagamenti associati.",
+          "warning": "Questa azione eliminerà anche tutti i pagamenti generati per questi studenti con questa tariffa. Questa azione NON può essere annullata.",
+          "continue": "Continua"
+        },
+        "bulkDeleteConfirmDialog": {
+          "title": "Conferma eliminazione massiva",
+          "description": "Stai per eliminare permanentemente {{count}} record e tutti i pagamenti associati.",
+          "typeInstruction": "Scrivi ELIMINAR per confermare:",
+          "confirm": "Elimina permanentemente"
+        }
       }
     },
     "assign": {

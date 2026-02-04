@@ -169,6 +169,14 @@ export default function PaymentRateDetailPage() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
+  // History assignment delete state
+  const [historyAssignmentToDelete, setHistoryAssignmentToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [selectedHistoryAssignments, setSelectedHistoryAssignments] = useState<Set<string>>(new Set());
+  const [showBulkHistoryDeleteDialog, setShowBulkHistoryDeleteDialog] = useState(false);
+  const [showBulkHistoryDeleteConfirmation, setShowBulkHistoryDeleteConfirmation] = useState(false);
+  const [bulkHistoryDeleteText, setBulkHistoryDeleteText] = useState("");
+  const [isBulkHistoryDeletePending, setIsBulkHistoryDeletePending] = useState(false);
+
   // Bulk action states
   const [showBulkUnlinkDialog, setShowBulkUnlinkDialog] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -289,6 +297,73 @@ export default function PaymentRateDetailPage() {
     setStudentToDelete(null);
     setShowDeleteConfirmation(false);
     setDeleteConfirmationText("");
+  };
+
+  // Handle delete from history tab
+  const handleDeleteHistoryAssignment = async () => {
+    if (!historyAssignmentToDelete) return;
+    try {
+      await deleteRateAssignment.mutateAsync(historyAssignmentToDelete.id);
+      toast.success(t('paymentRates.detail.assignments.deleteSuccess', { name: historyAssignmentToDelete.name }));
+      setHistoryAssignmentToDelete(null);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  // History multi-select helpers
+  const finalizadaAssignments = useMemo(() =>
+    filteredAssignments.filter(a => a.status === 'finalizada'),
+    [filteredAssignments]
+  );
+
+  const historySelectionState = useMemo(() => {
+    if (finalizadaAssignments.length === 0) return { allSelected: false, someSelected: false, selectedCount: 0 };
+    const selectedInList = finalizadaAssignments.filter(a => selectedHistoryAssignments.has(a.id));
+    const selectedCount = selectedInList.length;
+    return {
+      allSelected: selectedCount === finalizadaAssignments.length,
+      someSelected: selectedCount > 0 && selectedCount < finalizadaAssignments.length,
+      selectedCount,
+    };
+  }, [finalizadaAssignments, selectedHistoryAssignments]);
+
+  const toggleHistoryAssignment = (id: string) => {
+    setSelectedHistoryAssignments(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllHistoryAssignments = () => {
+    if (historySelectionState.allSelected) {
+      setSelectedHistoryAssignments(new Set());
+    } else {
+      setSelectedHistoryAssignments(new Set(finalizadaAssignments.map(a => a.id)));
+    }
+  };
+
+  // Bulk delete history assignments
+  const handleBulkHistoryDelete = async () => {
+    if (bulkHistoryDeleteText !== 'ELIMINAR' || selectedHistoryAssignments.size === 0) return;
+    setIsBulkHistoryDeletePending(true);
+    let deleted = 0;
+    for (const assignmentId of selectedHistoryAssignments) {
+      try {
+        await deleteRateAssignment.mutateAsync(assignmentId);
+        deleted++;
+      } catch {
+        // continue with others
+      }
+    }
+    toast.success(t('paymentRates.detail.assignments.bulkDeleteSuccess', { count: deleted }));
+    setSelectedHistoryAssignments(new Set());
+    setShowBulkHistoryDeleteConfirmation(false);
+    setShowBulkHistoryDeleteDialog(false);
+    setBulkHistoryDeleteText("");
+    setIsBulkHistoryDeletePending(false);
   };
 
   // Multi-select helper functions
@@ -1349,6 +1424,33 @@ export default function PaymentRateDetailPage() {
               )}
             </div>
 
+            {/* Bulk action bar for selected finalized assignments */}
+            {historySelectionState.selectedCount > 0 && (
+              <div className="p-3 border-b border-red-100 bg-red-50 flex items-center justify-between gap-3">
+                <span className="text-sm text-red-700 font-medium">
+                  {t('paymentRates.detail.assignments.selectedCount', { count: historySelectionState.selectedCount })}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowBulkHistoryDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('paymentRates.detail.assignments.bulkDelete')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedHistoryAssignments(new Set())}
+                    className="text-gray-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {filteredAssignments.length > 0 ? (
               <>
                 {/* Mobile list view */}
@@ -1358,23 +1460,49 @@ export default function PaymentRateDetailPage() {
                     const statusLabel = getStatusLabel(assignment.status);
                     return (
                       <div key={assignment.id} className="p-4">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          {assignment.status === 'finalizada' && (
+                            <Checkbox
+                              checked={selectedHistoryAssignments.has(assignment.id)}
+                              onCheckedChange={() => toggleHistoryAssignment(assignment.id)}
+                              className="mt-1"
+                            />
+                          )}
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-gray-900">
-                              {assignment.student_enrollment?.full_name || t('paymentRates.detail.assignments.noName')}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {t('paymentRates.detail.assignments.from')} {formatDate(assignment.start_date)}
-                            </p>
-                            {assignment.end_date && (
-                              <p className="text-xs text-gray-500">
-                                {t('paymentRates.detail.assignments.until')} {formatDate(assignment.end_date)}
-                              </p>
-                            )}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {assignment.student_enrollment?.full_name || t('paymentRates.detail.assignments.noName')}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {t('paymentRates.detail.assignments.from')} {formatDate(assignment.start_date)}
+                                </p>
+                                {assignment.end_date && (
+                                  <p className="text-xs text-gray-500">
+                                    {t('paymentRates.detail.assignments.until')} {formatDate(assignment.end_date)}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={statusColor}>
+                                  {statusLabel}
+                                </Badge>
+                                {assignment.status === 'finalizada' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => setHistoryAssignmentToDelete({
+                                      id: assignment.id,
+                                      name: assignment.student_enrollment?.full_name || '',
+                                    })}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <Badge className={statusColor}>
-                            {statusLabel}
-                          </Badge>
                         </div>
                       </div>
                     );
@@ -1385,11 +1513,25 @@ export default function PaymentRateDetailPage() {
                 <Table className="hidden sm:table">
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={
+                            historySelectionState.allSelected
+                              ? true
+                              : historySelectionState.someSelected
+                              ? "indeterminate"
+                              : false
+                          }
+                          onCheckedChange={toggleAllHistoryAssignments}
+                          disabled={finalizadaAssignments.length === 0}
+                        />
+                      </TableHead>
                       <TableHead>{t('paymentRates.detail.assignments.student')}</TableHead>
                       <TableHead>{t('paymentRates.detail.assignments.status')}</TableHead>
                       <TableHead>{t('paymentRates.detail.assignments.startDate')}</TableHead>
                       <TableHead>{t('paymentRates.detail.assignments.endDate')}</TableHead>
                       <TableHead>{t('paymentRates.detail.assignments.assigned')}</TableHead>
+                      <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1397,7 +1539,15 @@ export default function PaymentRateDetailPage() {
                       const statusColor = STATUS_COLORS[assignment.status] || STATUS_COLORS.finalizada;
                       const statusLabel = getStatusLabel(assignment.status);
                       return (
-                        <TableRow key={assignment.id}>
+                        <TableRow key={assignment.id} className={selectedHistoryAssignments.has(assignment.id) ? "bg-red-50/50" : ""}>
+                          <TableCell>
+                            {assignment.status === 'finalizada' ? (
+                              <Checkbox
+                                checked={selectedHistoryAssignments.has(assignment.id)}
+                                onCheckedChange={() => toggleHistoryAssignment(assignment.id)}
+                              />
+                            ) : null}
+                          </TableCell>
                           <TableCell>
                             <span className="font-medium">
                               {assignment.student_enrollment?.full_name || t('paymentRates.detail.assignments.noName')}
@@ -1414,6 +1564,21 @@ export default function PaymentRateDetailPage() {
                           </TableCell>
                           <TableCell className="text-gray-500">
                             {formatDate(assignment.created_at)}
+                          </TableCell>
+                          <TableCell>
+                            {assignment.status === 'finalizada' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => setHistoryAssignmentToDelete({
+                                  id: assignment.id,
+                                  name: assignment.student_enrollment?.full_name || '',
+                                })}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -1434,6 +1599,95 @@ export default function PaymentRateDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete History Assignment Confirmation Dialog */}
+      <AlertDialog open={!!historyAssignmentToDelete} onOpenChange={(open) => !open && setHistoryAssignmentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('paymentRates.detail.assignments.deleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('paymentRates.detail.assignments.deleteDialog.description', { name: historyAssignmentToDelete?.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteHistoryAssignment}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteRateAssignment.isPending}
+            >
+              {deleteRateAssignment.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk History Delete First Confirmation Dialog */}
+      <AlertDialog open={showBulkHistoryDeleteDialog && !showBulkHistoryDeleteConfirmation} onOpenChange={(open) => { if (!open) { setShowBulkHistoryDeleteDialog(false); setBulkHistoryDeleteText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.assignments.bulkDeleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>{t('paymentRates.detail.assignments.bulkDeleteDialog.description', { count: historySelectionState.selectedCount })}</p>
+              <p className="text-red-600 font-medium">{t('paymentRates.detail.assignments.bulkDeleteDialog.warning')}</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                setShowBulkHistoryDeleteConfirmation(true);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('paymentRates.detail.assignments.bulkDeleteDialog.continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk History Delete Second Confirmation Dialog (requires typing ELIMINAR) */}
+      <AlertDialog open={showBulkHistoryDeleteConfirmation} onOpenChange={(open) => { if (!open) { setShowBulkHistoryDeleteConfirmation(false); setShowBulkHistoryDeleteDialog(false); setBulkHistoryDeleteText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">{t('paymentRates.detail.assignments.bulkDeleteConfirmDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>{t('paymentRates.detail.assignments.bulkDeleteConfirmDialog.description', { count: historySelectionState.selectedCount })}</p>
+              <p className="text-sm text-gray-600">{t('paymentRates.detail.assignments.bulkDeleteConfirmDialog.typeInstruction')}</p>
+              <Input
+                value={bulkHistoryDeleteText}
+                onChange={(e) => setBulkHistoryDeleteText(e.target.value.toUpperCase())}
+                placeholder="ELIMINAR"
+                className="font-mono text-center tracking-widest"
+              />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowBulkHistoryDeleteConfirmation(false); setBulkHistoryDeleteText(""); }}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkHistoryDelete();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={bulkHistoryDeleteText !== 'ELIMINAR' || isBulkHistoryDeletePending}
+            >
+              {isBulkHistoryDeletePending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {t('paymentRates.detail.assignments.bulkDeleteConfirmDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Unlink Student Confirmation Dialog (soft action - amber) */}
       <AlertDialog open={!!studentToUnlink} onOpenChange={(open) => !open && setStudentToUnlink(null)}>
