@@ -24,7 +24,7 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '7b6f49ae-d496-407b-bca1-f5f1e9370610', // Hespérides Padel
   'a994e74e-0a7f-4721-8c0f-e23100a01614', // Wild Padel Indoor
   'df335578-b68b-4d3f-83e1-d5d7ff16d23c', // Escuela Pádel Fuente Viña
-  '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy
+  // '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy - PAUSED
   '6fde47fc-c531-4d5e-a54a-025fcd2a4f9c', // X El Padel Lepe
   '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
@@ -33,6 +33,11 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '190cfb4c-d923-49d8-bb75-93bbda82f97d', // Matchpadel Academy Matchpadel
   'ec23d10f-0a14-4699-a50d-87c5e65d6417', // Matchpadel Academy Solopadel
   '3f71d96e-defe-4395-9f03-46dca0577f45', // Pádel Pibo
+];
+
+// Club IDs excluded from ALL notifications (email + WhatsApp) - temporarily paused
+const EXCLUDED_CLUBS: string[] = [
+  '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy - PAUSED
 ];
 
 // Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)
@@ -523,6 +528,12 @@ serve(async (req) => {
 
     // 2. For each target class, send reminders to all active participants
     for (const { cls: classInfo, targetDate } of activeTargetClasses) {
+      // Skip clubs excluded from all notifications
+      if (EXCLUDED_CLUBS.includes(classInfo.club_id)) {
+        console.log(`⏭️ Skipping excluded club: ${(classInfo.clubs as any)?.name} (${classInfo.name})`);
+        continue;
+      }
+
       const clubTimezone = (classInfo.clubs as any)?.timezone || 'Europe/Madrid';
       console.log(`\n📋 Processing class: ${classInfo.name} at ${classInfo.start_time} (${clubTimezone}) for ${targetDate}`);
 

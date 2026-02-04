@@ -27,6 +27,11 @@ const TEMPLATE_CONFIG: Record<string, { name: string; languageCode: string }> = 
   'it': { name: 'class_cancelation_it', languageCode: 'it' }
 };
 
+// Clubs excluded from all notifications
+const EXCLUDED_CLUBS: string[] = [
+  '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy - PAUSED
+];
+
 // Locale map for date formatting
 const LOCALE_MAP: Record<string, string> = {
   'es': 'es-ES',
@@ -276,6 +281,23 @@ serve(async (req) => {
     const clubName = (classData?.clubs as any)?.name || 'Tu club';
     const clubLanguage = (classData?.clubs as any)?.default_language || 'es';
     console.log(`✓ Club: ${clubName} (language: ${clubLanguage})`);
+
+    // Skip clubs excluded from all notifications
+    if (EXCLUDED_CLUBS.includes(classData.club_id)) {
+      console.log(`⏭️ Skipping excluded club: ${clubName}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Club ${clubName} is excluded from notifications`,
+          notificationsSent: 0,
+          notificationsFailed: 0
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
 
     // Get all active participants for this class
     const { data: participants, error: participantsError } = await supabaseClient
