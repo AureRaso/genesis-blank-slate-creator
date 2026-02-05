@@ -1787,6 +1787,11 @@
         "unlinkDialog": {
           "title": "¿Desvincular alumno de la tarifa?",
           "description": "¿Estás seguro de que quieres desvincular a {{name}} de esta tarifa? El alumno quedará en el historial pero dejará de tener la tarifa activa.",
+          "paymentQuestion": "¿Qué deseas hacer con el pago del mes actual?",
+          "keepPayment": "Mantener el pago pendiente",
+          "keepPaymentDescription": "El pago generado para este mes seguirá pendiente de cobro",
+          "deletePayment": "Eliminar el pago pendiente",
+          "deletePaymentDescription": "Se eliminará el pago pendiente de este mes (si existe)",
           "confirm": "Desvincular"
         },
         "deleteDialog": {

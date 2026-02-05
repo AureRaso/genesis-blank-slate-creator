@@ -163,6 +163,7 @@ export default function PaymentRateDetailPage() {
 
   // Unlink rate confirmation dialog state
   const [studentToUnlink, setStudentToUnlink] = useState<RateDetailStudent | null>(null);
+  const [deleteCurrentMonthPayment, setDeleteCurrentMonthPayment] = useState(false);
 
   // Delete rate confirmation dialog states (two-step confirmation)
   const [studentToDelete, setStudentToDelete] = useState<RateDetailStudent | null>(null);
@@ -259,16 +260,26 @@ export default function PaymentRateDetailPage() {
   };
 
   // Handle unlink rate assignment confirmation (soft action)
-  const handleConfirmUnlink = async () => {
+  const handleConfirmUnlink = async (shouldDeletePayment: boolean) => {
     if (!studentToUnlink) return;
 
     try {
-      await unlinkRateAssignment.mutateAsync(studentToUnlink.assignment_id);
+      await unlinkRateAssignment.mutateAsync({
+        assignmentId: studentToUnlink.assignment_id,
+        deleteCurrentMonthPayment: shouldDeletePayment
+      });
       toast.success(t('paymentRates.detail.students.unlinkSuccess', { name: studentToUnlink.full_name }));
       setStudentToUnlink(null);
+      setDeleteCurrentMonthPayment(false);
     } catch (error) {
       // Error is handled in the hook
     }
+  };
+
+  // Reset unlink dialog state when closing
+  const handleCloseUnlinkDialog = () => {
+    setStudentToUnlink(null);
+    setDeleteCurrentMonthPayment(false);
   };
 
   // Handle first step of delete (open second confirmation dialog)
@@ -1690,7 +1701,7 @@ export default function PaymentRateDetailPage() {
       </AlertDialog>
 
       {/* Unlink Student Confirmation Dialog (soft action - amber) */}
-      <AlertDialog open={!!studentToUnlink} onOpenChange={(open) => !open && setStudentToUnlink(null)}>
+      <AlertDialog open={!!studentToUnlink} onOpenChange={(open) => !open && handleCloseUnlinkDialog()}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('paymentRates.detail.students.unlinkDialog.title')}</AlertDialogTitle>
@@ -1698,12 +1709,43 @@ export default function PaymentRateDetailPage() {
               {t('paymentRates.detail.students.unlinkDialog.description', { name: studentToUnlink?.full_name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4">
+            <p className="text-sm font-medium mb-3">{t('paymentRates.detail.students.unlinkDialog.paymentQuestion')}</p>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="deletePayment"
+                  checked={!deleteCurrentMonthPayment}
+                  onChange={() => setDeleteCurrentMonthPayment(false)}
+                  className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                />
+                <div>
+                  <span className="text-sm font-medium">{t('paymentRates.detail.students.unlinkDialog.keepPayment')}</span>
+                  <p className="text-xs text-gray-500">{t('paymentRates.detail.students.unlinkDialog.keepPaymentDescription')}</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input
+                  type="radio"
+                  name="deletePayment"
+                  checked={deleteCurrentMonthPayment}
+                  onChange={() => setDeleteCurrentMonthPayment(true)}
+                  className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                />
+                <div>
+                  <span className="text-sm font-medium">{t('paymentRates.detail.students.unlinkDialog.deletePayment')}</span>
+                  <p className="text-xs text-gray-500">{t('paymentRates.detail.students.unlinkDialog.deletePaymentDescription')}</p>
+                </div>
+              </label>
+            </div>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                handleConfirmUnlink();
+                handleConfirmUnlink(deleteCurrentMonthPayment);
               }}
               className="bg-amber-600 hover:bg-amber-700"
               disabled={unlinkRateAssignment.isPending}

@@ -256,11 +256,41 @@ export function useRateAllAssignments(rateId: string | undefined) {
 }
 
 // Hook to unlink a rate assignment (soft action - change status to 'finalizada')
+// Optionally delete current month's pending payment
 export function useUnlinkRateAssignment(rateId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (assignmentId: string) => {
+    mutationFn: async ({
+      assignmentId,
+      deleteCurrentMonthPayment = false
+    }: {
+      assignmentId: string;
+      deleteCurrentMonthPayment?: boolean;
+    }) => {
+      // If user wants to delete current month's payment
+      if (deleteCurrentMonthPayment) {
+        // Get current month's period
+        const now = new Date();
+        const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        // Delete pending payments for current month for this assignment
+        const { error: paymentError } = await supabase
+          .from('student_payments')
+          .delete()
+          .eq('rate_assignment_id', assignmentId)
+          .eq('status', 'pendiente')
+          .gte('period_start', periodStart)
+          .lte('period_start', periodEnd);
+
+        if (paymentError) {
+          console.error('Error deleting current month payment:', paymentError);
+          // Continue with unlink even if payment deletion fails
+        }
+      }
+
+      // Update assignment status to 'finalizada'
       const { error } = await supabase
         .from('student_rate_assignments')
         .update({
@@ -276,6 +306,8 @@ export function useUnlinkRateAssignment(rateId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['payment-rate-students', rateId] });
       queryClient.invalidateQueries({ queryKey: ['payment-rate-stats', rateId] });
       queryClient.invalidateQueries({ queryKey: ['payment-rate-all-assignments', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['payment-rate-history', rateId] });
+      queryClient.invalidateQueries({ queryKey: ['student-payments'] });
     },
     onError: (error) => {
       console.error('Error unlinking rate assignment:', error);

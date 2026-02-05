@@ -369,6 +369,11 @@
         "unlinkDialog": {
           "title": "Unlink student from rate?",
           "description": "Are you sure you want to unlink {{name}} from this rate? The student will remain in history but will no longer have the active rate.",
+          "paymentQuestion": "What do you want to do with the current month's payment?",
+          "keepPayment": "Keep pending payment",
+          "keepPaymentDescription": "The payment generated for this month will remain pending",
+          "deletePayment": "Delete pending payment",
+          "deletePaymentDescription": "The pending payment for this month will be deleted (if exists)",
           "confirm": "Unlink"
         },
         "deleteDialog": {

@@ -363,6 +363,11 @@
         "unlinkDialog": {
           "title": "Scollegare lo studente dalla tariffa?",
           "description": "Sei sicuro di voler scollegare {{name}} da questa tariffa? Lo studente rimarrà nello storico ma non avrà più la tariffa attiva.",
+          "paymentQuestion": "Cosa vuoi fare con il pagamento del mese corrente?",
+          "keepPayment": "Mantieni il pagamento in sospeso",
+          "keepPaymentDescription": "Il pagamento generato per questo mese rimarrà in sospeso",
+          "deletePayment": "Elimina il pagamento in sospeso",
+          "deletePaymentDescription": "Il pagamento in sospeso di questo mese verrà eliminato (se esiste)",
           "confirm": "Scollega"
         },
         "deleteDialog": {
