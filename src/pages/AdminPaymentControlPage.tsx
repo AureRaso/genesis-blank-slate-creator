@@ -36,7 +36,9 @@ import {
 import { useStudentsWithAssignments } from "@/hooks/useRateAssignments";
 import { usePaymentRates } from "@/hooks/usePaymentRates";
 import { useClubs } from "@/hooks/useClubs";
+import { useManualPaymentGeneration } from "@/hooks/usePaymentGenerationLogs";
 import { formatCurrency } from "@/lib/currency";
+import PaymentGenerationLogsDialog from "@/components/payments/PaymentGenerationLogsDialog";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -94,6 +96,7 @@ export default function AdminPaymentControlPage() {
   const verifyPayment = useVerifyStudentPayment();
   const createExtraPayment = useCreateExtraPayment();
   const generateMonthlyPayments = useGenerateMonthlyPayments();
+  const manualGeneration = useManualPaymentGeneration();
   const deletePayment = useDeleteStudentPayment();
 
   // Get club currency (default to EUR)
@@ -687,6 +690,7 @@ export default function AdminPaymentControlPage() {
             )}
             {t("paymentControl.generateMonthlyPayments")}
           </Button>
+          <PaymentGenerationLogsDialog />
           <Button onClick={openExtraPaymentDialog}>
             <Plus className="h-4 w-4 mr-2" />
             {t("paymentControl.extraPayment")}

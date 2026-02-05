@@ -639,7 +639,38 @@
       "paymentGenerated": "Payment generated successfully",
       "errorGeneratingPayment": "Error generating payment",
       "deleted": "Payment deleted successfully",
-      "errorDeleting": "Error deleting payment"
+      "errorDeleting": "Error deleting payment",
+      "autoGenerationSuccess": "{{count}} payments generated for {{period}}",
+      "autoGenerationSkipped": "{{count}} payments already existed",
+      "autoGenerationErrors": "{{count}} errors during generation",
+      "noAssignmentsToProcess": "No assignments to process",
+      "bulkGenerationSuccess": "{{count}} payments generated in total",
+      "errorAutoGeneration": "Error generating payments automatically"
+    },
+    "autoGeneration": {
+      "title": "Automatic Generation",
+      "description": "Payments are automatically generated on the billing day of each rate",
+      "lastExecution": "Last execution",
+      "nextExecution": "Next execution",
+      "manualGenerate": "Generate Manually",
+      "generateForDay": "Generate for day {{day}}",
+      "generateAll": "Generate All Month",
+      "viewLogs": "View History",
+      "logs": {
+        "title": "Generation History",
+        "executedAt": "Executed",
+        "billingDay": "Billing day",
+        "period": "Period",
+        "generated": "Generated",
+        "skipped": "Skipped",
+        "errors": "Errors",
+        "triggeredBy": "Triggered by",
+        "cron": "Automatic",
+        "manual": "Manual",
+        "test": "Test",
+        "noLogs": "No generation records",
+        "executionTime": "Execution time"
+      }
     },
     "deleteDialog": {
       "title": "Delete payment",

@@ -612,7 +612,38 @@
       "paymentGenerated": "Pagamento generato correttamente",
       "errorGeneratingPayment": "Errore nella generazione del pagamento",
       "deleted": "Pagamento eliminato correttamente",
-      "errorDeleting": "Errore nell'eliminazione del pagamento"
+      "errorDeleting": "Errore nell'eliminazione del pagamento",
+      "autoGenerationSuccess": "{{count}} pagamenti generati per {{period}}",
+      "autoGenerationSkipped": "{{count}} pagamenti già esistenti",
+      "autoGenerationErrors": "{{count}} errori durante la generazione",
+      "noAssignmentsToProcess": "Nessuna assegnazione da elaborare",
+      "bulkGenerationSuccess": "{{count}} pagamenti generati in totale",
+      "errorAutoGeneration": "Errore nella generazione automatica dei pagamenti"
+    },
+    "autoGeneration": {
+      "title": "Generazione Automatica",
+      "description": "I pagamenti vengono generati automaticamente nel giorno di fatturazione di ogni tariffa",
+      "lastExecution": "Ultima esecuzione",
+      "nextExecution": "Prossima esecuzione",
+      "manualGenerate": "Genera Manualmente",
+      "generateForDay": "Genera per il giorno {{day}}",
+      "generateAll": "Genera Tutto il Mese",
+      "viewLogs": "Visualizza Cronologia",
+      "logs": {
+        "title": "Cronologia Generazione",
+        "executedAt": "Eseguito",
+        "billingDay": "Giorno di fatturazione",
+        "period": "Periodo",
+        "generated": "Generati",
+        "skipped": "Saltati",
+        "errors": "Errori",
+        "triggeredBy": "Attivato da",
+        "cron": "Automatico",
+        "manual": "Manuale",
+        "test": "Test",
+        "noLogs": "Nessun record di generazione",
+        "executionTime": "Tempo di esecuzione"
+      }
     },
     "deleteDialog": {
       "title": "Elimina pagamento",

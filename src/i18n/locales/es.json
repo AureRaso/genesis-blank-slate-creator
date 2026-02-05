@@ -2057,7 +2057,38 @@
       "paymentGenerated": "Pago generado correctamente",
       "errorGeneratingPayment": "Error al generar el pago",
       "deleted": "Pago eliminado correctamente",
-      "errorDeleting": "Error al eliminar el pago"
+      "errorDeleting": "Error al eliminar el pago",
+      "autoGenerationSuccess": "{{count}} pagos generados para {{period}}",
+      "autoGenerationSkipped": "{{count}} pagos ya existían",
+      "autoGenerationErrors": "{{count}} errores durante la generación",
+      "noAssignmentsToProcess": "No hay asignaciones para procesar",
+      "bulkGenerationSuccess": "{{count}} pagos generados en total",
+      "errorAutoGeneration": "Error al generar pagos automáticamente"
+    },
+    "autoGeneration": {
+      "title": "Generación Automática",
+      "description": "Los pagos se generan automáticamente el día de cobro de cada tarifa",
+      "lastExecution": "Última ejecución",
+      "nextExecution": "Próxima ejecución",
+      "manualGenerate": "Generar Manualmente",
+      "generateForDay": "Generar para día {{day}}",
+      "generateAll": "Generar Todo el Mes",
+      "viewLogs": "Ver Historial",
+      "logs": {
+        "title": "Historial de Generación",
+        "executedAt": "Ejecutado",
+        "billingDay": "Día de cobro",
+        "period": "Período",
+        "generated": "Generados",
+        "skipped": "Omitidos",
+        "errors": "Errores",
+        "triggeredBy": "Disparado por",
+        "cron": "Automático",
+        "manual": "Manual",
+        "test": "Prueba",
+        "noLogs": "No hay registros de generación",
+        "executionTime": "Tiempo de ejecución"
+      }
     },
     "deleteDialog": {
       "title": "Eliminar pago",
