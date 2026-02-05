@@ -26,13 +26,36 @@ Esta carpeta contiene toda la documentación técnica del proyecto PadeLock.
 
 ---
 
+### Sistema de Tarifas y Pagos
+**Archivo**: [DOCS_SISTEMA_TARIFAS_PAGOS.md](DOCS_SISTEMA_TARIFAS_PAGOS.md)
+
+**Contenido**:
+- Arquitectura de base de datos (tablas: `payment_rates`, `student_rate_assignments`, `student_payments`, `payment_generation_logs`)
+- Tipos de tarifas: fija y por_clase
+- Asignación de tarifas a alumnos
+- Sistema de generación automática con pg_cron
+- Flujo de estados de pagos (pendiente → en_revision → pagado)
+- Hooks y componentes utilizados
+- Casos de uso con ejemplos
+- Troubleshooting y queries de diagnóstico
+
+**Cuándo consultarlo**:
+- ✅ Necesitas entender cómo funciona el sistema de cobros
+- ✅ Vas a configurar nuevas tarifas para un club
+- ✅ Los pagos no se están generando automáticamente
+- ✅ Necesitas entender el cálculo de tarifas por_clase
+- ✅ Quieres verificar los logs de generación automática
+
+---
+
 ## 🗂️ Estructura de Carpetas Relacionadas
 
 ```
 /
 ├── documentacion/              # ← Estás aquí
 │   ├── README.md              # Este archivo
-│   └── DOCS_SISTEMA_ASISTENCIAS.md
+│   ├── DOCS_SISTEMA_ASISTENCIAS.md
+│   └── DOCS_SISTEMA_TARIFAS_PAGOS.md
 │
 ├── migrations/                 # Queries SQL de debug y testing
 │   ├── check-*.sql            # Scripts de verificación
@@ -184,5 +207,5 @@ console.log('🔍 [Role] Debug message:', debug);
 
 ---
 
-**Última actualización**: 2025-12-05
+**Última actualización**: 2026-02-05
 **Mantenido por**: Equipo de desarrollo
