@@ -844,7 +844,7 @@
       "simpleDesc": "No hace falta ser experto en tecnología. La interfaz de Padelock está pensada para que cualquier persona pueda usarla sin complicaciones, desde el primer momento. Todo se entiende a la primera: claro, directo y sin pasos innecesarios.",
       "notificationsTitle": "Notificaciones en tiempo real",
       "notificationsDesc": "Recibe avisos instantáneos por WhatsApp y correo electrónico para mantenerte siempre informado. Tanto si eres responsable, monitor o familiar, estarás al tanto de cada actualización sin necesidad de entrar en la plataforma.",
-      "webappTitle": "Sin descargas, sin complicaciones",
+      "webappTitle": "Sin descargas o complicaciones",
       "webappDesc": "Padelock es una WebApp, por lo que no necesitas descargar ni instalar nada. Simplemente accede desde cualquier dispositivo a través de un enlace seguro y disfruta de todas las funcionalidades al instante. Funciona igual de bien en móvil, tablet u ordenador."
     },
     "hero": {
@@ -852,12 +852,53 @@
       "title1": "Ahorra",
       "title2": "4 horas diarias",
       "title3": "gestionando tu academia",
-      "subtitle": "La primera plataforma diseñada específicamente para academias de pádel. Gestiona profesores, clases y alumnos sin complicaciones.",
+      "subtitle": "Plataforma diseñada específicamente para el día a día de las academias de pádel.",
       "ctaDemo": "Solicitar Demo Gratuita",
       "ctaHow": "Ver cómo funciona",
-      "activeAcademies": "Academias activas",
+      "activeAcademies": "+30 academias activas",
       "spanish100": "100% español",
       "supportIncluded": "Soporte incluido"
+    },
+    "scrollNav": {
+      "problem": "El problema",
+      "successStories": "Casos de éxito",
+      "onboarding": "Onboarding",
+      "product": "Producto",
+      "comparison": "Comparativa",
+      "features": "Características",
+      "team": "Equipo",
+      "contact": "Contacto"
+    },
+    "successStories": {
+      "badge": "Casos de éxito",
+      "title": "Academias que ya confían en PadeLock",
+      "subtitle": "Descubre cómo PadeLock está transformando la gestión diaria de academias de pádel en toda España",
+      "testimonials": {
+        "juanOrtega": {
+          "name": "Juan Ortega",
+          "academy": "La Red 21",
+          "highlight": "Coordino mi academia de más de 400 alumnos,",
+          "quote": "desde que utilizo Padelock tengo más control y ahorro horas de trabajo."
+        },
+        "juanMolinillo": {
+          "name": "Juan Molinillo",
+          "academy": "Hesperides Padel",
+          "highlight": "Antes perdía horas confirmando quién venía y quién no.",
+          "quote": "Ahora, desde mi móvil, tengo todo el control."
+        },
+        "multiSede": {
+          "name": "Academia Multi-sede",
+          "academy": "3 sedes activas",
+          "highlight": "PadeLock nos permitió estandarizar los procesos de nuestras tres sedes.",
+          "quote": "Puedo ver el rendimiento de cada academia desde una sola cuenta."
+        }
+      },
+      "featured": {
+        "name": "Óscar Cardeñosa",
+        "academy": "Director de academia",
+        "highlight": "Lo que realmente marca la diferencia con PadeLock es la cercanía de su equipo.",
+        "quote": "Siempre que me surge una duda responden de inmediato. No solo te dan el software, se implican en tu negocio: me ayudaron mano a mano a configurar toda la estructura de mis tarifas. Esa tranquilidad de saber que nunca estás solo ante la tecnología no tiene precio."
+      }
     },
     "problem": {
       "title": "¿Te suena familiar?",
@@ -954,15 +995,19 @@
     },
     "team": {
       "title": "Nuestro Equipo",
-      "subtitle": "Conoce a los co-fundadores que están revolucionando la gestión de academias de pádel",
+      "subtitle": "Conoce al equipo detrás de PadeLock",
       "members": {
         "aurelio": {
           "name": "Aurelio Contreras",
-          "role": "Co-founder & CPO"
+          "role": "Co-founder"
         },
         "sergio": {
           "name": "Sergio Falcón",
-          "role": "Co-founder & CTO"
+          "role": "Co-founder"
+        },
+        "javi": {
+          "name": "Javi Peña",
+          "role": "Co-founder"
         }
       }
     },

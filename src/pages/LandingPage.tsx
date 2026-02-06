@@ -10,6 +10,8 @@ import ProductSection from "@/components/landing/ProductSection";
 import OnboardingSection from "@/components/landing/OnboardingSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import FeaturesHighlightSection from "@/components/landing/FeaturesHighlightSection";
+import SuccessStoriesSection from "@/components/landing/SuccessStoriesSection";
+import ScrollProgressNav from "@/components/landing/ScrollProgressNav";
 import TeamSection from "@/components/landing/TeamSection";
 import { ContactSection } from "@/components/landing/ContactSection";
 import { Footer } from "@/components/landing/Footer";
@@ -29,8 +31,10 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
       <StickyNavigation />
+      <ScrollProgressNav />
       <HeroSection />
       <ProblemSection />
+      <SuccessStoriesSection />
       <OnboardingSection />
       {/* <SolutionSection /> */}
       {/* <WhyNowSection /> */}

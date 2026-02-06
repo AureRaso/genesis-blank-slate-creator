@@ -30,7 +30,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section id="home" className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
+    <section id="home" className="relative w-screen min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-playtomic-dark to-slate-900 overflow-hidden">
       {/* Language Toggle Button */}
       <div className="absolute top-4 right-4 z-20">
         <DropdownMenu>

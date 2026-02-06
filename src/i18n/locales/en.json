@@ -1355,7 +1355,7 @@
       "simpleDesc": "No need to be a tech expert. Padelock's interface is designed so anyone can use it without complications, from the first moment. Everything is understood at first glance: clear, direct, and without unnecessary steps.",
       "notificationsTitle": "Real-Time Notifications",
       "notificationsDesc": "Receive instant alerts via WhatsApp and email to stay always informed. Whether you're an administrator, coach, or family member, you'll be aware of every update without needing to enter the platform.",
-      "webappTitle": "No Downloads, No Hassle",
+      "webappTitle": "No Downloads or Hassle",
       "webappDesc": "Padelock is a WebApp, so you don't need to download or install anything. Simply access from any device through a secure link and enjoy all the features instantly. Works equally well on mobile, tablet, or computer."
     },
     "hero": {
@@ -1363,12 +1363,53 @@
       "title1": "Save",
       "title2": "4 hours daily",
       "title3": "managing your academy",
-      "subtitle": "The first platform specifically designed for padel academies. Manage coaches, classes, and students without complications.",
+      "subtitle": "Platform specifically designed for the day-to-day of padel academies.",
       "ctaDemo": "Request Free Demo",
       "ctaHow": "See how it works",
-      "activeAcademies": "Active academies",
+      "activeAcademies": "+30 active academies",
       "spanish100": "100% Spanish",
       "supportIncluded": "Support included"
+    },
+    "scrollNav": {
+      "problem": "The Problem",
+      "successStories": "Success Stories",
+      "onboarding": "Onboarding",
+      "product": "Product",
+      "comparison": "Comparison",
+      "features": "Features",
+      "team": "Team",
+      "contact": "Contact"
+    },
+    "successStories": {
+      "badge": "Success Stories",
+      "title": "Academies that already trust PadeLock",
+      "subtitle": "Discover how PadeLock is transforming the daily management of padel academies across Spain",
+      "testimonials": {
+        "juanOrtega": {
+          "name": "Juan Ortega",
+          "academy": "La Red 21",
+          "highlight": "I manage my academy of over 400 students,",
+          "quote": "since I started using Padelock I have more control and save hours of work."
+        },
+        "juanMolinillo": {
+          "name": "Juan Molinillo",
+          "academy": "Hesperides Padel",
+          "highlight": "I used to waste hours confirming who was coming and who wasn't.",
+          "quote": "Now, from my phone, I have complete control."
+        },
+        "multiSede": {
+          "name": "Multi-location Academy",
+          "academy": "3 active locations",
+          "highlight": "PadeLock allowed us to standardize processes across our three locations.",
+          "quote": "I can see each academy's performance from a single account."
+        }
+      },
+      "featured": {
+        "name": "Óscar Cardeñosa",
+        "academy": "Academy Director",
+        "highlight": "What truly makes the difference with PadeLock is how close their team is.",
+        "quote": "Whenever I have a question, they respond immediately. They don't just give you the software, they get involved in your business: they helped me hand-in-hand to configure my entire rate structure. That peace of mind of knowing you're never alone with the technology is priceless."
+      }
     },
     "problem": {
       "title": "Sound familiar?",
@@ -1465,15 +1506,19 @@
     },
     "team": {
       "title": "Our Team",
-      "subtitle": "Meet the co-founders who are revolutionizing padel academy management",
+      "subtitle": "Meet the team behind PadeLock",
       "members": {
         "aurelio": {
           "name": "Aurelio Contreras",
-          "role": "Co-founder & CPO"
+          "role": "Co-founder"
         },
         "sergio": {
           "name": "Sergio Falcón",
-          "role": "Co-founder & CTO"
+          "role": "Co-founder"
+        },
+        "javi": {
+          "name": "Javi Peña",
+          "role": "Co-founder"
         }
       }
     },
