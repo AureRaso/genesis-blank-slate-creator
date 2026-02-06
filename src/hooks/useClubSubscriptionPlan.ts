@@ -28,6 +28,7 @@ interface ClubSubscriptionPlanResult {
   isLoading: boolean;
   error: Error | null;
   clubCount?: number;
+  isOverride?: boolean;
 }
 
 export const useClubSubscriptionPlan = (clubId: string | undefined): ClubSubscriptionPlanResult => {
@@ -111,8 +112,35 @@ export const useClubSubscriptionPlan = (clubId: string | undefined): ClubSubscri
     },
   });
 
-  // Determinar el plan recomendado basado en el número de jugadores
-  const recommendedPlan = allPlans.find(plan => plan.max_players >= playerData.count)
+  // Consultar si el club tiene un plan forzado (override)
+  const { data: overridePlan, isLoading: overrideLoading } = useQuery({
+    queryKey: ["club-override-plan", clubId],
+    queryFn: async () => {
+      if (!clubId) return null;
+
+      const { data: clubData, error: clubError } = await supabase
+        .from("clubs")
+        .select("override_subscription_plan_id")
+        .eq("id", clubId)
+        .single();
+
+      if (clubError || !clubData?.override_subscription_plan_id) return null;
+
+      const { data: plan, error: planError } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .eq("id", clubData.override_subscription_plan_id)
+        .single();
+
+      if (planError) return null;
+      return plan as SubscriptionPlan;
+    },
+    enabled: !!clubId,
+  });
+
+  // Si hay override, usar ese plan; si no, calcular por número de jugadores
+  const recommendedPlan = overridePlan
+    || allPlans.find(plan => plan.max_players >= playerData.count)
     || allPlans[allPlans.length - 1]
     || null;
 
@@ -120,8 +148,9 @@ export const useClubSubscriptionPlan = (clubId: string | undefined): ClubSubscri
     playerCount: playerData.count,
     recommendedPlan,
     allPlans,
-    isLoading: countLoading || plansLoading,
+    isLoading: countLoading || plansLoading || overrideLoading,
     error: error as Error | null,
     clubCount: playerData.clubCount,
+    isOverride: !!overridePlan,
   };
 };
