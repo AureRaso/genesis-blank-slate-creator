@@ -91,7 +91,7 @@ const SuccessStoriesSection = () => {
               <div className="flex items-center gap-3 pt-5 border-t border-white/10">
                 {item.image ? (
                   <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20 overflow-hidden">
-                    <img src={item.image} alt={t(item.nameKey)} className="w-full h-full object-cover rounded-full scale-125" />
+                    <img src={item.image} alt={t(item.nameKey)} className="w-full h-full object-cover rounded-full" />
                   </div>
                 ) : (
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20">
@@ -110,9 +110,38 @@ const SuccessStoriesSection = () => {
         {/* Featured Testimonial - Oscar */}
         <div className="max-w-6xl mx-auto">
           <div className="relative bg-gradient-to-r from-playtomic-orange/10 via-playtomic-orange/5 to-transparent border border-playtomic-orange/20 rounded-2xl p-8 md:p-10">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              {/* Left: avatar + info */}
-              <div className="flex flex-col items-center md:items-start gap-3 md:min-w-[160px]">
+            {/* Mobile: same structure as regular cards */}
+            <div className="md:hidden">
+              <Quote className="w-8 h-8 text-playtomic-orange/40 mb-5 rotate-180" />
+              <blockquote className="text-slate-300 leading-relaxed mb-6 text-[15px]">
+                <span className="text-white font-medium">{t(featured.highlightKey)}</span>{" "}
+                {t(featured.quoteKey)}
+              </blockquote>
+              <div className="flex gap-1 mb-5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-playtomic-orange text-playtomic-orange" />
+                ))}
+              </div>
+              <div className="flex items-center gap-3 pt-5 border-t border-white/10">
+                {featured.image ? (
+                  <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20 overflow-hidden">
+                    <img src={featured.image} alt={t(featured.nameKey)} className="w-full h-full object-contain rounded-full" />
+                  </div>
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20">
+                    <span className="text-sm font-bold text-white">{featured.initials}</span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-white font-semibold text-sm">{t(featured.nameKey)}</p>
+                  <p className="text-slate-400 text-xs">{t(featured.academyKey)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: side-by-side layout */}
+            <div className="hidden md:flex flex-row gap-8 items-start">
+              <div className="flex flex-col items-start gap-3 min-w-[160px]">
                 {featured.image ? (
                   <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center shadow-lg shadow-playtomic-orange/30 overflow-hidden">
                     <img src={featured.image} alt={t(featured.nameKey)} className="w-14 h-14 object-contain" />
@@ -122,7 +151,7 @@ const SuccessStoriesSection = () => {
                     <span className="text-xl font-bold text-white">{featured.initials}</span>
                   </div>
                 )}
-                <div className="text-center md:text-left">
+                <div className="text-left">
                   <p className="text-white font-bold">{t(featured.nameKey)}</p>
                   <p className="text-slate-400 text-sm">{t(featured.academyKey)}</p>
                 </div>
@@ -132,11 +161,9 @@ const SuccessStoriesSection = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Right: quote */}
               <div className="flex-1">
                 <Quote className="w-10 h-10 text-playtomic-orange/30 mb-4 rotate-180" />
-                <blockquote className="text-slate-300 leading-relaxed text-base md:text-lg">
+                <blockquote className="text-slate-300 leading-relaxed text-lg">
                   <span className="text-white font-medium">{t(featured.highlightKey)}</span>{" "}
                   {t(featured.quoteKey)}
                 </blockquote>

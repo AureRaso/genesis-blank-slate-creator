@@ -13,6 +13,8 @@ const sections = [
   { id: "contact", labelKey: "landing.scrollNav.contact" },
 ];
 
+const lightSections = new Set(["product", "comparison", "features", "team", "contact"]);
+
 const ScrollProgressNav = () => {
   const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState("home");
@@ -44,9 +46,11 @@ const ScrollProgressNav = () => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const isLight = lightSections.has(activeSection);
+
   return (
     <nav
-      className={`fixed right-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col items-center gap-3 transition-opacity duration-500 ${
+      className={`fixed right-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col items-center gap-3 transition-all duration-500 ${
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >
@@ -64,7 +68,7 @@ const ScrollProgressNav = () => {
               className={`absolute right-8 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-300 ${
                 isActive
                   ? "bg-playtomic-orange text-white opacity-100"
-                  : "bg-slate-800 text-slate-300 opacity-0 group-hover:opacity-100"
+                  : `${isLight ? "bg-slate-800 text-slate-300" : "bg-slate-800 text-slate-300"} opacity-0 group-hover:opacity-100`
               } pointer-events-none`}
             >
               {t(section.labelKey)}
@@ -75,7 +79,9 @@ const ScrollProgressNav = () => {
               className={`block rounded-full transition-all duration-300 ${
                 isActive
                   ? "w-3 h-3 bg-playtomic-orange shadow-lg shadow-playtomic-orange/40"
-                  : "w-2 h-2 bg-white/30 group-hover:bg-white/60"
+                  : isLight
+                    ? "w-2 h-2 bg-slate-400 group-hover:bg-slate-600"
+                    : "w-2 h-2 bg-white/30 group-hover:bg-white/60"
               }`}
             />
           </button>
