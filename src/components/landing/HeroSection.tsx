@@ -101,7 +101,7 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              className="bg-playtomic-orange hover:bg-playtomic-orange/90 text-white px-8 py-6 text-lg group"
+              className="bg-playtomic-orange hover:bg-playtomic-orange/90 text-white w-64 py-6 text-lg group"
               onClick={scrollToContact}
             >
               {t("landing.hero.ctaDemo")}
@@ -110,7 +110,7 @@ const HeroSection = () => {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 px-8 py-6 text-lg"
+              className="border-2 w-64 py-6 text-lg"
               onClick={() => document.getElementById('product')?.scrollIntoView({ behavior: 'smooth' })}
             >
               {t("landing.hero.ctaHow")}
@@ -121,9 +121,18 @@ const HeroSection = () => {
           <div className="mt-12 flex items-center justify-center gap-8 text-sm text-slate-400">
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-playtomic-orange/20 border-2 border-slate-800" />
-                <div className="w-8 h-8 rounded-full bg-playtomic-orange/40 border-2 border-slate-800" />
-                <div className="w-8 h-8 rounded-full bg-playtomic-orange/60 border-2 border-slate-800" />
+                <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-slate-700 overflow-hidden">
+                  <img src="/La-Red-21-2021-Blanco-NC-1024x1024.png" alt="La Red 21" className="w-full h-full object-contain" />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-white overflow-hidden">
+                  <img src="/hesperides_logo.jpg" alt="Hesperides" className="w-full h-full object-cover" />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-white overflow-hidden">
+                  <img src="/fuente_vina.jpeg" alt="Fuente Viña" className="w-full h-full object-cover" />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-slate-800 bg-slate-700 overflow-hidden">
+                  <img src="/logo_invictus.png" alt="Invictus" className="w-full h-full object-contain" />
+                </div>
               </div>
               <span>{t("landing.hero.activeAcademies")}</span>
             </div>

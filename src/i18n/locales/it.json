@@ -1305,7 +1305,8 @@
     "successStories": {
       "badge": "Casi di successo",
       "title": "Accademie che già si fidano di PadeLock",
-      "subtitle": "Scopri come PadeLock sta trasformando la gestione quotidiana delle accademie di padel in tutta la Spagna",
+      "subtitle": "Scopri come PadeLock sta trasformando la gestione quotidiana delle accademie di padel in tutto il ",
+      "subtitleBold": "mondo.",
       "testimonials": {
         "juanOrtega": {
           "name": "Juan Ortega",

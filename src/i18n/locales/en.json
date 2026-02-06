@@ -1383,7 +1383,8 @@
     "successStories": {
       "badge": "Success Stories",
       "title": "Academies that already trust PadeLock",
-      "subtitle": "Discover how PadeLock is transforming the daily management of padel academies across Spain",
+      "subtitle": "Discover how PadeLock is transforming the daily management of padel academies around the ",
+      "subtitleBold": "world.",
       "testimonials": {
         "juanOrtega": {
           "name": "Juan Ortega",

@@ -61,6 +61,7 @@ const SuccessStoriesSection = () => {
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto">
             {t("landing.successStories.subtitle")}
+            <span className="text-white font-semibold">{t("landing.successStories.subtitleBold")}</span>
           </p>
         </div>
 
