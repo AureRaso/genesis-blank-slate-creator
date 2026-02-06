@@ -37,7 +37,7 @@ const SuccessStoriesSection = () => {
     quoteKey: "landing.successStories.featured.quote",
     highlightKey: "landing.successStories.featured.highlight",
     initials: "OC",
-    image: "/logo_vectorized (1).png",
+    image: "/logo_invictus.png",
   };
 
   return (
