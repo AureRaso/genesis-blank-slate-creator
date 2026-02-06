@@ -11,7 +11,7 @@ const SuccessStoriesSection = () => {
       quoteKey: "landing.successStories.testimonials.juanOrtega.quote",
       highlightKey: "landing.successStories.testimonials.juanOrtega.highlight",
       initials: "JO",
-      image: "/juan_ortega.jpeg",
+      image: "/La-Red-21-2021-Blanco-NC-1024x1024.png",
     },
     {
       nameKey: "landing.successStories.testimonials.juanMolinillo.name",
@@ -19,13 +19,15 @@ const SuccessStoriesSection = () => {
       quoteKey: "landing.successStories.testimonials.juanMolinillo.quote",
       highlightKey: "landing.successStories.testimonials.juanMolinillo.highlight",
       initials: "JM",
+      image: "/hesperides_logo.jpg",
     },
     {
-      nameKey: "landing.successStories.testimonials.multiSede.name",
-      academyKey: "landing.successStories.testimonials.multiSede.academy",
-      quoteKey: "landing.successStories.testimonials.multiSede.quote",
-      highlightKey: "landing.successStories.testimonials.multiSede.highlight",
-      initials: "AC",
+      nameKey: "landing.successStories.testimonials.fuenteVina.name",
+      academyKey: "landing.successStories.testimonials.fuenteVina.academy",
+      quoteKey: "landing.successStories.testimonials.fuenteVina.quote",
+      highlightKey: "landing.successStories.testimonials.fuenteVina.highlight",
+      initials: "FV",
+      image: "/fuente_vina.jpeg",
     },
   ];
 
@@ -35,6 +37,7 @@ const SuccessStoriesSection = () => {
     quoteKey: "landing.successStories.featured.quote",
     highlightKey: "landing.successStories.featured.highlight",
     initials: "OC",
+    image: "/logo_vectorized (1).png",
   };
 
   return (
@@ -87,7 +90,9 @@ const SuccessStoriesSection = () => {
               {/* Author */}
               <div className="flex items-center gap-3 pt-5 border-t border-white/10">
                 {item.image ? (
-                  <img src={item.image} alt={t(item.nameKey)} className="w-11 h-11 rounded-full object-cover object-top flex-shrink-0 shadow-lg shadow-playtomic-orange/20" />
+                  <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20 overflow-hidden">
+                    <img src={item.image} alt={t(item.nameKey)} className="w-full h-full object-cover rounded-full scale-125" />
+                  </div>
                 ) : (
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-playtomic-orange/20">
                     <span className="text-sm font-bold text-white">{item.initials}</span>
@@ -108,9 +113,15 @@ const SuccessStoriesSection = () => {
             <div className="flex flex-col md:flex-row gap-8 items-start">
               {/* Left: avatar + info */}
               <div className="flex flex-col items-center md:items-start gap-3 md:min-w-[160px]">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center shadow-lg shadow-playtomic-orange/30">
-                  <span className="text-xl font-bold text-white">{featured.initials}</span>
-                </div>
+                {featured.image ? (
+                  <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center shadow-lg shadow-playtomic-orange/30 overflow-hidden">
+                    <img src={featured.image} alt={t(featured.nameKey)} className="w-14 h-14 object-contain" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-playtomic-orange to-orange-600 flex items-center justify-center shadow-lg shadow-playtomic-orange/30">
+                    <span className="text-xl font-bold text-white">{featured.initials}</span>
+                  </div>
+                )}
                 <div className="text-center md:text-left">
                   <p className="text-white font-bold">{t(featured.nameKey)}</p>
                   <p className="text-slate-400 text-sm">{t(featured.academyKey)}</p>

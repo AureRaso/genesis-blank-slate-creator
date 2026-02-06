@@ -886,16 +886,16 @@
           "highlight": "Antes perdía horas confirmando quién venía y quién no.",
           "quote": "Ahora, desde mi móvil, tengo todo el control."
         },
-        "multiSede": {
-          "name": "Academia Multi-sede",
-          "academy": "3 sedes activas",
-          "highlight": "PadeLock nos permitió estandarizar los procesos de nuestras tres sedes.",
-          "quote": "Puedo ver el rendimiento de cada academia desde una sola cuenta."
+        "fuenteVina": {
+          "name": "Escuela de Pádel Fuente Viña",
+          "academy": "Fuente Viña",
+          "highlight": "Gestionar una academia pequeña es engañoso: parece poco trabajo, pero no.",
+          "quote": "Antes de PadeLock, mi WhatsApp era un bombardeo constante, ahora gestiono asistencia, cancelaciones, pagos y huecos libres en segundos."
         }
       },
       "featured": {
         "name": "Óscar Cardeñosa",
-        "academy": "Director de academia",
+        "academy": "Director de academia multi-sede",
         "highlight": "Lo que realmente marca la diferencia con PadeLock es la cercanía de su equipo.",
         "quote": "Siempre que me surge una duda responden de inmediato. No solo te dan el software, se implican en tu negocio: me ayudaron mano a mano a configurar toda la estructura de mis tarifas. Esa tranquilidad de saber que nunca estás solo ante la tecnología no tiene precio."
       }

@@ -27,7 +27,8 @@ const TeamSection = () => {
     email: ""
   }];
 
-  return <section id="team" className="pt-12 pb-24 bg-background">
+  return <section id="team" className="pt-12 pb-24 bg-background relative">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
