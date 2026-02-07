@@ -82,9 +82,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
   const { data: allClubs = [] } = useActiveClubs();
   const { data: allTrainers = [] } = useAdminTrainers();
 
-  const clubs = profile?.club_id
-    ? allClubs.filter(club => club.id === profile.club_id)
-    : allClubs;
+  const clubs = allClubs;
 
   const [selectedClubId, setSelectedClubId] = useState<string>(
     initialClubId || profile?.club_id || ''
