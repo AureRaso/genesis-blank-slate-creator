@@ -36,6 +36,7 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
   '190cfb4c-d923-49d8-bb75-93bbda82f97d', // Matchpadel Academy Matchpadel
   'ec23d10f-0a14-4699-a50d-87c5e65d6417', // Matchpadel Academy Solopadel
   '3f71d96e-defe-4395-9f03-46dca0577f45', // Pádel Pibo
+  '0fb97f06-0c84-4559-874c-4b63124f7e8f', // Iron X Deluxe
 ];
 
 // Multi-language message templates
