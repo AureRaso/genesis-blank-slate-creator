@@ -173,6 +173,12 @@ const MobileTabBar = () => {
               <Link
                 key={tab.path}
                 to={tab.path}
+                onClick={(e) => {
+                  if (isActive) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
                 className={cn(
                   "relative flex flex-col items-center justify-center transition-all duration-300 ease-out",
                   "active:scale-95"
