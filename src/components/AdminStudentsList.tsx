@@ -250,7 +250,7 @@ const AdminStudentsList = () => {
         case "score_asc":
           return (scoreA?.score ?? 0) - (scoreB?.score ?? 0);
         case "noshows_desc":
-          return (behaviorB?.no_show_absences ?? 0) - (behaviorA?.no_show_absences ?? 0);
+          return (behaviorB?.no_show_count ?? 0) - (behaviorA?.no_show_count ?? 0);
         default:
           return 0;
       }

@@ -9,14 +9,16 @@ export interface BulkBehaviorMetric {
   total_absences: number;
   club_cancelled_classes: number;
   substitute_attendances: number;
-  // Derived from RPC data:
-  // no-shows = total_absences - late_notice - early_notice - club_cancelled
-  no_show_absences: number;
+  // Real attendance data from class_attendance_records (via SECURITY DEFINER RPC)
+  attended_count: number;
+  no_show_count: number;
 }
 
 /**
  * Hook to fetch behavior metrics for multiple students in batch.
- * Uses the RPC get_student_behavior_metrics which bypasses RLS issues.
+ * Uses two RPCs:
+ * - get_student_behavior_metrics: late notices, absences, cancellations
+ * - get_bulk_attendance_counts: real attended/no-show from class_attendance_records (SECURITY DEFINER)
  * Also fetches substitute attendance counts from class_participants.
  */
 export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
@@ -29,7 +31,7 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
 
       const GLOBAL_CLASS_ID = '00000000-0000-0000-0000-000000000000';
 
-      // Batch query: substitute attendance counts
+      // Batch query 1: substitute attendance counts
       const { data: substituteCounts, error: subError } = await supabase
         .from('class_participants')
         .select('student_enrollment_id')
@@ -46,7 +48,25 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
         substituteCountMap.set(row.student_enrollment_id, count + 1);
       });
 
-      // Fetch behavior metrics for each student via RPC
+      // Batch query 2: real attendance counts from class_attendance_records via SECURITY DEFINER RPC
+      const attendedMap = new Map<string, number>();
+      const noShowMap = new Map<string, number>();
+
+      const { data: attendanceCounts, error: attError } = await supabase
+        .rpc('get_bulk_attendance_counts', {
+          p_student_enrollment_ids: studentEnrollmentIds
+        });
+
+      if (attError) {
+        console.error('Error fetching bulk attendance counts:', attError);
+      } else if (attendanceCounts) {
+        (attendanceCounts as any[]).forEach((row: any) => {
+          attendedMap.set(row.student_enrollment_id, Number(row.attended_count) || 0);
+          noShowMap.set(row.student_enrollment_id, Number(row.no_show_count) || 0);
+        });
+      }
+
+      // Fetch behavior metrics (late notices, etc.) for each student via RPC
       const results = await Promise.all(
         studentEnrollmentIds.map(async (enrollmentId) => {
           try {
@@ -62,6 +82,8 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
             }
 
             const substituteAttendances = substituteCountMap.get(enrollmentId) || 0;
+            const attendedCount = attendedMap.get(enrollmentId) || 0;
+            const noShowCount = noShowMap.get(enrollmentId) || 0;
 
             if (!data || data.length === 0) {
               return {
@@ -72,24 +94,17 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
                 total_absences: 0,
                 club_cancelled_classes: 0,
                 substitute_attendances: substituteAttendances,
-                no_show_absences: 0,
+                attended_count: attendedCount,
+                no_show_count: noShowCount,
               };
             }
 
-            const d = data[0];
-            // No-shows = absences that weren't notified in advance and weren't club-cancelled
-            const noShows = Math.max(0,
-              (d.total_absences || 0) -
-              (d.late_notice_absences || 0) -
-              (d.early_notice_absences || 0) -
-              (d.club_cancelled_classes || 0)
-            );
-
             return {
               student_enrollment_id: enrollmentId,
-              ...d,
+              ...data[0],
               substitute_attendances: substituteAttendances,
-              no_show_absences: noShows,
+              attended_count: attendedCount,
+              no_show_count: noShowCount,
             };
           } catch (err) {
             console.error(`Exception fetching metrics for student ${enrollmentId}:`, err);

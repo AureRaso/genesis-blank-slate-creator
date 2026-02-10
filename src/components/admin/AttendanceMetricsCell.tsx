@@ -25,8 +25,8 @@ export const AttendanceMetricsCell = ({ score, behavior }: AttendanceMetricsCell
     );
   }
 
-  const attended = behavior?.total_attended ?? 0;
-  const noShows = behavior?.no_show_absences ?? 0;
+  const attended = behavior?.attended_count ?? 0;
+  const noShows = behavior?.no_show_count ?? 0;
   const lateNotices = behavior?.late_notice_absences ?? 0;
   const cancelledByAcademy = behavior?.club_cancelled_classes ?? 0;
   const substituteAttendances = behavior?.substitute_attendances ?? 0;
