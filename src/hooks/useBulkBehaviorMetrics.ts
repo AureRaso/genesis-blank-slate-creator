@@ -49,38 +49,69 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
       });
 
       // Batch query 2: real-time attendance records from class_attendance_records
-      // Join through class_participants to get student_enrollment_id
-      const { data: attendanceData, error: attError } = await supabase
+      // First get class_participant IDs for our enrollment IDs
+      const { data: participantIds, error: pError } = await supabase
         .from('class_participants')
-        .select(`
-          student_enrollment_id,
-          class_attendance_records(
-            had_confirmed_attendance,
-            actually_attended
-          )
-        `)
+        .select('id, student_enrollment_id')
         .in('student_enrollment_id', studentEnrollmentIds);
 
-      if (attError) {
-        console.error('Error fetching attendance records:', attError);
+      if (pError) {
+        console.error('📊 [BulkMetrics] Error fetching participant IDs:', pError);
+      }
+
+      console.log('📊 [BulkMetrics] Enrollment IDs count:', studentEnrollmentIds.length);
+      console.log('📊 [BulkMetrics] Participant IDs found:', participantIds?.length ?? 0);
+
+      // Map participant_id -> enrollment_id
+      const participantToEnrollment = new Map<string, string>();
+      (participantIds || []).forEach(p => {
+        participantToEnrollment.set(p.id, p.student_enrollment_id);
+      });
+
+      // Now fetch attendance records directly
+      const allParticipantIds = (participantIds || []).map(p => p.id);
+      let attendanceRecords: any[] = [];
+
+      if (allParticipantIds.length > 0) {
+        // Supabase .in() has a limit, so batch if needed
+        const batchSize = 500;
+        for (let i = 0; i < allParticipantIds.length; i += batchSize) {
+          const batch = allParticipantIds.slice(i, i + batchSize);
+          const { data: batchData, error: attError } = await supabase
+            .from('class_attendance_records')
+            .select('class_participant_id, had_confirmed_attendance, actually_attended')
+            .in('class_participant_id', batch);
+
+          if (attError) {
+            console.error('📊 [BulkMetrics] Error fetching attendance records batch:', attError);
+          } else {
+            attendanceRecords = attendanceRecords.concat(batchData || []);
+          }
+        }
+      }
+
+      console.log('📊 [BulkMetrics] Attendance records found:', attendanceRecords.length);
+      if (attendanceRecords.length > 0) {
+        console.log('📊 [BulkMetrics] Sample record:', attendanceRecords[0]);
       }
 
       // Aggregate attendance counts per student
       const attendedMap = new Map<string, number>();
       const noShowMap = new Map<string, number>();
-      (attendanceData || []).forEach((participant: any) => {
-        const enrollmentId = participant.student_enrollment_id;
-        const records = participant.class_attendance_records || [];
-        records.forEach((record: any) => {
-          if (record.had_confirmed_attendance) {
-            if (record.actually_attended) {
-              attendedMap.set(enrollmentId, (attendedMap.get(enrollmentId) || 0) + 1);
-            } else {
-              noShowMap.set(enrollmentId, (noShowMap.get(enrollmentId) || 0) + 1);
-            }
+      attendanceRecords.forEach((record: any) => {
+        const enrollmentId = participantToEnrollment.get(record.class_participant_id);
+        if (!enrollmentId) return;
+        if (record.had_confirmed_attendance) {
+          if (record.actually_attended) {
+            attendedMap.set(enrollmentId, (attendedMap.get(enrollmentId) || 0) + 1);
+          } else {
+            noShowMap.set(enrollmentId, (noShowMap.get(enrollmentId) || 0) + 1);
           }
-        });
+        }
       });
+
+      console.log('📊 [BulkMetrics] Students with attended > 0:', attendedMap.size);
+      console.log('📊 [BulkMetrics] Students with noShow > 0:', noShowMap.size);
 
       const results = await Promise.all(
         studentEnrollmentIds.map(async (enrollmentId) => {
