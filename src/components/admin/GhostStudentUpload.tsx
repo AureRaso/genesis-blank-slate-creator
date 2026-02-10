@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Upload, Download, FileText, Ghost, Plus, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Upload, Download, FileText, Plus, Trash2, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminClubs } from "@/hooks/useClubs";
 import { useCreateGhostEnrollments, CreateGhostEnrollmentData } from "@/hooks/useStudentEnrollments";
@@ -58,7 +58,7 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_alumnos_fantasma.csv');
+    link.setAttribute('download', 'plantilla_pre_registro_alumnos.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -461,7 +461,7 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
         {processing && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Creando perfiles fantasma...</Label>
+              <Label>Pre-registrando alumnos...</Label>
               <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
             </div>
             <Progress value={progress} className="w-full" />
@@ -474,7 +474,7 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-green-900 font-medium">{results.success} Exitosos</p>
-                <p className="text-sm text-green-700">Alumnos fantasma creados</p>
+                <p className="text-sm text-green-700">Alumnos pre-registrados</p>
               </div>
               <div className="p-4 bg-red-50 rounded-lg">
                 <p className="text-red-900 font-medium">{results.failed} Fallidos</p>

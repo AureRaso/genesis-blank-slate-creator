@@ -420,7 +420,7 @@ export const useCreateGhostEnrollments = () => {
 
           if (existing) {
             results.failed++;
-            results.errors.push({ name: ghost.full_name, error: `Teléfono ya registrado como fantasma (${existing.full_name})` });
+            results.errors.push({ name: ghost.full_name, error: `Teléfono ya pre-registrado (${existing.full_name})` });
             continue;
           }
 
@@ -480,7 +480,7 @@ export const useCreateGhostEnrollments = () => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       if (data.success > 0) {
         toast({
-          title: "Perfiles fantasma creados",
+          title: "Alumnos pre-registrados",
           description: `${data.success} alumno(s) pre-registrado(s) correctamente.${data.failed > 0 ? ` ${data.failed} fallido(s).` : ''}`,
           duration: 8000,
         });

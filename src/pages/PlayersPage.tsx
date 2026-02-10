@@ -6,7 +6,7 @@ import GhostStudentUpload from "@/components/admin/GhostStudentUpload";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Ghost } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 const PlayersPage = () => {
   const { isAdmin, loading } = useAuth();
@@ -44,7 +44,7 @@ const PlayersPage = () => {
               variant="outline"
               className="gap-2"
             >
-              <Ghost className="h-4 w-4" />
+              <UserPlus className="h-4 w-4" />
               Pre-registrar alumnos
             </Button>
           )}

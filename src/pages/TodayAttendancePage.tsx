@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban, MoreVertical, Settings, Ghost } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, Clock, Users, Wifi, ChevronDown, ChevronUp, AlertTriangle, RotateCcw, UserPlus, Search, Trash2, MessageSquare, LockOpen, Ban, MoreVertical, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1043,9 +1043,8 @@ const TodayAttendancePage = () => {
                                           {participant.student_enrollment!.full_name}
                                         </p>
                                         {participant.student_enrollment!.is_ghost && (
-                                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200 gap-1">
-                                            <Ghost className="h-3 w-3" />
-                                            Fantasma
+                                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+                                            Invitado
                                           </Badge>
                                         )}
                                         {participant.is_substitute && (

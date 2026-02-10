@@ -20,7 +20,6 @@ import {
   Pencil,
   GraduationCap,
   Users2,  // MULTI-CLUB FEATURE
-  Ghost
 } from "lucide-react";
 import {
   useAdminStudentEnrollments,
@@ -451,7 +450,7 @@ const AdminStudentsList = () => {
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="registered">Registrados</SelectItem>
-                <SelectItem value="ghost">Fantasmas</SelectItem>
+                <SelectItem value="ghost">Invitados</SelectItem>
               </SelectContent>
             </Select>
 
@@ -568,9 +567,8 @@ const AdminStudentsList = () => {
                                 {student.full_name}
                               </h3>
                               {student.is_ghost && (
-                                <Badge variant="outline" className="text-xs gap-1 bg-gray-100 text-gray-600 border-gray-300 flex-shrink-0">
-                                  <Ghost className="h-3 w-3" />
-                                  Fantasma
+                                <Badge variant="outline" className="text-xs bg-gray-100 text-gray-600 border-gray-300 flex-shrink-0">
+                                  Invitado
                                 </Badge>
                               )}
                             </div>
