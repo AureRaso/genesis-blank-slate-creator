@@ -129,14 +129,14 @@ export const StudentMetricsDetailModal = ({
                 <MetricItem
                   icon={<Check className="h-4 w-4 text-green-600" />}
                   label={t('playersPage.adminStudentsList.detailModal.attended')}
-                  value={score?.actually_attended_when_confirmed ?? 0}
+                  value={behavior?.attended_when_confirmed ?? 0}
                   color="text-green-600"
                 />
                 <MetricItem
                   icon={<X className="h-4 w-4 text-red-600" />}
                   label={t('playersPage.adminStudentsList.detailModal.noShows')}
-                  value={score?.no_show_when_confirmed ?? 0}
-                  color={score?.no_show_when_confirmed ? 'text-red-600' : 'text-gray-500'}
+                  value={behavior?.no_show_when_confirmed ?? 0}
+                  color={behavior?.no_show_when_confirmed ? 'text-red-600' : 'text-gray-500'}
                 />
                 <MetricItem
                   icon={<Clock className="h-4 w-4 text-orange-500" />}
@@ -153,7 +153,7 @@ export const StudentMetricsDetailModal = ({
                 <MetricItem
                   icon={<Ban className="h-4 w-4 text-gray-400" />}
                   label={t('playersPage.adminStudentsList.detailModal.cancelledByAcademy')}
-                  value={score?.classes_cancelled_by_academy ?? behavior?.club_cancelled_classes ?? 0}
+                  value={behavior?.club_cancelled_classes ?? 0}
                   color="text-gray-500"
                 />
               </div>
