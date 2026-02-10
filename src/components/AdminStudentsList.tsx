@@ -236,6 +236,8 @@ const AdminStudentsList = () => {
     .sort((a, b) => {
       const scoreA = scoresByEnrollmentId.get(a.id);
       const scoreB = scoresByEnrollmentId.get(b.id);
+      const behaviorA = behaviorByEnrollmentId.get(a.id);
+      const behaviorB = behaviorByEnrollmentId.get(b.id);
 
       switch (sortOrder) {
         case "alphabetical":
@@ -248,7 +250,7 @@ const AdminStudentsList = () => {
         case "score_asc":
           return (scoreA?.score ?? 0) - (scoreB?.score ?? 0);
         case "noshows_desc":
-          return (scoreB?.no_show_when_confirmed ?? 0) - (scoreA?.no_show_when_confirmed ?? 0);
+          return (behaviorB?.no_show_absences ?? 0) - (behaviorA?.no_show_absences ?? 0);
         default:
           return 0;
       }

@@ -129,14 +129,14 @@ export const StudentMetricsDetailModal = ({
                 <MetricItem
                   icon={<Check className="h-4 w-4 text-green-600" />}
                   label={t('playersPage.adminStudentsList.detailModal.attended')}
-                  value={behavior?.attended_when_confirmed ?? 0}
+                  value={behavior?.total_attended ?? 0}
                   color="text-green-600"
                 />
                 <MetricItem
                   icon={<X className="h-4 w-4 text-red-600" />}
                   label={t('playersPage.adminStudentsList.detailModal.noShows')}
-                  value={behavior?.no_show_when_confirmed ?? 0}
-                  color={behavior?.no_show_when_confirmed ? 'text-red-600' : 'text-gray-500'}
+                  value={behavior?.no_show_absences ?? 0}
+                  color={behavior?.no_show_absences ? 'text-red-600' : 'text-gray-500'}
                 />
                 <MetricItem
                   icon={<Clock className="h-4 w-4 text-orange-500" />}
