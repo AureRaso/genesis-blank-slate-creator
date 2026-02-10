@@ -1311,7 +1311,9 @@ const WeekAttendancePage = () => {
                                 <div
                                   key={participant.id}
                                   className={`group relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                                    isAbsent
+                                    participant.is_substitute
+                                      ? 'bg-gradient-to-br from-blue-50 to-sky-50 border-blue-300 shadow-sm hover:shadow-md'
+                                      : isAbsent
                                       ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-300 shadow-sm hover:shadow-md'
                                       : isConfirmed
                                       ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-sm hover:shadow-md'
@@ -1320,7 +1322,7 @@ const WeekAttendancePage = () => {
                                 >
                                   {/* Indicator Bar */}
                                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                                    isAbsent ? 'bg-red-500' : isConfirmed ? 'bg-green-500' : 'bg-slate-300'
+                                    participant.is_substitute ? 'bg-blue-500' : isAbsent ? 'bg-red-500' : isConfirmed ? 'bg-green-500' : 'bg-slate-300'
                                   }`} />
 
                                   <div className="p-4 pl-5">
@@ -1330,7 +1332,9 @@ const WeekAttendancePage = () => {
                                       <div className="flex items-center gap-3 min-w-0 flex-1">
                                         {/* Status Icon */}
                                         <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                                          isAbsent
+                                          participant.is_substitute
+                                            ? (isConfirmed || isAbsent ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-400')
+                                            : isAbsent
                                             ? 'bg-red-100 text-red-600'
                                             : isConfirmed
                                             ? 'bg-green-100 text-green-600'
@@ -1356,25 +1360,26 @@ const WeekAttendancePage = () => {
                                                 Invitado
                                               </Badge>
                                             )}
+                                          </div>
+                                          <div className="flex items-center gap-2 overflow-hidden">
                                             {participant.is_substitute && (
-                                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200 flex-shrink-0">
                                                 Sustituto
                                               </Badge>
                                             )}
+                                            {/* Timestamp - hidden on mobile */}
+                                            {(displayAttendanceConfirmedAt || displayAbsenceConfirmedAt) && (
+                                              <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
+                                                <Clock className="h-3 w-3 text-slate-400" />
+                                                <p className="text-xs text-slate-400">
+                                                  {displayAttendanceConfirmedAt
+                                                    ? format(new Date(displayAttendanceConfirmedAt), 'HH:mm')
+                                                    : format(new Date(displayAbsenceConfirmedAt!), 'HH:mm')
+                                                  }
+                                                </p>
+                                              </div>
+                                            )}
                                           </div>
-
-                                          {/* Timestamp */}
-                                          {(displayAttendanceConfirmedAt || displayAbsenceConfirmedAt) && (
-                                            <div className="flex items-center gap-1 mt-1">
-                                              <Clock className="h-3 w-3 text-slate-400" />
-                                              <p className="text-xs text-slate-400">
-                                                {displayAttendanceConfirmedAt
-                                                  ? format(new Date(displayAttendanceConfirmedAt), 'HH:mm')
-                                                  : format(new Date(displayAbsenceConfirmedAt!), 'HH:mm')
-                                                }
-                                              </p>
-                                            </div>
-                                          )}
                                         </div>
                                       </div>
 
