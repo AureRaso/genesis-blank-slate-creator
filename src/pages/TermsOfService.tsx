@@ -49,8 +49,9 @@ export default function TermsOfService() {
                 parte de estos términos, no debes utilizar nuestros servicios.
               </p>
               <p className="text-slate-700 leading-relaxed">
-                Estos Términos constituyen un acuerdo legal vinculante entre tú ("Usuario", "tú" o "tu") y PadeLock
-                ("nosotros", "nuestro" o "la Plataforma").
+                Estos Términos constituyen un acuerdo legal vinculante entre tú ("Usuario", "tú" o "tu") y Padelock S.L.
+                ("PadeLock", "nosotros", "nuestro" o "la Plataforma"), con domicilio social en Sevilla, España 41010, CIF B26710178,
+                y correo electrónico de contacto infopadelock@gmail.com.
               </p>
             </section>
 
@@ -271,6 +272,13 @@ export default function TermsOfService() {
                 Cualquier disputa que surja de o en relación con estos Términos estará sujeta a la jurisdicción
                 exclusiva de los tribunales de España.
               </p>
+              <p className="text-slate-700 leading-relaxed mt-4">
+                Conforme al Reglamento (UE) 524/2013, te informamos de que la Comisión Europea pone a disposición
+                una plataforma de resolución de litigios en línea (ODR), accesible en{" "}
+                <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:underline font-medium">
+                  https://ec.europa.eu/consumers/odr
+                </a>
+              </p>
             </section>
 
             <section className="mb-8">
@@ -326,10 +334,10 @@ export default function TermsOfService() {
                   </a>
                 </p>
                 <p className="text-slate-700 mb-2">
-                  <strong>Entidad legal:</strong> PadeLock
+                  <strong>Entidad legal:</strong> Padelock S.L.
                 </p>
                 <p className="text-slate-700">
-                  <strong>Dirección:</strong> España
+                  <strong>Dirección:</strong> Sevilla, España 41010
                 </p>
               </div>
             </section>
@@ -348,7 +356,7 @@ export default function TermsOfService() {
           <div className="mt-12 pt-6 border-t border-slate-200">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-slate-500">
-                © 2025 PadeLock. Todos los derechos reservados.
+                © 2025-{new Date().getFullYear()} Padelock S.L. Todos los derechos reservados.
               </p>
               <Link to="/privacy">
                 <Button variant="link" className="text-playtomic-orange hover:text-playtomic-orange/80">

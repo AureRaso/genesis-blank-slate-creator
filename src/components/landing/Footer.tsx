@@ -124,7 +124,7 @@ export const Footer = () => {
         <div className="py-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © {currentYear} PadeLock. {t("landing.footer.bottom.rights")}
+              © 2025-{currentYear} Padelock S.L. {t("landing.footer.bottom.rights")}
             </div>
 
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">

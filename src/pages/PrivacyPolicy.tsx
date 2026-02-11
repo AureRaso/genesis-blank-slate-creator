@@ -42,7 +42,18 @@ export default function PrivacyPolicy() {
           {/* Content */}
           <div className="w-full">
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">1. Introducción</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">1. Responsable del Tratamiento</h2>
+              <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-4">
+                <p className="text-slate-700 mb-2"><strong>Responsable:</strong> Padelock S.L.</p>
+                <p className="text-slate-700 mb-2"><strong>CIF:</strong> B26710178</p>
+                <p className="text-slate-700 mb-2"><strong>Domicilio social:</strong> Sevilla, España 41010</p>
+                <p className="text-slate-700 mb-2">
+                  <strong>Email de contacto:</strong>{" "}
+                  <a href="mailto:infopadelock@gmail.com" className="text-playtomic-orange hover:underline">
+                    infopadelock@gmail.com
+                  </a>
+                </p>
+              </div>
               <p className="text-slate-700 leading-relaxed mb-4">
                 En PadeLock, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad
                 describe cómo recopilamos, usamos, almacenamos y protegemos tu información personal cuando utilizas
@@ -74,7 +85,20 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">3. Cómo Usamos tu Información</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">3. Base Legal del Tratamiento</h2>
+              <p className="text-slate-700 leading-relaxed mb-3">
+                Conforme al artículo 6 del RGPD, tratamos tus datos personales en base a las siguientes bases legales:
+              </p>
+              <ul className="list-disc list-inside text-slate-700 space-y-2 ml-4">
+                <li><strong>Ejecución de contrato (Art. 6.1.b):</strong> Para gestionar tu cuenta, procesar reservas y pagos, y proporcionar los servicios contratados</li>
+                <li><strong>Consentimiento (Art. 6.1.a):</strong> Para el envío de comunicaciones comerciales y el uso de cookies no esenciales</li>
+                <li><strong>Interés legítimo (Art. 6.1.f):</strong> Para mejorar nuestros servicios, prevenir fraudes y garantizar la seguridad de la plataforma</li>
+                <li><strong>Obligación legal (Art. 6.1.c):</strong> Para cumplir con obligaciones fiscales, contables y regulatorias</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">4. Cómo Usamos tu Información</h2>
               <p className="text-slate-700 leading-relaxed mb-3">Utilizamos la información recopilada para:</p>
               <ul className="list-disc list-inside text-slate-700 space-y-2 ml-4">
                 <li>Proporcionar y mantener nuestros servicios de gestión de clases</li>
@@ -89,7 +113,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">4. Compartir Información</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">5. Compartir Información</h2>
               <p className="text-slate-700 leading-relaxed mb-3">
                 No vendemos ni alquilamos tu información personal a terceros. Podemos compartir tu información en las
                 siguientes circunstancias:
@@ -103,7 +127,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">5. Seguridad de los Datos</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">6. Seguridad de los Datos</h2>
               <p className="text-slate-700 leading-relaxed mb-3">
                 Implementamos medidas de seguridad técnicas y organizativas para proteger tu información:
               </p>
@@ -118,7 +142,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">6. Tus Derechos</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">7. Tus Derechos</h2>
               <p className="text-slate-700 leading-relaxed mb-3">
                 Conforme al RGPD (Reglamento General de Protección de Datos), tienes los siguientes derechos:
               </p>
@@ -136,10 +160,17 @@ export default function PrivacyPolicy() {
                   infopadelock@gmail.com
                 </a>
               </p>
+              <p className="text-slate-700 leading-relaxed mt-4">
+                Asimismo, te informamos de tu derecho a presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD) en{" "}
+                <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer" className="text-playtomic-orange hover:underline font-medium">
+                  www.aepd.es
+                </a>
+                {" "}si consideras que el tratamiento de tus datos no se ajusta a la normativa vigente.
+              </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">7. Cookies y Tecnologías Similares</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">8. Cookies y Tecnologías Similares</h2>
               <p className="text-slate-700 leading-relaxed mb-3">
                 Utilizamos cookies y tecnologías similares para:
               </p>
@@ -155,7 +186,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">8. Retención de Datos</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">9. Retención de Datos</h2>
               <p className="text-slate-700 leading-relaxed">
                 Conservamos tu información personal solo durante el tiempo necesario para cumplir con los propósitos
                 descritos en esta política, a menos que la ley requiera o permita un período de retención más largo.
@@ -165,7 +196,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">9. Transferencias Internacionales</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">10. Transferencias Internacionales</h2>
               <p className="text-slate-700 leading-relaxed">
                 Tus datos pueden ser transferidos y procesados en servidores ubicados fuera de tu país de residencia.
                 Tomamos medidas para garantizar que tus datos reciban un nivel adecuado de protección mediante cláusulas
@@ -174,7 +205,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">10. Menores de Edad</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">11. Menores de Edad</h2>
               <p className="text-slate-700 leading-relaxed">
                 Nuestros servicios no están dirigidos a menores de 16 años. No recopilamos intencionalmente información
                 de menores de 16 años. Si eres padre/madre o tutor y tienes conocimiento de que tu hijo nos ha
@@ -183,7 +214,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">11. Cambios a esta Política</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">12. Cambios a esta Política</h2>
               <p className="text-slate-700 leading-relaxed">
                 Podemos actualizar esta Política de Privacidad periódicamente. Te notificaremos sobre cambios
                 significativos publicando la nueva política en esta página y actualizando la fecha de "Última
@@ -192,7 +223,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">12. Contacto</h2>
+              <h2 className="text-2xl font-semibold text-playtomic-dark mb-4">13. Contacto</h2>
               <p className="text-slate-700 leading-relaxed mb-4">
                 Si tienes preguntas, comentarios o inquietudes sobre esta Política de Privacidad o nuestras prácticas
                 de datos, puedes contactarnos:
@@ -205,10 +236,10 @@ export default function PrivacyPolicy() {
                   </a>
                 </p>
                 <p className="text-slate-700 mb-2">
-                  <strong>Responsable de Protección de Datos:</strong> PadeLock
+                  <strong>Responsable de Protección de Datos:</strong> Padelock S.L.
                 </p>
                 <p className="text-slate-700">
-                  <strong>Dirección:</strong> España
+                  <strong>Dirección:</strong> Sevilla, España 41010
                 </p>
               </div>
             </section>
@@ -218,7 +249,7 @@ export default function PrivacyPolicy() {
           <div className="mt-12 pt-6 border-t border-slate-200">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-slate-500">
-                © 2025 PadeLock. Todos los derechos reservados.
+                © 2025-{new Date().getFullYear()} Padelock S.L. Todos los derechos reservados.
               </p>
               <Link to="/terms">
                 <Button variant="link" className="text-playtomic-orange hover:text-playtomic-orange/80">
