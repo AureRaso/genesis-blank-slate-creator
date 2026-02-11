@@ -260,7 +260,7 @@ export const StudentMetricsDetailModal = ({
             </div>
           )}
 
-          {/* View full scores button */}
+          {/* View full scores button - hidden until page is implemented
           <Button
             variant="outline"
             className="w-full"
@@ -269,6 +269,7 @@ export const StudentMetricsDetailModal = ({
             <ExternalLink className="h-4 w-4 mr-2" />
             {t('playersPage.adminStudentsList.detailModal.viewFullScores')}
           </Button>
+          */}
         </div>
       </DialogContent>
     </Dialog>
