@@ -647,12 +647,14 @@ serve(async (req) => {
           if (whatsappSent) {
             totalWhatsAppSent++;
           }
-          // Delay for WhatsApp rate limiting (1s for Kapso/Meta API - templates are pre-approved, ~80 msgs/min allowed)
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Delay for WhatsApp rate limiting (500ms - Meta API supports ~80 templates/min)
+          // This also covers the email rate limit (2/s = 500ms), so skip the email delay below
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } else {
+          // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
+          // Only when no WhatsApp delay was applied above
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
-
-        // Delay to respect Resend rate limit (2 emails/second = 500ms between emails)
-        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
