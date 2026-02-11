@@ -100,40 +100,49 @@ serve(async (req) => {
             planName: session.metadata.plan_name
           });
 
-          // Create or update club subscription with full details
-          const subscriptionData: any = {
-            club_id: session.metadata.club_id,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-            status: 'active',
-            updated_at: new Date().toISOString()
-          };
+          // Determine all club IDs to create subscriptions for
+          // If superadmin with multiple clubs, all_club_ids contains comma-separated IDs
+          const allClubIds = session.metadata.all_club_ids
+            ? session.metadata.all_club_ids.split(',')
+            : [session.metadata.club_id];
 
-          // Add subscription_plan_id if available
-          if (session.metadata.subscription_plan_id) {
-            subscriptionData.subscription_plan_id = session.metadata.subscription_plan_id;
-          }
+          logStep("Creating subscriptions for clubs", { clubCount: allClubIds.length, clubIds: allClubIds });
 
-          // Add period dates if available
-          if (subscription.current_period_start) {
-            subscriptionData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString();
-          }
-          if (subscription.current_period_end) {
-            subscriptionData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
-          }
+          // Create subscription record for each club
+          for (const clubId of allClubIds) {
+            const subscriptionData: any = {
+              club_id: clubId,
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: session.subscription as string,
+              status: 'active',
+              updated_at: new Date().toISOString()
+            };
 
-          // Try to update first, if not found, insert
-          const { error: updateError } = await supabaseClient
-            .from('club_subscriptions')
-            .upsert(subscriptionData, {
-              onConflict: 'stripe_subscription_id',
-              ignoreDuplicates: false
-            });
+            // Add subscription_plan_id if available
+            if (session.metadata.subscription_plan_id) {
+              subscriptionData.subscription_plan_id = session.metadata.subscription_plan_id;
+            }
 
-          if (updateError) {
-            logStep("Error creating/updating club subscription on checkout", { error: updateError });
-          } else {
-            logStep("Club subscription created/updated on checkout");
+            // Add period dates if available
+            if (subscription.current_period_start) {
+              subscriptionData.current_period_start = new Date(subscription.current_period_start * 1000).toISOString();
+            }
+            if (subscription.current_period_end) {
+              subscriptionData.current_period_end = new Date(subscription.current_period_end * 1000).toISOString();
+            }
+
+            const { error: updateError } = await supabaseClient
+              .from('club_subscriptions')
+              .upsert(subscriptionData, {
+                onConflict: 'club_id,stripe_subscription_id',
+                ignoreDuplicates: false
+              });
+
+            if (updateError) {
+              logStep(`Error creating/updating subscription for club ${clubId}`, { error: updateError });
+            } else {
+              logStep(`Subscription created/updated for club ${clubId}`);
+            }
           }
         }
         break;
