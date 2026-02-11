@@ -9,7 +9,7 @@ export interface BulkBehaviorMetric {
   total_absences: number;
   club_cancelled_classes: number;
   substitute_attendances: number;
-  // Real attendance data from class_attendance_records (via SECURITY DEFINER RPC)
+  // Derived: attended = scheduled sessions - cancelled - absences (via SECURITY DEFINER RPC)
   attended_count: number;
   no_show_count: number;
 }
@@ -18,7 +18,7 @@ export interface BulkBehaviorMetric {
  * Hook to fetch behavior metrics for multiple students in batch.
  * Uses two RPCs:
  * - get_student_behavior_metrics: late notices, absences, cancellations
- * - get_bulk_attendance_counts: real attended/no-show from class_attendance_records (SECURITY DEFINER)
+ * - get_bulk_attendance_counts: attended (scheduled - cancelled - absences) and no-show counts (SECURITY DEFINER)
  * Also fetches substitute attendance counts from class_participants.
  */
 export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
@@ -48,7 +48,7 @@ export const useBulkBehaviorMetrics = (studentEnrollmentIds: string[]) => {
         substituteCountMap.set(row.student_enrollment_id, count + 1);
       });
 
-      // Batch query 2: real attendance counts from class_attendance_records via SECURITY DEFINER RPC
+      // Batch query 2: attendance counts via SECURITY DEFINER RPC
       const attendedMap = new Map<string, number>();
       const noShowMap = new Map<string, number>();
 
