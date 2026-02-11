@@ -11,7 +11,7 @@ import { es } from "date-fns/locale";
 import { useClubSubscriptionPlan } from "@/hooks/useClubSubscriptionPlan";
 
 const StripePaymentPage = () => {
-  const { profile, effectiveClubId } = useAuth();
+  const { profile, effectiveClubId, superAdminClubs } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
@@ -41,8 +41,18 @@ const StripePaymentPage = () => {
 
   // Obtener el estado de la suscripción actual (si existe)
   const { data: subscription, isLoading: subscriptionLoading, refetch: refetchSubscription } = useQuery({
-    queryKey: ["subscription", effectiveClubId],
+    queryKey: ["subscription", effectiveClubId, isSuperadmin ? "superadmin" : "regular"],
     queryFn: async () => {
+      // Para superadmins, usar la función RPC que bypasea RLS
+      if (isSuperadmin) {
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc("get_superadmin_subscription");
+
+        if (rpcError && rpcError.code !== "PGRST116") throw rpcError;
+        // rpc returns an array, take the first result
+        return rpcData && rpcData.length > 0 ? rpcData[0] : null;
+      }
+
       if (!effectiveClubId) return null;
 
       // Primero intentar obtener una suscripción activa
@@ -70,7 +80,7 @@ const StripePaymentPage = () => {
       if (error && error.code !== "PGRST116") throw error; // PGRST116 es "no rows returned"
       return data;
     },
-    enabled: !!effectiveClubId,
+    enabled: isSuperadmin || !!effectiveClubId,
   });
 
   const handleProceedToPayment = async () => {
@@ -78,12 +88,19 @@ const StripePaymentPage = () => {
       setLoading(true);
       setError(null);
 
+      // Para superadmins sin club seleccionado, usar el primer club
+      const checkoutClubId = effectiveClubId || (isSuperadmin && superAdminClubs.length > 0 ? superAdminClubs[0].id : null);
+
+      if (!checkoutClubId) {
+        throw new Error("No se pudo determinar el club para el pago");
+      }
+
       // Llamar a la Edge Function de Supabase para crear una sesión de Stripe Checkout
       const { data, error: functionError } = await supabase.functions.invoke(
         "create-stripe-checkout",
         {
           body: {
-            club_id: effectiveClubId,
+            club_id: checkoutClubId,
             user_id: profile?.id,
             success_url: `${window.location.origin}/dashboard/payment?success=true`,
             cancel_url: `${window.location.origin}/dashboard/payment?canceled=true`,
@@ -239,7 +256,7 @@ const StripePaymentPage = () => {
           <CardContent className="space-y-2">
             <div>
               <p className="text-sm text-muted-foreground">Nombre del Club</p>
-              <p className="font-semibold">{club?.name || "No disponible"}</p>
+              <p className="font-semibold">{club?.name || (isSuperadmin ? `Todos los clubes (${superAdminClubs.length})` : "No disponible")}</p>
             </div>
             {club?.location && (
               <div>
