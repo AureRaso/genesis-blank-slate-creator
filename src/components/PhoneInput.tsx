@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Phone } from "lucide-react";
 
 // Lista de países con sus prefijos (la misma que en PhoneRequiredModal)
-const COUNTRIES = [
+export const COUNTRIES = [
   { code: "ES", name: "España", flag: "🇪🇸", prefix: "+34", minDigits: 9, maxDigits: 9, startsWithPattern: /^[67]/ },
   { code: "FR", name: "Francia", flag: "🇫🇷", prefix: "+33", minDigits: 9, maxDigits: 9 },
   { code: "GB", name: "Reino Unido", flag: "🇬🇧", prefix: "+44", minDigits: 10, maxDigits: 10 },

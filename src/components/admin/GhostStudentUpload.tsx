@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminClubs } from "@/hooks/useClubs";
 import { useCreateGhostEnrollments, CreateGhostEnrollmentData } from "@/hooks/useStudentEnrollments";
 import { toast } from "@/hooks/use-toast";
+import { COUNTRIES } from "@/components/PhoneInput";
 
 interface GhostStudentUploadProps {
   onClose: () => void;
@@ -40,6 +41,9 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
   // Manual entry state
   const [manualName, setManualName] = useState("");
   const [manualPhone, setManualPhone] = useState("");
+  const [manualCountryCode, setManualCountryCode] = useState("ES");
+
+  const selectedManualCountry = COUNTRIES.find(c => c.code === manualCountryCode) || COUNTRIES[0];
 
   const { isAdmin } = useAuth();
   const { data: adminClubs, isLoading: clubsLoading } = useAdminClubs();
@@ -47,11 +51,13 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
 
   const downloadTemplate = () => {
     const headers = ['Nombre y Apellidos', 'Telefono', 'Nivel de juego'];
-    const sampleData = ['Juan Pérez García', '612345678', '3.5'];
+    const sampleSpain = ['Juan Pérez García', '612345678', '3.5'];
+    const sampleInternational = ['Maria Da Silva', '+584243012850', '4.0'];
 
     const csvContent = [
       headers.join(';'),
-      sampleData.join(';')
+      sampleSpain.join(';'),
+      sampleInternational.join(';')
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -155,6 +161,12 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
     reader.readAsText(selectedFile);
   };
 
+  const handleManualPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '');
+    const limited = digitsOnly.slice(0, selectedManualCountry.maxDigits);
+    setManualPhone(limited);
+  };
+
   const addManualEntry = () => {
     if (!manualName.trim() || !manualPhone.trim()) {
       toast({
@@ -165,18 +177,24 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
       return;
     }
 
-    if (manualPhone.replace(/\D/g, '').length < 9) {
+    const digits = manualPhone.replace(/\D/g, '');
+    if (digits.length < selectedManualCountry.minDigits) {
       toast({
         title: "Teléfono inválido",
-        description: "El teléfono debe tener al menos 9 dígitos",
+        description: `El teléfono debe tener al menos ${selectedManualCountry.minDigits} dígitos`,
         variant: "destructive",
       });
       return;
     }
 
+    // Format phone same as PhoneInput: Spain = just digits, international = prefix + digits
+    const formattedPhone = manualCountryCode === "ES"
+      ? digits
+      : selectedManualCountry.prefix + digits;
+
     const newRow: GhostRow = {
       full_name: manualName.trim(),
-      phone: manualPhone.trim(),
+      phone: formattedPhone,
       level: 5, // Default level
     };
 
@@ -311,18 +329,35 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
                   disabled={!selectedClubId}
                 />
               </div>
-              <div className="w-full sm:w-48 space-y-1">
+              <div className="w-full sm:flex-1 space-y-1">
                 <Label htmlFor="manual-phone">Teléfono</Label>
-                <Input
-                  id="manual-phone"
-                  placeholder="612345678"
-                  value={manualPhone}
-                  inputMode="numeric"
-                  maxLength={15}
-                  onChange={(e) => setManualPhone(e.target.value.replace(/\D/g, ''))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addManualEntry(); } }}
-                  disabled={!selectedClubId}
-                />
+                <div className="flex gap-0">
+                  <Select value={manualCountryCode} onValueChange={(v) => { setManualCountryCode(v); setManualPhone(""); }}>
+                    <SelectTrigger className="h-10 w-[85px] rounded-r-none border-r-0 bg-slate-50 shrink-0">
+                      <span className="text-sm font-medium">{selectedManualCountry.prefix}</span>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.flag} {country.name} ({country.prefix})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="manual-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder={manualCountryCode === "ES" ? "612345678" : "123456789"}
+                    value={manualPhone}
+                    onChange={handleManualPhoneChange}
+                    maxLength={selectedManualCountry.maxDigits}
+                    className="flex-1 rounded-l-none"
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addManualEntry(); } }}
+                    disabled={!selectedClubId}
+                  />
+                </div>
               </div>
               <div className="flex items-end">
                 <Button
@@ -351,7 +386,7 @@ const GhostStudentUpload: React.FC<GhostStudentUploadProps> = ({ onClose }) => {
                 <FileText className="h-8 w-8 text-blue-500" />
                 <div>
                   <p className="font-medium">Plantilla CSV</p>
-                  <p className="text-sm text-muted-foreground">Solo necesitas: nombre, teléfono y nivel</p>
+                  <p className="text-sm text-muted-foreground">Nombre, teléfono y nivel. Internacional: incluir prefijo (ej: +58...)</p>
                 </div>
               </div>
               <Button onClick={downloadTemplate} variant="outline">
