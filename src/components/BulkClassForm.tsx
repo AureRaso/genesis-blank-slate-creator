@@ -98,7 +98,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
     selectedClubId && trainer.trainer_clubs?.some(tc => tc.club_id === selectedClubId)
   );
 
-  const currentUserAsTrainer = profile && (profile.role === 'admin' || profile.role === 'trainer')
+  const currentUserAsTrainer = profile && (profile.role === 'admin' || profile.role === 'trainer' || profile.role === 'superadmin')
     ? {
         id: profile.id,
         profile_id: profile.id,
@@ -112,7 +112,7 @@ export function BulkClassForm({ clubId: initialClubId, onSuccess, onDataChange }
           full_name: profile.full_name || 'Usuario actual',
           email: profile.email || ''
         },
-        trainer_clubs: []
+        trainer_clubs: clubs.map(c => ({ club_id: c.id }))
       }
     : null;
 
