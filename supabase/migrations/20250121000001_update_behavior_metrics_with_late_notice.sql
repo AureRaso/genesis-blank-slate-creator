@@ -17,18 +17,20 @@ AS $$
 BEGIN
   RETURN QUERY
   WITH cancelled_count AS (
-    -- Count cancelled classes for this student across ALL their classes
-    -- if p_class_id is the placeholder UUID (all zeros), otherwise filter by specific class
+    -- Count cancelled classes for this student, only counting cancellations
+    -- that happened on or after the student was enrolled in that class
     SELECT COALESCE(COUNT(*)::BIGINT, 0) as count
     FROM cancelled_classes cc
     WHERE
       CASE
         -- If placeholder ID (all zeros), count all cancelled classes for student's classes
         WHEN p_class_id = '00000000-0000-0000-0000-000000000000'::UUID THEN
-          cc.programmed_class_id IN (
-            SELECT DISTINCT class_id
-            FROM class_participants
-            WHERE student_enrollment_id = p_student_enrollment_id
+          EXISTS (
+            SELECT 1
+            FROM class_participants cp2
+            WHERE cp2.student_enrollment_id = p_student_enrollment_id
+              AND cp2.class_id = cc.programmed_class_id
+              AND cc.cancelled_date >= cp2.created_at::date
           )
         -- Otherwise, filter by specific class
         ELSE cc.programmed_class_id = p_class_id
