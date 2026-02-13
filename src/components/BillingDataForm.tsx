@@ -1,0 +1,281 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Building2, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useUpdateClub, type Club } from '@/hooks/useClubs';
+
+interface BillingDataFormProps {
+  club: Club;
+}
+
+export const BillingDataForm = ({ club }: BillingDataFormProps) => {
+  const updateClub = useUpdateClub();
+  const [syncing, setSyncing] = useState(false);
+  const [formData, setFormData] = useState({
+    legal_name: club.legal_name || '',
+    tax_id: club.tax_id || '',
+    legal_entity_type: club.legal_entity_type || 'empresa',
+    billing_email: club.billing_email || '',
+    billing_address: club.billing_address || '',
+    billing_city: club.billing_city || '',
+    billing_postal_code: club.billing_postal_code || '',
+    billing_province: club.billing_province || '',
+    billing_country: club.billing_country || 'Spain',
+  });
+
+  useEffect(() => {
+    setFormData({
+      legal_name: club.legal_name || '',
+      tax_id: club.tax_id || '',
+      legal_entity_type: club.legal_entity_type || 'empresa',
+      billing_email: club.billing_email || '',
+      billing_address: club.billing_address || '',
+      billing_city: club.billing_city || '',
+      billing_postal_code: club.billing_postal_code || '',
+      billing_province: club.billing_province || '',
+      billing_country: club.billing_country || 'Spain',
+    });
+  }, [club]);
+
+  const handleSave = async () => {
+    if (!formData.legal_name.trim() || !formData.tax_id.trim()) {
+      toast.error('La razón social y el NIF/CIF son obligatorios');
+      return;
+    }
+
+    try {
+      await updateClub.mutateAsync({
+        id: club.id,
+        ...formData,
+      });
+    } catch {
+      // Error handled by useUpdateClub hook
+      return;
+    }
+
+    // Auto-sync to Holded after saving
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('holded-sync-contact', {
+        body: { clubId: club.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(
+          data.isNew
+            ? 'Datos guardados y contacto creado en Holded'
+            : 'Datos guardados y contacto actualizado en Holded'
+        );
+      }
+    } catch (error) {
+      console.error('Error syncing to Holded:', error);
+      const message = error instanceof Error ? error.message : 'Datos guardados, pero error al sincronizar con Holded';
+      toast.error(message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const isHoldedSynced = !!club.holded_contact_id;
+  const hasRequiredFields = formData.legal_name.trim() && formData.tax_id.trim();
+
+  return (
+    <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
+              <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
+              Datos de Facturación
+            </CardTitle>
+            <CardDescription className="text-sm text-gray-500 mt-1">
+              Datos fiscales para la facturación automática con Holded
+            </CardDescription>
+          </div>
+          {isHoldedSynced && (
+            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 w-fit">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Sincronizado con Holded
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+        {/* Row 1: Legal name + Tax ID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="legal_name" className="text-xs sm:text-sm font-medium">
+              Razón Social *
+            </Label>
+            <Input
+              id="legal_name"
+              value={formData.legal_name}
+              onChange={(e) => setFormData({ ...formData, legal_name: e.target.value })}
+              placeholder="Ej: Club Padel Madrid S.L."
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tax_id" className="text-xs sm:text-sm font-medium">
+              NIF/CIF *
+            </Label>
+            <Input
+              id="tax_id"
+              value={formData.tax_id}
+              onChange={(e) => setFormData({ ...formData, tax_id: e.target.value.toUpperCase() })}
+              placeholder="Ej: B12345678"
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Entity type + Billing email */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="legal_entity_type" className="text-xs sm:text-sm font-medium">
+              Tipo de Entidad
+            </Label>
+            <Select
+              value={formData.legal_entity_type}
+              onValueChange={(val) => setFormData({ ...formData, legal_entity_type: val })}
+            >
+              <SelectTrigger className="text-sm h-9 sm:h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="empresa">Empresa (S.L., S.A.)</SelectItem>
+                <SelectItem value="asociacion">Asociación</SelectItem>
+                <SelectItem value="autonomo">Autónomo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="billing_email" className="text-xs sm:text-sm font-medium">
+              Email de Facturación
+            </Label>
+            <Input
+              id="billing_email"
+              type="email"
+              value={formData.billing_email}
+              onChange={(e) => setFormData({ ...formData, billing_email: e.target.value })}
+              placeholder="facturacion@tuclub.com"
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+        </div>
+
+        {/* Row 3: Address */}
+        <div className="space-y-1.5">
+          <Label htmlFor="billing_address" className="text-xs sm:text-sm font-medium">
+            Dirección Fiscal
+          </Label>
+          <Input
+            id="billing_address"
+            value={formData.billing_address}
+            onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
+            placeholder="Calle, número, piso..."
+            className="text-sm h-9 sm:h-10"
+          />
+        </div>
+
+        {/* Row 4: City + Postal Code + Province */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="billing_city" className="text-xs sm:text-sm font-medium">
+              Ciudad
+            </Label>
+            <Input
+              id="billing_city"
+              value={formData.billing_city}
+              onChange={(e) => setFormData({ ...formData, billing_city: e.target.value })}
+              placeholder="Madrid"
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="billing_postal_code" className="text-xs sm:text-sm font-medium">
+              Código Postal
+            </Label>
+            <Input
+              id="billing_postal_code"
+              value={formData.billing_postal_code}
+              onChange={(e) => setFormData({ ...formData, billing_postal_code: e.target.value })}
+              placeholder="28001"
+              className="text-sm h-9 sm:h-10"
+              maxLength={10}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="billing_province" className="text-xs sm:text-sm font-medium">
+              Provincia
+            </Label>
+            <Input
+              id="billing_province"
+              value={formData.billing_province}
+              onChange={(e) => setFormData({ ...formData, billing_province: e.target.value })}
+              placeholder="Madrid"
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+        </div>
+
+        {/* Row 5: Country */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="billing_country" className="text-xs sm:text-sm font-medium">
+              País
+            </Label>
+            <Input
+              id="billing_country"
+              value={formData.billing_country}
+              onChange={(e) => setFormData({ ...formData, billing_country: e.target.value })}
+              placeholder="Spain"
+              className="text-sm h-9 sm:h-10"
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+          <Button
+            onClick={handleSave}
+            disabled={updateClub.isPending || syncing}
+            className="flex-1 sm:flex-none"
+            size="sm"
+          >
+            {updateClub.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : syncing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sincronizando con Holded...
+              </>
+            ) : (
+              'Guardar datos fiscales'
+            )}
+          </Button>
+        </div>
+
+        {!hasRequiredFields && (
+          <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-800">
+              Rellena al menos la razón social y el NIF/CIF para poder sincronizar con Holded.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

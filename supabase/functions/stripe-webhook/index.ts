@@ -187,6 +187,29 @@ serve(async (req) => {
             logStep("Club subscription updated to active on successful payment");
           }
         }
+
+        // Forward to holded-create-invoice for automatic invoicing (fire-and-forget)
+        try {
+          logStep("Forwarding invoice to Holded sync...", { invoiceId: invoice.id });
+          const holdedResponse = await fetch(
+            `${Deno.env.get("SUPABASE_URL")}/functions/v1/holded-create-invoice`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({ stripeEvent: event }),
+            }
+          );
+          const holdedResult = await holdedResponse.json();
+          logStep("Holded sync result", { status: holdedResponse.status, result: holdedResult });
+        } catch (holdedError) {
+          // Don't fail the webhook if Holded sync fails
+          logStep("Holded sync failed (non-blocking)", {
+            error: holdedError instanceof Error ? holdedError.message : String(holdedError)
+          });
+        }
         break;
       }
 

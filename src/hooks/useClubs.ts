@@ -15,6 +15,17 @@ export type Club = {
   created_by_profile_id: string;
   created_at: string;
   updated_at: string;
+  // Billing/fiscal fields for Holded integration
+  legal_name?: string;
+  tax_id?: string;
+  legal_entity_type?: string;
+  billing_email?: string;
+  billing_address?: string;
+  billing_city?: string;
+  billing_postal_code?: string;
+  billing_province?: string;
+  billing_country?: string;
+  holded_contact_id?: string;
 };
 
 export type CreateClubData = {

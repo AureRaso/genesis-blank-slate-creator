@@ -38,6 +38,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { LopiviReportDialog } from "@/components/LopiviReportDialog";
 import { WhatsAppActivationModal } from "@/components/WhatsAppActivationModal";
+import { BillingDataForm } from "@/components/BillingDataForm";
+
 
 // Extended club interface with Stripe properties
 interface ClubWithStripe {
@@ -644,13 +646,12 @@ const SettingsPage = () => {
         <div className="mb-4 sm:mb-6 md:mb-8">
 
         <Tabs defaultValue="general" className="space-y-3 sm:space-y-4 md:space-y-6">
-          {/* Payments tab hidden for now - to be implemented in the future */}
-          {/* <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="general" className="text-xs sm:text-sm">General</TabsTrigger>
-            <TabsTrigger value="payments" className="text-xs sm:text-sm">Pagos</TabsTrigger>
-          </TabsList> */}
+            <TabsTrigger value="billing" className="text-xs sm:text-sm">Facturación</TabsTrigger>
+          </TabsList>
 
-          {/* <TabsContent value="payments" className="space-y-3 sm:space-y-4 md:space-y-6">
+          <TabsContent value="billing" className="space-y-3 sm:space-y-4 md:space-y-6">
             {!club ? (
               <Card>
                 <CardHeader className="p-3 sm:p-6">
@@ -659,7 +660,7 @@ const SettingsPage = () => {
                     Club Requerido
                   </CardTitle>
                   <CardDescription className="text-xs sm:text-sm">
-                    Necesitas crear un club antes de poder configurar los pagos.
+                    Necesitas crear un club antes de poder configurar la facturación.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
@@ -673,146 +674,28 @@ const SettingsPage = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardHeader className="p-3 sm:p-6">
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                    Conecta tu cuenta de Stripe
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Para poder cobrar a tus jugadores directamente en tu cuenta bancaria,
-                    conecta tu Stripe con nuestra plataforma. Es rápido y seguro.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0 sm:pt-0">
-                  <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
-                    <div>
-                      <label className="text-xs sm:text-sm font-medium mb-2 block">
-                        Seleccionar Club:
-                      </label>
-                      <Select value={selectedClubId} onValueChange={setSelectedClubId}>
-                        <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
-                          <SelectValue placeholder="Selecciona un club" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clubs?.map((clubOption) => (
-                            <SelectItem key={clubOption.id} value={clubOption.id}>
-                              {clubOption.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {club && (
-                      <div className="p-2 sm:p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-blue-800 text-xs sm:text-sm">
-                          <strong>Club seleccionado:</strong> {club.name}
-                        </p>
-                      </div>
-                    )}
+              <>
+                {clubs && clubs.length > 1 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Seleccionar Club:</Label>
+                    <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                      <SelectTrigger className="text-xs sm:text-sm h-9 sm:h-10">
+                        <SelectValue placeholder="Selecciona un club" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clubs?.map((clubOption) => (
+                          <SelectItem key={clubOption.id} value={clubOption.id}>
+                            {clubOption.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-
-                  {!isStripeConnected ? (
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="space-y-2 sm:space-y-3">
-                        <Label htmlFor="test-stripe-url" className="text-xs sm:text-sm font-medium">
-                          Enlace de prueba de Stripe Connect (temporal)
-                        </Label>
-                        <Input
-                          id="test-stripe-url"
-                          type="url"
-                          placeholder="https://connect.stripe.com/d/setup/s/..."
-                          value={testStripeUrl}
-                          onChange={(e) => setTestStripeUrl(e.target.value)}
-                          className="w-full text-xs sm:text-sm h-9 sm:h-10"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Introduce aquí el enlace de configuración de prueba que te ha proporcionado Stripe para continuar con la configuración.
-                        </p>
-                      </div>
-
-                      {testStripeUrl.trim() && (
-                        <Button
-                          onClick={handleUseTestUrl}
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xs sm:text-sm"
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                          Usar enlace de prueba
-                        </Button>
-                      )}
-
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">
-                            O usar configuración automática
-                          </span>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={handleConnectStripe}
-                        disabled={loading}
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs sm:text-sm"
-                      >
-                        <CreditCard className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                        <span className="hidden sm:inline">{loading ? 'Conectando...' : 'Conectar con Stripe (requiere cuenta completa)'}</span>
-                        <span className="sm:hidden">{loading ? 'Conectando...' : 'Conectar con Stripe'}</span>
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center gap-2 p-2 sm:p-3 bg-green-50 rounded-lg border border-green-200">
-                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-                        <span className="text-green-800 font-medium text-xs sm:text-sm">
-                          Tu cuenta Stripe está conectada correctamente
-                        </span>
-                      </div>
-
-                      <Button
-                        onClick={handleStripeLoginLink}
-                        disabled={loading}
-                        variant="outline"
-                        className="w-full text-xs sm:text-sm"
-                        size="sm"
-                      >
-                        <ExternalLink className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                        {loading ? 'Accediendo...' : 'Revisar tu cuenta en Stripe'}
-                      </Button>
-                    </div>
-                  )}
-
-                  {club && (
-                    <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-secondary/30 rounded-lg">
-                      <h4 className="font-medium text-xs sm:text-sm mb-2">Estado de la cuenta:</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground">Estado:</span>
-                          <Badge variant={isStripeConnected ? "default" : "secondary"} className="text-xs">
-                            {club.stripe_account_status || 'Desconectado'}
-                          </Badge>
-                        </div>
-                        {club.stripe_account_id && (
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">ID de cuenta:</span>
-                            <code className="text-xs bg-background px-2 py-1 rounded truncate max-w-[200px]">
-                              {club.stripe_account_id}
-                            </code>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                )}
+                <BillingDataForm club={club as any} />
+              </>
             )}
-          </TabsContent> */}
+          </TabsContent>
 
           <TabsContent value="general" className="space-y-3 sm:space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

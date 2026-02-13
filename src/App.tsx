@@ -52,6 +52,7 @@ import OwnerUsersPage from "@/pages/owner/OwnerUsersPage";
 import OwnerSystemPage from "@/pages/owner/OwnerSystemPage";
 import OwnerSettingsPage from "@/pages/owner/OwnerSettingsPage";
 import OwnerAbsencesWaitlistPage from "@/pages/owner/OwnerAbsencesWaitlistPage";
+import OwnerHoldedPage from "@/pages/owner/OwnerHoldedPage";
 import GuardianDashboard from "@/pages/GuardianDashboard";
 import GuardianClassesDashboard from "@/pages/GuardianClassesDashboard";
 import GuardianSetupPage from "@/pages/GuardianSetupPage";
@@ -205,6 +206,7 @@ function App() {
           <Route path="clubs" element={<OwnerClubsPage />} />
           <Route path="users" element={<OwnerUsersPage />} />
           <Route path="absences-waitlist" element={<OwnerAbsencesWaitlistPage />} />
+          <Route path="holded" element={<OwnerHoldedPage />} />
           <Route path="system" element={<OwnerSystemPage />} />
           <Route path="settings" element={<OwnerSettingsPage />} />
           <Route path="whatsapp-reports" element={<WhatsAppReportsConfigPage />} />
