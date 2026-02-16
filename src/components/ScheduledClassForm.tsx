@@ -647,8 +647,14 @@ export default function ScheduledClassForm({
                                 <SelectItem key={`${hourStr}:00`} value={`${hourStr}:00`}>
                                   {`${hourStr}:00`}
                                 </SelectItem>,
+                                <SelectItem key={`${hourStr}:15`} value={`${hourStr}:15`}>
+                                  {`${hourStr}:15`}
+                                </SelectItem>,
                                 <SelectItem key={`${hourStr}:30`} value={`${hourStr}:30`}>
                                   {`${hourStr}:30`}
+                                </SelectItem>,
+                                <SelectItem key={`${hourStr}:45`} value={`${hourStr}:45`}>
+                                  {`${hourStr}:45`}
                                 </SelectItem>
                               ];
                             }).flat()}
