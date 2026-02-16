@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, Euro, GraduationCap, Search, Lock } from "lucide-react";
+import { Calendar, Clock, Users, Target, ArrowLeft, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, MapPin, GraduationCap, Search, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -957,47 +957,6 @@ export default function ScheduledClassForm({
                     );
                   }} />
 
-                  {/* Price */}
-                  <FormField control={form.control} name="monthly_price" render={({
-                    field
-                  }) => (
-                    <Card className="border-primary/20">
-                      <CardContent className="pt-6">
-                        <FormItem>
-                          <div className="flex items-center gap-2 mb-3">
-                            <Euro className="h-5 w-5 text-primary" />
-                            <FormLabel className="text-base font-semibold">
-                              Precio Mensual
-                            </FormLabel>
-                          </div>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="0.00"
-                                className="h-12 text-lg pr-12"
-                                value={field.value ?? 0}
-                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
-                                €/mes
-                              </div>
-                            </div>
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
-                            <span className="text-primary mt-0.5">ℹ</span>
-                            {field.value === 0 || !field.value ? "Clase gratuita" : "Precio mensual"}
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      </CardContent>
-                    </Card>
-                  )} />
                 </div>
 
                 {/* Objective - Secondary */}
