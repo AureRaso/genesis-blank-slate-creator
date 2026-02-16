@@ -197,6 +197,7 @@ const WeekAttendancePage = () => {
     notifyParticipants: boolean;
     availableClasses: { classId: string; className: string; classTime: string; clubId: string }[];
     reason: string;
+    isFinished: boolean;
   }>({
     open: false,
     selectedClasses: [],
@@ -204,6 +205,7 @@ const WeekAttendancePage = () => {
     notifyParticipants: true,
     availableClasses: [],
     reason: '',
+    isFinished: false,
   });
 
   // Estado para diálogo de eliminación de clase
@@ -400,9 +402,24 @@ const WeekAttendancePage = () => {
   };
 
   // Handler para cancelar clase - ahora calcula las clases disponibles del mismo día
-  const handleCancelClass = (classId: string, className: string, classDate: string, classTime: string) => {
+  const handleCancelClass = (classId: string, className: string, classDate: string, classTime: string, isFinished: boolean = false) => {
     const now = new Date();
     const targetDayName = getDayOfWeekInSpanish(new Date(classDate + 'T00:00:00'));
+
+    // Si es una clase finalizada, solo incluir la clase clickeada
+    if (isFinished) {
+      const clickedClass = { classId, className, classTime, clubId: (classes || []).find((c: any) => c.id === classId)?.club_id || '' };
+      setCancelClassDialog({
+        open: true,
+        selectedClasses: [clickedClass],
+        classDate,
+        notifyParticipants: false,
+        availableClasses: [clickedClass],
+        reason: '',
+        isFinished: true,
+      });
+      return;
+    }
 
     // Obtener todas las clases del mismo día que aún no hayan empezado y no estén canceladas
     const availableClasses = (classes || [])
@@ -453,6 +470,7 @@ const WeekAttendancePage = () => {
       notifyParticipants: true,
       availableClasses,
       reason: '',
+      isFinished: false,
     });
   };
 
@@ -574,7 +592,8 @@ const WeekAttendancePage = () => {
       classDate: '',
       notifyParticipants: true,
       availableClasses: [],
-      reason: ''
+      reason: '',
+      isFinished: false,
     });
   };
 
@@ -1246,15 +1265,13 @@ const WeekAttendancePage = () => {
                                     Editar clase
                                   </DropdownMenuItem>
                                 )}
-                                {!hasEnded && (
-                                  <DropdownMenuItem
-                                    onClick={() => handleCancelClass(classData.id, classData.name, notificationDate, classData.start_time)}
+                                <DropdownMenuItem
+                                    onClick={() => handleCancelClass(classData.id, classData.name, notificationDate, classData.start_time, hasEnded)}
                                     className="text-amber-600 focus:text-amber-700"
                                   >
                                     <Ban className="h-4 w-4 mr-2" />
                                     Cancelar clase
                                   </DropdownMenuItem>
-                                )}
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteClass(classData.id, classData.name, classData.start_time, notificationDate)}
                                   className="text-red-600 focus:text-red-700"
@@ -1940,19 +1957,21 @@ const WeekAttendancePage = () => {
                       />
                     </div>
 
-                    {/* Opción de notificar */}
-                    <div className="flex items-center space-x-2 pt-2 border-t">
-                      <Checkbox
-                        id="notify-participants-week"
-                        checked={cancelClassDialog.notifyParticipants}
-                        onCheckedChange={(checked) =>
-                          setCancelClassDialog({ ...cancelClassDialog, notifyParticipants: checked === true })
-                        }
-                      />
-                      <Label htmlFor="notify-participants-week" className="text-sm font-medium cursor-pointer">
-                        Notificar a los alumnos por WhatsApp
-                      </Label>
-                    </div>
+                    {/* Opción de notificar (oculta para clases finalizadas) */}
+                    {!cancelClassDialog.isFinished && (
+                      <div className="flex items-center space-x-2 pt-2 border-t">
+                        <Checkbox
+                          id="notify-participants-week"
+                          checked={cancelClassDialog.notifyParticipants}
+                          onCheckedChange={(checked) =>
+                            setCancelClassDialog({ ...cancelClassDialog, notifyParticipants: checked === true })
+                          }
+                        />
+                        <Label htmlFor="notify-participants-week" className="text-sm font-medium cursor-pointer">
+                          Notificar a los alumnos por WhatsApp
+                        </Label>
+                      </div>
+                    )}
                   </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>

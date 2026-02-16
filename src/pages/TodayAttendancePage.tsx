@@ -157,6 +157,7 @@ const TodayAttendancePage = () => {
     notifyParticipants: boolean;
     availableClasses: { classId: string; className: string; classTime: string; clubId: string }[];
     reason: string;
+    isFinished: boolean;
   }>({
     open: false,
     selectedClasses: [],
@@ -164,6 +165,7 @@ const TodayAttendancePage = () => {
     notifyParticipants: true,
     availableClasses: [],
     reason: '',
+    isFinished: false,
   });
 
   // Estado para diálogo de eliminación de clase
@@ -252,9 +254,24 @@ const TodayAttendancePage = () => {
   };
 
   // Handler para cancelar clase - calcula las clases disponibles de hoy
-  const handleCancelClass = (classId: string, className: string, classTime: string) => {
+  const handleCancelClass = (classId: string, className: string, classTime: string, isFinished: boolean = false) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
+
+    // Si es una clase finalizada, solo incluir la clase clickeada
+    if (isFinished) {
+      const clickedClass = { classId, className, classTime, clubId: (classes || []).find((c: any) => c.id === classId)?.club_id || '' };
+      setCancelClassDialog({
+        open: true,
+        selectedClasses: [clickedClass],
+        classDate: today,
+        notifyParticipants: false,
+        availableClasses: [clickedClass],
+        reason: '',
+        isFinished: true,
+      });
+      return;
+    }
 
     // Obtener todas las clases de hoy que aún no hayan empezado y no estén canceladas
     const availableClasses = (classes || [])
@@ -294,6 +311,7 @@ const TodayAttendancePage = () => {
       notifyParticipants: true,
       availableClasses,
       reason: '',
+      isFinished: false,
     });
   };
 
@@ -417,6 +435,7 @@ const TodayAttendancePage = () => {
       notifyParticipants: true,
       availableClasses: [],
       reason: '',
+      isFinished: false,
     });
   };
 
@@ -880,8 +899,13 @@ const TodayAttendancePage = () => {
             ).length;
             const maxParticipants = classData.max_participants || 8;
             const confirmationRate = maxParticipants > 0 ? (confirmedCount / maxParticipants) * 100 : 0;
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
             const isCancelled = isClassCancelled(classData.id, today);
+            const [classHrs, classMins] = classData.start_time.split(':').map(Number);
+            const classEndTime = new Date();
+            classEndTime.setHours(classHrs, classMins + (classData.duration_minutes || 60), 0, 0);
+            const hasEnded = now > classEndTime;
 
             console.log('🔍 Rendering class card:', {
               classId: classData.id,
@@ -946,7 +970,7 @@ const TodayAttendancePage = () => {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
-                              onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time)}
+                              onClick={() => handleCancelClass(classData.id, classData.name, classData.start_time, hasEnded)}
                               className="text-amber-600 focus:text-amber-700"
                             >
                               <Ban className="h-4 w-4 mr-2" />
@@ -1607,19 +1631,21 @@ const TodayAttendancePage = () => {
                   />
                 </div>
 
-                {/* Opción de notificar */}
-                <div className="flex items-center space-x-2 pt-2 border-t">
-                  <Checkbox
-                    id="notify-participants"
-                    checked={cancelClassDialog.notifyParticipants}
-                    onCheckedChange={(checked) =>
-                      setCancelClassDialog({ ...cancelClassDialog, notifyParticipants: checked === true })
-                    }
-                  />
-                  <Label htmlFor="notify-participants" className="text-sm font-medium cursor-pointer">
-                    Notificar a los alumnos por WhatsApp
-                  </Label>
-                </div>
+                {/* Opción de notificar (oculta para clases finalizadas) */}
+                {!cancelClassDialog.isFinished && (
+                  <div className="flex items-center space-x-2 pt-2 border-t">
+                    <Checkbox
+                      id="notify-participants"
+                      checked={cancelClassDialog.notifyParticipants}
+                      onCheckedChange={(checked) =>
+                        setCancelClassDialog({ ...cancelClassDialog, notifyParticipants: checked === true })
+                      }
+                    />
+                    <Label htmlFor="notify-participants" className="text-sm font-medium cursor-pointer">
+                      Notificar a los alumnos por WhatsApp
+                    </Label>
+                  </div>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
