@@ -66,15 +66,6 @@ const formSchema = z.object({
   assigned_trainer_id_2: z.string().optional(),
   // Precio mensual
   monthly_price: z.number().min(0, "El precio debe ser mayor o igual a 0")
-}).refine(data => {
-  if (data.level_format === "numeric") {
-    return data.level_from && data.level_to && data.level_from <= data.level_to;
-  } else {
-    return !!data.custom_level;
-  }
-}, {
-  message: "Configure the level correctly",
-  path: ["level_from"]
 });
 type FormData = z.infer<typeof formSchema>;
 interface ScheduledClassFormProps {
@@ -508,123 +499,17 @@ export default function ScheduledClassForm({
             {currentStep === 1 && <div className="space-y-6">
                 {/* Single row layout for all basic info fields */}
                 <div className="space-y-4">
-                  {/* Numeric level format: all fields in one row */}
-                  {watchedValues.level_format === "numeric" && (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                      <div className="md:col-span-4">
-                        <FormField control={form.control} name="name" render={({
-                          field
-                        }) => <FormItem>
-                              <FormLabel>{t('classes.className')}</FormLabel>
-                              <FormControl>
-                                <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>} />
-                      </div>
-
-                      <div className="md:col-span-4">
-                        <FormField control={form.control} name="level_format" render={({
-                          field
-                        }) => <FormItem>
-                              <FormLabel>{t('classes.levelFormat')}</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="numeric">{t('classes.numeric')}</SelectItem>
-                                  <SelectItem value="levante">{t('classes.levelCategories')}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>} />
-                      </div>
-
-                      <div className="md:col-span-4">
-                        <div className="space-y-2">
-                          <FormLabel>Nivel</FormLabel>
-                          <div className="flex gap-2 items-center">
-                            <FormField control={form.control} name="level_from" render={({
-                              field
-                            }) => <FormItem className="flex-1">
-                                  <FormControl>
-                                    <Input placeholder="Desde" className="w-full text-center" type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>} />
-                            <span className="text-muted-foreground">-</span>
-                            <FormField control={form.control} name="level_to" render={({
-                              field
-                            }) => <FormItem className="flex-1">
-                                  <FormControl>
-                                    <Input placeholder="Hasta" className="w-full text-center" type="number" min="1.0" max="10.0" step="0.1" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Levante level format: name, format, and category in one row */}
-                  {watchedValues.level_format === "levante" && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField control={form.control} name="name" render={({
-                        field
-                      }) => <FormItem>
-                            <FormLabel>{t('classes.className')}</FormLabel>
-                            <FormControl>
-                              <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>} />
-
-                      <FormField control={form.control} name="level_format" render={({
-                        field
-                      }) => <FormItem>
-                            <FormLabel>{t('classes.levelFormat')}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="numeric">{t('classes.numeric')}</SelectItem>
-                                <SelectItem value="levante">{t('classes.levelCategories')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>} />
-
-                      <FormField control={form.control} name="custom_level" render={({
-                        field
-                      }) => <FormItem>
-                            <FormLabel>{t('classes.categoryLevel')}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('classes.selectLevel')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {LEVANTE_LEVELS.map(level => <SelectItem key={level.value} value={level.value}>
-                                    {level.label}
-                                  </SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>} />
-                    </div>
-                  )}
-
-                  {watchedValues.level_format === "numeric" && <p className="text-sm text-muted-foreground">
-                      
-                    </p>}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({
+                      field
+                    }) => <FormItem>
+                          <FormLabel>{t('classes.className')}</FormLabel>
+                          <FormControl>
+                            <Input placeholder={t('classes.classNamePlaceholder')} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>} />
+                  </div>
                 </div>
 
                 <Separator />
