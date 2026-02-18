@@ -34,7 +34,10 @@ const ClubCodeInput = ({
 
   useEffect(() => {
     setInputValue(value);
-  }, [value]);
+    if (value.length === 3 && /^[A-Z]{3}$/.test(value)) {
+      validateClubCode(value);
+    }
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validateClubCode = async (code: string) => {
     // Reset estados

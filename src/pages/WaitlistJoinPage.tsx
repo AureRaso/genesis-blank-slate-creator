@@ -265,7 +265,7 @@ const WaitlistJoinPage = () => {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                      className="w-full border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600"
                       onClick={() => {
                         const returnUrl = encodeURIComponent(`/waitlist/${classId}/${date}`);
                         const clubParam = clubCode ? `&club_code=${clubCode}` : '';
