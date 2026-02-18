@@ -2188,13 +2188,14 @@
     },
     "buttons": {
       "loading": "Loading...",
-      "loginToJoin": "Log in to join",
+      "loginToJoin": "Log in",
+      "registerToJoin": "Create account",
       "joining": "Joining...",
       "joinWaitlist": "Join the Waitlist"
     },
     "footer": {
       "loggedIn": "By clicking you accept that your request will be reviewed by the coach",
-      "loggedOut": "You need to log in to join the waitlist"
+      "loggedOut": "Log in or create an account to join the waitlist"
     }
   }
 }

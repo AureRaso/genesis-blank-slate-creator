@@ -1677,13 +1677,14 @@
     },
     "buttons": {
       "loading": "Cargando...",
-      "loginToJoin": "Iniciar sesión para unirme",
+      "loginToJoin": "Iniciar sesión",
+      "registerToJoin": "Registrarme",
       "joining": "Uniéndose...",
       "joinWaitlist": "Unirme a la Lista de Espera"
     },
     "footer": {
       "loggedIn": "Al hacer clic aceptas que tu solicitud sea revisada por el profesor",
-      "loggedOut": "Necesitas iniciar sesión para unirte a la lista de espera"
+      "loggedOut": "Inicia sesión o regístrate para unirte a la lista de espera"
     }
   },
   "months": {

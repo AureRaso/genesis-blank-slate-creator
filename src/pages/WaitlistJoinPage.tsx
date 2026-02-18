@@ -5,11 +5,12 @@ import { useCanJoinWaitlist, useJoinWaitlist } from "@/hooks/useClassWaitlist";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, Calendar, User, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Clock, Calendar, User, UserPlus, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GuardianWaitlistFlow } from "@/components/waitlist/GuardianWaitlistFlow";
+import { supabase } from "@/integrations/supabase/client";
 
 const WaitlistJoinPage = () => {
   const { classId, date } = useParams<{ classId: string; date: string }>();
@@ -26,6 +27,19 @@ const WaitlistJoinPage = () => {
   const { data: canJoinData, isLoading: checkingEligibility } = useCanJoinWaitlist(classId || '', date || '');
   const { mutate: joinWaitlist, isPending: isJoining, isSuccess } = useJoinWaitlist();
   const [countdown, setCountdown] = useState(3);
+  const [clubCode, setClubCode] = useState<string>('');
+
+  // Fetch club_code so we can pre-fill it in the registration form
+  useEffect(() => {
+    const clubId = canJoinData?.classData?.club_id;
+    if (!clubId) return;
+    supabase
+      .from('clubs')
+      .select('club_code')
+      .eq('id', clubId)
+      .single()
+      .then(({ data }) => { if (data?.club_code) setClubCode(data.club_code); });
+  }, [canJoinData?.classData?.club_id]);
 
   // Don't redirect to auth - let users see the waitlist info first
   // Authentication will be required when they click "Join Waitlist"
@@ -235,19 +249,33 @@ const WaitlistJoinPage = () => {
                     {t('waitlistJoin.buttons.loading')}
                   </Button>
                 ) : !user ? (
-                  // Not authenticated - show login button
-                  <Button
-                    size="lg"
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => {
-                      // Save current URL in sessionStorage for redirect after login
-                      sessionStorage.setItem('returnUrl', `/waitlist/${classId}/${date}`);
-                      navigate('/auth', { state: { from: `/waitlist/${classId}/${date}` } });
-                    }}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    {t('waitlistJoin.buttons.loginToJoin')}
-                  </Button>
+                  // Not authenticated - show login and register buttons
+                  <>
+                    <Button
+                      size="lg"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        const returnUrl = encodeURIComponent(`/waitlist/${classId}/${date}`);
+                        navigate(`/auth?return=${returnUrl}`);
+                      }}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      {t('waitlistJoin.buttons.loginToJoin')}
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                      onClick={() => {
+                        const returnUrl = encodeURIComponent(`/waitlist/${classId}/${date}`);
+                        const clubParam = clubCode ? `&club_code=${clubCode}` : '';
+                        navigate(`/auth?tab=signup${clubParam}&return=${returnUrl}`);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      {t('waitlistJoin.buttons.registerToJoin')}
+                    </Button>
+                  </>
                 ) : (
                   // Authenticated - show join button
                   <Button

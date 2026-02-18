@@ -2110,13 +2110,14 @@
     },
     "buttons": {
       "loading": "Caricamento...",
-      "loginToJoin": "Accedi per iscriverti",
+      "loginToJoin": "Accedi",
+      "registerToJoin": "Registrati",
       "joining": "Iscrizione in corso...",
       "joinWaitlist": "Iscriviti alla Lista d'Attesa"
     },
     "footer": {
       "loggedIn": "Cliccando accetti che la tua richiesta venga esaminata dall'allenatore",
-      "loggedOut": "Devi accedere per iscriverti alla lista d'attesa"
+      "loggedOut": "Accedi o registrati per iscriverti alla lista d'attesa"
     }
   }
 }

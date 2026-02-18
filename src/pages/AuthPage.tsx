@@ -27,7 +27,14 @@ export const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [level, setLevel] = useState("5"); // Nivel por defecto: 5
-  const [clubCode, setClubCode] = useState("");
+  const [clubCode, setClubCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('club_code') || '';
+  });
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'signup' ? 'signup' : 'signin';
+  });
   const [selectedClubId, setSelectedClubId] = useState("");
   const [selectedClubName, setSelectedClubName] = useState<string | null>(null);
   const [userType, setUserType] = useState<'player' | 'guardian'>('player');
@@ -182,10 +189,13 @@ export const AuthPage = () => {
             }
           }
 
-          // Check for redirect URL
-          const redirectUrl = localStorage.getItem('redirectAfterLogin');
+          // Check for redirect URL (URL param takes priority over localStorage)
+          const currentParams = new URLSearchParams(window.location.search);
+          const returnUrlParam = currentParams.get('return');
+          const storedRedirect = localStorage.getItem('redirectAfterLogin');
+          const redirectUrl = returnUrlParam || storedRedirect;
           if (redirectUrl) {
-            localStorage.removeItem('redirectAfterLogin');
+            if (!returnUrlParam) localStorage.removeItem('redirectAfterLogin');
             safeRedirect(redirectUrl);
           } else {
             safeRedirect("/dashboard");
@@ -528,7 +538,7 @@ export const AuthPage = () => {
     </CardHeader>
     
     <CardContent className="px-6 pb-8">
-      <Tabs defaultValue="signin" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-8 h-12 bg-slate-100/80 p-1 rounded-xl">
           <TabsTrigger
             value="signin"
