@@ -2,13 +2,14 @@
 --
 -- Handles two class models:
 -- 1. Single-date classes (start_date = end_date): each class_participant = 1 session
---    - attended: trainer confirmed attendance (attendance_confirmed_for_date IS NOT NULL)
---    - no_show: student confirmed absence (absence_confirmed = true)
---    This avoids retroactive enrollment issues since only trainer-confirmed attendance counts.
+--    Attended if:
+--      a) Trainer confirmed attendance (attendance_confirmed_for_date IS NOT NULL), OR
+--      b) Class date >= student enrollment date (se.created_at) AND no absence confirmed
+--    This handles both: retroactive classes with trainer confirmation AND
+--    recent classes where trainer didn't explicitly mark "Presente".
 --
 -- 2. Recurring classes (start_date != end_date): generate_series with days_of_week
---    - attended = total_past_sessions - cancelled_sessions - absences
---    - no_show = absence_confirmed
+--    attended = total_past_sessions - cancelled_sessions - absences
 
 CREATE OR REPLACE FUNCTION get_bulk_attendance_counts(
   p_student_enrollment_ids UUID[]
@@ -30,9 +31,15 @@ BEGIN
       -- Attended count per class_participant
       CASE
         WHEN pc.start_date = pc.end_date THEN
-          -- Single-date class: attended if trainer confirmed attendance for a past date
-          CASE WHEN cp.attendance_confirmed_for_date IS NOT NULL
-                AND pc.start_date < CURRENT_DATE
+          -- Single-date class: attended if past, not absent, AND either:
+          -- (a) trainer confirmed attendance, OR
+          -- (b) class date is on/after student enrollment date
+          CASE WHEN pc.start_date < CURRENT_DATE
+                AND cp.absence_confirmed IS NOT TRUE
+                AND (
+                  cp.attendance_confirmed_for_date IS NOT NULL
+                  OR pc.start_date >= se.created_at::date
+                )
                THEN 1 ELSE 0 END
         ELSE
           -- Recurring class: schedule-based = total_sessions - cancelled - absences
@@ -79,6 +86,7 @@ BEGIN
       END::BIGINT as no_show_for_class
     FROM class_participants cp
     JOIN programmed_classes pc ON cp.class_id = pc.id
+    JOIN student_enrollments se ON cp.student_enrollment_id = se.id
     WHERE cp.student_enrollment_id = ANY(p_student_enrollment_ids)
       AND cp.is_substitute IS NOT TRUE
   )
@@ -93,4 +101,4 @@ $$ LANGUAGE plpgsql;
 
 GRANT EXECUTE ON FUNCTION get_bulk_attendance_counts(UUID[]) TO authenticated;
 
-COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Single-date classes: uses trainer-confirmed attendance (attendance_confirmed_for_date). Recurring: schedule-based with generate_series. No-show from class_participants.absence_confirmed. Uses SECURITY DEFINER to bypass RLS.';
+COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Single-date classes: attended if trainer confirmed OR class after enrollment date and no absence. Recurring: schedule-based. Uses SECURITY DEFINER to bypass RLS.';
