@@ -1,11 +1,13 @@
 -- Calculate attendance counts per student by deriving from:
--- attended = total_past_scheduled_sessions - cancelled_sessions - absences
+-- attended = total_past_sessions - cancelled_sessions - absences
 -- no_show = absences from class_participants.absence_confirmed
 --
--- This approach works because the system auto-confirms attendance for all students.
--- Only absences are explicitly recorded. So "attended" = sessions that happened minus known absences.
--- Absences are read from class_participants (not class_attendance_confirmations) because
--- student self-service absence only writes to class_participants.
+-- Handles two class models:
+-- 1. Single-date classes (start_date = end_date): each class_participant = 1 session
+-- 2. Recurring classes (start_date != end_date): generate_series with days_of_week
+--
+-- Absences are read from class_participants.absence_confirmed (not class_attendance_confirmations)
+-- because student self-service absence only writes to class_participants.
 
 CREATE OR REPLACE FUNCTION get_bulk_attendance_counts(
   p_student_enrollment_ids UUID[]
@@ -24,30 +26,40 @@ BEGIN
       cp.student_enrollment_id,
       cp.id as participant_id,
       cp.class_id,
-      -- Total past scheduled sessions (generated from class schedule)
-      (
-        SELECT COUNT(*)
-        FROM generate_series(
-          GREATEST(pc.start_date, cp.created_at::date)::timestamp,
-          (LEAST(COALESCE(pc.end_date, CURRENT_DATE - 1), CURRENT_DATE - 1))::timestamp,
-          interval '1 day'
-        ) AS d(d)
-        WHERE (
-          (EXTRACT(DOW FROM d.d) = 1 AND 'lunes' = ANY(pc.days_of_week)) OR
-          (EXTRACT(DOW FROM d.d) = 2 AND 'martes' = ANY(pc.days_of_week)) OR
-          (EXTRACT(DOW FROM d.d) = 3 AND ('miércoles' = ANY(pc.days_of_week) OR 'miercoles' = ANY(pc.days_of_week))) OR
-          (EXTRACT(DOW FROM d.d) = 4 AND 'jueves' = ANY(pc.days_of_week)) OR
-          (EXTRACT(DOW FROM d.d) = 5 AND 'viernes' = ANY(pc.days_of_week)) OR
-          (EXTRACT(DOW FROM d.d) = 6 AND ('sábado' = ANY(pc.days_of_week) OR 'sabado' = ANY(pc.days_of_week))) OR
-          (EXTRACT(DOW FROM d.d) = 0 AND 'domingo' = ANY(pc.days_of_week))
-        )
-      ) as total_sessions,
-      -- Cancelled sessions for this class in the relevant date range
+      -- Total past scheduled sessions
+      CASE
+        WHEN pc.start_date = pc.end_date THEN
+          -- Single-date class: 1 session if date is in the past
+          CASE WHEN pc.start_date < CURRENT_DATE THEN 1 ELSE 0 END
+        ELSE
+          -- Recurring class: count matching days of week in date range
+          (
+            SELECT COUNT(*)
+            FROM generate_series(
+              GREATEST(pc.start_date, cp.created_at::date)::timestamp,
+              (LEAST(COALESCE(pc.end_date, CURRENT_DATE - 1), CURRENT_DATE - 1))::timestamp,
+              interval '1 day'
+            ) AS d(d)
+            WHERE (
+              (EXTRACT(DOW FROM d.d) = 1 AND 'lunes' = ANY(pc.days_of_week)) OR
+              (EXTRACT(DOW FROM d.d) = 2 AND 'martes' = ANY(pc.days_of_week)) OR
+              (EXTRACT(DOW FROM d.d) = 3 AND ('miércoles' = ANY(pc.days_of_week) OR 'miercoles' = ANY(pc.days_of_week))) OR
+              (EXTRACT(DOW FROM d.d) = 4 AND 'jueves' = ANY(pc.days_of_week)) OR
+              (EXTRACT(DOW FROM d.d) = 5 AND 'viernes' = ANY(pc.days_of_week)) OR
+              (EXTRACT(DOW FROM d.d) = 6 AND ('sábado' = ANY(pc.days_of_week) OR 'sabado' = ANY(pc.days_of_week))) OR
+              (EXTRACT(DOW FROM d.d) = 0 AND 'domingo' = ANY(pc.days_of_week))
+            )
+          )
+      END::BIGINT as total_sessions,
+      -- Cancelled sessions for this class
       (
         SELECT COUNT(*)
         FROM cancelled_classes cc
         WHERE cc.programmed_class_id = cp.class_id
-          AND cc.cancelled_date >= GREATEST(pc.start_date, cp.created_at::date)
+          AND cc.cancelled_date >= CASE
+            WHEN pc.start_date = pc.end_date THEN pc.start_date
+            ELSE GREATEST(pc.start_date, cp.created_at::date)
+          END
           AND cc.cancelled_date < CURRENT_DATE
       ) as cancelled_sessions,
       -- Absence: 1 if student confirmed absence for a past class, 0 otherwise
@@ -71,4 +83,4 @@ $$ LANGUAGE plpgsql;
 
 GRANT EXECUTE ON FUNCTION get_bulk_attendance_counts(UUID[]) TO authenticated;
 
-COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Attended = scheduled sessions - cancelled - absences. Absences from class_participants.absence_confirmed. Uses SECURITY DEFINER to bypass RLS.';
+COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Single-date classes: 1 session if past. Recurring: generate_series. Absences from class_participants.absence_confirmed. Uses SECURITY DEFINER to bypass RLS.';
