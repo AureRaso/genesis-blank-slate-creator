@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Calendar, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award, Wallet, User } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Building2, Calendar, ChevronRight, GraduationCap, LogOut, SquareTerminal, Trophy, UserCheck, Users, Zap, Bell, CreditCard, BookOpen, ClipboardCheck, MapPin, Phone, Settings, Tag, TrendingUp, Award, Wallet, User, Ticket, Package } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -332,15 +333,6 @@ const AppSidebar = () => {
       //   url: "/dashboard/student-scores",
       //   icon: Award
       // },
-      ...(club?.enable_monthly_payments ? [{
-        title: t('sidebar.paymentControl'),
-        url: "/dashboard/monthly-payments",
-        icon: Wallet
-      }, {
-        title: t('sidebar.paymentRates'),
-        url: "/dashboard/payment-rates",
-        icon: CreditCard
-      }] : []),
       {
         title: t('sidebar.players'),
         url: "/dashboard/players",
@@ -368,6 +360,24 @@ const AppSidebar = () => {
       }] : [])
     ]
   };
+
+  // Financial sub-items (conditional on feature flags)
+  const financialSubItems = [
+    ...(club?.enable_monthly_payments ? [
+      { title: t('sidebar.paymentControl'), url: "/dashboard/monthly-payments", icon: Wallet },
+      { title: t('sidebar.paymentRates'), url: "/dashboard/payment-rates", icon: CreditCard },
+    ] : []),
+    ...(club?.enable_bonos ? [
+      { title: t('sidebar.bonoTemplates'), url: "/dashboard/bono-templates", icon: Ticket },
+      { title: t('sidebar.bonoControl'), url: "/dashboard/bono-control", icon: Package },
+    ] : []),
+  ];
+
+  const showFinancialSection = financialSubItems.length > 0;
+
+  // Check if any financial sub-item is currently active
+  const isFinancialActive = financialSubItems.some(item => location.pathname === item.url);
+
   return <Sidebar variant="inset" className="w-64">
       <SidebarHeader className="flex items-center justify-center py-3">
         <Link to="/" className="flex items-center justify-center">
@@ -392,6 +402,34 @@ const AppSidebar = () => {
                   )}
                 </SidebarMenuButton>
               </SidebarMenuItem>)}
+            {/* Financial Control - collapsible group */}
+            {showFinancialSection && (
+              <Collapsible asChild defaultOpen={isFinancialActive} className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={t('sidebar.financialControl')}>
+                      <Wallet />
+                      <span>{t('sidebar.financialControl')}</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {financialSubItems.map(subItem => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild isActive={location.pathname === subItem.url}>
+                            <Link to={subItem.url}>
+                              <subItem.icon />
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            )}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

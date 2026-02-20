@@ -98,7 +98,22 @@ const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classD
 
       console.log('✅ Sustituto añadido:', data);
 
-      // 2. Rechazar todas las solicitudes de waitlist pendientes para esta clase y fecha
+      // 2. Non-blocking: try to deduct bono class for the substitute
+      try {
+        await supabase.rpc('deduct_bono_class', {
+          p_student_enrollment_id: studentEnrollmentId,
+          p_class_participant_id: data.id,
+          p_class_id: classId,
+          p_class_date: today,
+          p_is_waitlist: false,
+          p_class_name: className || null,
+          p_enrollment_type: 'substitute',
+        });
+      } catch (err) {
+        console.warn('[Bono] Failed to deduct class for substitute:', err);
+      }
+
+      // 3. Rechazar todas las solicitudes de waitlist pendientes para esta clase y fecha
       console.log('🔄 Rechazando solicitudes de waitlist pendientes para class_id:', classId, 'date:', today);
 
       const { data: rejectedRequests, error: rejectError } = await supabase
@@ -130,6 +145,8 @@ const SubstituteStudentSearch = ({ classId, clubId, className, classTime, classD
       // Invalidar waitlist queries para actualizar notificaciones de jugadores
       queryClient.invalidateQueries({ queryKey: ['my-waitlist-requests'] });
       queryClient.invalidateQueries({ queryKey: ['class-waitlist'] });
+      queryClient.invalidateQueries({ queryKey: ['student-bonos'] });
+      queryClient.invalidateQueries({ queryKey: ['participant-active-bonos'] });
       console.log('✅ Queries invalidadas');
 
       toast({

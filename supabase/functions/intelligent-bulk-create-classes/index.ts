@@ -156,7 +156,7 @@ async function validateClassData(classData: ClassToCreate, supabaseClient: any, 
   return true;
 }
 
-async function createClassParticipants(programmedClassId: string, participantIds: string[], classStartDate: string, supabaseClient: any) {
+async function createClassParticipants(programmedClassId: string, participantIds: string[], classStartDate: string, className: string, supabaseClient: any) {
   if (!participantIds || participantIds.length === 0) {
     return 0;
   }
@@ -178,7 +178,7 @@ async function createClassParticipants(programmedClassId: string, participantIds
   const { data: insertedData, error: insertError } = await supabaseClient
     .from('class_participants')
     .insert(participants)
-    .select();
+    .select('id, student_enrollment_id, class_id');
 
   if (insertError) {
     console.error('Error inserting class participants:', insertError);
@@ -186,7 +186,31 @@ async function createClassParticipants(programmedClassId: string, participantIds
   }
 
   console.log(`✅ Successfully assigned ${participants.length} participants to programmed class ${programmedClassId}`);
-  console.log(`🔵 Inserted data:`, insertedData);
+
+  // Non-blocking: try to deduct bono classes for each participant
+  if (insertedData && insertedData.length > 0) {
+    for (const participant of insertedData) {
+      try {
+        const { data: bonoResult, error: bonoError } = await supabaseClient.rpc('deduct_bono_class', {
+          p_student_enrollment_id: participant.student_enrollment_id,
+          p_class_participant_id: participant.id,
+          p_class_id: participant.class_id,
+          p_class_date: classStartDate,
+          p_is_waitlist: false,
+          p_class_name: className,
+          p_enrollment_type: 'fixed',
+        })
+        if (bonoError) {
+          console.warn(`[Bono] RPC error for participant ${participant.id}:`, bonoError)
+        } else {
+          console.log(`[Bono] Deduction result for participant ${participant.id}:`, bonoResult)
+        }
+      } catch (err) {
+        console.warn(`[Bono] Failed to deduct for participant ${participant.id}:`, err)
+      }
+    }
+  }
+
   return participants.length;
 }
 
@@ -240,7 +264,7 @@ async function createSingleClass(classData: ClassToCreate, supabaseClient: any, 
 
     // Create class participants if provided
     if (classData.participant_ids && classData.participant_ids.length > 0) {
-      const participantsCount = await createClassParticipants(createdClass.id, classData.participant_ids, classData.start_date, supabaseClient);
+      const participantsCount = await createClassParticipants(createdClass.id, classData.participant_ids, classData.start_date, classData.name, supabaseClient);
       console.log(`✅ Assigned ${participantsCount} participants to programmed class ${createdClass.id}`);
     }
 

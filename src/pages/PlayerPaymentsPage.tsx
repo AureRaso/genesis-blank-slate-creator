@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Wallet, Clock, CheckCircle2, AlertCircle, Loader2, Calendar, Euro, CreditCard, Banknote, Smartphone } from "lucide-react";
+import { Wallet, Clock, CheckCircle2, AlertCircle, Loader2, Calendar, Euro, CreditCard, Banknote, Smartphone, Ticket } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { useMyPayments, useMarkPaymentAsPaid, StudentPayment } from "@/hooks/useStudentPayments";
 import { useClubs } from "@/hooks/useClubs";
 import { formatCurrency } from "@/lib/currency";
+import PlayerBonosTab from "@/components/bonos/PlayerBonosTab";
 
 const STATUS_COLORS = {
   pendiente: "bg-amber-50 text-amber-700 border-amber-200",
@@ -75,6 +76,7 @@ export default function PlayerPaymentsPage() {
     return labels[method] || method;
   };
 
+  const [topTab, setTopTab] = useState<string>("payments");
   const [activeTab, setActiveTab] = useState<string>("pendiente");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<StudentPayment | null>(null);
@@ -246,75 +248,95 @@ export default function PlayerPaymentsPage() {
         <p className="text-gray-500 text-sm mt-1">{t("myPayments.subtitle")}</p>
       </div>
 
-      {/* Summary Card */}
-      {totalPending > 0 && (
-        <Card className="p-4 mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-amber-700">{t("myPayments.totalPending")}</p>
-              <p className="text-2xl font-bold text-amber-900">{formatAmount(totalPending)}</p>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-              <AlertCircle className="h-6 w-6 text-amber-600" />
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="pendiente" className="flex items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {t("myPayments.tabs.pending")} ({pendingPayments.length})
+      {/* Top-level Tabs: Payments / Bonos */}
+      <Tabs value={topTab} onValueChange={setTopTab} className="w-full mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="payments" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            {t("myPayments.topTabs.payments")}
           </TabsTrigger>
-          <TabsTrigger value="en_revision" className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {t("myPayments.tabs.inReview")} ({inReviewPayments.length})
-          </TabsTrigger>
-          <TabsTrigger value="pagado" className="flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" />
-            {t("myPayments.tabs.paid")} ({paidPayments.length})
+          <TabsTrigger value="bonos" className="flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            {t("myPayments.topTabs.bonos")}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pendiente" className="space-y-4">
-          {pendingPayments.length === 0 ? (
-            <Card className="p-8 text-center border-dashed">
-              <CheckCircle2 className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
-              <p className="text-gray-500">{t("myPayments.empty.noPending")}</p>
+        <TabsContent value="payments">
+          {/* Summary Card */}
+          {totalPending > 0 && (
+            <Card className="p-4 mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-amber-700">{t("myPayments.totalPending")}</p>
+                  <p className="text-2xl font-bold text-amber-900">{formatAmount(totalPending)}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-amber-600" />
+                </div>
+              </div>
             </Card>
-          ) : (
-            pendingPayments.map(payment => (
-              <PaymentCard key={payment.id} payment={payment} />
-            ))
           )}
+
+          {/* Payment Status Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="pendiente" className="flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {t("myPayments.tabs.pending")} ({pendingPayments.length})
+              </TabsTrigger>
+              <TabsTrigger value="en_revision" className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {t("myPayments.tabs.inReview")} ({inReviewPayments.length})
+              </TabsTrigger>
+              <TabsTrigger value="pagado" className="flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                {t("myPayments.tabs.paid")} ({paidPayments.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pendiente" className="space-y-4">
+              {pendingPayments.length === 0 ? (
+                <Card className="p-8 text-center border-dashed">
+                  <CheckCircle2 className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
+                  <p className="text-gray-500">{t("myPayments.empty.noPending")}</p>
+                </Card>
+              ) : (
+                pendingPayments.map(payment => (
+                  <PaymentCard key={payment.id} payment={payment} />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="en_revision" className="space-y-4">
+              {inReviewPayments.length === 0 ? (
+                <Card className="p-8 text-center border-dashed">
+                  <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">{t("myPayments.empty.noInReview")}</p>
+                </Card>
+              ) : (
+                inReviewPayments.map(payment => (
+                  <PaymentCard key={payment.id} payment={payment} />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="pagado" className="space-y-4">
+              {paidPayments.length === 0 ? (
+                <Card className="p-8 text-center border-dashed">
+                  <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">{t("myPayments.empty.noPaid")}</p>
+                </Card>
+              ) : (
+                paidPayments.map(payment => (
+                  <PaymentCard key={payment.id} payment={payment} />
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        <TabsContent value="en_revision" className="space-y-4">
-          {inReviewPayments.length === 0 ? (
-            <Card className="p-8 text-center border-dashed">
-              <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">{t("myPayments.empty.noInReview")}</p>
-            </Card>
-          ) : (
-            inReviewPayments.map(payment => (
-              <PaymentCard key={payment.id} payment={payment} />
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="pagado" className="space-y-4">
-          {paidPayments.length === 0 ? (
-            <Card className="p-8 text-center border-dashed">
-              <Wallet className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">{t("myPayments.empty.noPaid")}</p>
-            </Card>
-          ) : (
-            paidPayments.map(payment => (
-              <PaymentCard key={payment.id} payment={payment} />
-            ))
-          )}
+        <TabsContent value="bonos">
+          <PlayerBonosTab />
         </TabsContent>
       </Tabs>
 

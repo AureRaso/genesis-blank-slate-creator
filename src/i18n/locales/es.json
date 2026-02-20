@@ -63,7 +63,10 @@
     "attendanceToday": "Asistencia Hoy",
     "payments": "Pagos",
     "paymentControl": "Control de Pagos",
-    "paymentRates": "Tarifas"
+    "paymentRates": "Tarifas",
+    "bonoTemplates": "Bonos",
+    "bonoControl": "Control de Bonos",
+    "financialControl": "Control Financiero"
   },
   "userMenu": {
     "superadmin": "Administrador",
@@ -2150,8 +2153,12 @@
   },
   "myPayments": {
     "title": "Mis Pagos",
-    "subtitle": "Gestiona los pagos de tus clases",
+    "subtitle": "Gestiona los pagos y bonos de tus clases",
     "totalPending": "Total pendiente de pago",
+    "topTabs": {
+      "payments": "Pagos",
+      "bonos": "Bonos"
+    },
     "tabs": {
       "pending": "Pendientes",
       "inReview": "En Revisión",
@@ -2193,5 +2200,198 @@
       "cancel": "Cancelar",
       "confirm": "Confirmar Pago"
     }
+  },
+  "bonoTemplates": {
+    "title": "Bonos de Clases",
+    "subtitle": "Configura packs de clases prepagados para tus alumnos",
+    "newTemplate": "Nuevo Bono",
+    "assignBonos": "Asignar Bonos",
+    "activate": "Activar bono",
+    "deactivate": "Desactivar bono",
+    "empty": {
+      "title": "No hay bonos configurados",
+      "description": "Crea tu primer pack de clases para ofrecer a tus alumnos",
+      "action": "Crear Bono"
+    },
+    "table": {
+      "name": "Nombre",
+      "classes": "Clases",
+      "price": "Precio",
+      "pricePerClass": "Precio/Clase",
+      "validity": "Validez",
+      "status": "Estado",
+      "actions": "Acciones",
+      "classesUnit": "clases",
+      "classUnit": "clase",
+      "usageType": "Tipo de uso",
+      "noExpiry": "Sin caducidad",
+      "year": "año",
+      "years": "años",
+      "month": "mes",
+      "months": "meses",
+      "days": "días"
+    },
+    "form": {
+      "createTitle": "Nuevo Bono",
+      "editTitle": "Editar Bono",
+      "createDescription": "Configura un nuevo pack de clases prepagado",
+      "editDescription": "Modifica los datos del bono",
+      "name": "Nombre",
+      "namePlaceholder": "Ej: Pack 10 Clases",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción opcional...",
+      "totalClasses": "Nº de Clases",
+      "price": "Precio Total",
+      "pricePerClassPreview": "Precio por clase: {{price}}",
+      "validityDays": "Días de Validez",
+      "validityDaysPlaceholder": "Sin caducidad",
+      "validityDaysHelp": "Déjalo vacío si el bono no caduca. Ej: 90 = caduca a los 3 meses desde la compra.",
+      "usageType": "Tipo de uso",
+      "usageTypeHelp": "Define si este bono se descuenta en plazas fijas, en huecos de lista de espera, o en ambos.",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "create": "Crear"
+    },
+    "usageTypes": {
+      "fixed": "Solo plazas fijas",
+      "waitlist": "Solo lista de espera",
+      "both": "Ambos"
+    },
+    "deleteDialog": {
+      "title": "¿Eliminar bono?",
+      "description": "Esta acción no se puede deshacer. Si hay alumnos con este bono asignado, no se podrá eliminar.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "toasts": {
+      "created": "Bono creado correctamente",
+      "updated": "Bono actualizado correctamente",
+      "deleted": "Bono eliminado correctamente",
+      "activated": "Bono activado",
+      "deactivated": "Bono desactivado",
+      "errorCreating": "Error al crear el bono",
+      "errorUpdating": "Error al actualizar el bono",
+      "errorDeleting": "Error al eliminar el bono. Puede que tenga asignaciones activas.",
+      "errorToggling": "Error al cambiar el estado del bono",
+      "assigned": "Bono asignado correctamente",
+      "errorAssigning": "Error al asignar el bono",
+      "bulkAssigned": "{{count}} bonos asignados correctamente",
+      "bulkErrors": "{{count}} bonos no se pudieron asignar",
+      "cancelled": "Bono cancelado correctamente",
+      "errorCancelling": "Error al cancelar el bono"
+    }
+  },
+  "assignBonos": {
+    "title": "Asignar Bonos",
+    "subtitle": "Asigna packs de clases prepagados a tus alumnos",
+    "step1": {
+      "title": "Seleccionar Bono",
+      "templateLabel": "Bono",
+      "templatePlaceholder": "Selecciona un bono...",
+      "classes": "Clases",
+      "price": "Precio",
+      "pricePerClass": "Precio/clase",
+      "validity": "Validez",
+      "noActiveTemplates": "No hay bonos activos. Crea uno primero.",
+      "goToTemplates": "Ir a Bonos"
+    },
+    "step2": {
+      "title": "Seleccionar Alumnos",
+      "searchPlaceholder": "Buscar por nombre o email...",
+      "clearSearch": "Limpiar",
+      "showingResults": "Mostrando {{filtered}} de {{total}} alumnos",
+      "selectedCount": "{{count}} seleccionados",
+      "tableStudent": "Alumno",
+      "tableEmail": "Email",
+      "noStudentsFound": "No se encontraron alumnos con ese criterio",
+      "noStudentsRegistered": "No hay alumnos registrados"
+    },
+    "step3": {
+      "title": "Confirmar Asignación",
+      "template": "Bono",
+      "students": "Alumnos",
+      "totalPrice": "Precio Total",
+      "validity": "Validez",
+      "cancel": "Cancelar",
+      "assign": "Asignar Bono"
+    }
+  },
+  "myBonos": {
+    "status": {
+      "active": "Activo",
+      "used": "Agotado",
+      "expired": "Expirado",
+      "cancelled": "Cancelado"
+    },
+    "classesRemaining": "Clases restantes",
+    "purchased": "Comprado",
+    "expires": "Caduca",
+    "noExpiry": "Sin caducidad",
+    "expired": "Expirado",
+    "expiresToday": "Caduca hoy",
+    "expiresInDays": "Caduca en {{days}} días",
+    "unknownPack": "Pack de clases",
+    "activeBonos": "Bonos Activos",
+    "pastBonos": "Bonos Anteriores",
+    "empty": {
+      "title": "No tienes bonos",
+      "description": "Cuando tu club te asigne un pack de clases, aparecerá aquí"
+    }
+  },
+  "bonoControl": {
+    "title": "Control de Bonos",
+    "subtitle": "Monitoriza los bonos de clases de tus alumnos",
+    "summary": {
+      "activeBonos": "Bonos Activos",
+      "remainingClasses": "Clases Restantes",
+      "lowClasses": "Casi Agotados",
+      "totalValue": "Valor Activo"
+    },
+    "status": {
+      "active": "Activo",
+      "used": "Agotado",
+      "expired": "Expirado",
+      "cancelled": "Cancelado"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar alumno o bono...",
+      "allStatuses": "Todos los estados",
+      "allTemplates": "Todos los bonos",
+      "clear": "Limpiar",
+      "showing": "{{count}} bonos encontrados"
+    },
+    "table": {
+      "student": "Alumno",
+      "bono": "Bono",
+      "remaining": "Restantes",
+      "progress": "Progreso",
+      "purchased": "Compra",
+      "expires": "Caduca",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "viewHistory": "Ver historial",
+      "cancel": "Cancelar bono"
+    },
+    "empty": {
+      "title": "No hay bonos asignados",
+      "description": "Asigna bonos a tus alumnos desde la sección de plantillas de bonos"
+    },
+    "historyDialog": {
+      "title": "Historial de Uso",
+      "reverted": "Revertido",
+      "class": "clase",
+      "noUsages": "Aún no se ha usado este bono",
+      "substitute": "Sustituto",
+      "fixed": "Fija"
+    },
+    "cancelDialog": {
+      "title": "¿Cancelar bono?",
+      "description": "El bono quedará cancelado y las clases restantes se perderán. Esta acción no se puede deshacer.",
+      "cancel": "Volver",
+      "confirm": "Cancelar Bono"
+    },
+    "noExpiry": "Sin caducidad"
   }
 }

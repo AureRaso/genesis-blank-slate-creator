@@ -2,6 +2,68 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+// ============================================================================
+// Bono deduction helpers (non-blocking - never prevents enrollment/deletion)
+// ============================================================================
+
+/** Try to deduct a bono class after enrollment. Fails silently. */
+const tryDeductBonoClass = async (
+  studentEnrollmentId: string,
+  classParticipantId: string,
+  classId: string,
+  classDate: string | null,
+  className: string | null = null,
+  enrollmentType: 'fixed' | 'substitute' = 'fixed',
+) => {
+  try {
+    console.log('[Bono] Attempting deduction:', {
+      studentEnrollmentId, classParticipantId, classId, classDate, className, enrollmentType,
+    });
+    const { data, error } = await supabase.rpc('deduct_bono_class', {
+      p_student_enrollment_id: studentEnrollmentId,
+      p_class_participant_id: classParticipantId,
+      p_class_id: classId,
+      p_class_date: classDate,
+      p_is_waitlist: false,
+      p_class_name: className,
+      p_enrollment_type: enrollmentType,
+    });
+    if (error) {
+      console.warn('[Bono] RPC error:', error);
+    } else {
+      console.log('[Bono] Deduction result:', data);
+    }
+  } catch (err) {
+    // Non-blocking: enrollment succeeded, bono deduction is best-effort
+    console.warn('[Bono] Failed to deduct class:', err);
+  }
+};
+
+/** Try to revert bono usages when a participant is removed. Fails silently. */
+const tryRevertBonoUsages = async (classParticipantId: string) => {
+  try {
+    // Find non-reverted usages for this participant
+    const { data: usages } = await supabase
+      .from('student_bono_usages')
+      .select('id')
+      .eq('class_participant_id', classParticipantId)
+      .is('reverted_at', null);
+
+    if (!usages || usages.length === 0) return;
+
+    // Revert each usage
+    for (const usage of usages) {
+      await supabase.rpc('revert_bono_usage', {
+        p_usage_id: usage.id,
+        p_reason: 'Alumno eliminado de la clase',
+      });
+    }
+  } catch (err) {
+    // Non-blocking: deletion succeeded, bono reversion is best-effort
+    console.warn('[Bono] Failed to revert usage:', err);
+  }
+};
+
 export interface ClassParticipant {
   id: string;
   class_id: string;
@@ -93,10 +155,10 @@ export const useCreateClassParticipant = () => {
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error("No authenticated user");
 
-      // Obtener la fecha de inicio de la clase para auto-confirmar
+      // Obtener la fecha de inicio y nombre de la clase
       const { data: classData } = await supabase
         .from("programmed_classes")
-        .select("start_date")
+        .select("start_date, name")
         .eq("id", participantData.class_id)
         .single();
 
@@ -118,12 +180,24 @@ export const useCreateClassParticipant = () => {
         .single();
 
       if (error) throw error;
+
+      // Non-blocking: try to deduct bono class after successful enrollment
+      await tryDeductBonoClass(
+        participantData.student_enrollment_id,
+        data.id,
+        participantData.class_id,
+        classData?.start_date || null,
+        classData?.name || null,
+        'fixed',
+      );
+
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-bonos"] });
       toast({
         title: "Alumno asignado",
         description: "El alumno ha sido asignado a la clase correctamente",
@@ -175,6 +249,10 @@ export const useDeleteClassParticipant = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Non-blocking: try to revert bono usages BEFORE deleting the participant
+      // (we need the participant id to find usages, so revert first)
+      await tryRevertBonoUsages(id);
+
       const { error } = await supabase
         .from("class_participants")
         .delete()
@@ -186,6 +264,7 @@ export const useDeleteClassParticipant = () => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-bonos"] });
       toast({
         title: "Participante eliminado",
         description: "El participante ha sido eliminado de la clase",
@@ -309,7 +388,7 @@ export const useBulkEnrollToRecurringClass = () => {
       // Step 2: Get class details for the classes we'll enroll in
       const { data: matchingClasses, error: classesError } = await supabase
         .from('programmed_classes')
-        .select('id, name, start_time, club_id, start_date')
+        .select('id, name, start_time, club_id, start_date, end_date')
         .in('id', seriesClassIds);
 
       if (classesError || !matchingClasses) {
@@ -360,6 +439,36 @@ export const useBulkEnrollToRecurringClass = () => {
         throw insertError;
       }
 
+      // Non-blocking: try to deduct bono classes only for current/future classes
+      if (insertedData && insertedData.length > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        // Build maps of classId -> dates/names for deduction filtering
+        const classDateMap = new Map(classesToEnroll.map(c => [c.id, c.start_date]));
+        const classEndDateMap = new Map(classesToEnroll.map(c => [c.id, c.end_date]));
+        const classNameMap = new Map(classesToEnroll.map(c => [c.id, c.name]));
+
+        console.log('[Bono] Bulk enrollment: attempting deduction for', insertedData.length, 'participants. today=', today);
+
+        for (const participant of insertedData) {
+          // Skip bono deduction for classes that have already ended
+          const endDate = classEndDateMap.get(participant.class_id);
+          const startDate = classDateMap.get(participant.class_id);
+          console.log('[Bono] Class', participant.class_id, '- startDate:', startDate, 'endDate:', endDate);
+          if (endDate && endDate < today) {
+            console.log('[Bono] Skipping past class (endDate < today)');
+            continue;
+          }
+          await tryDeductBonoClass(
+            enrollmentData.student_enrollment_id,
+            participant.id,
+            participant.class_id,
+            startDate || null,
+            classNameMap.get(participant.class_id) || null,
+            'fixed',
+          );
+        }
+      }
+
       return {
         enrolled: insertedData?.length || 0,
         total: seriesClassIds.length,
@@ -371,6 +480,7 @@ export const useBulkEnrollToRecurringClass = () => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
       queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["student-bonos"] });
       toast({
         title: "Alumno añadido a la serie",
         description: `El alumno ha sido inscrito en ${data.enrolled} clase(s) de la serie recurrente.${data.skipped > 0 ? ` Ya estaba inscrito en ${data.skipped} clase(s).` : ''}`,
@@ -431,6 +541,9 @@ export const useBulkRemoveFromRecurringClass = () => {
       const errors = [];
 
       for (const enrollment of enrollments) {
+        // Non-blocking: try to revert bono usages before deleting
+        await tryRevertBonoUsages(enrollment.id);
+
         const { error: deleteError } = await supabase
           .from('class_participants')
           .delete()
@@ -456,6 +569,7 @@ export const useBulkRemoveFromRecurringClass = () => {
       queryClient.invalidateQueries({ queryKey: ["class-participants"] });
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-bonos"] });
       toast({
         title: "Alumno eliminado de la serie",
         description: `El alumno ha sido eliminado de ${data.removed} clase(s) de la serie recurrente.`,

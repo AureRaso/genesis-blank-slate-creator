@@ -46,6 +46,7 @@ import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import OpenClassesTab from "@/components/OpenClassesTab";
 import AssignSecondTrainerDialog from "@/components/AssignSecondTrainerDialog";
+import { useParticipantActiveBonos } from "@/hooks/useStudentBonos";
 import {
   Dialog,
   DialogContent,
@@ -725,6 +726,16 @@ const TodayAttendancePage = () => {
     );
   }, [classes, selectedTrainer]);
 
+  // Collect unique student_enrollment_ids for bono lookup
+  const allEnrollmentIds = useMemo(() => {
+    const ids = new Set<string>();
+    filteredClasses.forEach(c => c.participants.forEach(p => {
+      if (p.student_enrollment_id) ids.add(p.student_enrollment_id);
+    }));
+    return Array.from(ids);
+  }, [filteredClasses]);
+  const { data: bonoMap } = useParticipantActiveBonos(allEnrollmentIds);
+
   // Calculate statistics (usando clases filtradas)
   const totalClasses = filteredClasses.length;
   const totalParticipants = filteredClasses.reduce((acc, c) => acc + c.participants.length, 0);
@@ -1076,6 +1087,16 @@ const TodayAttendancePage = () => {
                                           </Badge>
                                         )}
                                       </div>
+                                      {/* Bono badge */}
+                                      {bonoMap?.get(participant.student_enrollment_id) && (() => {
+                                        const bono = bonoMap.get(participant.student_enrollment_id)!;
+                                        const used = bono.total_classes - bono.remaining_classes;
+                                        return (
+                                          <p className="text-xs text-slate-900">
+                                            🎟 {used}/{bono.total_classes} clases usadas
+                                          </p>
+                                        );
+                                      })()}
                                       <div className="flex items-center gap-2 overflow-hidden">
                                         {participant.is_substitute && (
                                           <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200 flex-shrink-0">

@@ -216,7 +216,10 @@
     "attendanceToday": "Presenze Oggi",
     "payments": "Pagamenti",
     "paymentControl": "Controllo Pagamenti",
-    "paymentRates": "Tariffe"
+    "paymentRates": "Tariffe",
+    "bonoTemplates": "Pacchetti",
+    "bonoControl": "Controllo Pacchetti",
+    "financialControl": "Controllo Finanziario"
   },
   "months": {
     "jan": { "short": "Gen", "full": "Gennaio" },
@@ -658,8 +661,12 @@
   },
   "myPayments": {
     "title": "I Miei Pagamenti",
-    "subtitle": "Gestisci i pagamenti delle tue lezioni",
+    "subtitle": "Gestisci i pagamenti e i pacchetti delle tue lezioni",
     "totalPending": "Totale in sospeso",
+    "topTabs": {
+      "payments": "Pagamenti",
+      "bonos": "Pacchetti"
+    },
     "tabs": {
       "pending": "In Sospeso",
       "inReview": "In Revisione",
@@ -2119,5 +2126,198 @@
       "loggedIn": "Cliccando accetti che la tua richiesta venga esaminata dall'allenatore",
       "loggedOut": "Accedi o registrati per iscriverti alla lista d'attesa"
     }
+  },
+  "bonoTemplates": {
+    "title": "Pacchetti Lezioni",
+    "subtitle": "Configura pacchetti di lezioni prepagati per i tuoi studenti",
+    "newTemplate": "Nuovo Pacchetto",
+    "assignBonos": "Assegna Pacchetti",
+    "activate": "Attiva pacchetto",
+    "deactivate": "Disattiva pacchetto",
+    "empty": {
+      "title": "Nessun pacchetto configurato",
+      "description": "Crea il tuo primo pacchetto di lezioni da offrire ai tuoi studenti",
+      "action": "Crea Pacchetto"
+    },
+    "table": {
+      "name": "Nome",
+      "classes": "Lezioni",
+      "price": "Prezzo",
+      "pricePerClass": "Prezzo/Lezione",
+      "validity": "Validità",
+      "status": "Stato",
+      "actions": "Azioni",
+      "classesUnit": "lezioni",
+      "classUnit": "lezione",
+      "usageType": "Tipo di utilizzo",
+      "noExpiry": "Senza scadenza",
+      "year": "anno",
+      "years": "anni",
+      "month": "mese",
+      "months": "mesi",
+      "days": "giorni"
+    },
+    "form": {
+      "createTitle": "Nuovo Pacchetto",
+      "editTitle": "Modifica Pacchetto",
+      "createDescription": "Configura un nuovo pacchetto di lezioni prepagato",
+      "editDescription": "Modifica i dati del pacchetto",
+      "name": "Nome",
+      "namePlaceholder": "Es: Pacchetto 10 Lezioni",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Descrizione opzionale...",
+      "totalClasses": "N° di Lezioni",
+      "price": "Prezzo Totale",
+      "pricePerClassPreview": "Prezzo per lezione: {{price}}",
+      "validityDays": "Giorni di Validità",
+      "validityDaysPlaceholder": "Senza scadenza",
+      "validityDaysHelp": "Lascia vuoto se il pacchetto non scade. Es: 90 = scade 3 mesi dopo l'acquisto.",
+      "usageType": "Tipo di utilizzo",
+      "usageTypeHelp": "Definisce se questo pacchetto si scarica per posti fissi, posti in lista d'attesa, o entrambi.",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "create": "Crea"
+    },
+    "usageTypes": {
+      "fixed": "Solo posti fissi",
+      "waitlist": "Solo lista d'attesa",
+      "both": "Entrambi"
+    },
+    "deleteDialog": {
+      "title": "Eliminare il pacchetto?",
+      "description": "Questa azione non può essere annullata. Se ci sono studenti con questo pacchetto assegnato, non sarà possibile eliminarlo.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    },
+    "toasts": {
+      "created": "Pacchetto creato con successo",
+      "updated": "Pacchetto aggiornato con successo",
+      "deleted": "Pacchetto eliminato con successo",
+      "activated": "Pacchetto attivato",
+      "deactivated": "Pacchetto disattivato",
+      "errorCreating": "Errore nella creazione del pacchetto",
+      "errorUpdating": "Errore nell'aggiornamento del pacchetto",
+      "errorDeleting": "Errore nell'eliminazione del pacchetto. Potrebbe avere assegnazioni attive.",
+      "errorToggling": "Errore nel cambio di stato del pacchetto",
+      "assigned": "Pacchetto assegnato con successo",
+      "errorAssigning": "Errore nell'assegnazione del pacchetto",
+      "bulkAssigned": "{{count}} pacchetti assegnati con successo",
+      "bulkErrors": "{{count}} pacchetti non assegnati",
+      "cancelled": "Pacchetto cancellato con successo",
+      "errorCancelling": "Errore nella cancellazione del pacchetto"
+    }
+  },
+  "assignBonos": {
+    "title": "Assegna Pacchetti",
+    "subtitle": "Assegna pacchetti di lezioni prepagati ai tuoi studenti",
+    "step1": {
+      "title": "Seleziona Pacchetto",
+      "templateLabel": "Pacchetto",
+      "templatePlaceholder": "Seleziona un pacchetto...",
+      "classes": "Lezioni",
+      "price": "Prezzo",
+      "pricePerClass": "Prezzo/lezione",
+      "validity": "Validità",
+      "noActiveTemplates": "Nessun pacchetto attivo. Creane uno prima.",
+      "goToTemplates": "Vai ai Pacchetti"
+    },
+    "step2": {
+      "title": "Seleziona Studenti",
+      "searchPlaceholder": "Cerca per nome o email...",
+      "clearSearch": "Cancella",
+      "showingResults": "Mostrando {{filtered}} di {{total}} studenti",
+      "selectedCount": "{{count}} selezionati",
+      "tableStudent": "Studente",
+      "tableEmail": "Email",
+      "noStudentsFound": "Nessuno studente trovato con quel criterio",
+      "noStudentsRegistered": "Nessuno studente registrato"
+    },
+    "step3": {
+      "title": "Conferma Assegnazione",
+      "template": "Pacchetto",
+      "students": "Studenti",
+      "totalPrice": "Prezzo Totale",
+      "validity": "Validità",
+      "cancel": "Annulla",
+      "assign": "Assegna Pacchetto"
+    }
+  },
+  "myBonos": {
+    "status": {
+      "active": "Attivo",
+      "used": "Esaurito",
+      "expired": "Scaduto",
+      "cancelled": "Cancellato"
+    },
+    "classesRemaining": "Lezioni rimanenti",
+    "purchased": "Acquistato",
+    "expires": "Scade",
+    "noExpiry": "Senza scadenza",
+    "expired": "Scaduto",
+    "expiresToday": "Scade oggi",
+    "expiresInDays": "Scade tra {{days}} giorni",
+    "unknownPack": "Pacchetto lezioni",
+    "activeBonos": "Pacchetti Attivi",
+    "pastBonos": "Pacchetti Precedenti",
+    "empty": {
+      "title": "Nessun pacchetto",
+      "description": "Quando il tuo club ti assegnerà un pacchetto di lezioni, apparirà qui"
+    }
+  },
+  "bonoControl": {
+    "title": "Controllo Pacchetti",
+    "subtitle": "Monitora i pacchetti di lezioni dei tuoi studenti",
+    "summary": {
+      "activeBonos": "Pacchetti Attivi",
+      "remainingClasses": "Lezioni Rimanenti",
+      "lowClasses": "Quasi Esauriti",
+      "totalValue": "Valore Attivo"
+    },
+    "status": {
+      "active": "Attivo",
+      "used": "Esaurito",
+      "expired": "Scaduto",
+      "cancelled": "Cancellato"
+    },
+    "filters": {
+      "searchPlaceholder": "Cerca studente o pacchetto...",
+      "allStatuses": "Tutti gli stati",
+      "allTemplates": "Tutti i pacchetti",
+      "clear": "Cancella",
+      "showing": "{{count}} pacchetti trovati"
+    },
+    "table": {
+      "student": "Studente",
+      "bono": "Pacchetto",
+      "remaining": "Rimanenti",
+      "progress": "Progresso",
+      "purchased": "Acquisto",
+      "expires": "Scade",
+      "status": "Stato",
+      "actions": "Azioni"
+    },
+    "actions": {
+      "viewHistory": "Vedi cronologia",
+      "cancel": "Cancella pacchetto"
+    },
+    "empty": {
+      "title": "Nessun pacchetto assegnato",
+      "description": "Assegna pacchetti ai tuoi studenti dalla sezione pacchetti lezioni"
+    },
+    "historyDialog": {
+      "title": "Cronologia Utilizzo",
+      "reverted": "Annullato",
+      "class": "lezione",
+      "noUsages": "Questo pacchetto non è ancora stato utilizzato",
+      "substitute": "Sostituto",
+      "fixed": "Fissa"
+    },
+    "cancelDialog": {
+      "title": "Cancellare il pacchetto?",
+      "description": "Il pacchetto sarà cancellato e le lezioni rimanenti andranno perse. Questa azione non può essere annullata.",
+      "cancel": "Torna",
+      "confirm": "Cancella Pacchetto"
+    },
+    "noExpiry": "Senza scadenza"
   }
 }

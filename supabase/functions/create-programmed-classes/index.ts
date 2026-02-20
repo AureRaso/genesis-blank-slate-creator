@@ -153,13 +153,38 @@ serve(async (req) => {
         // Insert participants for this class
         if (participantsData.length > 0) {
           console.log(`Creating ${participantsData.length} participants for class ${createdClass.id}`)
-          const { error: participantsError } = await supabase
+          const { data: insertedParticipants, error: participantsError } = await supabase
             .from("class_participants")
             .insert(participantsData)
+            .select('id, student_enrollment_id, class_id')
 
           if (participantsError) {
             console.error('Error creating participants:', participantsError)
             throw participantsError
+          }
+
+          // Non-blocking: try to deduct bono classes for each participant
+          if (insertedParticipants && insertedParticipants.length > 0) {
+            for (const participant of insertedParticipants) {
+              try {
+                const { data: bonoResult, error: bonoError } = await supabase.rpc('deduct_bono_class', {
+                  p_student_enrollment_id: participant.student_enrollment_id,
+                  p_class_participant_id: participant.id,
+                  p_class_id: participant.class_id,
+                  p_class_date: classDate,
+                  p_is_waitlist: false,
+                  p_class_name: classData.name,
+                  p_enrollment_type: 'fixed',
+                })
+                if (bonoError) {
+                  console.warn(`[Bono] RPC error for participant ${participant.id}:`, bonoError)
+                } else {
+                  console.log(`[Bono] Deduction result for participant ${participant.id}:`, bonoResult)
+                }
+              } catch (err) {
+                console.warn(`[Bono] Failed to deduct for participant ${participant.id}:`, err)
+              }
+            }
           }
         }
       }

@@ -24,6 +24,7 @@ export interface TodayAttendanceClass {
   } | null;
   participants: {
     id: string;
+    student_enrollment_id: string;
     student_enrollment: {
       full_name: string;
       email: string;
@@ -106,6 +107,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           ),
           participants:class_participants(
             id,
+            student_enrollment_id,
             status,
             attendance_confirmed_for_date,
             attendance_confirmed_at,
@@ -195,6 +197,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           .filter((p: any) => p.status === 'active')
           .map((p: any) => ({
             id: p.id,
+            student_enrollment_id: p.student_enrollment_id,
             student_enrollment: p.student_enrollment,
             // Store base data from class_participants (fallback)
             attendance_confirmed_for_date: p.attendance_confirmed_for_date,

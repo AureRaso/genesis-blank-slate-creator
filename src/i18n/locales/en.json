@@ -216,7 +216,10 @@
     "attendanceToday": "Today's Attendance",
     "payments": "Payments",
     "paymentControl": "Payment Control",
-    "paymentRates": "Rates"
+    "paymentRates": "Rates",
+    "bonoTemplates": "Class Packs",
+    "bonoControl": "Pack Control",
+    "financialControl": "Financial Control"
   },
   "months": {
     "jan": { "short": "Jan", "full": "January" },
@@ -685,8 +688,12 @@
   },
   "myPayments": {
     "title": "My Payments",
-    "subtitle": "Manage your class payments",
+    "subtitle": "Manage your payments and class packs",
     "totalPending": "Total pending payment",
+    "topTabs": {
+      "payments": "Payments",
+      "bonos": "Class Packs"
+    },
     "tabs": {
       "pending": "Pending",
       "inReview": "In Review",
@@ -2197,5 +2204,198 @@
       "loggedIn": "By clicking you accept that your request will be reviewed by the coach",
       "loggedOut": "Log in or create an account to join the waitlist"
     }
+  },
+  "bonoTemplates": {
+    "title": "Class Packs",
+    "subtitle": "Set up prepaid class packs for your students",
+    "newTemplate": "New Pack",
+    "assignBonos": "Assign Packs",
+    "activate": "Activate pack",
+    "deactivate": "Deactivate pack",
+    "empty": {
+      "title": "No class packs configured",
+      "description": "Create your first class pack to offer to your students",
+      "action": "Create Pack"
+    },
+    "table": {
+      "name": "Name",
+      "classes": "Classes",
+      "price": "Price",
+      "pricePerClass": "Price/Class",
+      "validity": "Validity",
+      "status": "Status",
+      "actions": "Actions",
+      "classesUnit": "classes",
+      "classUnit": "class",
+      "usageType": "Usage type",
+      "noExpiry": "No expiry",
+      "year": "year",
+      "years": "years",
+      "month": "month",
+      "months": "months",
+      "days": "days"
+    },
+    "form": {
+      "createTitle": "New Class Pack",
+      "editTitle": "Edit Class Pack",
+      "createDescription": "Set up a new prepaid class pack",
+      "editDescription": "Modify the class pack details",
+      "name": "Name",
+      "namePlaceholder": "E.g.: 10 Class Pack",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description...",
+      "totalClasses": "Number of Classes",
+      "price": "Total Price",
+      "pricePerClassPreview": "Price per class: {{price}}",
+      "validityDays": "Validity Days",
+      "validityDaysPlaceholder": "No expiry",
+      "validityDaysHelp": "Leave empty if the pack does not expire. E.g.: 90 = expires 3 months after purchase.",
+      "usageType": "Usage type",
+      "usageTypeHelp": "Defines whether this pack is deducted for fixed spots, waitlist spots, or both.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create"
+    },
+    "usageTypes": {
+      "fixed": "Fixed spots only",
+      "waitlist": "Waitlist only",
+      "both": "Both"
+    },
+    "deleteDialog": {
+      "title": "Delete class pack?",
+      "description": "This action cannot be undone. If students have this pack assigned, it cannot be deleted.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "toasts": {
+      "created": "Class pack created successfully",
+      "updated": "Class pack updated successfully",
+      "deleted": "Class pack deleted successfully",
+      "activated": "Class pack activated",
+      "deactivated": "Class pack deactivated",
+      "errorCreating": "Error creating the class pack",
+      "errorUpdating": "Error updating the class pack",
+      "errorDeleting": "Error deleting the class pack. It may have active assignments.",
+      "errorToggling": "Error changing the class pack status",
+      "assigned": "Class pack assigned successfully",
+      "errorAssigning": "Error assigning the class pack",
+      "bulkAssigned": "{{count}} class packs assigned successfully",
+      "bulkErrors": "{{count}} class packs could not be assigned",
+      "cancelled": "Class pack cancelled successfully",
+      "errorCancelling": "Error cancelling the class pack"
+    }
+  },
+  "assignBonos": {
+    "title": "Assign Class Packs",
+    "subtitle": "Assign prepaid class packs to your students",
+    "step1": {
+      "title": "Select Class Pack",
+      "templateLabel": "Class Pack",
+      "templatePlaceholder": "Select a class pack...",
+      "classes": "Classes",
+      "price": "Price",
+      "pricePerClass": "Price/class",
+      "validity": "Validity",
+      "noActiveTemplates": "No active class packs. Create one first.",
+      "goToTemplates": "Go to Class Packs"
+    },
+    "step2": {
+      "title": "Select Students",
+      "searchPlaceholder": "Search by name or email...",
+      "clearSearch": "Clear",
+      "showingResults": "Showing {{filtered}} of {{total}} students",
+      "selectedCount": "{{count}} selected",
+      "tableStudent": "Student",
+      "tableEmail": "Email",
+      "noStudentsFound": "No students found matching that criteria",
+      "noStudentsRegistered": "No registered students"
+    },
+    "step3": {
+      "title": "Confirm Assignment",
+      "template": "Class Pack",
+      "students": "Students",
+      "totalPrice": "Total Price",
+      "validity": "Validity",
+      "cancel": "Cancel",
+      "assign": "Assign Class Pack"
+    }
+  },
+  "myBonos": {
+    "status": {
+      "active": "Active",
+      "used": "Used Up",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "classesRemaining": "Classes remaining",
+    "purchased": "Purchased",
+    "expires": "Expires",
+    "noExpiry": "No expiry",
+    "expired": "Expired",
+    "expiresToday": "Expires today",
+    "expiresInDays": "Expires in {{days}} days",
+    "unknownPack": "Class pack",
+    "activeBonos": "Active Packs",
+    "pastBonos": "Past Packs",
+    "empty": {
+      "title": "No class packs",
+      "description": "When your club assigns you a class pack, it will appear here"
+    }
+  },
+  "bonoControl": {
+    "title": "Class Pack Control",
+    "subtitle": "Monitor your students' class packs",
+    "summary": {
+      "activeBonos": "Active Packs",
+      "remainingClasses": "Remaining Classes",
+      "lowClasses": "Almost Used Up",
+      "totalValue": "Active Value"
+    },
+    "status": {
+      "active": "Active",
+      "used": "Used Up",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "filters": {
+      "searchPlaceholder": "Search student or pack...",
+      "allStatuses": "All statuses",
+      "allTemplates": "All packs",
+      "clear": "Clear",
+      "showing": "{{count}} packs found"
+    },
+    "table": {
+      "student": "Student",
+      "bono": "Pack",
+      "remaining": "Remaining",
+      "progress": "Progress",
+      "purchased": "Purchased",
+      "expires": "Expires",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "viewHistory": "View history",
+      "cancel": "Cancel pack"
+    },
+    "empty": {
+      "title": "No packs assigned",
+      "description": "Assign class packs to your students from the class packs section"
+    },
+    "historyDialog": {
+      "title": "Usage History",
+      "reverted": "Reverted",
+      "class": "class",
+      "noUsages": "This pack hasn't been used yet",
+      "substitute": "Substitute",
+      "fixed": "Fixed"
+    },
+    "cancelDialog": {
+      "title": "Cancel class pack?",
+      "description": "The pack will be cancelled and remaining classes will be lost. This action cannot be undone.",
+      "cancel": "Go Back",
+      "confirm": "Cancel Pack"
+    },
+    "noExpiry": "No expiry"
   }
 }
