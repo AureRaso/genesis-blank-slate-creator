@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Check, Loader2, Search, Users, Ticket, X } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, Users, Ticket, X, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
@@ -42,24 +42,105 @@ export default function AssignBonosPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterAssigned, setFilterAssigned] = useState<"all" | "assigned" | "unassigned">("all");
+  const [filterUserType, setFilterUserType] = useState<"all" | "minors" | "parents" | "players">("all");
+  const [filterWeeklyHours, setFilterWeeklyHours] = useState<string>("all");
+
+  // Check if any filter is active (excluding search)
+  const hasActiveFilters = filterAssigned !== "all" || filterUserType !== "all" || filterWeeklyHours !== "all";
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setFilterAssigned("all");
+    setFilterUserType("all");
+    setFilterWeeklyHours("all");
+  };
+
+  // Helper function to determine user type based on email prefix
+  const getUserType = (email: string): "minors" | "parents" | "players" => {
+    const emailLower = email.toLowerCase();
+    if (emailLower.startsWith("child")) return "minors";
+    if (emailLower.startsWith("guardian")) return "parents";
+    return "players";
+  };
 
   // Get selected template details
   const selectedTemplate = useMemo(() => {
     return templates?.find((t) => t.id === selectedTemplateId) || null;
   }, [templates, selectedTemplateId]);
 
-  // Filter students by search
+  // Calculate available weekly hours options based on students data
+  const availableHoursOptions = useMemo(() => {
+    if (!students || students.length === 0) return [];
+
+    const hoursSet = new Set<number>();
+    students.forEach(student => {
+      const roundedHours = Math.round(student.weekly_hours * 2) / 2;
+      hoursSet.add(roundedHours);
+    });
+
+    const uniqueHours = Array.from(hoursSet).sort((a, b) => a - b);
+    const options: { value: string; label: string; min: number; max: number }[] = [];
+
+    uniqueHours.forEach(hours => {
+      if (hours === 0) {
+        options.push({ value: "0", label: t("paymentRates.assign.step2.filterHoursNone"), min: 0, max: 0 });
+      } else {
+        options.push({
+          value: hours.toString(),
+          label: `${hours}h`,
+          min: hours - 0.25,
+          max: hours + 0.25
+        });
+      }
+    });
+
+    return options;
+  }, [students, t]);
+
+  // Filter students
   const filteredStudents = useMemo(() => {
     if (!students) return [];
 
-    if (!searchTerm) return students;
+    return students.filter((student) => {
+      // Search filter
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch =
+        student.full_name.toLowerCase().includes(searchLower) ||
+        student.email.toLowerCase().includes(searchLower);
 
-    const searchLower = searchTerm.toLowerCase();
-    return students.filter((student) =>
-      student.full_name.toLowerCase().includes(searchLower) ||
-      student.email.toLowerCase().includes(searchLower)
-    );
-  }, [students, searchTerm]);
+      // Assignment filter (rate assignment status)
+      let matchesAssignment = true;
+      if (filterAssigned === "assigned") {
+        matchesAssignment = !!student.current_assignment;
+      } else if (filterAssigned === "unassigned") {
+        matchesAssignment = !student.current_assignment;
+      }
+
+      // User type filter
+      let matchesUserType = true;
+      if (filterUserType !== "all") {
+        matchesUserType = getUserType(student.email) === filterUserType;
+      }
+
+      // Weekly hours filter
+      let matchesWeeklyHours = true;
+      if (filterWeeklyHours !== "all") {
+        const hours = student.weekly_hours;
+        const option = availableHoursOptions.find(opt => opt.value === filterWeeklyHours);
+        if (option) {
+          if (option.value === "0") {
+            matchesWeeklyHours = hours === 0;
+          } else {
+            matchesWeeklyHours = hours >= option.min && hours <= option.max;
+          }
+        }
+      }
+
+      return matchesSearch && matchesAssignment && matchesUserType && matchesWeeklyHours;
+    });
+  }, [students, searchTerm, filterAssigned, filterUserType, filterWeeklyHours, availableHoursOptions]);
 
   // Selection helpers
   const filteredSelectionState = useMemo(() => {
@@ -225,7 +306,7 @@ export default function AssignBonosPage() {
             </div>
           </div>
 
-          {/* Search */}
+          {/* Filters */}
           <div className="flex flex-col gap-3 mb-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 max-w-sm">
@@ -237,25 +318,110 @@ export default function AssignBonosPage() {
                   className="pl-9"
                 />
               </div>
-              {searchTerm && (
+              <Select
+                value={filterAssigned}
+                onValueChange={(v: "all" | "assigned" | "unassigned") =>
+                  setFilterAssigned(v)
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("paymentRates.assign.step2.filterAll")}</SelectItem>
+                  <SelectItem value="assigned">{t("paymentRates.assign.step2.filterAssigned")}</SelectItem>
+                  <SelectItem value="unassigned">{t("paymentRates.assign.step2.filterUnassigned")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* User Type Filter Chips */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-gray-500 mr-1 self-center">
+                {t("paymentRates.assign.step2.filterByType")}:
+              </span>
+              <Button
+                variant={filterUserType === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("all")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeAll")}
+              </Button>
+              <Button
+                variant={filterUserType === "players" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("players")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypePlayers")}
+              </Button>
+              <Button
+                variant={filterUserType === "minors" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("minors")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeMinors")}
+              </Button>
+              <Button
+                variant={filterUserType === "parents" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterUserType("parents")}
+                className="h-7 text-xs"
+              >
+                {t("paymentRates.assign.step2.filterTypeParents")}
+              </Button>
+            </div>
+
+            {/* Weekly Hours Filter Chips */}
+            {availableHoursOptions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-gray-500 mr-1 self-center">
+                  {t("paymentRates.assign.step2.filterByHours")}:
+                </span>
+                <Button
+                  variant={filterWeeklyHours === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterWeeklyHours("all")}
+                  className="h-7 text-xs"
+                >
+                  {t("paymentRates.assign.step2.filterHoursAll")}
+                </Button>
+                {availableHoursOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={filterWeeklyHours === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterWeeklyHours(option.value)}
+                    className="h-7 text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {/* Results counter and clear filters */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span className="text-sm text-gray-500">
+                {t("assignBonos.step2.showingResults", {
+                  filtered: filteredStudents.length,
+                  total: students?.length || 0,
+                })}
+              </span>
+              {(hasActiveFilters || searchTerm) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSearchTerm("")}
-                  className="text-gray-500 hover:text-gray-700"
+                  onClick={clearAllFilters}
+                  className="text-gray-500 hover:text-gray-700 h-7 text-xs"
                 >
                   <X className="h-3 w-3 mr-1" />
-                  {t("assignBonos.step2.clearSearch")}
+                  {t("paymentRates.assign.step2.clearFilters")}
                 </Button>
               )}
             </div>
-
-            <span className="text-sm text-gray-500">
-              {t("assignBonos.step2.showingResults", {
-                filtered: filteredStudents.length,
-                total: students?.length || 0,
-              })}
-            </span>
           </div>
 
           {/* Students Table */}
@@ -282,7 +448,8 @@ export default function AssignBonosPage() {
                       </div>
                     </TableHead>
                     <TableHead>{t("assignBonos.step2.tableStudent")}</TableHead>
-                    <TableHead>{t("assignBonos.step2.tableEmail")}</TableHead>
+                    <TableHead className="text-center">{t("paymentRates.assign.step2.tableWeeklyHours")}</TableHead>
+                    <TableHead>{t("paymentRates.assign.step2.tableCurrentRate")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -303,11 +470,30 @@ export default function AssignBonosPage() {
                               {student.full_name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <p className="font-medium">{student.full_name}</p>
+                          <div>
+                            <p className="font-medium">{student.full_name}</p>
+                            <p className="text-xs text-gray-500 hidden sm:block">{student.email}</p>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-500 text-sm">
-                        {student.email}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <span className={`text-sm font-medium ${student.weekly_hours === 0 ? 'text-gray-400' : 'text-gray-700'}`}>
+                            {student.weekly_hours}h
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {student.current_assignment ? (
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 w-fit">
+                            {student.current_assignment.payment_rate?.name || t("paymentRates.assign.step2.rateAssigned")}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-500 w-fit">
+                            {t("paymentRates.assign.step2.noRate")}
+                          </Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
