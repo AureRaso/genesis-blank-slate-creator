@@ -29,8 +29,8 @@ BEGIN
       -- Total past scheduled sessions
       CASE
         WHEN pc.start_date = pc.end_date THEN
-          -- Single-date class: 1 session if date is in the past
-          CASE WHEN pc.start_date < CURRENT_DATE THEN 1 ELSE 0 END
+          -- Single-date class: 1 session if date is in the past AND after enrollment
+          CASE WHEN pc.start_date < CURRENT_DATE AND pc.start_date >= cp.created_at::date THEN 1 ELSE 0 END
         ELSE
           -- Recurring class: count matching days of week in date range
           (
@@ -62,9 +62,9 @@ BEGIN
           END
           AND cc.cancelled_date < CURRENT_DATE
       ) as cancelled_sessions,
-      -- Absence: 1 if student confirmed absence for a past class, 0 otherwise
+      -- Absence: 1 if student confirmed absence for a past class after enrollment, 0 otherwise
       CASE
-        WHEN cp.absence_confirmed = true AND pc.start_date < CURRENT_DATE THEN 1
+        WHEN cp.absence_confirmed = true AND pc.start_date < CURRENT_DATE AND pc.start_date >= cp.created_at::date THEN 1
         ELSE 0
       END as absence_count
     FROM class_participants cp
