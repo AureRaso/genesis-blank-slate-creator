@@ -1389,17 +1389,17 @@ const WeekAttendancePage = () => {
                                               </Badge>
                                             )}
                                           </div>
-                                          {/* Bono badge */}
-                                          {bonoMap?.get(participant.student_enrollment_id) && (() => {
-                                            const bono = bonoMap.get(participant.student_enrollment_id)!;
-                                            const used = bono.total_classes - bono.remaining_classes;
-                                            return (
-                                              <p className="text-xs text-slate-900">
-                                                🎟 {used}/{bono.total_classes} clases usadas
-                                              </p>
-                                            );
-                                          })()}
                                           <div className="flex items-center gap-2 overflow-hidden">
+                                            {/* Bono badge */}
+                                            {bonoMap?.get(participant.student_enrollment_id) && (() => {
+                                              const bono = bonoMap.get(participant.student_enrollment_id)!;
+                                              const used = bono.total_classes - bono.remaining_classes;
+                                              return (
+                                                <p className="text-xs text-slate-900 flex-shrink-0">
+                                                  🎟 {used}/{bono.total_classes} clases usadas
+                                                </p>
+                                              );
+                                            })()}
                                             {participant.is_substitute && (
                                               <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200 flex-shrink-0">
                                                 Sustituto

@@ -269,7 +269,7 @@ export const useAcceptFromWaitlist = () => {
       // 1. Verify class capacity before accepting
       const { data: classData, error: classError } = await supabase
         .from('programmed_classes')
-        .select('max_participants')
+        .select('max_participants, name')
         .eq('id', classId)
         .single();
 
@@ -308,6 +308,58 @@ export const useAcceptFromWaitlist = () => {
         });
 
       if (participantError) throw participantError;
+
+      // Non-blocking: try to deduct bono class for waitlist acceptance
+      try {
+        console.log('[Bono-Waitlist] Starting bono deduction attempt...', {
+          classId,
+          studentEnrollmentId,
+          classDate,
+          className: classData?.name
+        });
+
+        const { data: participantForBono, error: participantQueryError } = await supabase
+          .from('class_participants')
+          .select('id')
+          .eq('class_id', classId)
+          .eq('student_enrollment_id', studentEnrollmentId)
+          .eq('is_substitute', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        console.log('[Bono-Waitlist] Participant query result:', { participantForBono, participantQueryError });
+
+        if (participantForBono) {
+          console.log('[Bono-Waitlist] Calling deduct_bono_class RPC with:', {
+            p_student_enrollment_id: studentEnrollmentId,
+            p_class_participant_id: participantForBono.id,
+            p_class_id: classId,
+            p_class_date: classDate,
+            p_is_waitlist: true,
+            p_class_name: classData?.name || '',
+            p_enrollment_type: 'substitute',
+          });
+          const { data: bonoResult, error: bonoError } = await supabase.rpc('deduct_bono_class', {
+            p_student_enrollment_id: studentEnrollmentId,
+            p_class_participant_id: participantForBono.id,
+            p_class_id: classId,
+            p_class_date: classDate,
+            p_is_waitlist: true,
+            p_class_name: classData?.name || '',
+            p_enrollment_type: 'substitute',
+          });
+          if (bonoError) {
+            console.warn('[Bono-Waitlist] RPC error:', bonoError);
+          } else {
+            console.log('[Bono-Waitlist] Deduction result:', bonoResult);
+          }
+        } else {
+          console.warn('[Bono-Waitlist] Could not find participant record to deduct bono');
+        }
+      } catch (bonoErr) {
+        console.warn('[Bono-Waitlist] Failed to deduct on waitlist accept:', bonoErr);
+      }
 
       // 3. Update waitlist entry as accepted
       const { error: waitlistError } = await supabase
@@ -368,6 +420,8 @@ export const useAcceptFromWaitlist = () => {
     onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['class-waitlist', variables.classId, variables.classDate] });
       queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['student-bonos'] });
+      queryClient.invalidateQueries({ queryKey: ['participant-active-bonos'] });
       toast.success('✓ Alumno agregado a la clase');
 
       // Send email notification to accepted student
