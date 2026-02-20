@@ -1,9 +1,11 @@
 -- Calculate attendance counts per student by deriving from:
--- attended = total_past_scheduled_sessions - cancelled_sessions - recorded_absences
--- no_show = recorded absences from class_attendance_confirmations
+-- attended = total_past_scheduled_sessions - cancelled_sessions - absences
+-- no_show = absences from class_participants.absence_confirmed
 --
 -- This approach works because the system auto-confirms attendance for all students.
 -- Only absences are explicitly recorded. So "attended" = sessions that happened minus known absences.
+-- Absences are read from class_participants (not class_attendance_confirmations) because
+-- student self-service absence only writes to class_participants.
 
 CREATE OR REPLACE FUNCTION get_bulk_attendance_counts(
   p_student_enrollment_ids UUID[]
@@ -48,14 +50,11 @@ BEGIN
           AND cc.cancelled_date >= GREATEST(pc.start_date, cp.created_at::date)
           AND cc.cancelled_date < CURRENT_DATE
       ) as cancelled_sessions,
-      -- Recorded absences for this participant
-      (
-        SELECT COUNT(*)
-        FROM class_attendance_confirmations cac
-        WHERE cac.class_participant_id = cp.id
-          AND cac.absence_confirmed = true
-          AND cac.scheduled_date < CURRENT_DATE
-      ) as absence_count
+      -- Absence: 1 if student confirmed absence for a past class, 0 otherwise
+      CASE
+        WHEN cp.absence_confirmed = true AND pc.start_date < CURRENT_DATE THEN 1
+        ELSE 0
+      END as absence_count
     FROM class_participants cp
     JOIN programmed_classes pc ON cp.class_id = pc.id
     WHERE cp.student_enrollment_id = ANY(p_student_enrollment_ids)
@@ -72,4 +71,4 @@ $$ LANGUAGE plpgsql;
 
 GRANT EXECUTE ON FUNCTION get_bulk_attendance_counts(UUID[]) TO authenticated;
 
-COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Attended = scheduled sessions - cancelled - absences. Uses SECURITY DEFINER to bypass RLS.';
+COMMENT ON FUNCTION get_bulk_attendance_counts IS 'Calculates attended and absence counts per student. Attended = scheduled sessions - cancelled - absences. Absences from class_participants.absence_confirmed. Uses SECURITY DEFINER to bypass RLS.';
