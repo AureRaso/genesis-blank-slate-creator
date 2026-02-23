@@ -200,17 +200,75 @@ serve(async (req) => {
     const subscriptions = await subscriptionResponse.json();
     let customerId = subscriptions[0]?.stripe_customer_id;
 
+    // Prepare billing address and tax info for Stripe customer
+    const EU_COUNTRIES_ISO: Record<string, string> = {
+      'Alemania': 'DE', 'Austria': 'AT', 'Bélgica': 'BE', 'Bulgaria': 'BG', 'Chipre': 'CY',
+      'Croacia': 'HR', 'Dinamarca': 'DK', 'Eslovaquia': 'SK', 'Eslovenia': 'SI', 'España': 'ES',
+      'Estonia': 'EE', 'Finlandia': 'FI', 'Francia': 'FR', 'Grecia': 'GR', 'Hungría': 'HU',
+      'Irlanda': 'IE', 'Italia': 'IT', 'Letonia': 'LV', 'Lituania': 'LT', 'Luxemburgo': 'LU',
+      'Malta': 'MT', 'Países Bajos': 'NL', 'Polonia': 'PL', 'Portugal': 'PT',
+      'República Checa': 'CZ', 'Rumanía': 'RO', 'Suecia': 'SE',
+    };
+
+    // Common country name → ISO mapping for non-EU countries
+    const OTHER_COUNTRIES_ISO: Record<string, string> = {
+      'Reino Unido': 'GB', 'Estados Unidos': 'US', 'México': 'MX', 'Argentina': 'AR',
+      'Brasil': 'BR', 'Chile': 'CL', 'Colombia': 'CO', 'Perú': 'PE', 'Uruguay': 'UY',
+      'Suiza': 'CH', 'Noruega': 'NO', 'Andorra': 'AD', 'Marruecos': 'MA',
+    };
+
+    const billingCountry = club.billing_country || 'España';
+    const countryISO = EU_COUNTRIES_ISO[billingCountry] || OTHER_COUNTRIES_ISO[billingCountry] || undefined;
+
+    const customerAddress = club.billing_address ? {
+      line1: club.billing_address,
+      city: club.billing_city || undefined,
+      postal_code: club.billing_postal_code || undefined,
+      state: club.billing_province || undefined,
+      country: countryISO,
+    } : undefined;
+
+    // Determine tax_exempt status: reverse for intra-EU B2B with VAT number, exempt for non-EU, none for Spain
+    const isSpain = billingCountry === 'España';
+    const isIntraEU = !isSpain && !!EU_COUNTRIES_ISO[billingCountry];
+    const taxExempt = isIntraEU && club.vat_number ? 'reverse' : (!isSpain && !EU_COUNTRIES_ISO[billingCountry]) ? 'exempt' : 'none';
+
     // Si no existe un customer, crearlo
     if (!customerId) {
       const customer = await stripe.customers.create({
-        name: club.name,
-        email: club.contact_email || undefined,
+        name: club.legal_name || club.name,
+        email: club.billing_email || club.contact_email || undefined,
+        address: customerAddress,
+        tax_exempt: taxExempt,
         metadata: {
           club_id: club_id,
           club_name: club.name,
         },
       });
       customerId = customer.id;
+
+      // Register VAT number as tax_id for intra-EU customers
+      if (isIntraEU && club.vat_number) {
+        try {
+          // Determine the tax_id type based on EU country ISO code
+          const taxIdType = `eu_vat`;
+          await stripe.customers.createTaxId(customerId, {
+            type: taxIdType,
+            value: club.vat_number,
+          });
+          console.log(`Registered EU VAT ID for customer: ${club.vat_number}`);
+        } catch (taxIdError) {
+          console.error("Error registering tax ID (non-blocking):", taxIdError);
+        }
+      }
+    } else {
+      // Update existing customer with latest billing data
+      await stripe.customers.update(customerId, {
+        name: club.legal_name || club.name,
+        email: club.billing_email || club.contact_email || undefined,
+        address: customerAddress,
+        tax_exempt: taxExempt,
+      });
     }
 
     // Crear sesión de Checkout

@@ -49,7 +49,7 @@ serve(async (req) => {
     // Verify user has access to this club
     const { data: club, error: clubError } = await supabaseClient
       .from('clubs')
-      .select('id, name, legal_name, tax_id, legal_entity_type, billing_email, billing_address, billing_city, billing_postal_code, billing_province, billing_country, phone, holded_contact_id')
+      .select('id, name, legal_name, tax_id, legal_entity_type, billing_email, billing_address, billing_city, billing_postal_code, billing_province, billing_country, phone, holded_contact_id, vat_number')
       .eq('id', clubId)
       .single();
 
@@ -60,7 +60,23 @@ serve(async (req) => {
       throw new Error("Datos fiscales incompletos: razón social y NIF/CIF son obligatorios");
     }
 
+    // Determine tax operation based on country
+    const EU_COUNTRIES = new Set([
+      'Alemania', 'Austria', 'Bélgica', 'Bulgaria', 'Chipre', 'Croacia', 'Dinamarca',
+      'Eslovaquia', 'Eslovenia', 'Estonia', 'Finlandia', 'Francia', 'Grecia', 'Hungría',
+      'Irlanda', 'Italia', 'Letonia', 'Lituania', 'Luxemburgo', 'Malta', 'Países Bajos',
+      'Polonia', 'Portugal', 'República Checa', 'Rumanía', 'Suecia',
+    ]);
+    const country = club.billing_country || 'España';
+    const isSpain = country === 'España';
+    const isIntraEU = !isSpain && EU_COUNTRIES.has(country);
+    // España → general, UE intracomunitario → intra, Fuera UE → exempt
+    const taxOperation = isSpain ? 'general' : isIntraEU ? 'intra' : 'exempt';
+
+    logStep("Tax operation", { country, isSpain, isIntraEU, taxOperation });
+
     // Build Holded contact payload
+    // Note: vatnumber field is read-only in Holded API, must be set manually in Holded UI
     const contactPayload: Record<string, any> = {
       name: club.legal_name,
       tradeName: club.name,
@@ -69,13 +85,13 @@ serve(async (req) => {
       phone: club.phone || '',
       type: 'client',
       isperson: club.legal_entity_type === 'autonomo',
-      taxOperation: 'general',
+      taxOperation,
       billAddress: {
         address: club.billing_address || '',
         city: club.billing_city || '',
         postalCode: club.billing_postal_code || '',
         province: club.billing_province || '',
-        country: club.billing_country || 'Spain',
+        country: country,
       },
       defaults: {
         language: 'es',

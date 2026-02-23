@@ -108,7 +108,7 @@ serve(async (req) => {
     // Get club billing data
     const { data: club, error: clubError } = await supabaseClient
       .from('clubs')
-      .select('id, name, legal_name, tax_id, holded_contact_id, currency')
+      .select('id, name, legal_name, tax_id, holded_contact_id, currency, billing_country, vat_number')
       .eq('id', clubId)
       .single();
 
@@ -143,13 +143,31 @@ serve(async (req) => {
 
     const amountInEuros = (invoice.amount_paid || 0) / 100;
 
+    // Determine tax rate based on club's billing country
+    const EU_COUNTRIES = new Set([
+      'Alemania', 'Austria', 'Bélgica', 'Bulgaria', 'Chipre', 'Croacia', 'Dinamarca',
+      'Eslovaquia', 'Eslovenia', 'Estonia', 'Finlandia', 'Francia', 'Grecia', 'Hungría',
+      'Irlanda', 'Italia', 'Letonia', 'Lituania', 'Luxemburgo', 'Malta', 'Países Bajos',
+      'Polonia', 'Portugal', 'República Checa', 'Rumanía', 'Suecia',
+    ]);
+
+    const billingCountry = club.billing_country || 'España';
+    const isSpain = billingCountry === 'España';
+    const isIntraEU = !isSpain && EU_COUNTRIES.has(billingCountry);
+    const isNonEU = !isSpain && !isIntraEU;
+
+    // España → 21% IVA, UE intracomunitario → 0% (reverse charge), Fuera UE → 0% (no sujeto)
+    const taxRate = isSpain ? 21 : 0;
+
+    logStep("Tax calculation", { billingCountry, isSpain, isIntraEU, isNonEU, taxRate });
+
     // Build line items from Stripe invoice lines
     const holdedItems = (invoice.lines?.data || []).map((line) => ({
       name: line.description || `Suscripción PadeLock - ${club.name}`,
       desc: line.description || '',
       units: line.quantity || 1,
       subtotal: (line.amount || 0) / 100,
-      tax: 21, // 21% IVA - Spanish default
+      tax: taxRate,
     }));
 
     // Fallback if no line items
@@ -159,8 +177,19 @@ serve(async (req) => {
         desc: `Factura Stripe ${invoice.number || invoice.id}`,
         units: 1,
         subtotal: amountInEuros,
-        tax: 21,
+        tax: taxRate,
       });
+    }
+
+    // Build notes with legal text based on tax type
+    let invoiceNotes = `Ref. Stripe: ${invoice.number || invoice.id}`;
+    if (isIntraEU) {
+      invoiceNotes += `\nInversión del sujeto pasivo - Art. 84 LIVA`;
+      if (club.vat_number) {
+        invoiceNotes += `\nNIF-IVA cliente: ${club.vat_number}`;
+      }
+    } else if (isNonEU) {
+      invoiceNotes += `\nOperación no sujeta a IVA - Art. 69 LIVA`;
     }
 
     const holdedInvoicePayload = {
@@ -168,7 +197,7 @@ serve(async (req) => {
       date: invoiceDate,
       currency: (invoice.currency || 'eur').toLowerCase(),
       language: 'es',
-      notes: `Ref. Stripe: ${invoice.number || invoice.id}`,
+      notes: invoiceNotes,
       items: holdedItems,
     };
 
