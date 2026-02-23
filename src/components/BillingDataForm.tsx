@@ -1,14 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Building2, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Building2, CheckCircle, Loader2, AlertCircle, ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUpdateClub, type Club } from '@/hooks/useClubs';
+
+const COUNTRIES = [
+  'Afganistán', 'Albania', 'Alemania', 'Andorra', 'Angola', 'Antigua y Barbuda', 'Arabia Saudita',
+  'Argelia', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaiyán', 'Bahamas', 'Bangladés',
+  'Barbados', 'Baréin', 'Bélgica', 'Belice', 'Benín', 'Bielorrusia', 'Birmania', 'Bolivia',
+  'Bosnia y Herzegovina', 'Botsuana', 'Brasil', 'Brunéi', 'Bulgaria', 'Burkina Faso', 'Burundi',
+  'Bután', 'Cabo Verde', 'Camboya', 'Camerún', 'Canadá', 'Catar', 'Chad', 'Chile', 'China',
+  'Chipre', 'Colombia', 'Comoras', 'Corea del Norte', 'Corea del Sur', 'Costa de Marfil',
+  'Costa Rica', 'Croacia', 'Cuba', 'Dinamarca', 'Dominica', 'Ecuador', 'Egipto', 'El Salvador',
+  'Emiratos Árabes Unidos', 'Eritrea', 'Eslovaquia', 'Eslovenia', 'España', 'Estados Unidos',
+  'Estonia', 'Etiopía', 'Filipinas', 'Finlandia', 'Fiyi', 'Francia', 'Gabón', 'Gambia', 'Georgia',
+  'Ghana', 'Granada', 'Grecia', 'Guatemala', 'Guinea', 'Guinea-Bisáu', 'Guinea Ecuatorial',
+  'Guyana', 'Haití', 'Honduras', 'Hungría', 'India', 'Indonesia', 'Irak', 'Irán', 'Irlanda',
+  'Islandia', 'Islas Marshall', 'Islas Salomón', 'Israel', 'Italia', 'Jamaica', 'Japón',
+  'Jordania', 'Kazajistán', 'Kenia', 'Kirguistán', 'Kiribati', 'Kuwait', 'Laos', 'Lesoto',
+  'Letonia', 'Líbano', 'Liberia', 'Libia', 'Liechtenstein', 'Lituania', 'Luxemburgo',
+  'Macedonia del Norte', 'Madagascar', 'Malasia', 'Malaui', 'Maldivas', 'Malí', 'Malta',
+  'Marruecos', 'Mauricio', 'Mauritania', 'México', 'Micronesia', 'Moldavia', 'Mónaco',
+  'Mongolia', 'Montenegro', 'Mozambique', 'Namibia', 'Nauru', 'Nepal', 'Nicaragua', 'Níger',
+  'Nigeria', 'Noruega', 'Nueva Zelanda', 'Omán', 'Países Bajos', 'Pakistán', 'Palaos', 'Panamá',
+  'Papúa Nueva Guinea', 'Paraguay', 'Perú', 'Polonia', 'Portugal', 'Reino Unido',
+  'República Centroafricana', 'República Checa', 'República del Congo',
+  'República Democrática del Congo', 'República Dominicana', 'Ruanda', 'Rumanía', 'Rusia',
+  'Samoa', 'San Cristóbal y Nieves', 'San Marino', 'San Vicente y las Granadinas',
+  'Santa Lucía', 'Santo Tomé y Príncipe', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leona',
+  'Singapur', 'Siria', 'Somalia', 'Sri Lanka', 'Suazilandia', 'Sudáfrica', 'Sudán',
+  'Sudán del Sur', 'Suecia', 'Suiza', 'Surinam', 'Tailandia', 'Tanzania', 'Tayikistán',
+  'Timor Oriental', 'Togo', 'Tonga', 'Trinidad y Tobago', 'Túnez', 'Turkmenistán', 'Turquía',
+  'Tuvalu', 'Ucrania', 'Uganda', 'Uruguay', 'Uzbekistán', 'Vanuatu', 'Vaticano', 'Venezuela',
+  'Vietnam', 'Yemen', 'Yibuti', 'Zambia', 'Zimbabue',
+];
+
+const EU_COUNTRIES = new Set([
+  'Alemania', 'Austria', 'Bélgica', 'Bulgaria', 'Chipre', 'Croacia', 'Dinamarca',
+  'Eslovaquia', 'Eslovenia', 'Estonia', 'Finlandia', 'Francia', 'Grecia', 'Hungría',
+  'Irlanda', 'Italia', 'Letonia', 'Lituania', 'Luxemburgo', 'Malta', 'Países Bajos',
+  'Polonia', 'Portugal', 'República Checa', 'Rumanía', 'Suecia',
+]);
 
 interface BillingDataFormProps {
   club: Club;
@@ -17,6 +58,7 @@ interface BillingDataFormProps {
 export const BillingDataForm = ({ club }: BillingDataFormProps) => {
   const updateClub = useUpdateClub();
   const [syncing, setSyncing] = useState(false);
+  const [countryOpen, setCountryOpen] = useState(false);
   const [formData, setFormData] = useState({
     legal_name: club.legal_name || '',
     tax_id: club.tax_id || '',
@@ -26,7 +68,8 @@ export const BillingDataForm = ({ club }: BillingDataFormProps) => {
     billing_city: club.billing_city || '',
     billing_postal_code: club.billing_postal_code || '',
     billing_province: club.billing_province || '',
-    billing_country: club.billing_country || 'Spain',
+    billing_country: club.billing_country || 'España',
+    vat_number: club.vat_number || '',
   });
 
   useEffect(() => {
@@ -39,9 +82,12 @@ export const BillingDataForm = ({ club }: BillingDataFormProps) => {
       billing_city: club.billing_city || '',
       billing_postal_code: club.billing_postal_code || '',
       billing_province: club.billing_province || '',
-      billing_country: club.billing_country || 'Spain',
+      billing_country: club.billing_country || 'España',
+      vat_number: club.vat_number || '',
     });
   }, [club]);
+
+  const showVatField = formData.billing_country !== 'España' && EU_COUNTRIES.has(formData.billing_country);
 
   const handleSave = async () => {
     if (!formData.legal_name.trim() || !formData.tax_id.trim()) {
@@ -71,8 +117,8 @@ export const BillingDataForm = ({ club }: BillingDataFormProps) => {
       if (data?.success) {
         toast.success(
           data.isNew
-            ? 'Datos guardados y contacto creado en Holded'
-            : 'Datos guardados y contacto actualizado en Holded'
+            ? 'Datos guardados y contacto creado'
+            : 'Datos guardados y contacto actualizado'
         );
       }
     } catch (error) {
@@ -227,20 +273,63 @@ export const BillingDataForm = ({ club }: BillingDataFormProps) => {
           </div>
         </div>
 
-        {/* Row 5: Country */}
+        {/* Row 5: Country + VAT */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="billing_country" className="text-xs sm:text-sm font-medium">
+            <Label className="text-xs sm:text-sm font-medium">
               País
             </Label>
-            <Input
-              id="billing_country"
-              value={formData.billing_country}
-              onChange={(e) => setFormData({ ...formData, billing_country: e.target.value })}
-              placeholder="Spain"
-              className="text-sm h-9 sm:h-10"
-            />
+            <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={countryOpen}
+                  className="w-full justify-between text-sm h-9 sm:h-10 font-normal"
+                >
+                  {formData.billing_country || 'Selecciona un país'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar país..." />
+                  <CommandList>
+                    <CommandEmpty>No se encontró ningún país.</CommandEmpty>
+                    <CommandGroup>
+                      {COUNTRIES.map((country) => (
+                        <CommandItem
+                          key={country}
+                          value={country}
+                          onSelect={() => {
+                            setFormData({ ...formData, billing_country: country, vat_number: country === 'España' ? '' : formData.vat_number });
+                            setCountryOpen(false);
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", formData.billing_country === country ? "opacity-100" : "opacity-0")} />
+                          {country}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
+          {showVatField && (
+            <div className="space-y-1.5">
+              <Label htmlFor="vat_number" className="text-xs sm:text-sm font-medium">
+                VAT Number
+              </Label>
+              <Input
+                id="vat_number"
+                value={formData.vat_number}
+                onChange={(e) => setFormData({ ...formData, vat_number: e.target.value.toUpperCase() })}
+                placeholder="Ej: DE123456789"
+                className="text-sm h-9 sm:h-10"
+              />
+            </div>
+          )}
         </div>
 
         {/* Actions */}

@@ -26,6 +26,7 @@ export type Club = {
   billing_province?: string;
   billing_country?: string;
   holded_contact_id?: string;
+  vat_number?: string;
 };
 
 export type CreateClubData = {
