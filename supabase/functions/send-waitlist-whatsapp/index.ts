@@ -40,6 +40,7 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
   'd2265a22-fc1e-4f63-bd90-a78e6475bce4', // R2 Pádel Itálica
   'b0fc8417-a9dc-4c7c-8a1a-0f6a7714588a', // Rico Pádel
   '6dbcc136-1fe3-4755-957a-6e9a35d29574', // IBL Padel Academy
+  'c62db1b4-5c0f-4c1d-8d11-1905dd0512a8', // Escuela Soydepadel
 ];
 
 // Multi-language message templates
