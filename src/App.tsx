@@ -52,7 +52,9 @@ import OwnerUsersPage from "@/pages/owner/OwnerUsersPage";
 import OwnerSystemPage from "@/pages/owner/OwnerSystemPage";
 import OwnerSettingsPage from "@/pages/owner/OwnerSettingsPage";
 import OwnerAbsencesWaitlistPage from "@/pages/owner/OwnerAbsencesWaitlistPage";
+import OwnerClassesAnalyticsPage from "@/pages/owner/OwnerClassesAnalyticsPage";
 import OwnerHoldedPage from "@/pages/owner/OwnerHoldedPage";
+import OwnerClubReportPage from "@/pages/owner/OwnerClubReportPage";
 import GuardianDashboard from "@/pages/GuardianDashboard";
 import GuardianClassesDashboard from "@/pages/GuardianClassesDashboard";
 import GuardianSetupPage from "@/pages/GuardianSetupPage";
@@ -208,8 +210,10 @@ function App() {
           <Route path="metrics" element={<OwnerMetricsPage />} />
           <Route path="clubs" element={<OwnerClubsPage />} />
           <Route path="users" element={<OwnerUsersPage />} />
+          <Route path="classes-analytics" element={<OwnerClassesAnalyticsPage />} />
           <Route path="absences-waitlist" element={<OwnerAbsencesWaitlistPage />} />
           <Route path="holded" element={<OwnerHoldedPage />} />
+          <Route path="club-report" element={<OwnerClubReportPage />} />
           <Route path="system" element={<OwnerSystemPage />} />
           <Route path="settings" element={<OwnerSettingsPage />} />
           <Route path="whatsapp-reports" element={<WhatsAppReportsConfigPage />} />

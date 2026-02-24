@@ -36,6 +36,10 @@ export const OwnerLayout = ({ children }: OwnerLayoutProps) => {
         return { title: "Usuarios", path: "/owner/users" };
       case "/owner/metrics":
         return { title: "Métricas", path: "/owner/metrics" };
+      case "/owner/classes-analytics":
+        return { title: "Análisis de Clases", path: "/owner/classes-analytics" };
+      case "/owner/club-report":
+        return { title: "Informe de Club", path: "/owner/club-report" };
       case "/owner/system":
         return { title: "Sistema", path: "/owner/system" };
       case "/owner/settings":

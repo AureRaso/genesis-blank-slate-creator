@@ -11,6 +11,7 @@ import {
   Users,
   Settings,
   BarChart3,
+  GraduationCap,
   Shield,
   MessageSquare,
   UserMinus,
@@ -95,6 +96,19 @@ const OwnerSidebar = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
+            {/* Análisis de Clases */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === "/owner/classes-analytics"}
+              >
+                <Link to="/owner/classes-analytics">
+                  <GraduationCap className="h-4 w-4" />
+                  <span>Análisis Clases</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             {/* Ausencias y Waitlist */}
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -130,6 +144,19 @@ const OwnerSidebar = () => {
                 <Link to="/owner/holded">
                   <FileText className="h-4 w-4" />
                   <span>Facturación Holded</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Informe de Club */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={location.pathname === "/owner/club-report"}
+              >
+                <Link to="/owner/club-report">
+                  <FileText className="h-4 w-4" />
+                  <span>Informe de Club</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
