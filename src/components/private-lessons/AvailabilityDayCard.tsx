@@ -1,137 +1,219 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
-import { PrivateLessonAvailability } from "@/hooks/usePrivateLessons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, X, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+const DAY_INITIALS: Record<string, string[]> = {
+  es: ["D", "L", "M", "X", "J", "V", "S"],
+  en: ["S", "M", "T", "W", "T", "F", "S"],
+  it: ["D", "L", "M", "M", "G", "V", "S"],
+};
 
 const DAY_NAMES_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-interface AvailabilityDayCardProps {
-  dayOfWeek: number;
-  existing?: PrivateLessonAvailability;
-  onSave: (data: Omit<PrivateLessonAvailability, "id" | "created_at" | "updated_at">) => void;
-  isSaving: boolean;
-  trainerProfileId: string;
-  clubId: string;
+export interface DayState {
+  isActive: boolean;
+  morningStart: string;
+  morningEnd: string;
+  afternoonStart: string;
+  afternoonEnd: string;
+  duration: string;
+  hasMorning: boolean;
+  hasAfternoon: boolean;
 }
 
-const AvailabilityDayCard = ({
+interface AvailabilityDayRowProps {
+  dayOfWeek: number;
+  state: DayState;
+  onChange: (state: DayState) => void;
+  onCopyTo: (targetDays: number[]) => void;
+  orderedDays: number[];
+}
+
+const AvailabilityDayRow = ({
   dayOfWeek,
-  existing,
-  onSave,
-  isSaving,
-  trainerProfileId,
-  clubId,
-}: AvailabilityDayCardProps) => {
-  const { t } = useTranslation();
-  const [isActive, setIsActive] = useState(existing?.is_active ?? false);
-  const [morningStart, setMorningStart] = useState(existing?.morning_start?.slice(0, 5) || "");
-  const [morningEnd, setMorningEnd] = useState(existing?.morning_end?.slice(0, 5) || "");
-  const [afternoonStart, setAfternoonStart] = useState(existing?.afternoon_start?.slice(0, 5) || "");
-  const [afternoonEnd, setAfternoonEnd] = useState(existing?.afternoon_end?.slice(0, 5) || "");
-  const [duration, setDuration] = useState(String(existing?.slot_duration_minutes || 60));
+  state,
+  onChange,
+  onCopyTo,
+  orderedDays,
+}: AvailabilityDayRowProps) => {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.slice(0, 2) || "es";
+  const initials = DAY_INITIALS[lang] || DAY_INITIALS.es;
+  const initial = initials[dayOfWeek];
 
-  useEffect(() => {
-    if (existing) {
-      setIsActive(existing.is_active);
-      setMorningStart(existing.morning_start?.slice(0, 5) || "");
-      setMorningEnd(existing.morning_end?.slice(0, 5) || "");
-      setAfternoonStart(existing.afternoon_start?.slice(0, 5) || "");
-      setAfternoonEnd(existing.afternoon_end?.slice(0, 5) || "");
-      setDuration(String(existing.slot_duration_minutes || 60));
-    }
-  }, [existing]);
+  const [copyTargets, setCopyTargets] = useState<number[]>([]);
+  const [copyOpen, setCopyOpen] = useState(false);
 
-  const handleSave = () => {
-    onSave({
-      trainer_profile_id: trainerProfileId,
-      club_id: clubId,
-      day_of_week: dayOfWeek,
-      morning_start: morningStart || null,
-      morning_end: morningEnd || null,
-      afternoon_start: afternoonStart || null,
-      afternoon_end: afternoonEnd || null,
-      slot_duration_minutes: parseInt(duration),
-      is_active: isActive,
+  const handleActivate = () => {
+    onChange({
+      ...state,
+      isActive: true,
+      hasMorning: true,
+      morningStart: state.morningStart || "09:00",
+      morningEnd: state.morningEnd || "14:00",
     });
   };
 
+  const handleRemoveInterval = (interval: "morning" | "afternoon") => {
+    if (interval === "morning" && !state.hasAfternoon) {
+      // Removing last interval → deactivate day
+      onChange({ ...state, isActive: false, hasMorning: false, morningStart: "", morningEnd: "" });
+    } else if (interval === "morning" && state.hasAfternoon) {
+      // Remove morning, promote afternoon to morning slot visually
+      onChange({
+        ...state,
+        hasMorning: true,
+        hasAfternoon: false,
+        morningStart: state.afternoonStart,
+        morningEnd: state.afternoonEnd,
+        afternoonStart: "",
+        afternoonEnd: "",
+      });
+    } else {
+      // Remove afternoon
+      onChange({ ...state, hasAfternoon: false, afternoonStart: "", afternoonEnd: "" });
+    }
+  };
+
+  const handleAddAfternoon = () => {
+    onChange({
+      ...state,
+      hasAfternoon: true,
+      afternoonStart: state.afternoonStart || "16:00",
+      afternoonEnd: state.afternoonEnd || "21:00",
+    });
+  };
+
+  const handleApplyCopy = () => {
+    if (copyTargets.length > 0) {
+      onCopyTo(copyTargets);
+    }
+    setCopyTargets([]);
+    setCopyOpen(false);
+  };
+
+  const toggleCopyTarget = (day: number) => {
+    setCopyTargets((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
+
   return (
-    <Card className={`${isActive ? "border-playtomic-orange/40" : "opacity-60"}`}>
-      <CardContent className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{DAY_NAMES_ES[dayOfWeek]}</h3>
-          <div className="flex items-center gap-2">
-            <Label htmlFor={`active-${dayOfWeek}`} className="text-xs text-muted-foreground">
-              {isActive ? t("privateLessons.availability.enabled") : t("privateLessons.availability.disabled")}
-            </Label>
-            <Switch
-              id={`active-${dayOfWeek}`}
-              checked={isActive}
-              onCheckedChange={setIsActive}
-            />
-          </div>
+    <div className="flex items-start gap-3 py-3 border-b border-border/50 last:border-b-0">
+      {/* Day badge */}
+      <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm flex-shrink-0 mt-0.5">
+        {initial}
+      </div>
+
+      {/* Content */}
+      {!state.isActive ? (
+        /* Inactive state */
+        <div className="flex items-center gap-3 flex-1 min-h-[36px]">
+          <span className="text-sm text-muted-foreground">
+            {t("privateLessons.availability.unavailable", "No disponible")}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleActivate}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
+      ) : (
+        /* Active state */
+        <div className="flex-1 space-y-2">
+          {/* Morning interval */}
+          {state.hasMorning && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Input
+                type="time"
+                value={state.morningStart}
+                onChange={(e) => onChange({ ...state, morningStart: e.target.value })}
+                className="w-[110px] h-9 text-sm"
+              />
+              <span className="text-muted-foreground text-sm">—</span>
+              <Input
+                type="time"
+                value={state.morningEnd}
+                onChange={(e) => onChange({ ...state, morningEnd: e.target.value })}
+                className="w-[110px] h-9 text-sm"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => handleRemoveInterval("morning")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
 
-        {isActive && (
-          <>
-            {/* Morning range */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-                {t("privateLessons.availability.morning")}
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="time"
-                  value={morningStart}
-                  onChange={(e) => setMorningStart(e.target.value)}
-                  className="w-28 text-sm"
-                />
-                <span className="text-muted-foreground text-sm">—</span>
-                <Input
-                  type="time"
-                  value={morningEnd}
-                  onChange={(e) => setMorningEnd(e.target.value)}
-                  className="w-28 text-sm"
-                />
-              </div>
-            </div>
+              {/* Add afternoon button (only on first row if no afternoon yet) */}
+              {!state.hasAfternoon && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  onClick={handleAddAfternoon}
+                  title={t("privateLessons.availability.addInterval", "Añadir intervalo")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
 
-            {/* Afternoon range */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-                {t("privateLessons.availability.afternoon")}
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="time"
-                  value={afternoonStart}
-                  onChange={(e) => setAfternoonStart(e.target.value)}
-                  className="w-28 text-sm"
-                />
-                <span className="text-muted-foreground text-sm">—</span>
-                <Input
-                  type="time"
-                  value={afternoonEnd}
-                  onChange={(e) => setAfternoonEnd(e.target.value)}
-                  className="w-28 text-sm"
-                />
-              </div>
-            </div>
+              {/* Copy to other days */}
+              <Popover open={copyOpen} onOpenChange={setCopyOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground"
+                    title={t("privateLessons.availability.copyTo", "Copiar a otros días")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-56 p-3">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground mb-2 tracking-wider">
+                    {t("privateLessons.availability.copyTimesTo", "Copiar horarios a...")}
+                  </p>
+                  <div className="space-y-2">
+                    {orderedDays
+                      .filter((d) => d !== dayOfWeek)
+                      .map((d) => (
+                        <label key={d} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={copyTargets.includes(d)}
+                            onCheckedChange={() => toggleCopyTarget(d)}
+                          />
+                          <span className="text-sm">{DAY_NAMES_ES[d]}</span>
+                        </label>
+                      ))}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full mt-3"
+                    onClick={handleApplyCopy}
+                    disabled={copyTargets.length === 0}
+                  >
+                    {t("privateLessons.availability.apply", "Aplicar")}
+                  </Button>
+                </PopoverContent>
+              </Popover>
 
-            {/* Duration selector */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wider">
-                {t("privateLessons.availability.duration")}
-              </Label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger className="w-28">
+              {/* Duration selector */}
+              <Select value={state.duration} onValueChange={(v) => onChange({ ...state, duration: v })}>
+                <SelectTrigger className="w-[90px] h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -141,35 +223,39 @@ const AvailabilityDayCard = ({
                 </SelectContent>
               </Select>
             </div>
+          )}
 
-            {/* Save button */}
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-playtomic-orange hover:bg-playtomic-orange-dark"
-            >
-              <Save className="h-3.5 w-3.5 mr-1" />
-              {t("privateLessons.availability.save")}
-            </Button>
-          </>
-        )}
-
-        {/* Save even when inactive (to persist deactivation) */}
-        {!isActive && existing?.is_active && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            <Save className="h-3.5 w-3.5 mr-1" />
-            {t("privateLessons.availability.save")}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+          {/* Afternoon interval */}
+          {state.hasAfternoon && (
+            <div className="flex items-center gap-2 flex-wrap pl-0">
+              <Input
+                type="time"
+                value={state.afternoonStart}
+                onChange={(e) => onChange({ ...state, afternoonStart: e.target.value })}
+                className="w-[110px] h-9 text-sm"
+              />
+              <span className="text-muted-foreground text-sm">—</span>
+              <Input
+                type="time"
+                value={state.afternoonEnd}
+                onChange={(e) => onChange({ ...state, afternoonEnd: e.target.value })}
+                className="w-[110px] h-9 text-sm"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => handleRemoveInterval("afternoon")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default AvailabilityDayCard;
+export default AvailabilityDayRow;
