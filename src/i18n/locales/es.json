@@ -24,9 +24,11 @@
     "loadingHistory": "Cargando historial...",
     "history": "Historial",
     "attended": "Asistió",
+    "noShow": "No vino",
     "late": "Tardíos",
     "early": "Anticipados",
-    "cancelled": "Canceladas"
+    "cancelled": "Canceladas",
+    "substitute": "Sustituto"
   },
   "auth": {
     "signIn": "Iniciar Sesión",

@@ -31,7 +31,9 @@ import {
   TrendingDown,
   Loader2,
   X,
-  Circle,
+  Clock,
+  Ban,
+  UserPlus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -88,26 +90,36 @@ const StudentMetricsCompact = ({ studentEnrollmentId }: { studentEnrollmentId: s
         <div className="flex items-center gap-1">
           <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
           <span className="text-gray-600">Asistió:</span>
-          <span className="font-semibold">{metrics.total_attended}</span>
+          <span className="font-semibold">{metrics.attended_count}</span>
         </div>
 
         <div className="flex items-center gap-1">
           <X className="h-3 w-3 text-red-600 flex-shrink-0" />
+          <span className="text-gray-600">No vino:</span>
+          <span className="font-semibold text-red-700">{metrics.no_show_count}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Clock className="h-3 w-3 text-orange-500 flex-shrink-0" />
           <span className="text-gray-600">Tardíos:</span>
-          <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
+          <span className="font-semibold">{metrics.late_notice_absences}</span>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Circle className="h-3 w-3 text-red-600 flex-shrink-0" />
-          <span className="text-gray-600">Anticipados:</span>
-          <span className="font-semibold text-red-700">{metrics.early_notice_absences}</span>
-        </div>
+        {metrics.substitute_attendances > 0 && (
+          <div className="flex items-center gap-1">
+            <UserPlus className="h-3 w-3 text-blue-500 flex-shrink-0" />
+            <span className="text-gray-600">Sustituto:</span>
+            <span className="font-semibold">{metrics.substitute_attendances}</span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-1">
-          <X className="h-3 w-3 text-gray-500 flex-shrink-0" />
-          <span className="text-gray-600">Canceladas:</span>
-          <span className="font-semibold">{metrics.club_cancelled_classes}</span>
-        </div>
+        {metrics.club_cancelled_classes > 0 && (
+          <div className="flex items-center gap-1">
+            <Ban className="h-3 w-3 text-gray-400 flex-shrink-0" />
+            <span className="text-gray-600">Canceladas:</span>
+            <span className="font-semibold">{metrics.club_cancelled_classes}</span>
+          </div>
+        )}
       </div>
     </div>
   );

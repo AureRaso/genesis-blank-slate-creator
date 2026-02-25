@@ -24,9 +24,11 @@
     "loadingHistory": "Loading history...",
     "history": "History",
     "attended": "Attended",
+    "noShow": "No show",
     "late": "Late",
     "early": "Early",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "substitute": "Substitute"
   },
   "trainerDashboard": {
     "welcome": {

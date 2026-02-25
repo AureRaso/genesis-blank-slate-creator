@@ -4,7 +4,7 @@ import { useStudentBehaviorMetrics } from "@/hooks/useStudentBehaviorMetrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2, AlertTriangle, Ban, Check, X, Circle } from "lucide-react";
+import { Users, Clock, CheckCircle2, XCircle, UserCheck, Loader2, AlertTriangle, Ban, Check, X, Circle, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -51,26 +51,36 @@ const StudentMetricsDisplay = ({ studentEnrollmentId, classId }: { studentEnroll
         <div className="flex items-center gap-1.5">
           <Check className="h-3.5 w-3.5 text-green-600" />
           <span className="text-gray-600">Asistió:</span>
-          <span className="font-semibold">{metrics.total_attended}</span>
+          <span className="font-semibold">{metrics.attended_count}</span>
         </div>
 
         <div className="flex items-center gap-1.5">
           <X className="h-3.5 w-3.5 text-red-600" />
+          <span className="text-gray-600">No vino:</span>
+          <span className="font-semibold text-red-700">{metrics.no_show_count}</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 text-orange-500" />
           <span className="text-gray-600">Avisos tardíos:</span>
-          <span className="font-semibold text-red-700">{metrics.late_notice_absences}</span>
+          <span className="font-semibold">{metrics.late_notice_absences}</span>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <Circle className="h-3.5 w-3.5 text-orange-500" />
-          <span className="text-gray-600">Avisos anticipados:</span>
-          <span className="font-semibold">{metrics.early_notice_absences}</span>
-        </div>
+        {metrics.substitute_attendances > 0 && (
+          <div className="flex items-center gap-1.5">
+            <UserPlus className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-gray-600">Como sustituto:</span>
+            <span className="font-semibold">{metrics.substitute_attendances}</span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-1.5">
-          <X className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-gray-600">Canceladas (club):</span>
-          <span className="font-semibold">{metrics.club_cancelled_classes}</span>
-        </div>
+        {metrics.club_cancelled_classes > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Ban className="h-3.5 w-3.5 text-gray-400" />
+            <span className="text-gray-600">Canceladas:</span>
+            <span className="font-semibold">{metrics.club_cancelled_classes}</span>
+          </div>
+        )}
       </div>
     </div>
   );
