@@ -80,9 +80,6 @@ const CompanionSearch = ({
         <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{value.name}</p>
-          {value.email && (
-            <p className="text-xs text-gray-500 truncate">{value.email}</p>
-          )}
         </div>
         <span className="text-xs font-mono tracking-widest text-gray-400">
           {value.user_code}
@@ -132,9 +129,6 @@ const CompanionSearch = ({
         <div className="flex items-center gap-2 p-2.5 bg-orange-50 border border-orange-200 rounded-xl">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{foundUser.full_name}</p>
-            {foundUser.email && (
-              <p className="text-xs text-gray-500 truncate">{foundUser.email}</p>
-            )}
           </div>
           <Button
             size="sm"
