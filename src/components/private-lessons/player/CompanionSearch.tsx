@@ -5,6 +5,7 @@ import { Check, X, Loader2, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
 import { useLookupUserCode, UserCodeResult } from "@/hooks/useLookupUserCode";
+import { PhoneInput, COUNTRIES } from "@/components/PhoneInput";
 
 // Valid charset matching the DB function (no 0/O/1/I/L)
 const VALID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -191,7 +192,9 @@ const CompanionSearch = ({
   }
 
   // ---- GUEST MODE ----
-  const guestValid = guestName.trim().length > 0 && guestPhone.trim().length >= 6;
+  // Phone is valid when it has digits (PhoneInput already handles formatting/country validation)
+  const phoneDigits = guestPhone.replace(/\D/g, "");
+  const guestValid = guestName.trim().length > 0 && phoneDigits.length >= 7;
 
   return (
     <div className="space-y-2">
@@ -201,12 +204,11 @@ const CompanionSearch = ({
         onChange={(e) => setGuestName(e.target.value)}
         className="rounded-xl"
       />
-      <Input
-        placeholder={t("privateLessonsBooking.guestPhonePlaceholder", "Teléfono del invitado")}
+      <PhoneInput
         value={guestPhone}
-        onChange={(e) => setGuestPhone(e.target.value)}
-        className="rounded-xl"
-        type="tel"
+        onChange={setGuestPhone}
+        label={t("privateLessonsBooking.guestPhonePlaceholder", "Teléfono del invitado")}
+        required={false}
       />
 
       <Button
