@@ -5,7 +5,7 @@ import { ArrowLeft, User, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { PrivateLessonRates, DurationRates } from "@/hooks/useTrainers";
-import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
+import { CompanionInfo, useRecentCompanions } from "@/hooks/usePlayerPrivateLessons";
 import CompanionSearch from "./CompanionSearch";
 
 interface BookingStepPlayersProps {
@@ -84,6 +84,7 @@ const BookingStepPlayers = ({
 }: BookingStepPlayersProps) => {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const { data: recentCompanions = [] } = useRecentCompanions(clubId);
 
   const durationKey = String(durationMinutes);
   const durationRates = rates[durationKey];
@@ -201,6 +202,7 @@ const BookingStepPlayers = ({
                 value={companions[i] || null}
                 onChange={(c) => onUpdateCompanion(i, c)}
                 excludeProfileIds={selectedProfileIds}
+                recentCompanions={recentCompanions}
               />
             ))}
           </div>

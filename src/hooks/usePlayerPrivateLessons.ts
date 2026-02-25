@@ -287,8 +287,78 @@ export const useCreatePrivateLessonBooking = () => {
 };
 
 // ============================================================================
-// Hook: Search club students for companion selection
+// Hook: Recent companions (from past bookings)
 // ============================================================================
+
+export interface RecentCompanion {
+  name: string;
+  profile_id?: string;
+  user_code?: string;
+  email?: string;
+  phone?: string;
+  type: "registered" | "guest";
+  count: number; // how many times they've been a companion
+}
+
+export const useRecentCompanions = (clubId: string) => {
+  return useQuery({
+    queryKey: ["recent-companions", clubId],
+    queryFn: async (): Promise<RecentCompanion[]> => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("private_lesson_bookings")
+        .select("companion_details")
+        .eq("booked_by_profile_id", user.id)
+        .eq("club_id", clubId)
+        .in("status", ["confirmed", "pending"])
+        .not("companion_details", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      if (!data) return [];
+
+      // Extract and deduplicate companions
+      const companionMap = new Map<string, RecentCompanion>();
+
+      for (const booking of data) {
+        const details = booking.companion_details as CompanionInfo[] | null;
+        if (!Array.isArray(details)) continue;
+
+        for (const c of details) {
+          if (!c.name) continue;
+
+          // Unique key: profile_id for registered, name+phone for guests
+          const key = c.profile_id || `guest:${c.name}:${c.phone || ""}`;
+
+          const existing = companionMap.get(key);
+          if (existing) {
+            existing.count++;
+          } else {
+            companionMap.set(key, {
+              name: c.name,
+              profile_id: c.profile_id,
+              user_code: c.user_code,
+              email: c.email,
+              phone: c.phone,
+              type: c.profile_id ? "registered" : "guest",
+              count: 1,
+            });
+          }
+        }
+      }
+
+      // Sort by frequency (most used first)
+      return Array.from(companionMap.values()).sort((a, b) => b.count - a.count);
+    },
+    enabled: !!clubId,
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
+};
 
 // ============================================================================
 // Types for player's own bookings

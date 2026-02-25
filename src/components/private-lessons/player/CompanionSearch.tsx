@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Check, X, Loader2, Phone } from "lucide-react";
+import { Check, X, Loader2, Phone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
+import { CompanionInfo, RecentCompanion } from "@/hooks/usePlayerPrivateLessons";
 import { useLookupUserCode, UserCodeResult } from "@/hooks/useLookupUserCode";
 import { PhoneInput, COUNTRIES } from "@/components/PhoneInput";
 
@@ -16,6 +16,7 @@ interface CompanionSearchProps {
   value: CompanionInfo | null;
   onChange: (companion: CompanionInfo | null) => void;
   excludeProfileIds?: string[];
+  recentCompanions?: RecentCompanion[];
 }
 
 const CompanionSearch = ({
@@ -24,6 +25,7 @@ const CompanionSearch = ({
   value,
   onChange,
   excludeProfileIds = [],
+  recentCompanions = [],
 }: CompanionSearchProps) => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<"code" | "guest">("code");
@@ -104,6 +106,23 @@ const CompanionSearch = ({
     setGuestPhone("");
   };
 
+  const handleSelectRecent = (rc: RecentCompanion) => {
+    onChange({
+      name: rc.name,
+      email: rc.email,
+      phone: rc.phone,
+      type: rc.type,
+      user_code: rc.user_code,
+      profile_id: rc.profile_id,
+    });
+  };
+
+  // Filter out already-selected companions from suggestions
+  const availableSuggestions = recentCompanions.filter((rc) => {
+    if (rc.profile_id) return !excludeProfileIds.includes(rc.profile_id);
+    return true;
+  });
+
   // If companion is already confirmed, show it
   if (value) {
     return (
@@ -138,6 +157,34 @@ const CompanionSearch = ({
 
     return (
       <div className="space-y-2">
+        {/* Recent companions suggestions */}
+        {availableSuggestions.length > 0 && code.length === 0 && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-gray-400 uppercase tracking-wider font-medium">
+              {t("privateLessonsBooking.recentCompanions", "Recientes")}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {availableSuggestions.slice(0, 5).map((rc) => {
+                const key = rc.profile_id || `guest:${rc.name}:${rc.phone || ""}`;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleSelectRecent(rc)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-orange-50 hover:border-orange-200 border border-gray-200 transition-colors text-sm"
+                  >
+                    <UserRound className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="truncate max-w-[120px]">{rc.name}</span>
+                    {rc.type === "guest" && (
+                      <Phone className="h-3 w-3 text-gray-300" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <Input
           placeholder={t("userCode.placeholder", "Codigo del jugador")}
           value={code}
