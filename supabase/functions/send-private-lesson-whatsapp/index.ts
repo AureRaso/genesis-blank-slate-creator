@@ -42,66 +42,63 @@ const WHATSAPP_ENABLED_CLUBS: string[] = [
 // ============================================================================
 
 const CONFIRMED_BOOKER_TEMPLATES: Record<string, string> = {
-  es: `*¡Tu clase particular ha sido confirmada!*
+  es: `¡Todo listo! ✅
 
-Profesor: {trainerName}
-Fecha: {date}
-Hora: {startTime} - {endTime}
-Precio: {pricePerPerson}€/persona
-Club: {clubName}
+Tienes una clase particular confirmada con {trainerName} el {date} ({startTime} - {endTime}) en {clubName}.
 
-¡Nos vemos en la pista!`,
-  en: `*Your private lesson has been confirmed!*
+Tarifa: {pricePerPerson}€/persona
 
-Coach: {trainerName}
-Date: {date}
-Time: {startTime} - {endTime}
-Price: {pricePerPerson}€/person
-Club: {clubName}
+_Nota: Recuerda realizar el pago antes de acudir a la pista._
 
-See you on the court!`,
-  it: `*La tua lezione privata è stata confermata!*
+¡Disfruta del entrenamiento!`,
+  en: `You're all set! ✅
 
-Maestro: {trainerName}
-Data: {date}
-Ora: {startTime} - {endTime}
-Prezzo: {pricePerPerson}€/persona
-Club: {clubName}
+You have a confirmed lesson with {trainerName} this {date} ({startTime} - {endTime}) at {clubName}.
 
-Ci vediamo in campo!`,
+Rate: {pricePerPerson}€/person
+
+_Note: Please remember to process your payment before heading to the court._
+
+Enjoy your training!`,
+  it: `Tutto pronto! ✅
+
+Hai una lezione privata confermata con {trainerName} il {date} ({startTime} - {endTime}) presso {clubName}.
+
+Tariffa: {pricePerPerson}€/persona
+
+_Nota: Ricorda di effettuare il pagamento prima di recarti in campo._
+
+Buon allenamento!`,
 };
 
 const CONFIRMED_COMPANION_TEMPLATES: Record<string, string> = {
-  es: `*¡Clase particular confirmada!*
+  es: `¡Todo listo! ✅
 
-{bookerName} te ha incluido en una clase particular.
-Profesor: {trainerName}
-Fecha: {date}
-Hora: {startTime} - {endTime}
-Precio: {pricePerPerson}€/persona
-Club: {clubName}
+{bookerName} ha reservado una clase particular para ti con {trainerName} el {date} ({startTime} - {endTime}) en {clubName}.
 
-¡Nos vemos en la pista!`,
-  en: `*Private lesson confirmed!*
+Tarifa: {pricePerPerson}€/persona
 
-{bookerName} has included you in a private lesson.
-Coach: {trainerName}
-Date: {date}
-Time: {startTime} - {endTime}
-Price: {pricePerPerson}€/person
-Club: {clubName}
+_Nota: Recuerda realizar el pago antes de acudir a la pista._
 
-See you on the court!`,
-  it: `*Lezione privata confermata!*
+¡Disfruta del entrenamiento!`,
+  en: `You're all set! ✅
 
-{bookerName} ti ha incluso in una lezione privata.
-Maestro: {trainerName}
-Data: {date}
-Ora: {startTime} - {endTime}
-Prezzo: {pricePerPerson}€/persona
-Club: {clubName}
+{bookerName} has booked a lesson for you with {trainerName} this {date} ({startTime} - {endTime}) at {clubName}.
 
-Ci vediamo in campo!`,
+Rate: {pricePerPerson}€/person
+
+_Note: Please remember to process your payment before heading to the court._
+
+Enjoy your training!`,
+  it: `Tutto pronto! ✅
+
+{bookerName} ha prenotato una lezione per te con {trainerName} il {date} ({startTime} - {endTime}) presso {clubName}.
+
+Tariffa: {pricePerPerson}€/persona
+
+_Nota: Ricorda di effettuare il pagamento prima di recarti in campo._
+
+Buon allenamento!`,
 };
 
 const REJECTED_TEMPLATES: Record<string, string> = {
