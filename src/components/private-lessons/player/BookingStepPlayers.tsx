@@ -117,7 +117,8 @@ const BookingStepPlayers = ({
   // All companions filled?
   const allCompanionsFilled =
     companionsNeeded === 0 ||
-    companions.slice(0, companionsNeeded).every((c) => c !== null && c.name);
+    (companions.length >= companionsNeeded &&
+      companions.slice(0, companionsNeeded).every((c) => c !== null && c.name));
 
   const canContinue = pricePerPerson != null && allCompanionsFilled;
 
