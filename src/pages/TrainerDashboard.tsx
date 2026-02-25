@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, Activity, UserPlus, CalendarPlus, Calendar, ChevronDown, ChevronUp, Check, X, Bell } from "lucide-react";
+import { Users, GraduationCap, Clock, TrendingUp, TrendingDown, UserPlus, Calendar, ChevronDown, ChevronUp, Check, X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMyTrainerProfile } from "@/hooks/useTrainers";
@@ -19,6 +19,8 @@ import SubstituteStudentSearch from "@/components/SubstituteStudentSearch";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { UserMinusIcon } from "@/components/icons/UserMinusIcon";
 import { getWaitlistUrl } from "@/utils/url";
+import PendingBookingCard from "@/components/private-lessons/PendingBookingCard";
+import { PrivateLessonBooking } from "@/hooks/usePrivateLessons";
 import {
   Sheet,
   SheetContent,
@@ -37,7 +39,6 @@ import {
 const TrainerDashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [showAllActivities, setShowAllActivities] = useState(false);
   const [expandedClass, setExpandedClass] = useState<string | null>(null);
   const [substituteDialog, setSubstituteDialog] = useState<{
     open: boolean;
@@ -154,104 +155,24 @@ const TrainerDashboard = () => {
     enabled: trainerClubIds.length > 0
   });
 
-  // Fetch recent activities
-  const { data: recentActivities } = useQuery({
-    queryKey: ['trainer-recent-activities', trainerProfile?.id, myClasses],
+  // Fetch pending private lesson bookings for dashboard
+  // Note: trainer_profile_id in bookings references the user profile ID, not the trainers table ID
+  const { data: pendingBookings } = useQuery({
+    queryKey: ['private-lesson-pending-dashboard', profile?.id],
     queryFn: async () => {
-      if (!trainerProfile?.id || !myClasses || myClasses.length === 0) return [];
-
-      const activities: any[] = [];
-      const classIds = myClasses.map(c => c.id);
-
-      try {
-        // New students enrolled (from trainer's classes)
-        const { data: newStudents, error: studentsError } = await supabase
-          .from('class_participants')
-          .select('student_enrollment_id, created_at')
-          .in('class_id', classIds)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (studentsError) console.error('Error fetching students:', studentsError);
-
-        if (newStudents && newStudents.length > 0) {
-          // Get student enrollment and profile info
-          const { data: enrollment } = await supabase
-            .from('student_enrollments')
-            .select('profile_id')
-            .eq('id', newStudents[0].student_enrollment_id)
-            .single();
-
-          if (enrollment) {
-            const { data: studentProfile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', enrollment.profile_id)
-              .single();
-
-            activities.push({
-              type: 'new_student',
-              icon: UserPlus,
-              title: t('trainerDashboard.activity.newStudentEnrolled'),
-              description: t('trainerDashboard.activity.studentEnrolledIn', { name: studentProfile?.full_name || t('trainerDashboard.welcome.defaultName') }),
-              timestamp: newStudents[0].created_at,
-              color: 'primary'
-            });
-          }
-        }
-
-        // New classes created
-        const { data: newClasses, error: classesError } = await supabase
-          .from('programmed_classes')
-          .select('id, name, created_at')
-          .eq('trainer_profile_id', trainerProfile.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (classesError) console.error('Error fetching classes:', classesError);
-
-        if (newClasses && newClasses.length > 0) {
-          activities.push({
-            type: 'new_class',
-            icon: CalendarPlus,
-            title: t('trainerDashboard.activity.newClassScheduled'),
-            description: t('trainerDashboard.activity.classCreated', { name: newClasses[0].name }),
-            timestamp: newClasses[0].created_at,
-            color: 'gray'
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching activities:', error);
-      }
-
-      // If no real activities, show example data
-      if (activities.length === 0) {
-        const now = new Date();
-        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-
-        return [
-          {
-            type: 'new_student',
-            icon: UserPlus,
-            title: t('trainerDashboard.activity.newStudentsEnrolled'),
-            description: t('trainerDashboard.activity.newStudentsThisWeek', { count: 2 }),
-            timestamp: twoHoursAgo.toISOString(),
-            color: 'primary'
-          },
-          {
-            type: 'new_class',
-            icon: CalendarPlus,
-            title: t('trainerDashboard.activity.classesScheduled'),
-            description: t('trainerDashboard.activity.allClassesActive'),
-            timestamp: twoHoursAgo.toISOString(),
-            color: 'gray'
-          }
-        ];
-      }
-
-      return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      if (!profile?.id) return [];
+      const { data, error } = await supabase
+        .from('private_lesson_bookings')
+        .select('*')
+        .eq('trainer_profile_id', profile.id)
+        .eq('status', 'pending')
+        .order('lesson_date')
+        .order('start_time');
+      if (error) throw error;
+      return (data || []) as PrivateLessonBooking[];
     },
-    enabled: !!trainerProfile?.id && !!myClasses && myClasses.length > 0
+    enabled: !!profile?.id,
+    refetchInterval: 30000,
   });
 
   // Fetch weekly summary stats
@@ -334,21 +255,6 @@ const TrainerDashboard = () => {
     },
     enabled: !!trainerProfile?.id && !!myClasses
   });
-
-  const getTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const diffMs = now.getTime() - past.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return t('common.timeAgo.minutes', { count: diffMins });
-    if (diffHours < 24) return t('common.timeAgo.hours', { count: diffHours });
-    if (diffDays === 1) return t('common.timeAgo.yesterday');
-    if (diffDays < 7) return t('common.timeAgo.days', { count: diffDays });
-    return past.toLocaleDateString();
-  };
 
   if (profileLoading || classesLoading) {
     return (
@@ -544,54 +450,27 @@ const TrainerDashboard = () => {
 
       {/* Activity Backlog Section - Two columns on desktop, hidden on mobile */}
       <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Actividad Reciente */}
+        {/* Clases Particulares - Solicitudes pendientes */}
         <div>
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-bold text-[#10172a]">
-              {t('trainerDashboard.activity.title')}
+              {t('privateLessons.title', 'Clases Particulares')}
             </h3>
-            {recentActivities && recentActivities.length > 3 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAllActivities(!showAllActivities)}
-                className="text-xs text-primary hover:text-primary/80"
-              >
-                {showAllActivities ? (
-                  <>
-                    {t('trainerDashboard.activity.showLess')} <ChevronUp className="h-3 w-3 ml-1" />
-                  </>
-                ) : (
-                  <>
-                    {t('trainerDashboard.activity.showAll')} ({recentActivities.length}) <ChevronDown className="h-3 w-3 ml-1" />
-                  </>
-                )}
-              </Button>
+            {pendingBookings && pendingBookings.length > 0 && (
+              <Badge className="bg-amber-100 text-amber-700 border-amber-300">
+                {pendingBookings.length} {t('privateLessons.bookings.pendingCount', 'pendientes')}
+              </Badge>
             )}
           </div>
-          <div className="space-y-2 sm:space-y-3">
-            {recentActivities && recentActivities.length > 0 ? (
-              (showAllActivities ? recentActivities : recentActivities.slice(0, 3)).map((activity, index) => {
-                const Icon = activity.icon;
-                return (
-                  <div
-                    key={`${activity.type}-${index}`}
-                    className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/10"
-                  >
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 mt-0.5 flex-shrink-0">
-                      <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-[#10172a]">{activity.title}</p>
-                      <p className="text-xs text-gray-600 mt-0.5 sm:mt-1 line-clamp-2">{activity.description}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 sm:mt-1">{getTimeAgo(activity.timestamp)}</p>
-                    </div>
-                  </div>
-                );
-              })
+          <div className="space-y-3">
+            {pendingBookings && pendingBookings.length > 0 ? (
+              pendingBookings.map((booking) => (
+                <PendingBookingCard key={booking.id} booking={booking} />
+              ))
             ) : (
               <div className="text-center py-6 sm:py-8 text-gray-500">
-                <p className="text-xs sm:text-sm">{t('trainerDashboard.activity.noActivity')}</p>
+                <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-xs sm:text-sm">{t('privateLessons.bookings.noPending', 'No hay solicitudes pendientes')}</p>
               </div>
             )}
           </div>
@@ -900,6 +779,32 @@ const TrainerDashboard = () => {
             });
           })()}
         </div>
+        </div>
+      </div>
+
+      {/* Mobile Clases Particulares */}
+      <div className="md:hidden">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-base font-bold text-[#10172a]">
+            {t('privateLessons.title', 'Clases Particulares')}
+          </h3>
+          {pendingBookings && pendingBookings.length > 0 && (
+            <Badge className="bg-amber-100 text-amber-700 border-amber-300">
+              {pendingBookings.length}
+            </Badge>
+          )}
+        </div>
+        <div className="space-y-3">
+          {pendingBookings && pendingBookings.length > 0 ? (
+            pendingBookings.map((booking) => (
+              <PendingBookingCard key={`mobile-${booking.id}`} booking={booking} />
+            ))
+          ) : (
+            <div className="text-center py-6 text-gray-500">
+              <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">{t('privateLessons.bookings.noPending', 'No hay solicitudes pendientes')}</p>
+            </div>
+          )}
         </div>
       </div>
 
