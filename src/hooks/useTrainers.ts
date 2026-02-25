@@ -2,6 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface DurationRates {
+  price_1_player: number | null;
+  price_2_players: number | null;
+  price_3_players: number | null;
+  price_4_players: number | null;
+}
+
+/** Keyed by duration in minutes, e.g. "60", "90", "120" */
+export type PrivateLessonRates = Record<string, DurationRates>;
+
 export type Trainer = {
   id: string;
   profile_id: string;
@@ -10,6 +20,8 @@ export type Trainer = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Private lesson rates per duration tier (JSONB)
+  private_lesson_rates: PrivateLessonRates;
   // Profile information from join
   profiles?: {
     id: string;
@@ -522,6 +534,48 @@ export const useTrainersByClubFixed = (clubId: string) => {
       return [...(trainers || []), ...adminProfiles];
     },
     enabled: !!clubId,
+  });
+};
+
+export type UpdateTrainerRatesData = {
+  id: string;
+  private_lesson_rates: PrivateLessonRates;
+};
+
+export const useUpdateTrainerRates = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: UpdateTrainerRatesData) => {
+      const { data: result, error } = await supabase
+        .from('trainers')
+        .update({
+          private_lesson_rates: data.private_lesson_rates as unknown as Record<string, unknown>,
+        })
+        .eq('id', data.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trainers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
+      toast({
+        title: "Tarifa actualizada",
+        description: "La tarifa del entrenador se ha guardado correctamente",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating trainer rates:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la tarifa",
+        variant: "destructive",
+      });
+    },
   });
 };
 

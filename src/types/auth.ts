@@ -11,6 +11,7 @@ export interface Profile {
   club_id?: string;
   birth_date?: string;
   shirt_size?: string;
+  user_code: string;
   created_at: string;
   updated_at: string;
 }

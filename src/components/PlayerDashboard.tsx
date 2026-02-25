@@ -11,15 +11,20 @@ import { usePlayerAvailableLeagues } from "@/hooks/usePlayerAvailableLeagues";
 import { useGuardianChildren } from "@/hooks/useGuardianChildren";
 import { useCurrentUserEnrollment } from "@/hooks/useCurrentUserEnrollment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users } from "lucide-react";
+import { Users, Copy, Check, Info } from "lucide-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 const PlayerDashboard = () => {
   const { profile, isGuardian, retryAuth } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [codeCopied, setCodeCopied] = useState(false);
   const { availableLeagues, enrolledLeagues, isLoading: loadingLeagues } = usePlayerAvailableLeagues(profile?.id, profile?.club_id);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
   const [registrationLeague, setRegistrationLeague] = useState(null);
@@ -184,9 +189,45 @@ const PlayerDashboard = () => {
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         {/* Título y subtítulo */}
         <div className="space-y-2">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            {t('playerDashboard.greeting', { name: profile?.full_name?.split(' ')[0] })}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+              {t('playerDashboard.greeting', { name: profile?.full_name?.split(' ')[0] })}
+            </h1>
+            {profile?.user_code && (
+              <div className="inline-flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(profile.user_code);
+                    setCodeCopied(true);
+                    toast({ title: t('userCode.copied', 'Codigo copiado') });
+                    setTimeout(() => setCodeCopied(false), 2000);
+                  }}
+                  className="inline-flex items-center gap-1.5 group"
+                >
+                  <Badge variant="outline" className="font-mono text-xs sm:text-sm tracking-widest px-2 py-0.5 bg-orange-50 border-orange-200 text-primary hover:bg-orange-100 transition-colors">
+                    {profile.user_code}
+                    {codeCopied ? (
+                      <Check className="h-3 w-3 ml-1 text-green-600" />
+                    ) : (
+                      <Copy className="h-3 w-3 ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </Badge>
+                </button>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[220px] text-center">
+                      <p className="text-xs">{t('userCode.tooltip', 'Comparte este codigo con otros jugadores para que te incluyan en sus clases particulares')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
           <p className="text-sm sm:text-base text-gray-500">
             {t('playerDashboard.welcome')}
           </p>

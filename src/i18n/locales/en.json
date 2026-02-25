@@ -219,7 +219,8 @@
     "paymentRates": "Rates",
     "bonoTemplates": "Class Packs",
     "bonoControl": "Pack Control",
-    "financialControl": "Financial Control"
+    "financialControl": "Financial Control",
+    "privateLessons": "Private Lessons"
   },
   "months": {
     "jan": { "short": "Jan", "full": "January" },
@@ -949,6 +950,29 @@
       "title": "Read-Only Access",
       "description": "Only administrators can create and edit trainers."
     },
+    "stats": {
+      "activeTrainers": "Active trainers",
+      "weeklyClasses": "Classes this week",
+      "weeklyIncome": "Weekly income",
+      "avgOccupancy": "Avg. occupancy"
+    },
+    "privateRates": {
+      "title": "Trainers · Private Rates",
+      "addTrainer": "+ Add trainer",
+      "columns": {
+        "trainer": "Trainer",
+        "ratePerClass": "Rate / Class",
+        "duration": "Duration",
+        "availability": "Availability",
+        "weeklyClasses": "Weekly classes",
+        "actions": "Actions"
+      },
+      "notConfigured": "Not configured",
+      "active": "Active",
+      "hour": "hour",
+      "hours": "hours",
+      "infoTip": "The rate applies per full class, regardless of the number of players. The system automatically calculates the price per person by dividing (trainer fee + court) ÷ number of players."
+    },
     "trainersList": {
       "errorLoading": "Error loading trainers",
       "noTrainers": "No registered trainers",
@@ -971,6 +995,39 @@
         "cancel": "Cancel",
         "confirm": "Deactivate"
       }
+    },
+    "rateDialog": {
+      "title": "Edit rate",
+      "classOf": "Class of",
+      "duration": "Class duration",
+      "pricesTitle": "Price per person (€)",
+      "pricesHint": "Define the price each student will pay based on group size",
+      "player1": "1 player pays",
+      "player2": "2 players pay",
+      "player3": "3 players pay",
+      "player4": "4 players pay",
+      "save": "Save rate",
+      "saving": "Saving...",
+      "durationHint": "Each duration tier has its own independent rates"
+    },
+    "schedule": {
+      "breadcrumbTrainers": "Trainers",
+      "breadcrumbSchedule": "Schedule",
+      "weekLabel": "Week",
+      "rate": "Rate",
+      "durationLabel": "Duration",
+      "previous": "Previous",
+      "next": "Next",
+      "available": "Available",
+      "reserved": "Reserved",
+      "notAvailable": "Not available",
+      "free": "Free",
+      "noSlots": "This trainer has no configured schedule",
+      "todayReservations": "Today's reservations",
+      "player": "player",
+      "players": "players",
+      "infoBanner": "The schedule is configured by the trainer from their app. As a coordinator, you can view their availability and student reservations.",
+      "rateFrom": "From"
     },
     "trainerForm": {
       "editTitle": "Edit Trainer",
@@ -1795,7 +1852,8 @@
     },
     "tabs": {
       "myClasses": "My classes",
-      "availableClasses": "Available classes"
+      "availableClasses": "Available classes",
+      "privateLessons": "Private Lessons"
     },
     "upcomingClasses": "Upcoming classes",
     "myClassesTitle": "My classes",
@@ -1826,6 +1884,14 @@
     "waitlistBeingReviewed": "Your request is being reviewed by the teacher",
     "waitlistAcceptedInClass": "You have been accepted in this class",
     "waitlistNoSpots": "Sorry, there are no spots available in this class",
+    "privateLessons": "Private Lessons",
+    "privateLessonPending": "Pending",
+    "privateLessonConfirmed": "Confirmed",
+    "privateLessonWith": "Private lesson with",
+    "privateLessonPendingHint": "Pending trainer confirmation",
+    "privateLessonConfirmedHint": "Confirmed by trainer",
+    "privateLessonInvited": "Invited",
+    "privateLessonBookedBy": "Booked by",
     "attendance": {
       "confirmed": "Confirmed",
       "notAttending": "Not attending",
@@ -2397,5 +2463,124 @@
       "confirm": "Cancel Pack"
     },
     "noExpiry": "No expiry"
+  },
+  "privateLessons": {
+    "title": "Private Lessons",
+    "noClub": "You don't have an assigned club. Contact your administrator.",
+    "tabs": {
+      "week": "Week",
+      "availability": "Availability",
+      "exceptions": "Exceptions",
+      "requests": "Requests"
+    },
+    "availability": {
+      "description": "Configure morning and afternoon time ranges for each day of the week.",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "duration": "Duration",
+      "enabled": "Active",
+      "disabled": "Inactive",
+      "save": "Save"
+    },
+    "slots": {
+      "time": "Time",
+      "free": "Available",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "noSlots": "No slots configured for this week. Set up your availability first."
+    },
+    "exceptions": {
+      "description": "Manage blocks, extra days, and vacations.",
+      "add": "Add exception",
+      "addTitle": "Add exception",
+      "type": "Type",
+      "date": "Date",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "reason": "Reason",
+      "reasonPlaceholder": "E.g.: Tournament, Holiday...",
+      "blockDay": "Block day",
+      "extraDay": "Extra day",
+      "vacation": "Vacation",
+      "noExceptions": "No exceptions configured."
+    },
+    "bookings": {
+      "court": "Court",
+      "total": "Total",
+      "confirm": "Accept",
+      "reject": "Reject",
+      "rejectTitle": "Rejection reason",
+      "rejectPlaceholder": "Optional: indicate the reason...",
+      "confirmReject": "Reject request",
+      "noPending": "No pending requests.",
+      "pendingDescription": "Booking requests awaiting your response."
+    },
+    "rates": {
+      "title": "Rates",
+      "readOnly": "read-only",
+      "noRates": "No rates configured. The administrator must set them up.",
+      "player": "player",
+      "players": "players"
+    }
+  },
+  "privateLessonsBooking": {
+    "title": "Private Lessons",
+    "selectTrainer": "Choose your coach",
+    "selectDate": "Select date",
+    "selectTime": "Available times",
+    "noSlots": "No available times for this day",
+    "noTrainers": "No coaches available for private lessons at your club.",
+    "continue": "Continue",
+    "back": "Back",
+    "howManyPlayers": "How many players?",
+    "players": {
+      "solo": "Just me",
+      "duo": "2 players",
+      "trio": "3 players",
+      "cuarteto": "4 players"
+    },
+    "companions": "Players",
+    "you": "YOU",
+    "searchCompanion": "Search player...",
+    "companionNamePlaceholder": "Companion name",
+    "noResults": "No results",
+    "addManually": "Add manually",
+    "add": "Add",
+    "cancel": "Cancel",
+    "pricePerPerson": "Price per person",
+    "player": "player",
+    "playersLabel": "players",
+    "choosePayment": "Choose payment method",
+    "payAtClub": "Pay at the club",
+    "payAtClubDesc": "Cash or card on arrival",
+    "bonoRemaining": "You have",
+    "bonoClasses": "classes left",
+    "bonoExpires": "Expires",
+    "summary": "Summary",
+    "privateLesson": "Private lesson",
+    "trainerLabel": "Coach",
+    "yourPayment": "Your payment",
+    "requestBooking": "Request booking",
+    "submitting": "Requesting...",
+    "pendingTitle": "Booking pending",
+    "pendingSubtitle": "The coach must confirm your lesson",
+    "pendingBanner": "Pending confirmation · We'll notify you when the coach accepts",
+    "pendingBonoDeduction": "Will be deducted upon confirmation",
+    "pendingPayAtClub": "Pay at the club upon confirmation",
+    "addToCalendar": "Add to calendar",
+    "shareWhatsApp": "Share on WhatsApp",
+    "backToHome": "Back to home"
+  },
+  "userCode": {
+    "title": "Your code",
+    "copied": "Code copied",
+    "placeholder": "Player code",
+    "notFound": "No player found",
+    "notFoundInClub": "No player found in your club",
+    "confirm": "Confirm",
+    "change": "Change",
+    "searching": "Searching...",
+    "alreadyAdded": "This player is already included",
+    "tooltip": "Share this code with other players so they can include you in their private lessons"
   }
 }

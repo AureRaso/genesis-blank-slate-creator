@@ -7,6 +7,8 @@ import { useSendCancellationNotification } from "@/hooks/useCancellationNotifica
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { useBulkEnrollToRecurringClass } from "@/hooks/useClassParticipants";
 import { useClassWaitlist } from "@/hooks/useClassWaitlist";
+import { usePrivateLessonBookingsForAttendance } from "@/hooks/usePrivateLessons";
+import PrivateLessonAttendanceCard from "@/components/private-lessons/PrivateLessonAttendanceCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -320,6 +322,21 @@ const WeekAttendancePage = () => {
     return Array.from(ids);
   }, [filteredClasses]);
   const { data: bonoMap } = useParticipantActiveBonos(allEnrollmentIds);
+
+  // Private lesson bookings for the week
+  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(startDateStr, endDateStr);
+  const filteredPrivateLessons = useMemo(() => {
+    let result = allPrivateLessonBookings;
+    // Filter by selected date
+    if (selectedDate) {
+      result = result.filter(b => b.lesson_date === selectedDate);
+    }
+    // Filter by selected trainer
+    if (selectedTrainer !== 'all') {
+      result = result.filter(b => b.trainer?.full_name === selectedTrainer);
+    }
+    return result;
+  }, [allPrivateLessonBookings, selectedDate, selectedTrainer]);
 
   // Sort classes: upcoming/current first, past classes last
   const sortedClasses = useMemo(() => {
@@ -1689,6 +1706,18 @@ const WeekAttendancePage = () => {
                   </Card>
                 );
               })}
+            </div>
+          )}
+
+          {/* Private Lessons Section */}
+          {filteredPrivateLessons.length > 0 && (
+            <div className="mt-6 space-y-3">
+              <h2 className="text-lg font-semibold text-indigo-700">Clases Particulares</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredPrivateLessons.map(booking => (
+                  <PrivateLessonAttendanceCard key={booking.id} booking={booking} />
+                ))}
+              </div>
             </div>
           )}
 

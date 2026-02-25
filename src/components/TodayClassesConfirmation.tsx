@@ -6,12 +6,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell, Save } from "lucide-react";
+import { Clock, User, MapPin, CheckCircle2, AlertCircle, XCircle, Calendar, Zap, Target, Users, CalendarPlus, Bell, Save, GraduationCap, UserPlus } from "lucide-react";
 import { useTodayClassAttendance } from "@/hooks/useTodayClassAttendance";
 import { useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsence, useCancelAbsence } from "@/hooks/useAttendanceConfirmations";
 import { AttendanceToggle } from "./AttendanceToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
+import { useMyPrivateLessonBookings, MyPrivateLessonBooking } from "@/hooks/usePlayerPrivateLessons";
 import { format } from "date-fns";
 import { es, enUS, it } from "date-fns/locale";
 import { ClassWaitlist } from "@/types/waitlist";
@@ -25,6 +26,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const { isGuardian } = useAuth();
   const { data: allClasses = [], isLoading } = useTodayClassAttendance();
   const { data: waitlistRequests = [], isLoading: loadingWaitlist } = useMyWaitlistRequests();
+  const { data: privateLessonBookings = [] } = useMyPrivateLessonBookings();
   const { t, i18n } = useTranslation();
 
   // Get locale for date-fns based on current language
@@ -343,11 +345,131 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     );
   };
 
+  // Render private lesson bookings section
+  const renderPrivateLessonsSection = () => {
+    if (privateLessonBookings.length === 0) return null;
+
+    const formatPrivateLessonDate = (dateStr: string) => {
+      const date = new Date(dateStr + 'T00:00:00');
+      const formatString = i18n.language === 'es' ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d";
+      return format(date, formatString, { locale: getDateLocale() });
+    };
+
+    const formatTime = (time: string) => time.substring(0, 5);
+
+    return (
+      <div className="space-y-3 mb-6">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-gradient-to-br from-primary to-orange-600 rounded-xl">
+            <GraduationCap className="h-5 w-5 text-white" />
+          </div>
+          <h3 className="text-lg sm:text-xl font-bold text-slate-800">
+            {t('playerDashboard.privateLessons', 'Clases Particulares')}
+          </h3>
+        </div>
+
+        <div className="space-y-2">
+          {privateLessonBookings.map((booking: MyPrivateLessonBooking) => {
+            const isPending = booking.status === 'pending';
+            const isConfirmed = booking.status === 'confirmed';
+
+            return (
+              <Card
+                key={booking.id}
+                className={`
+                  border-0 shadow-md rounded-xl transition-all duration-300
+                  ${isPending
+                    ? 'bg-gradient-to-br from-amber-50 to-yellow-50/30 border-l-4 border-l-amber-400'
+                    : 'bg-gradient-to-br from-green-50 to-emerald-50/30 border-l-4 border-l-green-400'
+                  }
+                `}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {isPending ? (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {t('playerDashboard.privateLessonPending', 'Pendiente')}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-100 text-green-800 border-green-300">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {t('playerDashboard.privateLessonConfirmed', 'Confirmada')}
+                          </Badge>
+                        )}
+                        {booking.is_companion && (
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            {t('playerDashboard.privateLessonInvited', 'Invitado')}
+                          </Badge>
+                        )}
+                      </div>
+                      <h4 className="font-semibold text-slate-800 mb-1">
+                        {t('playerDashboard.privateLessonWith', 'Clase particular con')} {booking.trainer_name}
+                      </h4>
+                      {booking.is_companion && booking.booker_name && (
+                        <p className="text-xs text-blue-700 mb-1">
+                          {t('playerDashboard.privateLessonBookedBy', 'Reservada por')} {booking.booker_name}
+                        </p>
+                      )}
+                      <div className="space-y-1 text-xs sm:text-sm text-slate-600">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="capitalize">{formatPrivateLessonDate(booking.lesson_date)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{booking.trainer_name}</span>
+                        </div>
+                        {booking.price_per_person != null && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-slate-500">
+                              {booking.price_per_person}€/{t('privateLessonsBooking.player', 'jugador')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isPending && (
+                    <div className="mt-3 pt-3 border-t border-amber-200">
+                      <p className="text-xs text-amber-800">
+                        <AlertCircle className="h-3.5 w-3.5 inline mr-1" />
+                        {t('playerDashboard.privateLessonPendingHint', 'Pendiente de confirmación del entrenador')}
+                      </p>
+                    </div>
+                  )}
+                  {isConfirmed && (
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <p className="text-xs text-green-800 font-medium">
+                        <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />
+                        {t('playerDashboard.privateLessonConfirmedHint', 'Confirmada por el entrenador')}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (todayClasses.length === 0) {
     return (
       <div className="space-y-4">
         {/* Waitlist section - show even when no classes */}
         {renderWaitlistSection()}
+        {/* Private lesson bookings */}
+        {renderPrivateLessonsSection()}
 
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
@@ -382,6 +504,8 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     <div className="space-y-4 sm:space-y-6">
       {/* Waitlist Notifications Section */}
       {renderWaitlistSection()}
+      {/* Private lesson bookings */}
+      {renderPrivateLessonsSection()}
 
       {/* Header - Responsive: stacked on mobile, inline on desktop */}
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">

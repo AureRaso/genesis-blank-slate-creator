@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWaitlistCount } from "@/hooks/useWaitlistCount";
+import { usePendingPrivateLessonCount } from "@/hooks/usePrivateLessons";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useClub } from "@/hooks/useClub";
@@ -154,6 +155,7 @@ const GuardianPlayerSidebar = ({
 const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
+  const { data: pendingLessonCount = 0 } = usePendingPrivateLessonCount(authContext?.isTrainer ?? false);
   const { t } = useTranslation();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const location = useLocation();
@@ -209,6 +211,19 @@ const AppSidebar = () => {
                 <Link to="/dashboard/scheduled-classes">
                   <Calendar />
                   <span>{t('sidebar.scheduledClasses')}</span>
+                </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/dashboard/private-lessons"}>
+                <Link to="/dashboard/private-lessons" className="flex items-center gap-2">
+                  <GraduationCap />
+                  <span>{t('sidebar.privateLessons', 'Clases Particulares')}</span>
+                  {pendingLessonCount > 0 && (
+                    <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-[10px]">
+                      {pendingLessonCount}
+                    </Badge>
+                  )}
                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

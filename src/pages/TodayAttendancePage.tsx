@@ -6,6 +6,8 @@ import { useSendWhatsAppNotification } from "@/hooks/useWhatsAppNotification";
 import { useSendCancellationNotification } from "@/hooks/useCancellationNotification";
 import { useCurrentUserWhatsAppGroup, useAllWhatsAppGroups } from "@/hooks/useWhatsAppGroup";
 import { useClassWaitlist } from "@/hooks/useClassWaitlist";
+import { usePrivateLessonBookingsForAttendance } from "@/hooks/usePrivateLessons";
+import PrivateLessonAttendanceCard from "@/components/private-lessons/PrivateLessonAttendanceCard";
 import { getWaitlistUrl } from "@/utils/url";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -736,6 +738,13 @@ const TodayAttendancePage = () => {
   }, [filteredClasses]);
   const { data: bonoMap } = useParticipantActiveBonos(allEnrollmentIds);
 
+  // Private lesson bookings for today
+  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(todayStr, todayStr);
+  const filteredPrivateLessons = useMemo(() => {
+    if (selectedTrainer === 'all') return allPrivateLessonBookings;
+    return allPrivateLessonBookings.filter(b => b.trainer?.full_name === selectedTrainer);
+  }, [allPrivateLessonBookings, selectedTrainer]);
+
   // Calculate statistics (usando clases filtradas)
   const totalClasses = filteredClasses.length;
   const totalParticipants = filteredClasses.reduce((acc, c) => acc + c.participants.length, 0);
@@ -1392,6 +1401,18 @@ const TodayAttendancePage = () => {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Private Lessons Section */}
+      {filteredPrivateLessons.length > 0 && (
+        <div className="mt-6 space-y-3">
+          <h2 className="text-lg font-semibold text-indigo-700">Clases Particulares</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredPrivateLessons.map(booking => (
+              <PrivateLessonAttendanceCard key={booking.id} booking={booking} />
+            ))}
+          </div>
         </div>
       )}
 

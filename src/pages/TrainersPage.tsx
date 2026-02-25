@@ -1,19 +1,22 @@
 
 import { useState } from "react";
-import { Plus, UserCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Lightbulb } from "lucide-react";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import TrainerForm from "@/components/TrainerForm";
-import TrainersList from "@/components/TrainersList";
+import TrainerStatsCards from "@/components/TrainerStatsCards";
+import TrainersPrivateRatesTable from "@/components/TrainersPrivateRatesTable";
+import TrainerWeeklySchedule from "@/components/TrainerWeeklySchedule";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trainer } from "@/hooks/useTrainers";
+import { Trainer, useAdminTrainers } from "@/hooks/useTrainers";
 import { useTranslation } from "react-i18next";
 
 const TrainersPage = () => {
   const [showTrainerForm, setShowTrainerForm] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<Trainer | undefined>();
-  const { isAdmin } = useAuth();
+  const [scheduleTrainer, setScheduleTrainer] = useState<Trainer | null>(null);
+  const { isAdmin, effectiveClubId } = useAuth();
   const { t } = useTranslation();
+  const { data: trainers, isLoading, error } = useAdminTrainers(effectiveClubId);
 
   const handleCloseTrainerForm = () => {
     setShowTrainerForm(false);
@@ -30,6 +33,14 @@ const TrainersPage = () => {
     setShowTrainerForm(true);
   };
 
+  const handleViewSchedule = (trainer: Trainer) => {
+    setScheduleTrainer(trainer);
+  };
+
+  const handleBackFromSchedule = () => {
+    setScheduleTrainer(null);
+  };
+
   if (showTrainerForm) {
     return (
       <div className="space-y-6">
@@ -38,20 +49,17 @@ const TrainersPage = () => {
     );
   }
 
+  if (scheduleTrainer) {
+    return (
+      <TrainerWeeklySchedule
+        trainer={scheduleTrainer}
+        onBack={handleBackFromSchedule}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-black">
-          {t('trainersPage.title')}
-        </h1>
-        {isAdmin && (
-          <Button onClick={handleCreateNewTrainer} className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark">
-            <Plus className="mr-2 h-4 w-4" />
-            {t('trainersPage.newTrainer')}
-          </Button>
-        )}
-      </div>
-
       {!isAdmin && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
@@ -63,7 +71,28 @@ const TrainersPage = () => {
         </Card>
       )}
 
-      <TrainersList onEditTrainer={handleEditTrainer} onCreateTrainer={handleCreateNewTrainer} />
+      {/* Stats cards */}
+      <TrainerStatsCards trainers={trainers || []} />
+
+      {/* Private rates table */}
+      <TrainersPrivateRatesTable
+        trainers={trainers || []}
+        isLoading={isLoading}
+        error={error}
+        onEditTrainer={handleEditTrainer}
+        onCreateTrainer={handleCreateNewTrainer}
+        onViewSchedule={handleViewSchedule}
+      />
+
+      {/* Info tip banner */}
+      {trainers && trainers.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+          <Lightbulb className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            {t('trainersPage.privateRates.infoTip')}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

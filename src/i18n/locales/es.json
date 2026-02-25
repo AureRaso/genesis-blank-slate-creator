@@ -66,7 +66,8 @@
     "paymentRates": "Tarifas",
     "bonoTemplates": "Bonos",
     "bonoControl": "Control de Bonos",
-    "financialControl": "Control Financiero"
+    "financialControl": "Control Financiero",
+    "privateLessons": "Clases Particulares"
   },
   "userMenu": {
     "superadmin": "Administrador",
@@ -434,6 +435,29 @@
       "title": "Acceso de Solo Lectura",
       "description": "Solo los administradores pueden crear y editar profesores."
     },
+    "stats": {
+      "activeTrainers": "Entrenadores activos",
+      "weeklyClasses": "Clases esta semana",
+      "weeklyIncome": "Ingresos semana",
+      "avgOccupancy": "Ocupación media"
+    },
+    "privateRates": {
+      "title": "Entrenadores · Tarifas Particulares",
+      "addTrainer": "+ Añadir entrenador",
+      "columns": {
+        "trainer": "Entrenador",
+        "ratePerClass": "Tarifa / Clase",
+        "duration": "Duración",
+        "availability": "Disponibilidad",
+        "weeklyClasses": "Clases semana",
+        "actions": "Acciones"
+      },
+      "notConfigured": "Sin configurar",
+      "active": "Activa",
+      "hour": "hora",
+      "hours": "horas",
+      "infoTip": "La tarifa se aplica por clase completa, independientemente del número de jugadores. El sistema calcula automáticamente el precio por persona dividiendo (tarifa profesor + pista) ÷ nº jugadores."
+    },
     "trainersList": {
       "errorLoading": "Error al cargar los profesores",
       "noTrainers": "No hay profesores registrados",
@@ -446,6 +470,7 @@
       },
       "specialty": "Especialidad:",
       "assignedClub": "Club asignado:",
+      "assignedClubs": "Clubs asignados:",
       "status": {
         "active": "Activo",
         "inactive": "Inactivo"
@@ -456,6 +481,39 @@
         "cancel": "Cancelar",
         "confirm": "Desactivar"
       }
+    },
+    "rateDialog": {
+      "title": "Editar tarifa",
+      "classOf": "Clase de",
+      "duration": "Duración de la clase",
+      "pricesTitle": "Precio por persona (€)",
+      "pricesHint": "Define el precio que pagará cada alumno según el tamaño del grupo",
+      "player1": "1 jugador paga",
+      "player2": "2 jugadores pagan",
+      "player3": "3 jugadores pagan",
+      "player4": "4 jugadores pagan",
+      "save": "Guardar tarifa",
+      "saving": "Guardando...",
+      "durationHint": "Cada tramo horario tiene sus propias tarifas independientes"
+    },
+    "schedule": {
+      "breadcrumbTrainers": "Entrenadores",
+      "breadcrumbSchedule": "Horario",
+      "weekLabel": "Semana",
+      "rate": "Tarifa",
+      "durationLabel": "Duración",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "available": "Disponible",
+      "reserved": "Reservado",
+      "notAvailable": "No disponible",
+      "free": "Libre",
+      "noSlots": "Este entrenador no tiene horarios configurados",
+      "todayReservations": "Reservas de hoy",
+      "player": "jugador",
+      "players": "jugadores",
+      "infoBanner": "El horario es configurado por el propio entrenador desde su app. Como coordinador, puedes visualizar su disponibilidad y las reservas de los alumnos.",
+      "rateFrom": "Desde"
     },
     "trainerForm": {
       "editTitle": "Editar Profesor",
@@ -1280,7 +1338,8 @@
     },
     "tabs": {
       "myClasses": "Mis clases",
-      "availableClasses": "Clases disponibles"
+      "availableClasses": "Clases disponibles",
+      "privateLessons": "Clases Particulares"
     },
     "upcomingClasses": "Próximas clases",
     "myClassesTitle": "Mis clases",
@@ -1311,6 +1370,14 @@
     "waitlistBeingReviewed": "Tu solicitud está siendo revisada por el profesor",
     "waitlistAcceptedInClass": "Has sido aceptado en esta clase",
     "waitlistNoSpots": "Lo sentimos, no hay plazas disponibles en esta clase",
+    "privateLessons": "Clases Particulares",
+    "privateLessonPending": "Pendiente",
+    "privateLessonConfirmed": "Confirmada",
+    "privateLessonWith": "Clase particular con",
+    "privateLessonPendingHint": "Pendiente de confirmación del entrenador",
+    "privateLessonConfirmedHint": "Confirmada por el entrenador",
+    "privateLessonInvited": "Invitado",
+    "privateLessonBookedBy": "Reservada por",
     "attendance": {
       "confirmed": "Confirmada",
       "notAttending": "No asistiré",
@@ -2393,5 +2460,124 @@
       "confirm": "Cancelar Bono"
     },
     "noExpiry": "Sin caducidad"
+  },
+  "privateLessons": {
+    "title": "Clases Particulares",
+    "noClub": "No tienes un club asignado. Contacta con tu administrador.",
+    "tabs": {
+      "week": "Semana",
+      "availability": "Disponibilidad",
+      "exceptions": "Excepciones",
+      "requests": "Solicitudes"
+    },
+    "availability": {
+      "description": "Configura las franjas horarias de mañana y tarde para cada día de la semana.",
+      "morning": "Mañana",
+      "afternoon": "Tarde",
+      "duration": "Duración",
+      "enabled": "Activo",
+      "disabled": "Inactivo",
+      "save": "Guardar"
+    },
+    "slots": {
+      "time": "Hora",
+      "free": "Disponible",
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "noSlots": "No hay huecos configurados para esta semana. Configura tu disponibilidad primero."
+    },
+    "exceptions": {
+      "description": "Gestiona bloqueos, días extra y vacaciones.",
+      "add": "Añadir excepción",
+      "addTitle": "Añadir excepción",
+      "type": "Tipo",
+      "date": "Fecha",
+      "startDate": "Fecha inicio",
+      "endDate": "Fecha fin",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Ej: Torneo, Festivo...",
+      "blockDay": "Bloquear día",
+      "extraDay": "Día extra",
+      "vacation": "Vacaciones",
+      "noExceptions": "No hay excepciones configuradas."
+    },
+    "bookings": {
+      "court": "Pista",
+      "total": "Total",
+      "confirm": "Aceptar",
+      "reject": "Rechazar",
+      "rejectTitle": "Motivo del rechazo",
+      "rejectPlaceholder": "Opcional: indica el motivo...",
+      "confirmReject": "Rechazar solicitud",
+      "noPending": "No hay solicitudes pendientes.",
+      "pendingDescription": "Solicitudes de reserva pendientes de tu respuesta."
+    },
+    "rates": {
+      "title": "Tarifas",
+      "readOnly": "solo lectura",
+      "noRates": "No hay tarifas configuradas. El administrador debe definirlas.",
+      "player": "jug",
+      "players": "jug"
+    }
+  },
+  "privateLessonsBooking": {
+    "title": "Clases Particulares",
+    "selectTrainer": "Elige tu profesor",
+    "selectDate": "Selecciona fecha",
+    "selectTime": "Horarios disponibles",
+    "noSlots": "No hay horarios disponibles para este día",
+    "noTrainers": "No hay profesores disponibles para clases particulares en tu club.",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "howManyPlayers": "¿Cuántos jugáis?",
+    "players": {
+      "solo": "Solo yo",
+      "duo": "Somos 2",
+      "trio": "Somos 3",
+      "cuarteto": "Somos 4"
+    },
+    "companions": "Jugadores",
+    "you": "TÚ",
+    "searchCompanion": "Buscar jugador...",
+    "companionNamePlaceholder": "Nombre del acompañante",
+    "noResults": "Sin resultados",
+    "addManually": "Añadir manualmente",
+    "add": "Añadir",
+    "cancel": "Cancelar",
+    "pricePerPerson": "Precio por persona",
+    "player": "jugador",
+    "playersLabel": "jugadores",
+    "choosePayment": "Elige cómo pagar",
+    "payAtClub": "Pagar en academia",
+    "payAtClubDesc": "Efectivo o TPV al llegar",
+    "bonoRemaining": "Te quedan",
+    "bonoClasses": "clases",
+    "bonoExpires": "Caduca",
+    "summary": "Resumen",
+    "privateLesson": "Clase particular",
+    "trainerLabel": "Profesor",
+    "yourPayment": "Tu pago",
+    "requestBooking": "Solicitar reserva",
+    "submitting": "Solicitando...",
+    "pendingTitle": "Reserva pendiente",
+    "pendingSubtitle": "El entrenador debe confirmar tu clase",
+    "pendingBanner": "Pendiente de confirmación · Te notificaremos cuando el entrenador acepte",
+    "pendingBonoDeduction": "Se descontará al confirmar",
+    "pendingPayAtClub": "Se paga en academia al confirmar",
+    "addToCalendar": "Añadir al calendario",
+    "shareWhatsApp": "Compartir por WhatsApp",
+    "backToHome": "Volver al inicio"
+  },
+  "userCode": {
+    "title": "Tu código",
+    "copied": "Código copiado",
+    "placeholder": "Código del jugador",
+    "notFound": "No se encontró jugador",
+    "notFoundInClub": "No se encontró jugador en tu club",
+    "confirm": "Confirmar",
+    "change": "Cambiar",
+    "searching": "Buscando...",
+    "alreadyAdded": "Este jugador ya está incluido",
+    "tooltip": "Comparte este código con otros jugadores para que te incluyan en sus clases particulares"
   }
 }

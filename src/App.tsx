@@ -83,6 +83,8 @@ import AssignRatesPage from "@/pages/AssignRatesPage";
 import BonoTemplatesPage from "@/pages/BonoTemplatesPage";
 import AssignBonosPage from "@/pages/AssignBonosPage";
 import BonoControlPage from "@/pages/BonoControlPage";
+import PrivateLessonsPage from "@/pages/PrivateLessonsPage";
+import PlayerPrivateLessonBookingPage from "@/pages/PlayerPrivateLessonBookingPage";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading, authError, retryAuth } = useAuth();
@@ -253,6 +255,7 @@ function App() {
                     <Route path="/waitlist-notifications" element={<WaitlistNotifications />} />
                     <Route path="/monthly-payments" element={<AdminPaymentControlPage />} />
                     <Route path="/ejercicios" element={<EjerciciosPage />} />
+                    <Route path="/private-lessons" element={<PrivateLessonsPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
@@ -292,6 +295,7 @@ function App() {
                      {isAdmin && <Route path="/bono-templates/assign" element={<AssignBonosPage />} />}
                      {isAdmin && <Route path="/bono-control" element={<BonoControlPage />} />}
                      {(isAdmin || isTrainer) && <Route path="/ejercicios" element={<EjerciciosPage />} />}
+                     <Route path="/private-lesson-booking" element={<PlayerPrivateLessonBookingPage />} />
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />
                   </>

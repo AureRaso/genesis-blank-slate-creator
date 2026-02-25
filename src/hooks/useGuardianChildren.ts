@@ -9,6 +9,7 @@ export interface GuardianChild {
   email: string;
   level: number | null;
   club_id: string | null;
+  user_code?: string;
   relationship_type: string;
   birth_date: string | null;
   created_at: string;
@@ -70,6 +71,7 @@ export const useGuardianChildren = () => {
           email,
           level,
           club_id,
+          user_code,
           club:clubs!profiles_club_id_fkey (
             name
           )
@@ -89,6 +91,7 @@ export const useGuardianChildren = () => {
           email: profile.email,
           level: profile.level,
           club_id: profile.club_id,
+          user_code: (profile as any).user_code || undefined,
           relationship_type: dependent.relationship_type,
           birth_date: dependent.birth_date,
           created_at: dependent.created_at,
