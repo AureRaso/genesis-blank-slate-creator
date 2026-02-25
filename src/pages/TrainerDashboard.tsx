@@ -803,9 +803,9 @@ const TrainerDashboard = () => {
                         console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
                         const waitlistUrl = getWaitlistUrl(classData.id, today);
-                        const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
-                        const substituteCount = classData.participants.filter(p => p.is_substitute).length;
-                        const availableSlots = absentCount - substituteCount;
+                        const maxParticipants = classData.max_participants || 8;
+                        const attendingCount = classData.participants.filter(p => p.student_enrollment && !p.absence_confirmed).length;
+                        const availableSlots = maxParticipants - attendingCount;
 
                         sendWhatsApp({
                           groupChatId: whatsappGroup.group_chat_id,
@@ -1109,9 +1109,9 @@ const TrainerDashboard = () => {
                         console.log('📤 Enviando directamente al grupo único');
                         const today = format(new Date(), 'yyyy-MM-dd');
                         const waitlistUrl = getWaitlistUrl(classData.id, today);
-                        const absentCount = classData.participants.filter(p => p.absence_confirmed).length;
-                        const substituteCount = classData.participants.filter(p => p.is_substitute).length;
-                        const availableSlots = absentCount - substituteCount;
+                        const maxParticipants = classData.max_participants || 8;
+                        const attendingCount = classData.participants.filter(p => p.student_enrollment && !p.absence_confirmed).length;
+                        const availableSlots = maxParticipants - attendingCount;
 
                         sendWhatsApp({
                           groupChatId: whatsappGroup.group_chat_id,
@@ -1253,9 +1253,9 @@ const TrainerDashboard = () => {
 
                     const today = format(new Date(), 'yyyy-MM-dd');
                     const waitlistUrl = getWaitlistUrl(whatsappGroupDialog.classData.id, today);
-                    const absentCount = whatsappGroupDialog.classData.participants.filter(p => p.absence_confirmed).length;
-                    const substituteCount = whatsappGroupDialog.classData.participants.filter(p => p.is_substitute).length;
-                    const availableSlots = absentCount - substituteCount;
+                    const maxParticipants = whatsappGroupDialog.classData.max_participants || 8;
+                    const attendingCount = whatsappGroupDialog.classData.participants.filter(p => p.student_enrollment && !p.absence_confirmed).length;
+                    const availableSlots = maxParticipants - attendingCount;
 
                     console.log('📤 Enviando notificación al grupo:', group.group_name);
 

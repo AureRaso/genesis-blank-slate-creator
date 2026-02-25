@@ -530,9 +530,9 @@ const TodayAttendancePage = () => {
 
   const sendNotificationToGroup = (groupChatId: string, classData: any) => {
     const today = new Date().toISOString().split('T')[0];
-    const absentCount = classData.participants.filter((p: any) => p.absence_confirmed).length;
-    const substituteCount = classData.participants.filter((p: any) => p.is_substitute).length;
-    const availableSlots = absentCount - substituteCount;
+    const maxParticipants = classData.max_participants || 8;
+    const attendingCount = classData.participants.filter((p: any) => p.student_enrollment && !p.absence_confirmed).length;
+    const availableSlots = maxParticipants - attendingCount;
 
     // Generate waitlist URL
     const waitlistUrl = getWaitlistUrl(classData.id, today);
