@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Lightbulb } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import TrainerForm from "@/components/TrainerForm";
-import TrainerStatsCards from "@/components/TrainerStatsCards";
 import TrainersPrivateRatesTable from "@/components/TrainersPrivateRatesTable";
 import TrainerWeeklySchedule from "@/components/TrainerWeeklySchedule";
 import { useAuth } from "@/contexts/AuthContext";
@@ -71,9 +70,6 @@ const TrainersPage = () => {
         </Card>
       )}
 
-      {/* Stats cards */}
-      <TrainerStatsCards trainers={trainers || []} />
-
       {/* Private rates table */}
       <TrainersPrivateRatesTable
         trainers={trainers || []}
@@ -84,8 +80,8 @@ const TrainersPage = () => {
         onViewSchedule={handleViewSchedule}
       />
 
-      {/* Info tip banner */}
-      {trainers && trainers.length > 0 && (
+      {/* Info tip banner - removed */}
+      {false && trainers && trainers.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
           <Lightbulb className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800">

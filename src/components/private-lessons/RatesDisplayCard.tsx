@@ -45,9 +45,6 @@ const RatesDisplayCard = ({ rates }: RatesDisplayCardProps) => {
           <h3 className="font-semibold text-sm">
             {t("privateLessons.rates.title", "Tarifas")}
           </h3>
-          <span className="text-xs text-muted-foreground">
-            ({t("privateLessons.rates.readOnly", "solo lectura")})
-          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
