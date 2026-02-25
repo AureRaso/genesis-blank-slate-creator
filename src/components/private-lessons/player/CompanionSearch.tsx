@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
 import { useLookupUserCode, UserCodeResult } from "@/hooks/useLookupUserCode";
@@ -25,8 +25,15 @@ const CompanionSearch = ({
   excludeProfileIds = [],
 }: CompanionSearchProps) => {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<"code" | "guest">("code");
+
+  // --- Code mode state ---
   const [code, setCode] = useState("");
   const [foundUser, setFoundUser] = useState<UserCodeResult | null>(null);
+
+  // --- Guest mode state ---
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
 
   const { data: lookupResult, isLoading, isError } = useLookupUserCode(code, clubId);
 
@@ -40,7 +47,6 @@ const CompanionSearch = ({
   }, [lookupResult, isLoading, code]);
 
   const handleCodeChange = (raw: string) => {
-    // Filter to valid chars only and uppercase
     const filtered = raw
       .toUpperCase()
       .split("")
@@ -48,13 +54,12 @@ const CompanionSearch = ({
       .join("")
       .slice(0, 6);
     setCode(filtered);
-    // Reset found user when code changes
     if (filtered.length < 6) {
       setFoundUser(null);
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirmRegistered = () => {
     if (!foundUser) return;
     onChange({
       name: foundUser.full_name,
@@ -67,10 +72,35 @@ const CompanionSearch = ({
     setFoundUser(null);
   };
 
+  const handleConfirmGuest = () => {
+    if (!guestName.trim() || !guestPhone.trim()) return;
+    onChange({
+      name: guestName.trim(),
+      phone: guestPhone.trim(),
+      type: "guest",
+    });
+    setGuestName("");
+    setGuestPhone("");
+  };
+
   const handleClear = () => {
     onChange(null);
     setCode("");
     setFoundUser(null);
+    setGuestName("");
+    setGuestPhone("");
+  };
+
+  const switchToGuest = () => {
+    setMode("guest");
+    setCode("");
+    setFoundUser(null);
+  };
+
+  const switchToCode = () => {
+    setMode("code");
+    setGuestName("");
+    setGuestPhone("");
   };
 
   // If companion is already confirmed, show it
@@ -81,9 +111,14 @@ const CompanionSearch = ({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{value.name}</p>
         </div>
-        <span className="text-xs font-mono tracking-widest text-gray-400">
-          {value.user_code}
-        </span>
+        {value.type === "registered" && value.user_code && (
+          <span className="text-xs font-mono tracking-widest text-gray-400">
+            {value.user_code}
+          </span>
+        )}
+        {value.type === "guest" && (
+          <Phone className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+        )}
         <button
           onClick={handleClear}
           className="text-gray-400 hover:text-gray-600"
@@ -94,58 +129,102 @@ const CompanionSearch = ({
     );
   }
 
-  const isSearching = isLoading && code.length === 6;
-  const notFound = !isLoading && code.length === 6 && !foundUser && !isError;
-  const isDuplicate = foundUser && excludeProfileIds.includes(foundUser.id);
+  // ---- CODE MODE ----
+  if (mode === "code") {
+    const isSearching = isLoading && code.length === 6;
+    const notFound = !isLoading && code.length === 6 && !foundUser && !isError;
+    const isDuplicate = foundUser && excludeProfileIds.includes(foundUser.id);
+
+    return (
+      <div className="space-y-2">
+        <Input
+          placeholder={t("userCode.placeholder", "Codigo del jugador")}
+          value={code}
+          onChange={(e) => handleCodeChange(e.target.value)}
+          className="rounded-xl font-mono text-center text-lg tracking-widest uppercase"
+          maxLength={6}
+        />
+
+        {isSearching && (
+          <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t("userCode.searching", "Buscando...")}
+          </div>
+        )}
+
+        {notFound && (
+          <p className="text-sm text-red-500 text-center py-1">
+            {t("userCode.notFoundInClub", "No se encontro jugador en tu club")}
+          </p>
+        )}
+
+        {foundUser && !isDuplicate && (
+          <div className="flex items-center gap-2 p-2.5 bg-orange-50 border border-orange-200 rounded-xl">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{foundUser.full_name}</p>
+            </div>
+            <Button
+              size="sm"
+              className="rounded-xl bg-primary hover:bg-orange-600 text-white"
+              onClick={handleConfirmRegistered}
+            >
+              {t("userCode.confirm", "Confirmar")}
+            </Button>
+          </div>
+        )}
+
+        {isDuplicate && (
+          <p className="text-sm text-amber-600 text-center py-1">
+            {t("userCode.alreadyAdded", "Este jugador ya esta incluido")}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={switchToGuest}
+          className="w-full text-xs text-primary hover:text-orange-600 underline underline-offset-2 py-1"
+        >
+          {t("privateLessonsBooking.addGuest", "¿No tiene cuenta? Añadir como invitado")}
+        </button>
+      </div>
+    );
+  }
+
+  // ---- GUEST MODE ----
+  const guestValid = guestName.trim().length > 0 && guestPhone.trim().length >= 6;
 
   return (
     <div className="space-y-2">
-      {/* Code input */}
       <Input
-        placeholder={t("userCode.placeholder", "Codigo del jugador")}
-        value={code}
-        onChange={(e) => handleCodeChange(e.target.value)}
-        className="rounded-xl font-mono text-center text-lg tracking-widest uppercase"
-        maxLength={6}
+        placeholder={t("privateLessonsBooking.companionNamePlaceholder", "Nombre del acompañante")}
+        value={guestName}
+        onChange={(e) => setGuestName(e.target.value)}
+        className="rounded-xl"
+      />
+      <Input
+        placeholder={t("privateLessonsBooking.guestPhonePlaceholder", "Teléfono del invitado")}
+        value={guestPhone}
+        onChange={(e) => setGuestPhone(e.target.value)}
+        className="rounded-xl"
+        type="tel"
       />
 
-      {/* Searching state */}
-      {isSearching && (
-        <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-500">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          {t("userCode.searching", "Buscando...")}
-        </div>
-      )}
+      <Button
+        size="sm"
+        className="w-full rounded-xl bg-primary hover:bg-orange-600 text-white"
+        disabled={!guestValid}
+        onClick={handleConfirmGuest}
+      >
+        {t("privateLessonsBooking.add", "Añadir")}
+      </Button>
 
-      {/* Not found (code doesn't exist or player not in same club) */}
-      {notFound && (
-        <p className="text-sm text-red-500 text-center py-1">
-          {t("userCode.notFoundInClub", "No se encontro jugador en tu club")}
-        </p>
-      )}
-
-      {/* Found user - show card to confirm */}
-      {foundUser && !isDuplicate && (
-        <div className="flex items-center gap-2 p-2.5 bg-orange-50 border border-orange-200 rounded-xl">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{foundUser.full_name}</p>
-          </div>
-          <Button
-            size="sm"
-            className="rounded-xl bg-primary hover:bg-orange-600 text-white"
-            onClick={handleConfirm}
-          >
-            {t("userCode.confirm", "Confirmar")}
-          </Button>
-        </div>
-      )}
-
-      {/* Duplicate warning */}
-      {isDuplicate && (
-        <p className="text-sm text-amber-600 text-center py-1">
-          {t("userCode.alreadyAdded", "Este jugador ya esta incluido")}
-        </p>
-      )}
+      <button
+        type="button"
+        onClick={switchToCode}
+        className="w-full text-xs text-primary hover:text-orange-600 underline underline-offset-2 py-1"
+      >
+        {t("privateLessonsBooking.searchByCode", "¿Tiene código? Buscar por código")}
+      </button>
     </div>
   );
 };

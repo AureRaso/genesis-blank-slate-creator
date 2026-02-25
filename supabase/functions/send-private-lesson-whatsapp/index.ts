@@ -211,7 +211,7 @@ interface BookingData {
   end_time: string;
   price_per_person: number | null;
   rejection_reason: string | null;
-  companion_details: { name: string; profile_id: string }[];
+  companion_details: { name: string; profile_id?: string; phone?: string }[];
   trainerName: string;
   clubName: string;
 }
@@ -331,7 +331,7 @@ serve(async (req) => {
 
     // Build booking data for message formatting
     const companions = Array.isArray(booking.companion_details)
-      ? booking.companion_details as { name: string; profile_id: string }[]
+      ? booking.companion_details as { name: string; profile_id?: string; phone?: string }[]
       : [];
 
     const bookingData: BookingData = {
@@ -369,17 +369,18 @@ serve(async (req) => {
 
     // 6. Send to companions (only on confirmation)
     if (request.type === 'confirmed' && companions.length > 0) {
-      const companionProfileIds = companions
-        .map(c => c.profile_id)
-        .filter(Boolean);
+      const companionMessage = formatConfirmedCompanionMessage(bookingData, language);
 
-      if (companionProfileIds.length > 0) {
+      // 6a. Registered companions — look up phone from profiles
+      const registeredIds = companions
+        .map(c => c.profile_id)
+        .filter(Boolean) as string[];
+
+      if (registeredIds.length > 0) {
         const { data: companionProfiles } = await supabaseClient
           .from('profiles')
           .select('id, phone, full_name')
-          .in('id', companionProfileIds);
-
-        const companionMessage = formatConfirmedCompanionMessage(bookingData, language);
+          .in('id', registeredIds);
 
         for (const companion of companionProfiles || []) {
           if (!companion.phone) {
@@ -390,10 +391,20 @@ serve(async (req) => {
           const sent = await sendWhatsAppMessage(companion.phone, companionMessage);
           if (sent) messagesSent++;
 
-          // Anti-ban delay between companions
           console.log('Waiting 30 seconds before next message...');
           await new Promise(resolve => setTimeout(resolve, 30000));
         }
+      }
+
+      // 6b. Guest companions — use phone stored directly in companion_details
+      const guestCompanions = companions.filter(c => !c.profile_id && c.phone);
+      for (const guest of guestCompanions) {
+        console.log(`Sending WhatsApp to guest companion ${guest.name}`);
+        const sent = await sendWhatsAppMessage(guest.phone!, companionMessage);
+        if (sent) messagesSent++;
+
+        console.log('Waiting 30 seconds before next message...');
+        await new Promise(resolve => setTimeout(resolve, 30000));
       }
     }
 

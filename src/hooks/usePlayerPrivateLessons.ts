@@ -31,9 +31,10 @@ export interface TrainerWithRates {
 export interface CompanionInfo {
   name: string;
   email?: string;
-  type: "registered";
-  user_code: string;
-  profile_id: string;
+  phone?: string;
+  type: "registered" | "guest";
+  user_code?: string;
+  profile_id?: string;
 }
 
 export interface CreateBookingInput {
