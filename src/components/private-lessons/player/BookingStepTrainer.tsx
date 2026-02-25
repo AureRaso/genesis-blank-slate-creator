@@ -19,7 +19,13 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
-import { es } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const DAY_LABELS_BY_LANG: Record<string, string[]> = {
+  es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  it: ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"],
+};
 
 interface BookingStepTrainerProps {
   trainers: TrainerWithRates[];
@@ -32,8 +38,6 @@ interface BookingStepTrainerProps {
   onContinue: () => void;
   clubId: string;
 }
-
-const DAY_LABELS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 function getMinPrice(rates: PrivateLessonRates): { duration: string; price: number } | null {
   let minPrice: number | null = null;
@@ -77,6 +81,9 @@ const BookingStepTrainer = ({
   clubId,
 }: BookingStepTrainerProps) => {
   const { t } = useTranslation();
+  const { language, getDateFnsLocale } = useLanguage();
+  const dateFnsLocale = getDateFnsLocale();
+  const dayLabels = DAY_LABELS_BY_LANG[language] || DAY_LABELS_BY_LANG.es;
   const [weekOffset, setWeekOffset] = useState(0);
 
   const selectedTrainer = trainers.find((tr) => tr.profile_id === selectedTrainerId);
@@ -175,8 +182,8 @@ const BookingStepTrainer = ({
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-xs text-gray-500 flex-1 text-center">
-              {format(weekDays[0], "d MMM", { locale: es })} —{" "}
-              {format(weekDays[6], "d MMM", { locale: es })}
+              {format(weekDays[0], "d MMM", { locale: dateFnsLocale })} —{" "}
+              {format(weekDays[6], "d MMM", { locale: dateFnsLocale })}
             </span>
             <Button
               variant="ghost"
@@ -210,7 +217,7 @@ const BookingStepTrainer = ({
                   }`}
                 >
                   <span className="text-[10px] font-medium uppercase">
-                    {DAY_LABELS_SHORT[day.getDay()]}
+                    {dayLabels[day.getDay()]}
                   </span>
                   <span className="text-lg font-bold leading-tight">{day.getDate()}</span>
                 </button>

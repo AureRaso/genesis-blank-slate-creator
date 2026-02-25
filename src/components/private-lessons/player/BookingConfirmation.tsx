@@ -12,7 +12,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
 
 interface BookingConfirmationProps {
@@ -79,15 +79,17 @@ const BookingConfirmation = ({
 }: BookingConfirmationProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { getDateFnsLocale } = useLanguage();
+  const dateFnsLocale = getDateFnsLocale();
 
   const formattedDate = useMemo(() => {
     try {
       const d = new Date(date + "T12:00:00");
-      return format(d, "EEEE, d 'de' MMMM", { locale: es });
+      return format(d, "EEEE, d MMMM", { locale: dateFnsLocale });
     } catch {
       return date;
     }
-  }, [date]);
+  }, [date, dateFnsLocale]);
 
   const handleAddToCalendar = () => {
     const icsContent = generateICS({

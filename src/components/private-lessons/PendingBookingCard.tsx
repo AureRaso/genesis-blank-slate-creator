@@ -14,7 +14,7 @@ import { Check, X, Clock, Users, MapPin, Calendar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PrivateLessonBooking, useRespondToBooking } from "@/hooks/usePrivateLessons";
 import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PendingBookingCardProps {
   booking: PrivateLessonBooking;
@@ -22,6 +22,8 @@ interface PendingBookingCardProps {
 
 const PendingBookingCard = ({ booking }: PendingBookingCardProps) => {
   const { t } = useTranslation();
+  const { getDateFnsLocale } = useLanguage();
+  const dateFnsLocale = getDateFnsLocale();
   const respondMutation = useRespondToBooking();
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -32,7 +34,7 @@ const PendingBookingCard = ({ booking }: PendingBookingCardProps) => {
   };
 
   const timeRemaining = booking.auto_cancel_at
-    ? formatDistanceToNow(new Date(booking.auto_cancel_at), { locale: es, addSuffix: false })
+    ? formatDistanceToNow(new Date(booking.auto_cancel_at), { locale: dateFnsLocale, addSuffix: false })
     : null;
 
   const isExpiringSoon = booking.auto_cancel_at

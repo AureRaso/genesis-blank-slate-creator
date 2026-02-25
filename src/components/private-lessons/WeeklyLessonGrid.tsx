@@ -20,9 +20,13 @@ import {
   isSameDay,
   eachDayOfInterval,
 } from "date-fns";
-import { es } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const DAY_LABELS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const DAY_LABELS_BY_LANG: Record<string, string[]> = {
+  es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  it: ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"],
+};
 
 interface WeeklyLessonGridProps {
   availability: PrivateLessonAvailability[];
@@ -33,6 +37,9 @@ interface WeeklyLessonGridProps {
 
 const WeeklyLessonGrid = ({ availability, exceptions, bookings, scheduledClasses = [] }: WeeklyLessonGridProps) => {
   const { t } = useTranslation();
+  const { language, getDateFnsLocale } = useLanguage();
+  const dateFnsLocale = getDateFnsLocale();
+  const dayLabels = DAY_LABELS_BY_LANG[language] || DAY_LABELS_BY_LANG.es;
   const [weekOffset, setWeekOffset] = useState(0);
 
   const currentWeekStart = useMemo(() => {
@@ -91,7 +98,7 @@ const WeeklyLessonGrid = ({ availability, exceptions, bookings, scheduledClasses
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-sm font-medium">
-          {format(currentWeekStart, "d MMM", { locale: es })} — {format(currentWeekEnd, "d MMM yyyy", { locale: es })}
+          {format(currentWeekStart, "d MMM", { locale: dateFnsLocale })} — {format(currentWeekEnd, "d MMM yyyy", { locale: dateFnsLocale })}
         </span>
         <Button variant="outline" size="sm" onClick={() => setWeekOffset((p) => p + 1)}>
           <ChevronRight className="h-4 w-4" />
@@ -131,7 +138,7 @@ const WeeklyLessonGrid = ({ availability, exceptions, bookings, scheduledClasses
                       key={day.toISOString()}
                       className={`border p-2 text-center ${isToday ? "bg-playtomic-orange/10 font-bold" : "bg-muted"}`}
                     >
-                      <div>{DAY_LABELS_SHORT[dow]}</div>
+                      <div>{dayLabels[dow]}</div>
                       <div className="text-[10px] text-muted-foreground">{format(day, "d/M")}</div>
                     </th>
                   );
