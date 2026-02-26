@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface SendPrivateLessonWhatsAppRequest {
-  type: 'confirmed' | 'rejected';
+  type: 'confirmed' | 'rejected' | 'new_booking';
   bookingId: string;
 }
 
@@ -125,6 +125,36 @@ const REJECTION_REASON_PREFIX: Record<string, string> = {
   it: 'Motivo: ',
 };
 
+const NEW_BOOKING_TRAINER_TEMPLATES: Record<string, string> = {
+  es: `*Nueva solicitud de clase particular* 🎾
+
+👤 Alumno: {bookerName}
+📅 Fecha: {date}
+🕐 Hora: {startTime} - {endTime}
+👥 Jugadores: {numPlayers}
+💰 Tarifa: {pricePerPerson}€/persona
+
+Pulsa un botón para responder:`,
+  en: `*New private lesson request* 🎾
+
+👤 Student: {bookerName}
+📅 Date: {date}
+🕐 Time: {startTime} - {endTime}
+👥 Players: {numPlayers}
+💰 Rate: {pricePerPerson}€/person
+
+Press a button to respond:`,
+  it: `*Nuova richiesta di lezione privata* 🎾
+
+👤 Alunno: {bookerName}
+📅 Data: {date}
+🕐 Orario: {startTime} - {endTime}
+👥 Giocatori: {numPlayers}
+💰 Tariffa: {pricePerPerson}€/persona
+
+Premi un pulsante per rispondere:`,
+};
+
 // ============================================================================
 // Utility functions (same as send-waitlist-whatsapp)
 // ============================================================================
@@ -200,6 +230,56 @@ async function sendWhatsAppMessage(phone: string, message: string): Promise<bool
 }
 
 // ============================================================================
+// Interactive message sender (for buttons)
+// ============================================================================
+
+async function sendWhatsAppInteractiveMessage(
+  phone: string,
+  message: string,
+  buttons: { type: string; id: string; title: string }[]
+): Promise<boolean> {
+  const whapiToken = Deno.env.get('WHAPI_TOKEN');
+  const whapiEndpoint = Deno.env.get('WHAPI_ENDPOINT') || 'https://gate.whapi.cloud';
+
+  if (!whapiToken) {
+    console.error('WHAPI_TOKEN not configured');
+    return false;
+  }
+
+  try {
+    const formattedPhone = formatPhoneNumber(phone);
+    console.log('Sending interactive WhatsApp to:', formattedPhone);
+
+    const response = await fetch(`${whapiEndpoint}/messages/interactive`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${whapiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: formattedPhone,
+        type: 'button',
+        body: { text: message },
+        action: { buttons },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Whapi interactive error:', errorText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('Interactive WhatsApp sent:', result.id || result.message_id);
+    return true;
+  } catch (error) {
+    console.error('Error sending interactive WhatsApp:', error);
+    return false;
+  }
+}
+
+// ============================================================================
 // Message formatting
 // ============================================================================
 
@@ -243,6 +323,20 @@ function formatConfirmedCompanionMessage(booking: BookingData, language: string)
     .replace('{clubName}', booking.clubName);
 }
 
+function formatNewBookingTrainerMessage(booking: BookingData, language: string): string {
+  const template = NEW_BOOKING_TRAINER_TEMPLATES[language] || NEW_BOOKING_TRAINER_TEMPLATES['es'];
+  const date = formatDateLocalized(booking.lesson_date, language);
+  const numPlayers = (booking.companion_details?.length || 0) + 1;
+
+  return template
+    .replace('{bookerName}', booking.booker_name)
+    .replace('{date}', date)
+    .replace('{startTime}', booking.start_time.substring(0, 5))
+    .replace('{endTime}', booking.end_time.substring(0, 5))
+    .replace('{numPlayers}', String(numPlayers))
+    .replace('{pricePerPerson}', String(booking.price_per_person ?? 0));
+}
+
 function formatRejectedMessage(booking: BookingData, language: string): string {
   const template = REJECTED_TEMPLATES[language] || REJECTED_TEMPLATES['es'];
   const date = formatDateLocalized(booking.lesson_date, language);
@@ -281,8 +375,8 @@ serve(async (req) => {
       throw new Error('Missing required fields: type, bookingId');
     }
 
-    if (request.type !== 'confirmed' && request.type !== 'rejected') {
-      throw new Error('Invalid type. Must be "confirmed" or "rejected"');
+    if (request.type !== 'confirmed' && request.type !== 'rejected' && request.type !== 'new_booking') {
+      throw new Error('Invalid type. Must be "confirmed", "rejected", or "new_booking"');
     }
 
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -347,9 +441,48 @@ serve(async (req) => {
       clubName,
     };
 
+    // 5. Handle new_booking: send interactive message to trainer
+    if (request.type === 'new_booking') {
+      // Fetch trainer phone
+      const { data: trainerPhoneData } = await supabaseClient
+        .from('profiles')
+        .select('phone')
+        .eq('id', booking.trainer_profile_id)
+        .single();
+
+      if (!trainerPhoneData?.phone) {
+        console.log(`No phone for trainer ${booking.trainer_profile_id} — skipping WhatsApp`);
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Trainer has no phone number',
+          whatsappSent: false,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const trainerMessage = formatNewBookingTrainerMessage(bookingData, language);
+      const buttons = [
+        { type: 'quick_reply', id: `booking_accept_${request.bookingId}`, title: '✅ Aceptar' },
+        { type: 'quick_reply', id: `booking_reject_${request.bookingId}`, title: '❌ Rechazar' },
+      ];
+
+      const sent = await sendWhatsAppInteractiveMessage(trainerPhoneData.phone, trainerMessage, buttons);
+
+      console.log(`New booking WhatsApp to trainer: ${sent ? 'sent' : 'failed'}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        type: request.type,
+        messagesSent: sent ? 1 : 0,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     let messagesSent = 0;
 
-    // 5. Send to booker
+    // 6. Send confirmed/rejected to booker
     if (booking.booker_phone) {
       const message = request.type === 'confirmed'
         ? formatConfirmedBookerMessage(bookingData, language)

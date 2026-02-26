@@ -277,7 +277,7 @@ export const useCreatePrivateLessonBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["private-lesson-bookings"],
       });
@@ -287,6 +287,15 @@ export const useCreatePrivateLessonBooking = () => {
       queryClient.invalidateQueries({
         queryKey: ["trainer-free-slots"],
       });
+
+      // Notify trainer via WhatsApp (fire-and-forget)
+      if (data?.id) {
+        supabase.functions.invoke('send-private-lesson-whatsapp', {
+          body: { type: 'new_booking', bookingId: data.id },
+        }).then(({ error: whatsappError }) => {
+          if (whatsappError) console.error('Trainer WhatsApp notification error:', whatsappError);
+        }).catch(err => console.error('Trainer WhatsApp notification error:', err));
+      }
     },
     onError: (error: Error) => {
       toast({
