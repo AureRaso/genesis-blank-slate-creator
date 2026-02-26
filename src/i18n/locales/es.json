@@ -2531,7 +2531,8 @@
     "noTrainers": "No hay profesores disponibles para clases particulares en tu club.",
     "continue": "Continuar",
     "back": "Atrás",
-    "howManyPlayers": "¿Cuántos jugáis?",
+    "howManyPlayers": "¿Cuántos participáis?",
+    "howManyPlayersHint": "Selecciona el número total de participantes (incluido tú). Pagarás el total de la reserva.",
     "players": {
       "solo": "Solo yo",
       "duo": "Somos 2",

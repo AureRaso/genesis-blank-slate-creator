@@ -136,9 +136,12 @@ const BookingStepPlayers = ({
 
       {/* Player count selection */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-          {t("privateLessonsBooking.howManyPlayers", "¿Cuántos jugáis?")}
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+          {t("privateLessonsBooking.howManyPlayers", "¿Cuántos participáis?")}
         </h3>
+        <p className="text-xs text-gray-400 mb-3">
+          {t("privateLessonsBooking.howManyPlayersHint", "Selecciona el número total de participantes (incluido tú). Pagarás el total de la reserva.")}
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {PLAYER_OPTIONS.map((option) => {
             const isAvailable = availablePlayerCounts.includes(option.value);

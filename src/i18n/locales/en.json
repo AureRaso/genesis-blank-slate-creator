@@ -2534,7 +2534,8 @@
     "noTrainers": "No coaches available for private lessons at your club.",
     "continue": "Continue",
     "back": "Back",
-    "howManyPlayers": "How many players?",
+    "howManyPlayers": "How many of you?",
+    "howManyPlayersHint": "Select the total number of participants (including yourself). You will pay the full booking amount.",
     "players": {
       "solo": "Just me",
       "duo": "2 players",

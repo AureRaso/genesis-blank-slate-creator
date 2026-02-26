@@ -2454,7 +2454,8 @@
     "noTrainers": "Nessun allenatore disponibile per lezioni private nel tuo club.",
     "continue": "Continua",
     "back": "Indietro",
-    "howManyPlayers": "Quanti giocate?",
+    "howManyPlayers": "Quanti partecipate?",
+    "howManyPlayersHint": "Seleziona il numero totale di partecipanti (te incluso). Pagherai il totale della prenotazione.",
     "players": {
       "solo": "Solo io",
       "duo": "Siamo 2",
