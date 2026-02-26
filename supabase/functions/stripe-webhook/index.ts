@@ -89,6 +89,51 @@ serve(async (req) => {
           customerId: session.customer
         });
 
+        // Handle private lesson checkout (pre-authorization hold placed)
+        if (session.metadata?.type === 'private_lesson' && session.metadata?.booking_id) {
+          const bookingId = session.metadata.booking_id;
+          const paymentIntentId = session.payment_intent as string;
+          logStep("Processing private lesson checkout", { bookingId, paymentIntentId });
+
+          // Update booking: hold has been placed
+          const { error: plUpdateError } = await supabaseClient
+            .from('private_lesson_bookings')
+            .update({
+              stripe_payment_intent_id: paymentIntentId,
+              stripe_payment_status: 'hold_placed',
+            })
+            .eq('id', bookingId)
+            .eq('stripe_checkout_session_id', session.id);
+
+          if (plUpdateError) {
+            logStep("Error updating booking after checkout", { error: plUpdateError });
+          } else {
+            logStep("Booking updated with PaymentIntent, hold placed", { bookingId, paymentIntentId });
+          }
+
+          // Send WhatsApp notification to trainer (fire-and-forget)
+          try {
+            await fetch(
+              `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-private-lesson-whatsapp`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                },
+                body: JSON.stringify({ type: 'new_booking', bookingId }),
+              }
+            );
+            logStep("Trainer WhatsApp notification triggered for private lesson", { bookingId });
+          } catch (notifyError) {
+            logStep("Error triggering trainer notification (non-blocking)", {
+              error: notifyError instanceof Error ? notifyError.message : String(notifyError)
+            });
+          }
+
+          break; // Don't fall through to subscription logic
+        }
+
         if (session.subscription && session.metadata?.club_id) {
           // Fetch full subscription details to get period dates
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
@@ -353,6 +398,33 @@ serve(async (req) => {
           logStep("Error updating club_subscription on deletion", { error: clubUpdateError });
         } else {
           logStep("Club subscription marked as canceled");
+        }
+        break;
+      }
+
+      case 'account.updated': {
+        // Handle Stripe Connect onboarding completion
+        const account = event.data.object as any;
+        logStep("Processing account.updated", {
+          accountId: account.id,
+          chargesEnabled: account.charges_enabled,
+          payoutsEnabled: account.payouts_enabled,
+        });
+
+        if (account.charges_enabled && account.payouts_enabled) {
+          const { error: onboardError } = await supabaseClient
+            .from('clubs')
+            .update({
+              stripe_account_status: 'active',
+              stripe_onboarding_completed: true,
+            })
+            .eq('stripe_account_id', account.id);
+
+          if (onboardError) {
+            logStep("Error updating club onboarding status", { error: onboardError });
+          } else {
+            logStep("Club Stripe Connect onboarding completed", { accountId: account.id });
+          }
         }
         break;
       }

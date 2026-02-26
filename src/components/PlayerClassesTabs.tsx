@@ -9,9 +9,18 @@ interface PlayerClassesTabsProps {
   selectedChildId?: string;
 }
 
+// Auto-switch to private lessons tab when returning from Stripe checkout
+function getDefaultTab(): string {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("pl_payment")) {
+    return "private-lessons";
+  }
+  return "upcoming";
+}
+
 export const PlayerClassesTabs = ({ selectedChildId }: PlayerClassesTabsProps) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState(getDefaultTab);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

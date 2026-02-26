@@ -22,7 +22,7 @@ serve(async (req) => {
     // Find pending bookings that have expired (auto_cancel_at < NOW)
     const { data: expiredBookings, error: fetchError } = await supabase
       .from('private_lesson_bookings')
-      .select('id, booker_name, lesson_date, start_time, trainer_profile_id')
+      .select('id, booker_name, lesson_date, start_time, trainer_profile_id, payment_method, stripe_payment_intent_id, stripe_payment_status')
       .eq('status', 'pending')
       .lt('auto_cancel_at', new Date().toISOString());
 
@@ -56,6 +56,27 @@ serve(async (req) => {
       if (updateError) {
         console.error(`Error cancelling booking ${booking.id}:`, updateError);
         continue;
+      }
+
+      // Cancel Stripe hold if applicable
+      if (booking.payment_method === 'stripe' && booking.stripe_payment_status === 'hold_placed') {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/manage-private-lesson-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              bookingId: booking.id,
+              action: 'cancel',
+            }),
+          });
+          console.log(`Stripe hold cancelled for booking ${booking.id}`);
+        } catch (stripeError) {
+          console.error(`Error cancelling Stripe hold for ${booking.id}:`, stripeError);
+          // Don't stop processing other bookings
+        }
       }
 
       processed++;

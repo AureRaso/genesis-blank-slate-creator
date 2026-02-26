@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Building2, Calendar, User, Users, Clock } from "lucide-react";
+import { ArrowLeft, Building2, CreditCard, Calendar, User, Users, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -17,6 +17,9 @@ interface BookingStepPaymentProps {
   onSubmit: () => void;
   isSubmitting: boolean;
   onBack: () => void;
+  onlinePaymentAvailable: boolean;
+  selectedPaymentMethod: "academia" | "stripe";
+  onPaymentMethodChange: (method: "academia" | "stripe") => void;
 }
 
 function formatDuration(m: number): string {
@@ -38,6 +41,9 @@ const BookingStepPayment = ({
   onSubmit,
   isSubmitting,
   onBack,
+  onlinePaymentAvailable,
+  selectedPaymentMethod,
+  onPaymentMethodChange,
 }: BookingStepPaymentProps) => {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
@@ -75,26 +81,77 @@ const BookingStepPayment = ({
         </p>
       </div>
 
-      {/* Payment info */}
+      {/* Payment method selection */}
       <div>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
           {t("privateLessonsBooking.paymentMethod", "Método de pago")}
         </h3>
-        <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <Building2 className="h-5 w-5 text-gray-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium">
-              {t("privateLessonsBooking.payAtClub", "Pagar en academia")}
-            </p>
-            <p className="text-xs text-gray-500">
-              {t(
-                "privateLessonsBooking.payAtClubDesc",
-                "Efectivo o TPV al llegar"
-              )}
-            </p>
-          </div>
+        <div className={onlinePaymentAvailable ? "space-y-2" : ""}>
+          {/* Pay at club option */}
+          <button
+            type="button"
+            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+              !onlinePaymentAvailable
+                ? "border border-gray-200 bg-gray-50"
+                : selectedPaymentMethod === "academia"
+                  ? "border-2 border-primary bg-orange-50 ring-1 ring-primary"
+                  : "border border-gray-200 bg-gray-50 hover:border-gray-300"
+            }`}
+            onClick={() => onlinePaymentAvailable && onPaymentMethodChange("academia")}
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+              selectedPaymentMethod === "academia" && onlinePaymentAvailable
+                ? "bg-orange-100"
+                : "bg-gray-100"
+            }`}>
+              <Building2 className={`h-5 w-5 ${
+                selectedPaymentMethod === "academia" && onlinePaymentAvailable
+                  ? "text-primary"
+                  : "text-gray-600"
+              }`} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">
+                {t("privateLessonsBooking.payAtClub", "Pagar en academia")}
+              </p>
+              <p className="text-xs text-gray-500">
+                {t("privateLessonsBooking.payAtClubDesc", "Efectivo o TPV al llegar")}
+              </p>
+            </div>
+          </button>
+
+          {/* Pay with card option (only if club has online payments) */}
+          {onlinePaymentAvailable && (
+            <button
+              type="button"
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                selectedPaymentMethod === "stripe"
+                  ? "border-2 border-primary bg-orange-50 ring-1 ring-primary"
+                  : "border border-gray-200 bg-gray-50 hover:border-gray-300"
+              }`}
+              onClick={() => onPaymentMethodChange("stripe")}
+            >
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                selectedPaymentMethod === "stripe"
+                  ? "bg-orange-100"
+                  : "bg-gray-100"
+              }`}>
+                <CreditCard className={`h-5 w-5 ${
+                  selectedPaymentMethod === "stripe"
+                    ? "text-primary"
+                    : "text-gray-600"
+                }`} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {t("privateLessonsBooking.payWithCard", "Pagar con tarjeta")}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {t("privateLessonsBooking.payWithCardDesc", "Se retiene el importe en tu tarjeta")}
+                </p>
+              </div>
+            </button>
+          )}
         </div>
       </div>
 
@@ -152,7 +209,9 @@ const BookingStepPayment = ({
       >
         {isSubmitting
           ? t("privateLessonsBooking.submitting", "Solicitando...")
-          : t("privateLessonsBooking.requestBooking", "Solicitar reserva")} →
+          : selectedPaymentMethod === "stripe"
+            ? t("privateLessonsBooking.payAndRequest", "Pagar y solicitar reserva")
+            : t("privateLessonsBooking.requestBooking", "Solicitar reserva")} →
       </Button>
     </div>
   );

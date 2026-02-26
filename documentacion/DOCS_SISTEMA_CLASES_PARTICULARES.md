@@ -13,10 +13,11 @@
 10. [Auto-cancelación por Timeout](#auto-cancelación-por-timeout)
 11. [Notificaciones WhatsApp](#notificaciones-whatsapp)
 12. [Visualización en Pantallas de Asistencia](#visualización-en-pantallas-de-asistencia)
-13. [Hooks y Componentes](#hooks-y-componentes)
-14. [Políticas RLS](#políticas-rls)
-15. [Casos de Uso Comunes](#casos-de-uso-comunes)
-16. [Troubleshooting](#troubleshooting)
+13. [Pago Online con Tarjeta (Stripe Connect)](#pago-online-con-tarjeta-stripe-connect)
+14. [Hooks y Componentes](#hooks-y-componentes)
+15. [Políticas RLS](#políticas-rls)
+16. [Casos de Uso Comunes](#casos-de-uso-comunes)
+17. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -31,7 +32,9 @@ El sistema de clases particulares permite a los jugadores reservar clases privad
 5. **Sistema** envía notificación WhatsApp al jugador (y acompañantes si aplica)
 6. Si el entrenador no responde en 2 horas → auto-cancelación automática
 
-**Pago**: Siempre "en academia" (se paga presencialmente al confirmar la clase).
+**Pago**: Dos métodos disponibles:
+- **En academia** (se paga presencialmente al confirmar la clase) — siempre disponible
+- **Con tarjeta** (pre-autorización Stripe Connect) — requiere que el admin active pago online
 
 **Máquina de estados del booking**:
 ```
@@ -39,6 +42,16 @@ pending → confirmed    (entrenador confirma)
 pending → rejected     (entrenador rechaza)
 pending → cancelled    (jugador cancela)
 pending → auto_cancelled (timeout 2h sin respuesta)
+```
+
+**Máquina de estados del pago Stripe** (`stripe_payment_status`):
+```
+NULL                → (booking sin Stripe, pago en academia)
+pending_checkout    → (redirigido a Stripe Checkout, aún no pagó)
+hold_placed         → (pre-autorización colocada en tarjeta, esperando confirmación del entrenador)
+captured            → (entrenador confirmó, cargo completado)
+cancelled           → (entrenador rechazó o auto-cancel, hold liberado)
+capture_failed      → (error al intentar capturar el pago)
 ```
 
 ---
@@ -206,7 +219,12 @@ CHECK (
 - total_price: NUMERIC(10,2)
 
 -- Pago
-- payment_method: VARCHAR(20) DEFAULT 'academia'
+- payment_method: VARCHAR(20) DEFAULT 'academia' CHECK (IN ('academia', 'bono', 'stripe'))
+
+-- Stripe (solo si payment_method = 'stripe')
+- stripe_checkout_session_id: TEXT (ID de Stripe Checkout Session)
+- stripe_payment_intent_id: TEXT (ID de PaymentIntent, se obtiene del webhook o fallback)
+- stripe_payment_status: TEXT (pending_checkout | hold_placed | captured | cancelled | capture_failed)
 
 -- Estado
 - status: TEXT ('pending' | 'confirmed' | 'rejected' | 'cancelled' | 'auto_cancelled')
@@ -246,7 +264,27 @@ CHECK (
 - status (filtrar por estado)
 - (trainer_profile_id, lesson_date) (buscar slots ocupados)
 - (status, auto_cancel_at) WHERE status='pending' (cron de auto-cancel)
+- stripe_payment_intent_id WHERE NOT NULL (lookup desde webhook)
+- stripe_checkout_session_id WHERE NOT NULL (lookup desde webhook)
 ```
+
+---
+
+### Tabla: `clubs` (columnas añadidas para Stripe Connect)
+
+**Campos añadidos**:
+```sql
+- stripe_account_id: TEXT (ID de Express account de Stripe Connect)
+- stripe_account_status: TEXT ('pending' | 'active')
+- stripe_onboarding_completed: BOOLEAN DEFAULT false
+- enable_private_lesson_online_payment: BOOLEAN DEFAULT false
+```
+
+**Flujo de activación**:
+1. Admin conecta Stripe desde Settings → crea Express account → `stripe_account_id` se guarda
+2. Admin completa onboarding en Stripe → `stripe_onboarding_completed = true`, `stripe_account_status = 'active'`
+3. Admin activa toggle "Pago online" → `enable_private_lesson_online_payment = true`
+4. Solo cuando los 3 campos están activos, el jugador ve la opción "Pagar con tarjeta"
 
 ---
 
@@ -402,11 +440,17 @@ interface ComputedSlot {
 **Paso 3 — Confirmar y pagar** (`BookingStepPayment.tsx`):
 ```
 1. Resumen: entrenador, fecha, hora, duración, jugadores, precio
-2. Método de pago: siempre "Pagar en academia"
-3. Botón "Confirmar reserva"
+2. Método de pago:
+   - Si club tiene pago online activado: mostrar 2 opciones (academia / tarjeta)
+   - Si no: solo "Pagar en academia"
+3. Botón "Solicitar reserva" (academia) o "Pagar y solicitar" (tarjeta)
 ```
 
-**Hook**: `useCreatePrivateLessonBooking()` — Inserta en `private_lesson_bookings` con `status='pending'`, `payment_method='academia'`
+**Flujo según método de pago**:
+- **Academia**: Inserta booking → paso 4 (confirmación) → WhatsApp al entrenador
+- **Stripe**: Inserta booking → invoca `create-private-lesson-checkout` → redirect a Stripe Checkout → vuelve a `/dashboard?pl_payment=success` → paso 4 → WhatsApp al entrenador
+
+**Hook**: `useCreatePrivateLessonBooking()` — Inserta en `private_lesson_bookings` con `status='pending'` y `payment_method` dinámico
 
 **Paso 4 — Confirmación** (`BookingConfirmation.tsx`):
 ```
@@ -695,6 +739,136 @@ Card de solo lectura con estilo índigo diferenciado (`border-indigo-200 bg-indi
 
 ---
 
+## Pago Online con Tarjeta (Stripe Connect)
+
+### Resumen
+
+Cada club puede activar el cobro online con tarjeta para clases particulares. Se usa **Stripe Connect** con cuentas Express y **pre-autorización** (hold en tarjeta, no cargo inmediato). Si el entrenador confirma → se captura el pago. Si rechaza o timeout → se libera el hold.
+
+**Comisión**: 7% del total va a PadeLock como `application_fee_amount` (destination charges). El club recibe el 93%.
+
+### Configuración del Admin (Settings)
+
+La configuración se realiza en `SettingsPage.tsx`, en la card "Pagos Online - Clases Particulares":
+
+1. **Conectar Stripe**: Botón que invoca `stripe-connect` → crea Express account → redirect a Stripe onboarding
+2. **Estado**: Badge "Conectada"/"No conectada" basado en `stripe_onboarding_completed`
+3. **Toggle "Pago online"**: Switch para `enable_private_lesson_online_payment` (solo visible si Stripe está conectado)
+4. **Panel Stripe**: Botón para acceder al dashboard de Stripe del club (`stripe-login-link`)
+
+Al volver del onboarding de Stripe, el `useEffect` invoca `stripe-connect` con `action: 'check-status'` para verificar el estado de la cuenta con la API de Stripe y actualizar la BD.
+
+### Flujo Completo de Pago con Tarjeta
+
+```
+1. JUGADOR selecciona "Pagar con tarjeta" en BookingStepPayment
+2. Se crea booking con payment_method='stripe' (useCreatePrivateLessonBooking)
+3. Se invoca create-private-lesson-checkout → crea Stripe Checkout Session:
+   - mode: 'payment'
+   - capture_method: 'manual' (pre-autorización, NO cargo inmediato)
+   - transfer_data.destination: club.stripe_account_id
+   - application_fee_amount: Math.round(total_price * 100 * 0.07)
+   - metadata: { booking_id, club_id, type: 'private_lesson' }
+4. Redirect a Stripe Checkout (página hosted de Stripe)
+5. Jugador completa pago → hold colocado en tarjeta
+6. Redirect de vuelta a /dashboard?pl_payment=success&booking_id=X
+7. PlayerClassesTabs detecta pl_payment → auto-switch a tab "Clases Particulares"
+8. PlayerPrivateLessonBookingPage detecta params → carga booking → muestra confirmación
+9. Se envía WhatsApp al entrenador (fallback desde frontend si webhook no configurado)
+
+ENTRENADOR CONFIRMA:
+10. useRespondToBooking → invoca manage-private-lesson-payment(capture)
+11. La función recupera PaymentIntent (desde booking o fallback desde Checkout Session)
+12. stripe.paymentIntents.capture() → cargo completado
+13. Club recibe 93%, PadeLock 7%
+
+ENTRENADOR RECHAZA / AUTO-CANCEL:
+10. useRespondToBooking / process-private-lesson-timeout → invoca manage-private-lesson-payment(cancel)
+11. stripe.paymentIntents.cancel() → hold liberado, sin cargo al jugador
+```
+
+### Edge Functions de Stripe
+
+#### `create-private-lesson-checkout`
+
+- **Input**: `{ bookingId: string }`
+- **Auth**: JWT del usuario (verifica que es el booker)
+- **Valida**: booking en estado pending, payment_method='stripe', club con Stripe activo
+- **Crea**: Stripe Checkout Session con `capture_method: 'manual'` y destination charges
+- **Actualiza**: booking con `stripe_checkout_session_id`, `stripe_payment_status: 'pending_checkout'`
+- **Retorna**: `{ url: string }` para redirect
+
+#### `manage-private-lesson-payment`
+
+- **Input**: `{ bookingId: string, action: 'capture' | 'cancel' }`
+- **Auth**: Service role (llamada desde webhooks/cron) o JWT
+- **Early return**: Si `payment_method !== 'stripe'` o no hay PaymentIntent
+- **Fallback**: Si no tiene `stripe_payment_intent_id` pero sí `stripe_checkout_session_id`, recupera el PaymentIntent desde la Checkout Session de Stripe
+- **Capture**: `stripe.paymentIntents.capture()` → `stripe_payment_status: 'captured'`
+- **Cancel**: `stripe.paymentIntents.cancel()` → `stripe_payment_status: 'cancelled'`
+- **Invocada desde**: `useRespondToBooking`, `whatsapp-webhook`, `process-private-lesson-timeout`, `stripe-webhook`
+
+#### `stripe-connect` (modificada)
+
+- **Acción por defecto**: Crea Express account y genera account link para onboarding
+- **Acción `check-status`**: Verifica `charges_enabled` y `payouts_enabled` con la API de Stripe, actualiza `stripe_onboarding_completed` en la BD
+
+#### `stripe-webhook` (modificada)
+
+Nuevo handler en `checkout.session.completed`:
+- Si `metadata.type === 'private_lesson'`: guarda `stripe_payment_intent_id`, marca `stripe_payment_status: 'hold_placed'`, envía WhatsApp al entrenador
+
+Nuevo handler `account.updated`:
+- Si `charges_enabled && payouts_enabled`: marca club como `stripe_onboarding_completed: true`
+
+#### `whatsapp-webhook` (modificada)
+
+Después de que el entrenador confirma/rechaza via WhatsApp, invoca `manage-private-lesson-payment` con la acción correspondiente.
+
+#### `process-private-lesson-timeout` (modificada)
+
+Al auto-cancelar bookings expirados, invoca `manage-private-lesson-payment(cancel)` para liberar el hold si aplica.
+
+### Componentes Modificados
+
+| Componente | Cambio |
+|-----------|--------|
+| `BookingStepPayment.tsx` | Selector de método de pago (academia/tarjeta), CTA dinámico |
+| `BookingConfirmation.tsx` | Prop `paymentMethod`, banner azul de pre-autorización para Stripe |
+| `PlayerPrivateLessonBookingPage.tsx` | Estado de pago, redirect a Stripe, detección de retorno, WhatsApp fallback |
+| `PlayerClassesTabs.tsx` | Auto-switch a tab "Clases Particulares" al volver de Stripe |
+| `SettingsPage.tsx` | Card de Stripe Connect con badge, botones, toggle de pago online |
+
+### Retorno de Stripe Checkout
+
+Cuando el jugador vuelve de Stripe Checkout:
+
+1. **Success**: `/dashboard?pl_payment=success&booking_id=X`
+   - `PlayerClassesTabs` detecta `pl_payment` → `getDefaultTab()` retorna `"private-lessons"`
+   - `PlayerPrivateLessonBookingPage` useEffect detecta params → `setStripeReturnBookingId(bookingId)`
+   - Query `stripe-return-booking` carga datos del booking + nombre trainer/club
+   - Se muestra `BookingConfirmation` con banner de pre-autorización
+   - Se envía WhatsApp al entrenador (fallback)
+
+2. **Cancel**: `/dashboard?pl_payment=cancel&booking_id=X`
+   - Toast "Pago cancelado" → URL limpiada
+   - Booking queda en `pending_checkout` → auto-cancel en 2h si no se completa
+
+### Edge Cases
+
+| Caso | Manejo |
+|---|---|
+| Club sin Stripe Connect | Solo muestra "Pagar en academia" |
+| Entrenador confirma (Stripe) | `manage-private-lesson-payment(capture)` → cargo completado |
+| Entrenador rechaza (Stripe) | `manage-private-lesson-payment(cancel)` → hold liberado |
+| Auto-cancel 2h (Stripe) | Cron → `cancel` → hold liberado |
+| Alumno abandona checkout | Booking `pending_checkout` → auto-cancel en 2h |
+| Webhook no configurado | Fallback: `manage-private-lesson-payment` recupera PaymentIntent desde Checkout Session |
+| Double-capture | Stripe es idempotente + check `stripe_payment_status` |
+| Capture falla | `stripe_payment_status = 'capture_failed'` |
+
+---
+
 ## Hooks y Componentes
 
 ### Hooks principales
@@ -753,8 +927,12 @@ Card de solo lectura con estilo índigo diferenciado (`border-indigo-200 bg-indi
 
 | Función | Archivo | Descripción |
 |---------|---------|-------------|
-| `process-private-lesson-timeout` | `supabase/functions/process-private-lesson-timeout/` | Auto-cancelar bookings expirados |
+| `process-private-lesson-timeout` | `supabase/functions/process-private-lesson-timeout/` | Auto-cancelar bookings expirados + liberar holds Stripe |
 | `send-private-lesson-whatsapp` | `supabase/functions/send-private-lesson-whatsapp/` | Notificaciones WhatsApp |
+| `create-private-lesson-checkout` | `supabase/functions/create-private-lesson-checkout/` | Crear Stripe Checkout Session con pre-autorización |
+| `manage-private-lesson-payment` | `supabase/functions/manage-private-lesson-payment/` | Capturar/cancelar PaymentIntents de Stripe |
+| `stripe-connect` | `supabase/functions/stripe-connect/` | Onboarding Stripe Connect Express + check-status |
+| `stripe-webhook` | `supabase/functions/stripe-webhook/` | Webhook de Stripe (checkout, subscriptions, account.updated) |
 
 ---
 
@@ -837,7 +1015,32 @@ Card de solo lectura con estilo índigo diferenciado (`border-indigo-200 bg-indi
 3. Cron se ejecuta cada 15 minutos
 4. A las 12:00-12:15, cron detecta el booking expirado
 5. Edge Function actualiza: status='auto_cancelled'
-6. Jugador ve el booking como cancelado
+6. Si pago con Stripe: manage-private-lesson-payment(cancel) libera el hold
+7. Jugador ve el booking como cancelado
+```
+
+### 5. Admin configura pago online con Stripe
+
+```
+1. Admin va a Settings → card "Pagos Online"
+2. Click "Conectar con Stripe" → redirect a Stripe Express onboarding
+3. Completa datos en Stripe → vuelve a Settings
+4. useEffect detecta ?stripe_connect=success → invoca check-status → actualiza BD
+5. Badge cambia a "Conectada"
+6. Activa toggle "Pago online" → clubs.enable_private_lesson_online_payment = true
+7. Los jugadores ven la opción "Pagar con tarjeta" al reservar
+```
+
+### 6. Jugador paga clase particular con tarjeta
+
+```
+1. Jugador reserva → elige "Pagar con tarjeta"
+2. Se crea booking (payment_method='stripe') → redirect a Stripe Checkout
+3. Introduce tarjeta 4242... → hold colocado (NO cargo)
+4. Vuelve a /dashboard?pl_payment=success → ve confirmación con banner azul
+5. WhatsApp enviado al entrenador con botones Aceptar/Rechazar
+6. Entrenador acepta → manage-private-lesson-payment(capture) → cargo completado
+7. Club recibe 93% en su cuenta Stripe, PadeLock 7%
 ```
 
 ---
@@ -928,6 +1131,40 @@ WHERE tablename = 'private_lesson_bookings'
   AND policyname LIKE '%companion%';
 ```
 
+### Problema: Pago con tarjeta no captura al confirmar
+
+**Causas posibles**:
+1. `stripe_payment_intent_id` es NULL → webhook no disparó y fallback falló
+2. `stripe_checkout_session_id` es NULL → el booking no pasó por Checkout
+3. `STRIPE_SECRET_KEY` no es la correcta (test vs producción)
+
+**Verificación**:
+```sql
+SELECT id, payment_method, stripe_checkout_session_id, stripe_payment_intent_id, stripe_payment_status
+FROM private_lesson_bookings
+WHERE payment_method = 'stripe'
+ORDER BY created_at DESC;
+```
+
+### Problema: No aparece opción "Pagar con tarjeta" al reservar
+
+**Causas posibles**:
+1. Club no tiene `stripe_account_id` → Admin debe conectar Stripe
+2. `stripe_onboarding_completed = false` → Admin debe completar onboarding
+3. `enable_private_lesson_online_payment = false` → Admin debe activar toggle
+
+**Verificación**:
+```sql
+SELECT id, name, stripe_account_id, stripe_onboarding_completed, enable_private_lesson_online_payment
+FROM clubs WHERE id = 'UUID_CLUB';
+```
+
+### Problema: Stripe Connect "You can only create new accounts if you've signed up for Connect"
+
+**Causa**: La cuenta de Stripe de la plataforma no tiene Connect habilitado.
+
+**Solución**: Ir a Stripe Dashboard → Settings → Connect → configurar (primero en modo test, luego producción).
+
 ---
 
 ## Migraciones
@@ -941,3 +1178,5 @@ WHERE tablename = 'private_lesson_bookings'
 | `20260225200000` | Añade `companion_details`, `payment_method`, `student_bono_id` a bookings |
 | `20260225300000` | Añade `user_code` a profiles + función de generación + RPC de lookup |
 | `20260225400000` | Política RLS para que acompañantes vean sus bookings |
+| `20260227000000` | Añade columnas Stripe a bookings + `enable_private_lesson_online_payment` a clubs + índices |
+| `20260227100000` | Añade `'stripe'` al CHECK constraint de `payment_method` |

@@ -50,6 +50,7 @@ export interface CreateBookingInput {
   price_per_person: number | null;
   total_price: number | null;
   companion_details: CompanionInfo[];
+  payment_method: "academia" | "stripe";
 }
 
 
@@ -269,7 +270,7 @@ export const useCreatePrivateLessonBooking = () => {
           total_price: input.total_price,
           status: "pending",
           companion_details: input.companion_details,
-          payment_method: "academia",
+          payment_method: input.payment_method,
         })
         .select()
         .single();
@@ -277,7 +278,7 @@ export const useCreatePrivateLessonBooking = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["private-lesson-bookings"],
       });
@@ -289,7 +290,8 @@ export const useCreatePrivateLessonBooking = () => {
       });
 
       // Notify trainer via WhatsApp (fire-and-forget)
-      if (data?.id) {
+      // For Stripe payments, the WhatsApp is sent from the stripe-webhook after the hold is placed
+      if (data?.id && variables.payment_method !== 'stripe') {
         supabase.functions.invoke('send-private-lesson-whatsapp', {
           body: { type: 'new_booking', bookingId: data.id },
         }).then(({ error: whatsappError }) => {

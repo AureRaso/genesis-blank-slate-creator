@@ -93,23 +93,31 @@ serve(async (req) => {
 
     console.log("stripe-connect: User profile:", profile);
 
-    // Verify user is admin and check if they own the club
+    // Verify user is admin
     if (profile.role !== 'admin') {
       console.log("stripe-connect: User is not admin");
       throw new Error("Unauthorized: Only admins can connect Stripe accounts");
     }
 
-    // Check if the user owns this specific club
+    // Check if the admin is associated with this club (owner or club_id match)
     const { data: clubOwnership, error: ownershipError } = await supabaseAdmin
       .from('clubs')
-      .select('created_by_profile_id')
+      .select('id, created_by_profile_id')
       .eq('id', clubId)
-      .eq('created_by_profile_id', user.id)
       .single();
 
     if (ownershipError || !clubOwnership) {
-      console.log("stripe-connect: User does not own this club");
-      throw new Error("Unauthorized: You can only connect Stripe accounts for clubs you own");
+      console.log("stripe-connect: Club not found:", ownershipError);
+      throw new Error("Club not found");
+    }
+
+    // Allow if user created the club OR their profile.club_id matches
+    const isOwner = clubOwnership.created_by_profile_id === user.id;
+    const isClubAdmin = profile.club_id === clubId;
+
+    if (!isOwner && !isClubAdmin) {
+      console.log("stripe-connect: User does not own/belong to this club. created_by:", clubOwnership.created_by_profile_id, "user:", user.id, "profile.club_id:", profile.club_id);
+      throw new Error("Unauthorized: You can only connect Stripe accounts for your clubs");
     }
 
     // Get club information
@@ -140,7 +148,40 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
+    const { action } = requestBody;
     let accountId = club.stripe_account_id;
+
+    // Action: check-status — verify Stripe account status and update DB
+    if (action === 'check-status') {
+      if (!accountId) {
+        return new Response(JSON.stringify({ connected: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      console.log("stripe-connect: Checking account status for:", accountId);
+      const account = await stripe.accounts.retrieve(accountId);
+      const isComplete = account.charges_enabled && account.payouts_enabled;
+
+      if (isComplete) {
+        await supabaseAdmin
+          .from('clubs')
+          .update({ stripe_onboarding_completed: true, stripe_account_status: 'active' })
+          .eq('id', clubId);
+        console.log("stripe-connect: Account fully onboarded, updated DB");
+      }
+
+      return new Response(JSON.stringify({
+        connected: isComplete,
+        charges_enabled: account.charges_enabled,
+        payouts_enabled: account.payouts_enabled,
+        details_submitted: account.details_submitted,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     // Create Stripe Connect account if it doesn't exist
     if (!accountId) {
@@ -180,8 +221,8 @@ serve(async (req) => {
     
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${origin}/settings?refresh=true`,
-      return_url: `${origin}/settings?success=true`,
+      refresh_url: `${origin}/dashboard/settings?stripe_connect=refresh`,
+      return_url: `${origin}/dashboard/settings?stripe_connect=success`,
       type: 'account_onboarding',
     });
 

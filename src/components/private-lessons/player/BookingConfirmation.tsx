@@ -8,6 +8,8 @@ import {
   Clock,
   CalendarPlus,
   Share2,
+  CreditCard,
+  Info,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +28,7 @@ interface BookingConfirmationProps {
   companions: CompanionInfo[];
   pricePerPerson: number;
   bookerName: string;
+  paymentMethod?: "academia" | "stripe";
   onBackToHome?: () => void;
 }
 
@@ -75,6 +78,7 @@ const BookingConfirmation = ({
   companions,
   pricePerPerson,
   bookerName,
+  paymentMethod = "academia",
   onBackToHome,
 }: BookingConfirmationProps) => {
   const { t } = useTranslation();
@@ -130,7 +134,9 @@ const BookingConfirmation = ({
     );
   };
 
-  const paymentLabel = `${pricePerPerson}€ · ${t("privateLessonsBooking.pendingPayAtClub", "Se paga en academia al confirmar")}`;
+  const paymentLabel = paymentMethod === "stripe"
+    ? `${pricePerPerson}€ · ${t("privateLessonsBooking.cardPaymentPreauthorized", "Pago con tarjeta (pre-autorizado)")}`
+    : `${pricePerPerson}€ · ${t("privateLessonsBooking.pendingPayAtClub", "Se paga en academia al confirmar")}`;
 
   return (
     <div className="space-y-6">
@@ -197,6 +203,19 @@ const BookingConfirmation = ({
           <p className="text-sm text-gray-600">{paymentLabel}</p>
         </div>
       </div>
+
+      {/* Stripe hold info banner */}
+      {paymentMethod === "stripe" && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-blue-700">
+            {t(
+              "privateLessonsBooking.holdInfo",
+              "Se ha realizado una pre-autorización en tu tarjeta. El cargo solo se completará si el entrenador confirma la clase. Si rechaza o no responde, el importe se liberará automáticamente."
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Pending banner */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">

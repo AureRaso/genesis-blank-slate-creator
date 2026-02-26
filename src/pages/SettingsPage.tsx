@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClubs } from '@/hooks/useClubs';
 import { Button } from '@/components/ui/button';
@@ -48,11 +49,13 @@ interface ClubWithStripe {
   stripe_account_id?: string | null;
   stripe_account_status?: string | null;
   stripe_onboarding_completed?: boolean | null;
+  enable_private_lesson_online_payment?: boolean | null;
 }
 
 const SettingsPage = () => {
   const { profile, isAdmin, isPlayer, isTrainer, isGuardian, user } = useAuth();
   const { data: clubs } = useClubs();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -74,6 +77,8 @@ const SettingsPage = () => {
   );
   const [updatingWhatsapp, setUpdatingWhatsapp] = useState(false);
   const [showWhatsAppActivationModal, setShowWhatsAppActivationModal] = useState(false);
+  const [onlinePaymentEnabled, setOnlinePaymentEnabled] = useState(false);
+  const [updatingOnlinePayment, setUpdatingOnlinePayment] = useState(false);
 
   // Get the selected club or default to the first one
   const club = clubs && clubs.length > 0
@@ -98,20 +103,40 @@ const SettingsPage = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('stripe-connect', {
-        body: { clubId: club.id }
-      });
+      console.log('Connecting Stripe for club:', club.id);
 
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
 
-      if (data?.url) {
-        window.location.href = data.url;
+      // Use raw fetch to get proper error messages from the function
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ clubId: club.id }),
+        }
+      );
+
+      const responseData = await res.json();
+      console.log('Stripe connect response:', res.status, responseData);
+
+      if (!res.ok) {
+        throw new Error(responseData.error || `Error ${res.status}`);
+      }
+
+      if (responseData?.url) {
+        window.location.href = responseData.url;
       } else {
         throw new Error('No se recibió la URL de conexión');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting to Stripe:', error);
-      toast.error('Error al conectar con Stripe. Inténtalo de nuevo.');
+      toast.error(error.message || 'Error al conectar con Stripe. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -153,6 +178,63 @@ const SettingsPage = () => {
   };
 
   const isStripeConnected = club?.stripe_account_id && club?.stripe_onboarding_completed;
+
+  // Sync online payment toggle when club data changes
+  React.useEffect(() => {
+    if (club) {
+      setOnlinePaymentEnabled(!!(club as ClubWithStripe).enable_private_lesson_online_payment);
+    }
+  }, [club]);
+
+  // Handle Stripe Connect onboarding return
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("stripe_connect") === "success" && club?.id) {
+      window.history.replaceState({}, "", window.location.pathname);
+      // Verify account status via edge function (uses service role to update DB)
+      const verifyStripeStatus = async () => {
+        try {
+          const { data } = await supabase.functions.invoke("stripe-connect", {
+            body: { clubId: club.id, action: "check-status" },
+          });
+          if (data?.connected) {
+            toast.success(t('settings.stripe.connectSuccess', 'Cuenta de Stripe conectada correctamente'));
+          } else {
+            toast.info(t('settings.stripe.onboardingIncomplete', 'Configuración de Stripe pendiente. Completa el proceso para activar pagos.'));
+          }
+        } catch (err) {
+          console.error("Error checking Stripe status:", err);
+        }
+        queryClient.invalidateQueries({ queryKey: ["clubs"] });
+      };
+      verifyStripeStatus();
+    }
+  }, [club?.id]);
+
+  const handleToggleOnlinePayment = async (enabled: boolean) => {
+    if (!club?.id) return;
+    setUpdatingOnlinePayment(true);
+    try {
+      const { error } = await supabase
+        .from("clubs")
+        .update({ enable_private_lesson_online_payment: enabled })
+        .eq("id", club.id);
+
+      if (error) throw error;
+
+      setOnlinePaymentEnabled(enabled);
+      toast.success(
+        enabled
+          ? t('settings.stripe.onlinePaymentEnabled', 'Pago online activado para clases particulares')
+          : t('settings.stripe.onlinePaymentDisabled', 'Pago online desactivado')
+      );
+    } catch (error) {
+      console.error("Error updating online payment setting:", error);
+      toast.error(t('settings.stripe.updateError', 'Error al actualizar la configuración'));
+    } finally {
+      setUpdatingOnlinePayment(false);
+    }
+  };
 
   // Update editedProfile when profile changes
   React.useEffect(() => {
@@ -778,6 +860,85 @@ const SettingsPage = () => {
                 authProviderMessage={t(getAuthProviderMessageKey(user))}
               />
             </div>
+
+            {/* Stripe Connect - Online Payments */}
+            {club && (
+              <Card className="border-0 shadow-lg rounded-xl transition-all duration-300 hover:shadow-xl bg-white">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-800">
+                    <CreditCard className="h-5 w-5 sm:h-6 sm:w-6" />
+                    {t('settings.stripe.title', 'Pagos Online - Clases Particulares')}
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    {t('settings.stripe.description', 'Permite a tus alumnos pagar las clases particulares con tarjeta de crédito/débito.')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+                  {/* Stripe Connect Status */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">
+                        {t('settings.stripe.connectLabel', 'Cuenta de Stripe')}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {isStripeConnected
+                          ? t('settings.stripe.connectedDesc', 'Tu cuenta de Stripe está conectada y activa')
+                          : t('settings.stripe.notConnectedDesc', 'Conecta tu cuenta de Stripe para recibir pagos online')}
+                      </p>
+                    </div>
+                    <Badge variant={isStripeConnected ? "default" : "secondary"} className={isStripeConnected ? "bg-green-100 text-green-700" : ""}>
+                      {isStripeConnected
+                        ? <><CheckCircle className="h-3 w-3 mr-1" />{t('settings.stripe.connected', 'Conectada')}</>
+                        : t('settings.stripe.notConnected', 'No conectada')}
+                    </Badge>
+                  </div>
+
+                  {/* Connect / Dashboard button */}
+                  {isStripeConnected ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleStripeLoginLink}
+                      disabled={loading}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('settings.stripe.dashboard', 'Abrir panel de Stripe')}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={handleConnectStripe}
+                      disabled={loading}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      {loading
+                        ? t('settings.stripe.connecting', 'Conectando...')
+                        : t('settings.stripe.connect', 'Conectar con Stripe')}
+                    </Button>
+                  )}
+
+                  {/* Online payment toggle (only when connected) */}
+                  {isStripeConnected && (
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="online-payment-toggle" className="text-sm font-medium cursor-pointer">
+                          {t('settings.stripe.toggleLabel', 'Pago online con tarjeta')}
+                        </Label>
+                        <p className="text-xs text-gray-500">
+                          {t('settings.stripe.toggleDesc', 'Los alumnos podrán pagar con tarjeta al reservar una clase particular')}
+                        </p>
+                      </div>
+                      <Switch
+                        id="online-payment-toggle"
+                        checked={onlinePaymentEnabled}
+                        onCheckedChange={handleToggleOnlinePayment}
+                        disabled={updatingOnlinePayment}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Logout Section */}
             <div className="pt-4 border-t border-gray-200">

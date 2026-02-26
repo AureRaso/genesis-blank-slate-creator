@@ -195,7 +195,7 @@ async function handleBookingButton(
   // 1. Fetch booking
   const { data: booking, error: bookingError } = await supabaseClient
     .from('private_lesson_bookings')
-    .select('id, status, trainer_profile_id, club_id')
+    .select('id, status, trainer_profile_id, club_id, payment_method, stripe_payment_status')
     .eq('id', bookingId)
     .single();
 
@@ -284,6 +284,30 @@ async function handleBookingButton(
   }
 
   console.log(`✅ Booking ${bookingId} updated to ${updateData.status}`);
+
+  // 5.5 Handle Stripe payment capture/cancel if applicable
+  if (booking.payment_method === 'stripe' && booking.stripe_payment_status === 'hold_placed') {
+    try {
+      const paymentAction = action === 'confirm' ? 'capture' : 'cancel';
+      console.log(`Triggering payment ${paymentAction} for booking ${bookingId}`);
+
+      await fetch(`${SUPABASE_URL}/functions/v1/manage-private-lesson-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({
+          bookingId: bookingId,
+          action: paymentAction,
+        }),
+      });
+      console.log(`✓ Payment ${paymentAction} triggered for booking ${bookingId}`);
+    } catch (paymentError) {
+      console.error(`Error triggering payment ${paymentAction}:`, paymentError);
+      // Don't fail the webhook — booking status is already updated
+    }
+  }
 
   // 6. Send confirmation reply to trainer
   const replyMessages = action === 'confirm'

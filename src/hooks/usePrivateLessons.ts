@@ -318,6 +318,15 @@ export const useRespondToBooking = () => {
       }).then(({ error: whatsappError }) => {
         if (whatsappError) console.error('WhatsApp notification error:', whatsappError);
       }).catch(err => console.error('WhatsApp notification error:', err));
+
+      // Trigger Stripe payment capture/cancel (fire-and-forget)
+      // Safe for "academia" bookings — manage-private-lesson-payment does early return if no stripe hold
+      supabase.functions.invoke('manage-private-lesson-payment', {
+        body: {
+          bookingId,
+          action: action === 'confirm' ? 'capture' : 'cancel',
+        },
+      }).catch(err => console.error('Payment management error:', err));
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["private-lesson-bookings"] });

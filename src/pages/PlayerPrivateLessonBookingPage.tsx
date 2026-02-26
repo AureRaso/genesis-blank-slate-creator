@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GraduationCap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   useClubTrainersWithRates,
   useCreatePrivateLessonBooking,
@@ -63,6 +64,7 @@ const usePlayerClubId = (profileClubId: string | undefined, email: string | unde
 
 const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }: PlayerPrivateLessonBookingPageProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { profile, effectiveClubId } = useAuth();
 
   // Fallback: if profile.club_id is missing, look it up from student_enrollments
@@ -89,7 +91,88 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
     null,
   ]);
 
-  // Step 3: payment is always "academia" (no bono for private lessons)
+  // Step 3: payment method
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"academia" | "stripe">("academia");
+  const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
+
+  // Stripe return handling
+  const [stripeReturnBookingId, setStripeReturnBookingId] = useState<string | null>(null);
+
+  // Query club Stripe config for online payment availability
+  const { data: clubStripeConfig } = useQuery({
+    queryKey: ["club-stripe-config", clubId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clubs")
+        .select("enable_private_lesson_online_payment, stripe_onboarding_completed, stripe_account_id")
+        .eq("id", clubId)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!clubId,
+  });
+
+  const onlinePaymentAvailable = !!(
+    (clubStripeConfig as any)?.enable_private_lesson_online_payment &&
+    clubStripeConfig?.stripe_onboarding_completed &&
+    clubStripeConfig?.stripe_account_id
+  );
+
+  // Query booking details when returning from Stripe checkout
+  const { data: stripeReturnBooking } = useQuery({
+    queryKey: ["stripe-return-booking", stripeReturnBookingId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("private_lesson_bookings")
+        .select("id, trainer_profile_id, club_id, lesson_date, start_time, end_time, duration_minutes, num_companions, price_per_person, companion_details, booker_name, payment_method")
+        .eq("id", stripeReturnBookingId!)
+        .single();
+      if (error) throw error;
+
+      const [{ data: trainerProfile }, { data: clubData }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", data.trainer_profile_id).single(),
+        supabase.from("clubs").select("name").eq("id", data.club_id).single(),
+      ]);
+
+      return {
+        ...data,
+        trainer_name: trainerProfile?.full_name || "",
+        club_name: clubData?.name || "",
+      };
+    },
+    enabled: !!stripeReturnBookingId,
+  });
+
+  // Detect Stripe return via URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const plPayment = params.get("pl_payment");
+    const bookingId = params.get("booking_id");
+
+    if (plPayment === "success" && bookingId) {
+      setStripeReturnBookingId(bookingId);
+      window.history.replaceState({}, "", window.location.pathname);
+      // Send WhatsApp notification to trainer (fallback if webhook didn't fire)
+      supabase.functions.invoke('send-private-lesson-whatsapp', {
+        body: { type: 'new_booking', bookingId },
+      }).catch(err => console.error('Trainer WhatsApp notification error:', err));
+    } else if (plPayment === "cancel" && bookingId) {
+      toast({
+        title: t("privateLessonsBooking.paymentCancelled", "Pago cancelado"),
+        description: t("privateLessonsBooking.paymentCancelledDesc", "Puedes volver a intentarlo o elegir otro método de pago."),
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  // When Stripe return booking loads, jump to step 4
+  useEffect(() => {
+    if (stripeReturnBooking) {
+      setStep(4);
+    }
+  }, [stripeReturnBooking]);
 
   const selectedTrainer = useMemo(
     () => trainers.find((tr) => tr.profile_id === selectedTrainerId),
@@ -148,7 +231,7 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
       .slice(0, numPlayers - 1)
       .filter((c): c is CompanionInfo => c !== null);
 
-    await createBooking.mutateAsync({
+    const bookingData = await createBooking.mutateAsync({
       trainer_profile_id: selectedTrainer.profile_id,
       club_id: clubId,
       lesson_date: selectedSlot.date,
@@ -159,7 +242,33 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
       price_per_person: pricePerPerson,
       total_price: pricePerPerson * numPlayers,
       companion_details: validCompanions,
+      payment_method: selectedPaymentMethod,
     });
+
+    if (selectedPaymentMethod === "stripe" && bookingData?.id) {
+      // Redirect to Stripe Checkout
+      setIsRedirectingToStripe(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("create-private-lesson-checkout", {
+          body: { bookingId: bookingData.id },
+        });
+
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+          return;
+        }
+        throw new Error("No checkout URL received");
+      } catch (err: any) {
+        setIsRedirectingToStripe(false);
+        toast({
+          title: "Error",
+          description: err.message || t("privateLessonsBooking.checkoutError", "Error al crear el pago. Inténtalo de nuevo."),
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     setStep(4);
   };
@@ -267,12 +376,36 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
           numPlayers={numPlayers}
           pricePerPerson={pricePerPerson}
           onSubmit={handleSubmitBooking}
-          isSubmitting={createBooking.isPending}
+          isSubmitting={createBooking.isPending || isRedirectingToStripe}
           onBack={() => setStep(2)}
+          onlinePaymentAvailable={onlinePaymentAvailable}
+          selectedPaymentMethod={selectedPaymentMethod}
+          onPaymentMethodChange={setSelectedPaymentMethod}
         />
       )}
 
-      {step === 4 && selectedTrainer && selectedSlot && (
+      {step === 4 && (stripeReturnBooking ? (
+        <BookingConfirmation
+          trainerName={stripeReturnBooking.trainer_name}
+          clubName={stripeReturnBooking.club_name}
+          date={stripeReturnBooking.lesson_date}
+          startTime={stripeReturnBooking.start_time?.slice(0, 5) || ""}
+          endTime={stripeReturnBooking.end_time?.slice(0, 5) || ""}
+          durationMinutes={stripeReturnBooking.duration_minutes}
+          numPlayers={(stripeReturnBooking.num_companions || 0) + 1}
+          companions={(stripeReturnBooking.companion_details || []) as CompanionInfo[]}
+          pricePerPerson={stripeReturnBooking.price_per_person || 0}
+          bookerName={stripeReturnBooking.booker_name || profile?.full_name || ""}
+          paymentMethod={(stripeReturnBooking.payment_method as "academia" | "stripe") || "academia"}
+          onBackToHome={() => {
+            setStep(1);
+            setStripeReturnBookingId(null);
+            if (onBackToMyClasses) {
+              onBackToMyClasses();
+            }
+          }}
+        />
+      ) : selectedTrainer && selectedSlot ? (
         <BookingConfirmation
           trainerName={selectedTrainer.full_name}
           clubName={selectedTrainer.club_name}
@@ -286,8 +419,8 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
             .filter((c): c is CompanionInfo => c !== null)}
           pricePerPerson={pricePerPerson}
           bookerName={profile?.full_name || ""}
+          paymentMethod={selectedPaymentMethod}
           onBackToHome={() => {
-            // Reset the wizard and switch to "Mis clases" tab
             setStep(1);
             setSelectedTrainerId("");
             setSelectedDate("");
@@ -299,7 +432,7 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
             }
           }}
         />
-      )}
+      ) : null)}
     </div>
   );
 };
