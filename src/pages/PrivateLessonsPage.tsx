@@ -134,6 +134,8 @@ const PrivateLessonsPage = () => {
             availability={availability}
             trainerProfileId={trainerProfileId}
             clubId={trainerClubId}
+            bookingWindowDays={trainerProfile?.booking_window_days ?? 7}
+            minNoticeHours={trainerProfile?.min_notice_hours ?? 24}
           />
         </TabsContent>
 

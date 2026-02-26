@@ -22,6 +22,8 @@ export interface TrainerWithRates {
   specialty: string | null;
   photo_url: string | null;
   private_lesson_rates: PrivateLessonRates;
+  booking_window_days: number;
+  min_notice_hours: number;
   full_name: string;
   email: string;
   club_id: string;
@@ -98,7 +100,7 @@ export const useClubTrainersWithRates = (clubId: string) => {
       const { data: trainers, error: tError } = await supabase
         .from("trainers")
         .select(
-          "id, profile_id, specialty, photo_url, private_lesson_rates, profiles:profile_id(id, full_name, email)"
+          "id, profile_id, specialty, photo_url, private_lesson_rates, booking_window_days, min_notice_hours, profiles:profile_id(id, full_name, email)"
         )
         .in("profile_id", profileIds)
         .eq("is_active", true);
@@ -125,6 +127,8 @@ export const useClubTrainersWithRates = (clubId: string) => {
           specialty: t.specialty,
           photo_url: t.photo_url,
           private_lesson_rates: rates,
+          booking_window_days: (t as any).booking_window_days ?? 7,
+          min_notice_hours: (t as any).min_notice_hours ?? 24,
           full_name: profile?.full_name || "",
           email: profile?.email || "",
           club_id: clubId,
@@ -145,7 +149,8 @@ export const useClubTrainersWithRates = (clubId: string) => {
 export const useTrainerFreeSlots = (
   trainerProfileId: string,
   clubId: string,
-  date: string // "yyyy-MM-dd"
+  date: string, // "yyyy-MM-dd"
+  minNoticeHours: number = 24
 ) => {
   // We need the week range that contains the date for the hooks
   const targetDate = date ? new Date(date + "T12:00:00") : new Date();
@@ -181,6 +186,7 @@ export const useTrainerFreeSlots = (
       trainerProfileId,
       clubId,
       date,
+      minNoticeHours,
       availability,
       exceptions,
       bookings,
@@ -201,8 +207,14 @@ export const useTrainerFreeSlots = (
         scheduledClasses
       );
 
-      // Only return free slots for that specific date
-      return allSlots.filter((s) => s.date === date && s.status === "free");
+      // Only return free slots for that specific date, respecting min notice
+      const minNoticeDeadline = new Date(Date.now() + minNoticeHours * 60 * 60 * 1000);
+
+      return allSlots.filter((s) => {
+        if (s.date !== date || s.status !== "free") return false;
+        const slotStart = new Date(`${s.date}T${s.startTime}:00`);
+        return slotStart >= minNoticeDeadline;
+      });
     },
     enabled:
       !!trainerProfileId &&

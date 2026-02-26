@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Save } from "lucide-react";
+import { RefreshCw, Save, CalendarClock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import AvailabilityDayRow, { DayState } from "./AvailabilityDayCard";
 import { PrivateLessonAvailability } from "@/hooks/usePrivateLessons";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ interface AvailabilityFormProps {
   availability: PrivateLessonAvailability[];
   trainerProfileId: string;
   clubId: string;
+  bookingWindowDays: number;
+  minNoticeHours: number;
 }
 
 // Days: 1=Monday to 6=Saturday, 0=Sunday (shown last)
@@ -49,7 +52,7 @@ function buildDayState(existing?: PrivateLessonAvailability): DayState {
   };
 }
 
-const AvailabilityForm = ({ availability, trainerProfileId, clubId }: AvailabilityFormProps) => {
+const AvailabilityForm = ({ availability, trainerProfileId, clubId, bookingWindowDays, minNoticeHours }: AvailabilityFormProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -64,6 +67,16 @@ const AvailabilityForm = ({ availability, trainerProfileId, clubId }: Availabili
   });
 
   const [isSaving, setIsSaving] = useState(false);
+
+  // Booking window state
+  const [windowDays, setWindowDays] = useState(bookingWindowDays);
+  const [noticeHours, setNoticeHours] = useState(minNoticeHours);
+
+  // Sync booking window from props
+  useEffect(() => {
+    setWindowDays(bookingWindowDays);
+    setNoticeHours(minNoticeHours);
+  }, [bookingWindowDays, minNoticeHours]);
 
   // Sync from props when availability changes (e.g. after refetch)
   useEffect(() => {
@@ -111,7 +124,19 @@ const AvailabilityForm = ({ availability, trainerProfileId, clubId }: Availabili
         .from("private_lesson_availability")
         .upsert(rows, { onConflict: "trainer_profile_id,club_id,day_of_week" });
       if (error) throw error;
+
+      // Save booking window settings to trainers table
+      const { error: windowError } = await supabase
+        .from("trainers")
+        .update({
+          booking_window_days: windowDays,
+          min_notice_hours: noticeHours,
+        })
+        .eq("profile_id", trainerProfileId);
+      if (windowError) throw windowError;
+
       queryClient.invalidateQueries({ queryKey: ["private-lesson-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["my-trainer-profile"] });
       toast.success(t("privateLessons.availability.savedAll", "Disponibilidad guardada correctamente"));
     } catch {
       toast.error(t("privateLessons.availability.saveError", "Error al guardar la disponibilidad"));
@@ -146,6 +171,57 @@ const AvailabilityForm = ({ availability, trainerProfileId, clubId }: Availabili
               orderedDays={ORDERED_DAYS}
             />
           ))}
+        </div>
+
+        {/* Booking window settings */}
+        <div className="mt-6 border border-orange-200 bg-orange-50/50 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">
+              {t("privateLessons.availability.bookingWindowTitle", "Ventana de reserva")}
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("privateLessons.availability.bookingWindowDesc", "Configura cuándo pueden reservar tus alumnos")}
+          </p>
+
+          <div className="space-y-3">
+            {/* Max days into the future */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm">
+                {t("privateLessons.availability.bookingWindowDays", "Los alumnos pueden reservar hasta")}
+              </span>
+              <Input
+                type="number"
+                min={1}
+                max={90}
+                value={windowDays}
+                onChange={(e) => setWindowDays(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-16 h-8 text-center font-semibold text-primary border-primary/30 focus:border-primary"
+              />
+              <span className="text-sm">
+                {t("privateLessons.availability.daysInFuture", "días en el futuro")}
+              </span>
+            </div>
+
+            {/* Min notice hours */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm">
+                {t("privateLessons.availability.minNotice", "Con al menos")}
+              </span>
+              <Input
+                type="number"
+                min={0}
+                max={168}
+                value={noticeHours}
+                onChange={(e) => setNoticeHours(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-16 h-8 text-center font-semibold text-primary border-primary/30 focus:border-primary"
+              />
+              <span className="text-sm">
+                {t("privateLessons.availability.hoursNotice", "horas de antelación")}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Global save button */}

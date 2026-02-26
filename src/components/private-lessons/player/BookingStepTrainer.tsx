@@ -14,9 +14,9 @@ import {
   addDays,
   startOfWeek,
   addWeeks,
-  isSameDay,
   isToday,
   isBefore,
+  isAfter,
   startOfDay,
 } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -88,17 +88,29 @@ const BookingStepTrainer = ({
 
   const selectedTrainer = trainers.find((tr) => tr.profile_id === selectedTrainerId);
 
+  // Booking window limits from selected trainer
+  const bookingWindowDays = selectedTrainer?.booking_window_days ?? 7;
+  const minNoticeHours = selectedTrainer?.min_notice_hours ?? 24;
+  const maxBookingDate = startOfDay(addDays(new Date(), bookingWindowDays));
+
   // Generate week days for date picker
   const weekDays = useMemo(() => {
     const base = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset);
     return Array.from({ length: 7 }, (_, i) => addDays(base, i));
   }, [weekOffset]);
 
-  // Free slots for selected trainer + date
+  // Check if next week is entirely beyond booking window
+  const nextWeekStart = useMemo(() => {
+    return addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset + 1);
+  }, [weekOffset]);
+  const canGoForward = !selectedTrainerId || isBefore(nextWeekStart, maxBookingDate);
+
+  // Free slots for selected trainer + date (filtered by min notice hours)
   const { data: freeSlots = [], isLoading: slotsLoading } = useTrainerFreeSlots(
     selectedTrainerId,
     clubId,
-    selectedDate
+    selectedDate,
+    minNoticeHours
   );
 
   const canContinue = !!selectedTrainerId && !!selectedDate && !!selectedSlot;
@@ -190,6 +202,7 @@ const BookingStepTrainer = ({
               size="icon"
               className="h-8 w-8"
               onClick={() => setWeekOffset((p) => p + 1)}
+              disabled={!canGoForward}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -199,17 +212,19 @@ const BookingStepTrainer = ({
               const dateStr = format(day, "yyyy-MM-dd");
               const isSelected = dateStr === selectedDate;
               const isPast = isBefore(day, today);
+              const isBeyondWindow = !isBefore(day, maxBookingDate);
+              const isDisabled = isPast || isBeyondWindow;
               const isTodayDay = isToday(day);
 
               return (
                 <button
                   key={dateStr}
-                  disabled={isPast}
+                  disabled={isDisabled}
                   onClick={() => onSelectDate(dateStr)}
                   className={`flex flex-col items-center justify-center min-w-[48px] py-2 px-1.5 rounded-xl transition-all text-center ${
                     isSelected
                       ? "bg-primary text-white shadow-md"
-                      : isPast
+                      : isDisabled
                         ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                         : isTodayDay
                           ? "bg-orange-50 text-primary border border-orange-200"
