@@ -468,31 +468,40 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
       <div className="space-y-4">
         {/* Waitlist section - show even when no classes */}
         {renderWaitlistSection()}
-        {/* Private lesson bookings */}
-        {renderPrivateLessonsSection()}
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
-              <Calendar className="h-6 w-6 text-white" />
+        {/* Desktop: side by side | Mobile: stacked */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 gap-4 lg:items-start">
+          {/* Left: Mis clases */}
+          <div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                {t('playerDashboard.myClassesTitle')}
+              </h2>
             </div>
-            {t('playerDashboard.myClassesTitle')}
-          </h2>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl text-center mt-4">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-8 w-8 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-700 mb-2">{t('playerDashboard.noScheduledClasses')}</h3>
+                <p className="text-slate-500 text-sm">
+                  {t('playerDashboard.noClassesNext10Days')}
+                </p>
+                <p className="text-slate-400 text-xs mt-2">
+                  {t('playerDashboard.enjoyFreeTime')}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: Clases Particulares */}
+          {privateLessonBookings.length > 0 && (
+            <div>{renderPrivateLessonsSection()}</div>
+          )}
         </div>
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-50 to-white rounded-2xl text-center">
-          <CardContent className="p-8">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-8 w-8 text-slate-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">{t('playerDashboard.noScheduledClasses')}</h3>
-            <p className="text-slate-500 text-sm">
-              {t('playerDashboard.noClassesNext10Days')}
-            </p>
-            <p className="text-slate-400 text-xs mt-2">
-              {t('playerDashboard.enjoyFreeTime')}
-            </p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -504,39 +513,40 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
     <div className="space-y-4 sm:space-y-6">
       {/* Waitlist Notifications Section */}
       {renderWaitlistSection()}
-      {/* Private lesson bookings */}
-      {renderPrivateLessonsSection()}
 
-      {/* Header - Responsive: stacked on mobile, inline on desktop */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-        <div className="flex-1">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{t('playerDashboard.upcomingClasses')}</h2>
-        </div>
+      {/* Desktop: side by side | Mobile: stacked */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 gap-4 lg:items-start">
+        {/* Left column: Mis clases */}
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">{t('playerDashboard.upcomingClasses')}</h2>
+            </div>
 
-        {/* Reminder Banner - Full width on mobile, 50% on desktop */}
-        <div className="w-full md:w-1/2">
-          <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl sm:rounded-2xl">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
-                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-green-800">
-                  {t('playerDashboard.autoConfirmed')}
-                </p>
-                <p className="text-xs text-green-600 mt-0.5 sm:mt-1 line-clamp-2">
-                  {t('playerDashboard.releaseSpotHint')}
-                </p>
+            {/* Reminder Banner */}
+            <div className="w-full md:w-auto">
+              <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl sm:rounded-2xl">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg flex-shrink-0">
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-green-800">
+                      {t('playerDashboard.autoConfirmed')}
+                    </p>
+                    <p className="text-xs text-green-600 mt-0.5 sm:mt-1 line-clamp-2">
+                      {t('playerDashboard.releaseSpotHint')}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-
-      {/* Class Cards Grid - Single column on mobile, 2 columns on tablet/desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-        {todayClasses.map((classItem: any) => {
+          {/* Class Cards */}
+          <div className="space-y-4">
+            {todayClasses.map((classItem: any) => {
           const isConfirmed = !!classItem.attendance_confirmed_for_date;
           const scheduledDate = classItem.scheduled_date;
           const isConfirmedForThisDate = classItem.attendance_confirmed_for_date === scheduledDate;
@@ -693,6 +703,13 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             </Card>
           );
         })}
+          </div>
+        </div>
+
+        {/* Right column: Clases Particulares */}
+        {privateLessonBookings.length > 0 && (
+          <div>{renderPrivateLessonsSection()}</div>
+        )}
       </div>
     </div>
   );

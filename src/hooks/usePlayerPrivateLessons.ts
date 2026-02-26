@@ -449,13 +449,21 @@ export const useMyPrivateLessonBookings = () => {
       const trainerMap = new Map((profiles || []).map((p) => [p.id, p.full_name]));
       const clubMap = new Map((clubs || []).map((c) => [c.id, c.name]));
 
-      return data.map((b) => ({
-        ...b,
-        trainer_name: trainerMap.get(b.trainer_profile_id) || "",
-        club_name: clubMap.get(b.club_id) || "",
-        booker_name: b.booker_name || "",
-        is_companion: b.booked_by_profile_id !== user.id,
-      }));
+      const now = new Date();
+
+      return data
+        .filter((b) => {
+          // Hide bookings whose end_time has passed today
+          const endDateTime = new Date(`${b.lesson_date}T${b.end_time}`);
+          return endDateTime > now;
+        })
+        .map((b) => ({
+          ...b,
+          trainer_name: trainerMap.get(b.trainer_profile_id) || "",
+          club_name: clubMap.get(b.club_id) || "",
+          booker_name: b.booker_name || "",
+          is_companion: b.booked_by_profile_id !== user.id,
+        }));
     },
   });
 };
