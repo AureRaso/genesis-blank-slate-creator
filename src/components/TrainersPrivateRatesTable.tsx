@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Edit, CalendarDays, UserCheck, Plus, Settings2 } from "lucide-react";
+import { useState, Fragment } from "react";
+import { Edit, CalendarDays, UserCheck, Plus, Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Trainer } from "@/hooks/useTrainers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import TrainerRateDialog from "@/components/TrainerRateDialog";
+import TrainerStatsPanel from "@/components/TrainerStatsPanel";
 
 interface TrainersPrivateRatesTableProps {
   trainers: Trainer[];
@@ -31,9 +32,14 @@ const TrainersPrivateRatesTable = ({
   onCreateTrainer,
   onViewSchedule,
 }: TrainersPrivateRatesTableProps) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, effectiveClubId } = useAuth();
   const { t } = useTranslation();
   const [rateDialogTrainer, setRateDialogTrainer] = useState<Trainer | null>(null);
+  const [expandedTrainerId, setExpandedTrainerId] = useState<string | null>(null);
+
+  const toggleExpanded = (trainerId: string) => {
+    setExpandedTrainerId((prev) => (prev === trainerId ? null : trainerId));
+  };
 
   if (isLoading) {
     return (
@@ -161,11 +167,20 @@ const TrainersPrivateRatesTable = ({
               <TableBody>
                 {trainers.map((trainer) => {
                   const { trainerName, trainerEmail, ratePerClass, durationLabel, isConfigured } = renderTrainerRow(trainer);
+                  const isExpanded = expandedTrainerId === trainer.id;
 
                   return (
-                    <TableRow key={trainer.id}>
+                    <Fragment key={trainer.id}><TableRow
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => toggleExpanded(trainer.id)}
+                      >
                       <TableCell>
                         <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={trainer.photo_url || undefined} alt={trainerName} />
                             <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white text-sm">
@@ -198,7 +213,7 @@ const TrainersPrivateRatesTable = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           {isAdmin && (
                             <Button
                               variant="ghost"
@@ -233,6 +248,17 @@ const TrainersPrivateRatesTable = ({
                         </div>
                       </TableCell>
                     </TableRow>
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="bg-muted/30 p-0">
+                          <TrainerStatsPanel
+                            trainerProfileId={trainer.profile_id}
+                            clubId={effectiveClubId || ""}
+                            enabled={isExpanded}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )}</Fragment>
                   );
                 })}
               </TableBody>
@@ -243,11 +269,20 @@ const TrainersPrivateRatesTable = ({
           <div className="block md:hidden space-y-3">
             {trainers.map((trainer) => {
               const data = renderTrainerRow(trainer);
+              const isExpanded = expandedTrainerId === trainer.id;
 
               return (
                 <Card key={trainer.id} className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center justify-between mb-3 cursor-pointer"
+                    onClick={() => toggleExpanded(trainer.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={trainer.photo_url || undefined} alt={data.trainerName} />
                         <AvatarFallback className="bg-gradient-to-r from-playtomic-orange to-playtomic-orange-dark text-white text-sm">
@@ -259,7 +294,7 @@ const TrainersPrivateRatesTable = ({
                         <p className="text-xs text-muted-foreground">{data.trainerEmail}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       {isAdmin && (
                         <Button variant="ghost" size="icon" onClick={() => onEditTrainer(trainer)} className="h-8 w-8 hover:bg-slate-200">
                           <Settings2 className="h-4 w-4 text-muted-foreground" />
@@ -307,6 +342,15 @@ const TrainersPrivateRatesTable = ({
                       )}
                     </div>
                   </div>
+                  {isExpanded && (
+                    <div className="mt-3 -mx-2 border-t pt-3">
+                      <TrainerStatsPanel
+                        trainerProfileId={trainer.profile_id}
+                        clubId={effectiveClubId || ""}
+                        enabled={isExpanded}
+                      />
+                    </div>
+                  )}
                 </Card>
               );
             })}

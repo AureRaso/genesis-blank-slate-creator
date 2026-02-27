@@ -958,6 +958,16 @@
       "weeklyIncome": "Weekly income",
       "avgOccupancy": "Avg. occupancy"
     },
+    "trainerStats": {
+      "groupClasses": "Group classes",
+      "activeClasses": "Active",
+      "totalStudents": "Enrolled students",
+      "cancellations": "Cancellations",
+      "privateLessons": "Private lessons",
+      "confirmed": "Confirmed",
+      "cancelledRejected": "Canc./Rejected",
+      "revenue": "Revenue"
+    },
     "privateRates": {
       "title": "Trainers · Private Rates",
       "addTrainer": "+ Add trainer",

@@ -443,6 +443,16 @@
       "weeklyIncome": "Ingresos semana",
       "avgOccupancy": "Ocupación media"
     },
+    "trainerStats": {
+      "groupClasses": "Clases grupales",
+      "activeClasses": "Activas",
+      "totalStudents": "Alumnos inscritos",
+      "cancellations": "Cancelaciones",
+      "privateLessons": "C. Particulares",
+      "confirmed": "Confirmadas",
+      "cancelledRejected": "Cancel./Rechaz.",
+      "revenue": "Ingresos"
+    },
     "privateRates": {
       "title": "Entrenadores · Tarifas Particulares",
       "addTrainer": "+ Añadir entrenador",
