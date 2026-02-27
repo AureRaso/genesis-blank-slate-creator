@@ -457,7 +457,11 @@ export const useMyPrivateLessonBookings = () => {
         .filter((b) => {
           // Hide bookings whose end_time has passed today
           const endDateTime = new Date(`${b.lesson_date}T${b.end_time}`);
-          return endDateTime > now;
+          if (endDateTime <= now) return false;
+          // Note: unpaid Stripe bookings are handled by the cancel_url handler
+          // (cancels the booking when player returns from Stripe without paying)
+          // and by the 2-hour auto-cancel cron job as a safety net.
+          return true;
         })
         .map((b) => ({
           ...b,

@@ -23,14 +23,16 @@ serve(async (req) => {
     );
 
     // Parse request
-    const { bookingId, action } = await req.json();
+    // checkoutSessionId is optional — used in pay-first flow where
+    // the booking was just created and doesn't have the session stored yet
+    const { bookingId, action, checkoutSessionId } = await req.json();
 
     if (!bookingId || !action) {
       throw new Error("bookingId and action are required");
     }
 
-    if (action !== "capture" && action !== "cancel") {
-      throw new Error('action must be "capture" or "cancel"');
+    if (action !== "capture" && action !== "cancel" && action !== "verify") {
+      throw new Error('action must be "capture", "cancel", or "verify"');
     }
 
     console.log(`manage-private-lesson-payment: ${action} for booking ${bookingId}`);
@@ -70,21 +72,24 @@ serve(async (req) => {
     });
 
     // If we don't have the PaymentIntent ID yet (webhook didn't fire), try to recover it from the Checkout Session
+    // Use provided checkoutSessionId (pay-first flow) or fall back to the stored one
     let paymentIntentId = booking.stripe_payment_intent_id;
+    const sessionIdToUse = checkoutSessionId || booking.stripe_checkout_session_id;
 
-    if (!paymentIntentId && booking.stripe_checkout_session_id) {
-      console.log("No PaymentIntent ID found, recovering from Checkout Session:", booking.stripe_checkout_session_id);
+    if (!paymentIntentId && sessionIdToUse) {
+      console.log("No PaymentIntent ID found, recovering from Checkout Session:", sessionIdToUse);
       try {
-        const session = await stripe.checkout.sessions.retrieve(booking.stripe_checkout_session_id);
+        const session = await stripe.checkout.sessions.retrieve(sessionIdToUse);
         if (session.payment_intent) {
           paymentIntentId = session.payment_intent as string;
           console.log("Recovered PaymentIntent:", paymentIntentId, "status:", session.payment_status);
 
-          // Update booking with recovered PaymentIntent ID
+          // Update booking with recovered PaymentIntent ID and session ID
           await supabaseAdmin
             .from("private_lesson_bookings")
             .update({
               stripe_payment_intent_id: paymentIntentId,
+              stripe_checkout_session_id: sessionIdToUse,
               stripe_payment_status: session.payment_status === "paid" ? "hold_placed" : "pending_checkout",
             })
             .eq("id", bookingId);
@@ -92,6 +97,22 @@ serve(async (req) => {
       } catch (sessionError) {
         console.error("Error recovering PaymentIntent from session:", sessionError);
       }
+    }
+
+    // Verify action: just recover + confirm the hold status, don't capture or cancel
+    if (action === "verify") {
+      const currentStatus = paymentIntentId ? "hold_placed" : (booking.stripe_payment_status || "pending_checkout");
+      console.log(`Verify result for booking ${bookingId}: paymentIntentId=${paymentIntentId}, status=${currentStatus}`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: "verified",
+          bookingId,
+          stripe_payment_status: currentStatus,
+          has_payment_intent: !!paymentIntentId,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (!paymentIntentId) {

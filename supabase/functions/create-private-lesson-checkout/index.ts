@@ -46,46 +46,72 @@ serve(async (req) => {
     const user = userData.user;
     console.log("create-private-lesson-checkout: User authenticated:", user.email);
 
-    // Parse request body
-    const { bookingId } = await req.json();
+    // Parse request body — supports two flows:
+    // 1. bookingId: existing booking in DB (legacy flow)
+    // 2. bookingData: booking data without DB record (pay-first flow)
+    const body = await req.json();
+    const { bookingId, bookingData } = body;
 
-    if (!bookingId) {
-      throw new Error("bookingId is required");
+    if (!bookingId && !bookingData) {
+      throw new Error("bookingId or bookingData is required");
     }
 
-    console.log("create-private-lesson-checkout: Booking ID:", bookingId);
+    // Resolve booking details from either source
+    let clubId: string;
+    let totalPrice: number;
+    let numPlayers: number;
+    let lessonDate: string;
+    let startTime: string;
+    let endTime: string;
 
-    // Fetch the booking
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from("private_lesson_bookings")
-      .select("id, booked_by_profile_id, club_id, trainer_profile_id, lesson_date, start_time, end_time, duration_minutes, num_companions, price_per_person, total_price, payment_method, status, booker_name")
-      .eq("id", bookingId)
-      .single();
+    if (bookingId) {
+      // LEGACY FLOW: fetch existing booking from DB
+      console.log("create-private-lesson-checkout: Booking ID:", bookingId);
 
-    if (bookingError || !booking) {
-      console.error("Booking not found:", bookingError);
-      throw new Error("Booking not found");
-    }
+      const { data: booking, error: bookingError } = await supabaseAdmin
+        .from("private_lesson_bookings")
+        .select("id, booked_by_profile_id, club_id, trainer_profile_id, lesson_date, start_time, end_time, duration_minutes, num_companions, price_per_person, total_price, payment_method, status, booker_name")
+        .eq("id", bookingId)
+        .single();
 
-    // Verify the user is the booker
-    if (booking.booked_by_profile_id !== user.id) {
-      throw new Error("Unauthorized: You can only pay for your own bookings");
-    }
+      if (bookingError || !booking) {
+        console.error("Booking not found:", bookingError);
+        throw new Error("Booking not found");
+      }
 
-    // Verify booking is in the right state
-    if (booking.payment_method !== "stripe") {
-      throw new Error("This booking does not require online payment");
-    }
+      if (booking.booked_by_profile_id !== user.id) {
+        throw new Error("Unauthorized: You can only pay for your own bookings");
+      }
+      if (booking.payment_method !== "stripe") {
+        throw new Error("This booking does not require online payment");
+      }
+      if (booking.status !== "pending") {
+        throw new Error("Booking is not in a payable state");
+      }
 
-    if (booking.status !== "pending") {
-      throw new Error("Booking is not in a payable state");
+      clubId = booking.club_id;
+      totalPrice = booking.total_price || 0;
+      numPlayers = (booking.num_companions || 0) + 1;
+      lessonDate = booking.lesson_date;
+      startTime = booking.start_time;
+      endTime = booking.end_time;
+    } else {
+      // PAY-FIRST FLOW: booking data provided directly (no DB record yet)
+      console.log("create-private-lesson-checkout: Pay-first flow, no DB record");
+
+      clubId = bookingData.club_id;
+      totalPrice = bookingData.total_price || 0;
+      numPlayers = (bookingData.num_companions || 0) + 1;
+      lessonDate = bookingData.lesson_date;
+      startTime = bookingData.start_time;
+      endTime = bookingData.end_time;
     }
 
     // Fetch club with Stripe config
     const { data: club, error: clubError } = await supabaseAdmin
       .from("clubs")
       .select("id, name, stripe_account_id, stripe_onboarding_completed, enable_private_lesson_online_payment, currency")
-      .eq("id", booking.club_id)
+      .eq("id", clubId)
       .single();
 
     if (clubError || !club) {
@@ -114,7 +140,7 @@ serve(async (req) => {
     });
 
     // Calculate amounts (in cents)
-    const totalAmountCents = Math.round((booking.total_price || 0) * 100);
+    const totalAmountCents = Math.round(totalPrice * 100);
     const applicationFeeAmount = Math.round(totalAmountCents * PLATFORM_FEE_PERCENT);
 
     if (totalAmountCents < 50) {
@@ -126,8 +152,15 @@ serve(async (req) => {
     const currency = (club.currency || "EUR").toLowerCase();
     const origin = req.headers.get("origin") || "https://app.padelock.com";
 
+    // Build URLs — pay-first flow uses Stripe's {CHECKOUT_SESSION_ID} template
+    const successUrl = bookingId
+      ? `${origin}/dashboard?pl_payment=success&booking_id=${bookingId}`
+      : `${origin}/dashboard?pl_payment=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = bookingId
+      ? `${origin}/dashboard?pl_payment=cancel&booking_id=${bookingId}`
+      : `${origin}/dashboard?pl_payment=cancel`;
+
     // Create Stripe Checkout Session with manual capture (pre-authorization hold)
-    const numPlayers = (booking.num_companions || 0) + 1;
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -138,8 +171,8 @@ serve(async (req) => {
           destination: club.stripe_account_id,
         },
         metadata: {
-          booking_id: bookingId,
-          club_id: booking.club_id,
+          booking_id: bookingId || "",
+          club_id: clubId,
           type: "private_lesson",
         },
       },
@@ -148,8 +181,8 @@ serve(async (req) => {
           price_data: {
             currency,
             product_data: {
-              name: `Clase particular - ${booking.lesson_date}`,
-              description: `${booking.start_time.substring(0, 5)} - ${booking.end_time.substring(0, 5)} | ${numPlayers} jugador${numPlayers > 1 ? "es" : ""}`,
+              name: `Clase particular - ${lessonDate}`,
+              description: `${startTime.substring(0, 5)} - ${endTime.substring(0, 5)} | ${numPlayers} jugador${numPlayers > 1 ? "es" : ""}`,
             },
             unit_amount: totalAmountCents,
           },
@@ -157,27 +190,29 @@ serve(async (req) => {
         },
       ],
       metadata: {
-        booking_id: bookingId,
-        club_id: booking.club_id,
+        booking_id: bookingId || "",
+        club_id: clubId,
         type: "private_lesson",
       },
-      success_url: `${origin}/dashboard?pl_payment=success&booking_id=${bookingId}`,
-      cancel_url: `${origin}/dashboard?pl_payment=cancel&booking_id=${bookingId}`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     console.log("create-private-lesson-checkout: Session created:", session.id);
 
-    // Update booking with checkout session ID
-    const { error: updateError } = await supabaseAdmin
-      .from("private_lesson_bookings")
-      .update({
-        stripe_checkout_session_id: session.id,
-        stripe_payment_status: "pending_checkout",
-      })
-      .eq("id", bookingId);
+    // Only update DB if booking already exists (legacy flow)
+    if (bookingId) {
+      const { error: updateError } = await supabaseAdmin
+        .from("private_lesson_bookings")
+        .update({
+          stripe_checkout_session_id: session.id,
+          stripe_payment_status: "pending_checkout",
+        })
+        .eq("id", bookingId);
 
-    if (updateError) {
-      console.error("Error updating booking:", updateError);
+      if (updateError) {
+        console.error("Error updating booking:", updateError);
+      }
     }
 
     return new Response(JSON.stringify({ url: session.url }), {

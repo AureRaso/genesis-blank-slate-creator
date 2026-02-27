@@ -62,7 +62,8 @@ export interface PrivateLessonBooking {
   auto_cancel_at: string | null;
   rejection_reason: string | null;
   updated_at: string;
-  payment_method: "academia" | null;
+  payment_method: "academia" | "stripe" | "bono" | null;
+  stripe_payment_status: string | null;
   student_bono_id: string | null;
 }
 

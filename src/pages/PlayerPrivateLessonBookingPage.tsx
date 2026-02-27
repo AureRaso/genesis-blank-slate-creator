@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { GraduationCap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import {
   useCreatePrivateLessonBooking,
   TrainerWithRates,
   CompanionInfo,
+  CreateBookingInput,
 } from "@/hooks/usePlayerPrivateLessons";
 import { ComputedSlot } from "@/hooks/usePrivateLessons";
 import { DurationRates } from "@/hooks/useTrainers";
@@ -66,6 +67,7 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
   const { t } = useTranslation();
   const { toast } = useToast();
   const { profile, effectiveClubId } = useAuth();
+  const queryClient = useQueryClient();
 
   // Fallback: if profile.club_id is missing, look it up from student_enrollments
   const directClubId = effectiveClubId || profile?.club_id;
@@ -144,26 +146,120 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
     enabled: !!stripeReturnBookingId,
   });
 
+  // Handle browser back button from Stripe (bfcache restore)
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setIsRedirectingToStripe(false);
+        // Pay-first flow: no DB record exists, just clear stored data
+        const pendingData = sessionStorage.getItem("pendingStripeBookingData");
+        if (pendingData) {
+          sessionStorage.removeItem("pendingStripeBookingData");
+          toast({
+            title: t("privateLessonsBooking.paymentCancelled", "Pago cancelado"),
+            description: t("privateLessonsBooking.paymentCancelledDesc", "Puedes volver a intentarlo o elegir otro método de pago."),
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   // Detect Stripe return via URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const plPayment = params.get("pl_payment");
+    const sessionId = params.get("session_id");
     const bookingId = params.get("booking_id");
 
-    if (plPayment === "success" && bookingId) {
-      setStripeReturnBookingId(bookingId);
+    if (plPayment === "success" && (sessionId || bookingId)) {
       window.history.replaceState({}, "", window.location.pathname);
-      // Send WhatsApp notification to trainer (fallback if webhook didn't fire)
-      supabase.functions.invoke('send-private-lesson-whatsapp', {
-        body: { type: 'new_booking', bookingId },
-      }).catch(err => console.error('Trainer WhatsApp notification error:', err));
-    } else if (plPayment === "cancel" && bookingId) {
+
+      if (sessionId && !bookingId) {
+        // PAY-FIRST FLOW: Payment confirmed — now create the booking in DB
+        const storedData = sessionStorage.getItem("pendingStripeBookingData");
+        sessionStorage.removeItem("pendingStripeBookingData");
+
+        if (!storedData) {
+          toast({
+            title: "Error",
+            description: t("privateLessonsBooking.missingBookingData", "No se encontraron los datos de la reserva. Contacta con soporte."),
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const handlePayFirstReturn = async () => {
+          try {
+            const bookingPayload = JSON.parse(storedData) as CreateBookingInput;
+            // Create the booking now that payment is confirmed
+            const newBooking = await createBooking.mutateAsync(bookingPayload);
+
+            if (newBooking?.id) {
+              // Link Stripe payment to the newly created booking
+              try {
+                await supabase.functions.invoke("manage-private-lesson-payment", {
+                  body: { bookingId: newBooking.id, action: "verify", checkoutSessionId: sessionId },
+                });
+              } catch (err) {
+                console.error("Payment verify error:", err);
+              }
+
+              setStripeReturnBookingId(newBooking.id);
+              queryClient.invalidateQueries({ queryKey: ["my-private-lesson-bookings"] });
+              queryClient.invalidateQueries({ queryKey: ["private-lesson-bookings"] });
+              queryClient.invalidateQueries({ queryKey: ["private-lesson-pending-count"] });
+
+              // Send WhatsApp notification to trainer (fire-and-forget)
+              supabase.functions.invoke("send-private-lesson-whatsapp", {
+                body: { type: "new_booking", bookingId: newBooking.id },
+              }).catch((err) => console.error("Trainer WhatsApp notification error:", err));
+            }
+          } catch (err) {
+            console.error("Error creating booking after Stripe payment:", err);
+            toast({
+              title: "Error",
+              description: t("privateLessonsBooking.postPaymentError", "Error al confirmar la reserva. Contacta con soporte indicando tu pago."),
+              variant: "destructive",
+            });
+          }
+        };
+        handlePayFirstReturn();
+      } else if (bookingId) {
+        // LEGACY FLOW: booking already exists in DB
+        const handleLegacyReturn = async () => {
+          try {
+            await supabase.functions.invoke("manage-private-lesson-payment", {
+              body: { bookingId, action: "verify" },
+            });
+          } catch (err) {
+            console.error("Payment verify error:", err);
+          }
+          setStripeReturnBookingId(bookingId);
+          queryClient.invalidateQueries({ queryKey: ["my-private-lesson-bookings"] });
+          queryClient.invalidateQueries({ queryKey: ["private-lesson-bookings"] });
+          queryClient.invalidateQueries({ queryKey: ["private-lesson-pending-count"] });
+          // Send WhatsApp notification to trainer (fire-and-forget)
+          supabase.functions.invoke("send-private-lesson-whatsapp", {
+            body: { type: "new_booking", bookingId },
+          }).catch((err) => console.error("Trainer WhatsApp notification error:", err));
+        };
+        handleLegacyReturn();
+      }
+    } else if (plPayment === "cancel") {
+      // Pay-first flow: no DB record exists, just clear stored data
+      sessionStorage.removeItem("pendingStripeBookingData");
       toast({
         title: t("privateLessonsBooking.paymentCancelled", "Pago cancelado"),
         description: t("privateLessonsBooking.paymentCancelledDesc", "Puedes volver a intentarlo o elegir otro método de pago."),
         variant: "destructive",
       });
       window.history.replaceState({}, "", window.location.pathname);
+    } else {
+      // No Stripe return params — clear any stale pending data (e.g. user closed Stripe tab)
+      sessionStorage.removeItem("pendingStripeBookingData");
     }
   }, []);
 
@@ -231,7 +327,7 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
       .slice(0, numPlayers - 1)
       .filter((c): c is CompanionInfo => c !== null);
 
-    const bookingData = await createBooking.mutateAsync({
+    const bookingPayload: CreateBookingInput = {
       trainer_profile_id: selectedTrainer.profile_id,
       club_id: clubId,
       lesson_date: selectedSlot.date,
@@ -243,14 +339,26 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
       total_price: pricePerPerson * numPlayers,
       companion_details: validCompanions,
       payment_method: selectedPaymentMethod,
-    });
+    };
 
-    if (selectedPaymentMethod === "stripe" && bookingData?.id) {
-      // Redirect to Stripe Checkout
+    if (selectedPaymentMethod === "stripe") {
+      // PAY-FIRST: Do NOT create DB record yet. Store data and redirect to Stripe.
+      // The booking will only be created AFTER the payment is confirmed.
       setIsRedirectingToStripe(true);
       try {
+        sessionStorage.setItem("pendingStripeBookingData", JSON.stringify(bookingPayload));
+
         const { data, error } = await supabase.functions.invoke("create-private-lesson-checkout", {
-          body: { bookingId: bookingData.id },
+          body: {
+            bookingData: {
+              club_id: clubId,
+              total_price: pricePerPerson * numPlayers,
+              num_companions: numPlayers - 1,
+              lesson_date: selectedSlot.date,
+              start_time: selectedSlot.startTime + ":00",
+              end_time: selectedSlot.endTime + ":00",
+            },
+          },
         });
 
         if (error) throw error;
@@ -261,6 +369,7 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
         throw new Error("No checkout URL received");
       } catch (err: any) {
         setIsRedirectingToStripe(false);
+        sessionStorage.removeItem("pendingStripeBookingData");
         toast({
           title: "Error",
           description: err.message || t("privateLessonsBooking.checkoutError", "Error al crear el pago. Inténtalo de nuevo."),
@@ -270,6 +379,8 @@ const PlayerPrivateLessonBookingPage = ({ embedded = false, onBackToMyClasses }:
       }
     }
 
+    // Non-Stripe: create booking in DB immediately
+    await createBooking.mutateAsync(bookingPayload);
     setStep(4);
   };
 
