@@ -324,7 +324,13 @@ const WeekAttendancePage = () => {
   const { data: bonoMap } = useParticipantActiveBonos(allEnrollmentIds);
 
   // Private lesson bookings for the week
-  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(startDateStr, endDateStr);
+  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(
+    startDateStr,
+    endDateStr,
+    undefined,
+    effectiveClubId,
+    superAdminClubIds
+  );
   const filteredPrivateLessons = useMemo(() => {
     let result = allPrivateLessonBookings;
     // Filter by selected date

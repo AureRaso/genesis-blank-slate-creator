@@ -611,10 +611,12 @@ export interface PrivateLessonBookingWithTrainer extends PrivateLessonBooking {
 export const usePrivateLessonBookingsForAttendance = (
   startDate: string,
   endDate: string,
-  trainerFilter?: string
+  trainerFilter?: string,
+  effectiveClubId?: string,
+  superAdminClubIds?: string[]
 ) => {
   return useQuery({
-    queryKey: ["private-lesson-bookings-attendance", startDate, endDate, trainerFilter],
+    queryKey: ["private-lesson-bookings-attendance", startDate, endDate, trainerFilter, effectiveClubId, superAdminClubIds],
     queryFn: async (): Promise<PrivateLessonBookingWithTrainer[]> => {
       if (!startDate || !endDate) return [];
 
@@ -629,6 +631,13 @@ export const usePrivateLessonBookingsForAttendance = (
 
       if (trainerFilter) {
         query = query.eq("trainer_profile_id", trainerFilter);
+      }
+
+      // Club filtering (same pattern as useTodayAttendance)
+      if (effectiveClubId) {
+        query = query.eq("club_id", effectiveClubId);
+      } else if (superAdminClubIds && superAdminClubIds.length > 0) {
+        query = query.in("club_id", superAdminClubIds);
       }
 
       const { data, error } = await query;

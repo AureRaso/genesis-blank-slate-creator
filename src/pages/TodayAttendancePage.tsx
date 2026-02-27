@@ -739,7 +739,13 @@ const TodayAttendancePage = () => {
   const { data: bonoMap } = useParticipantActiveBonos(allEnrollmentIds);
 
   // Private lesson bookings for today
-  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(todayStr, todayStr);
+  const { data: allPrivateLessonBookings = [] } = usePrivateLessonBookingsForAttendance(
+    todayStr,
+    todayStr,
+    undefined,
+    effectiveClubId,
+    superAdminClubIds
+  );
   const filteredPrivateLessons = useMemo(() => {
     if (selectedTrainer === 'all') return allPrivateLessonBookings;
     return allPrivateLessonBookings.filter(b => b.trainer?.full_name === selectedTrainer);
