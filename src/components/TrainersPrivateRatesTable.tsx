@@ -204,7 +204,7 @@ const TrainersPrivateRatesTable = ({
                               variant="ghost"
                               size="icon"
                               onClick={() => onEditTrainer(trainer)}
-                              className="h-9 w-9"
+                              className="h-9 w-9 hover:bg-slate-200"
                               title={t('trainersPage.privateRates.editInfo', 'Editar información')}
                             >
                               <Settings2 className="h-4 w-4 text-muted-foreground" />
@@ -215,7 +215,7 @@ const TrainersPrivateRatesTable = ({
                               variant="ghost"
                               size="icon"
                               onClick={() => setRateDialogTrainer(trainer)}
-                              className="h-9 w-9"
+                              className="h-9 w-9 hover:bg-orange-100"
                               title={t('trainersPage.privateRates.editRates', 'Editar tarifas')}
                             >
                               <Edit className="h-4 w-4 text-playtomic-orange" />
@@ -224,7 +224,7 @@ const TrainersPrivateRatesTable = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9"
+                            className="h-9 w-9 hover:bg-blue-100"
                             onClick={() => onViewSchedule(trainer)}
                             title={t('trainersPage.privateRates.viewSchedule', 'Ver horario')}
                           >
@@ -261,16 +261,16 @@ const TrainersPrivateRatesTable = ({
                     </div>
                     <div className="flex items-center gap-1">
                       {isAdmin && (
-                        <Button variant="ghost" size="icon" onClick={() => onEditTrainer(trainer)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" onClick={() => onEditTrainer(trainer)} className="h-8 w-8 hover:bg-slate-200">
                           <Settings2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       )}
                       {isAdmin && (
-                        <Button variant="ghost" size="icon" onClick={() => setRateDialogTrainer(trainer)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" onClick={() => setRateDialogTrainer(trainer)} className="h-8 w-8 hover:bg-orange-100">
                           <Edit className="h-4 w-4 text-playtomic-orange" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewSchedule(trainer)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100" onClick={() => onViewSchedule(trainer)}>
                         <CalendarDays className="h-4 w-4 text-blue-500" />
                       </Button>
                     </div>
