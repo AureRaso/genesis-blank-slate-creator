@@ -8,6 +8,7 @@ import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWaitlistCount } from "@/hooks/useWaitlistCount";
 import { usePendingPrivateLessonCount } from "@/hooks/usePrivateLessons";
+import { useMyTrainerProfile } from "@/hooks/useTrainers";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useClub } from "@/hooks/useClub";
@@ -156,6 +157,7 @@ const AppSidebar = () => {
   const authContext = useAuth();
   const { data: waitlistCount = 0 } = useWaitlistCount();
   const { data: pendingLessonCount = 0 } = usePendingPrivateLessonCount(authContext?.isTrainer ?? false);
+  const { data: myTrainerProfile } = useMyTrainerProfile();
   const { t } = useTranslation();
   const { leagues: leaguesEnabled, matches: matchesEnabled } = useFeatureFlags();
   const location = useLocation();
@@ -170,6 +172,9 @@ const AppSidebar = () => {
     effectiveClubId,
     profile
   } = authContext || {};
+
+  // Admin who registered as private lesson instructor
+  const isAdminInstructor = isAdmin && !!myTrainerProfile;
 
   // Fetch club data for feature flags (ejercicios, scoring, etc.)
   // Use effectiveClubId for superadmin, falls back to profile.club_id for others
@@ -358,6 +363,11 @@ const AppSidebar = () => {
         url: "/dashboard/trainers",
         icon: UserCheck
       },
+      ...(isAdminInstructor ? [{
+        title: t('sidebar.privateLessons', 'Clases Particulares'),
+        url: "/dashboard/private-lessons",
+        icon: GraduationCap
+      }] : []),
       {
         title: t('sidebar.clubs'),
         url: "/dashboard/clubs",

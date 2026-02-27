@@ -295,6 +295,7 @@ function App() {
                      {isAdmin && <Route path="/bono-templates/assign" element={<AssignBonosPage />} />}
                      {isAdmin && <Route path="/bono-control" element={<BonoControlPage />} />}
                      {(isAdmin || isTrainer) && <Route path="/ejercicios" element={<EjerciciosPage />} />}
+                     {isAdmin && <Route path="/private-lessons" element={<PrivateLessonsPage />} />}
                      <Route path="/private-lesson-booking" element={<PlayerPrivateLessonBookingPage />} />
                      <Route path="/settings" element={<SettingsPage />} />
                      <Route path="*" element={<NotFound />} />

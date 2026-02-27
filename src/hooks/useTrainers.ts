@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface DurationRates {
   price_1_player: number | null;
@@ -181,7 +182,7 @@ export const useAdminTrainers = (clubId?: string) => {
 
       const trainerProfileIds = [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))];
 
-      // Get trainer details
+      // Get trainer details (exclude private-lesson-only instructors like admins)
       const { data: trainers, error: trainersError } = await supabase
         .from('trainers')
         .select(`
@@ -193,7 +194,8 @@ export const useAdminTrainers = (clubId?: string) => {
           )
         `)
         .in('profile_id', trainerProfileIds)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .eq('is_private_lesson_only', false);
 
       if (trainersError) throw trainersError;
 
@@ -605,6 +607,120 @@ export const useDeleteTrainer = () => {
       toast({
         title: "Error",
         description: "No se pudo desactivar el profesor",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// ============================================================================
+// Hook: Fetch private-lesson-only instructors (admins) for a club
+// ============================================================================
+
+export const usePrivateLessonInstructors = (clubId?: string) => {
+  const { profile, isSuperAdmin } = useAuth();
+
+  return useQuery({
+    queryKey: ['private-lesson-instructors', clubId, profile?.id],
+    queryFn: async (): Promise<Trainer[]> => {
+      if (!profile) return [];
+
+      let clubIds: string[] = [];
+
+      if (clubId) {
+        clubIds = [clubId];
+      } else if (isSuperAdmin) {
+        const { data: superadminClubs } = await supabase
+          .from('admin_clubs')
+          .select('club_id')
+          .eq('admin_profile_id', profile.id);
+        clubIds = (superadminClubs || []).map(ac => ac.club_id);
+      } else {
+        if (profile.club_id) {
+          clubIds = [profile.club_id];
+        }
+      }
+
+      if (clubIds.length === 0) return [];
+
+      const { data: trainerClubsData } = await supabase
+        .from('trainer_clubs')
+        .select('trainer_profile_id, club_id, clubs:club_id(id, name)')
+        .in('club_id', clubIds);
+
+      if (!trainerClubsData || trainerClubsData.length === 0) return [];
+
+      const profileIds = [...new Set(trainerClubsData.map(tc => tc.trainer_profile_id))];
+
+      const { data: trainers } = await supabase
+        .from('trainers')
+        .select('*, profiles:profile_id(id, full_name, email)')
+        .in('profile_id', profileIds)
+        .eq('is_active', true)
+        .eq('is_private_lesson_only', true);
+
+      return (trainers || []).map(trainer => {
+        const trainerClubs = trainerClubsData.filter(
+          tc => tc.trainer_profile_id === trainer.profile_id
+        );
+        return { ...trainer, trainer_clubs: trainerClubs };
+      }) as Trainer[];
+    },
+    enabled: !!profile,
+  });
+};
+
+// ============================================================================
+// Hook: Register current admin as private lesson instructor
+// ============================================================================
+
+export const useRegisterAsPrivateLessonInstructor = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ profileId, clubIds }: { profileId: string; clubIds: string[] }) => {
+      // Create trainer record with private_lesson_only flag
+      const { data: trainer, error: trainerError } = await supabase
+        .from('trainers')
+        .insert({
+          profile_id: profileId,
+          is_active: true,
+          is_private_lesson_only: true,
+        })
+        .select()
+        .single();
+
+      if (trainerError) throw trainerError;
+
+      // Create trainer_clubs entries
+      const trainerClubInserts = clubIds.map(clubId => ({
+        trainer_profile_id: profileId,
+        club_id: clubId,
+      }));
+
+      const { error: clubError } = await supabase
+        .from('trainer_clubs')
+        .insert(trainerClubInserts);
+
+      if (clubError) throw clubError;
+
+      return trainer;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['private-lesson-instructors'] });
+      queryClient.invalidateQueries({ queryKey: ['my-trainer-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-trainers'] });
+      toast({
+        title: "Registrado correctamente",
+        description: "Ya puedes configurar tus tarifas de clases particulares",
+      });
+    },
+    onError: (error) => {
+      console.error('Error registering as instructor:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo completar el registro",
         variant: "destructive",
       });
     },
