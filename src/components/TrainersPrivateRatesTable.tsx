@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Edit, CalendarDays, UserCheck, Plus } from "lucide-react";
+import { Edit, CalendarDays, UserCheck, Plus, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -116,10 +116,7 @@ const TrainersPrivateRatesTable = ({
           .join(' · ')
       : `1 ${t('trainersPage.privateRates.hour')}`;
 
-    // Weekly classes will be computed from real slot data later
-    const weeklyClasses = 0;
-
-    return { trainerName, trainerEmail, ratePerClass, durationLabel, isConfigured, weeklyClasses };
+    return { trainerName, trainerEmail, ratePerClass, durationLabel, isConfigured };
   };
 
   return (
@@ -157,16 +154,13 @@ const TrainersPrivateRatesTable = ({
                     {t('trainersPage.privateRates.columns.availability')}
                   </TableHead>
                   <TableHead className="uppercase text-xs font-semibold tracking-wider">
-                    {t('trainersPage.privateRates.columns.weeklyClasses')}
-                  </TableHead>
-                  <TableHead className="uppercase text-xs font-semibold tracking-wider">
                     {t('trainersPage.privateRates.columns.actions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {trainers.map((trainer) => {
-                  const { trainerName, trainerEmail, ratePerClass, durationLabel, isConfigured, weeklyClasses } = renderTrainerRow(trainer);
+                  const { trainerName, trainerEmail, ratePerClass, durationLabel, isConfigured } = renderTrainerRow(trainer);
 
                   return (
                     <TableRow key={trainer.id}>
@@ -203,15 +197,26 @@ const TrainersPrivateRatesTable = ({
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">{weeklyClasses}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           {isAdmin && (
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => onEditTrainer(trainer)}
+                              className="h-9 w-9"
+                              title={t('trainersPage.privateRates.editInfo', 'Editar información')}
+                            >
+                              <Settings2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setRateDialogTrainer(trainer)}
                               className="h-9 w-9"
+                              title={t('trainersPage.privateRates.editRates', 'Editar tarifas')}
                             >
                               <Edit className="h-4 w-4 text-playtomic-orange" />
                             </Button>
@@ -221,6 +226,7 @@ const TrainersPrivateRatesTable = ({
                             size="icon"
                             className="h-9 w-9"
                             onClick={() => onViewSchedule(trainer)}
+                            title={t('trainersPage.privateRates.viewSchedule', 'Ver horario')}
                           >
                             <CalendarDays className="h-4 w-4 text-blue-500" />
                           </Button>
@@ -254,6 +260,11 @@ const TrainersPrivateRatesTable = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" onClick={() => onEditTrainer(trainer)} className="h-8 w-8">
+                          <Settings2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
                       {isAdmin && (
                         <Button variant="ghost" size="icon" onClick={() => setRateDialogTrainer(trainer)} className="h-8 w-8">
                           <Edit className="h-4 w-4 text-playtomic-orange" />
