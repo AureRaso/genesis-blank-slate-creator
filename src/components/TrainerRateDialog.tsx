@@ -173,6 +173,9 @@ const TrainerRateDialog = ({ trainer, open, onOpenChange }: TrainerRateDialogPro
           <p className="text-xs text-muted-foreground -mt-1">
             {t('trainersPage.rateDialog.pricesHint')}
           </p>
+          <p className="text-xs text-amber-600 font-medium -mt-1">
+            {t('trainersPage.rateDialog.commissionNotice', 'Se aplicará una comisión del 6% sobre el precio total de cada clase con pago online.')}
+          </p>
 
           <div className="space-y-2">
             {[

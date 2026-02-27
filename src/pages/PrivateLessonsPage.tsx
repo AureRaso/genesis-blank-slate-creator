@@ -15,7 +15,6 @@ import WeeklyLessonGrid from "@/components/private-lessons/WeeklyLessonGrid";
 import AvailabilityForm from "@/components/private-lessons/AvailabilityForm";
 import ExceptionsList from "@/components/private-lessons/ExceptionsList";
 import PendingBookingsList from "@/components/private-lessons/PendingBookingsList";
-import RatesDisplayCard from "@/components/private-lessons/RatesDisplayCard";
 
 const PrivateLessonsPage = () => {
   const { t } = useTranslation();
@@ -53,8 +52,6 @@ const PrivateLessonsPage = () => {
     bookingRange.start,
     bookingRange.end
   );
-
-  const rates = trainerProfile?.private_lesson_rates || {};
 
   const isLoading = profileLoading || availLoading || exLoading || bookLoading || scLoading;
 
@@ -99,9 +96,6 @@ const PrivateLessonsPage = () => {
           {t("privateLessons.title", "Clases Particulares")}
         </h1>
       </div>
-
-      {/* Rates card (always visible, read-only) */}
-      <RatesDisplayCard rates={rates} />
 
       {/* Tabs */}
       <Tabs defaultValue="week" className="w-full">
