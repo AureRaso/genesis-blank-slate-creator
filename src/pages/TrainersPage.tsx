@@ -1,12 +1,11 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { GraduationCap, Lightbulb, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import TrainerForm from "@/components/TrainerForm";
 import TrainersPrivateRatesTable from "@/components/TrainersPrivateRatesTable";
 import TrainerWeeklySchedule from "@/components/TrainerWeeklySchedule";
-import TrainerRateDialog from "@/components/TrainerRateDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Trainer,
@@ -21,13 +20,20 @@ const TrainersPage = () => {
   const [showTrainerForm, setShowTrainerForm] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<Trainer | undefined>();
   const [scheduleTrainer, setScheduleTrainer] = useState<Trainer | null>(null);
-  const [rateDialogInstructor, setRateDialogInstructor] = useState<Trainer | null>(null);
   const { isAdmin, effectiveClubId, profile, isSuperAdmin, superAdminClubs } = useAuth();
   const { t } = useTranslation();
   const { data: trainers, isLoading, error } = useAdminTrainers(effectiveClubId);
   const { data: privateLessonInstructors = [] } = usePrivateLessonInstructors(effectiveClubId);
   const { data: myTrainerProfile } = useMyTrainerProfile();
   const registerAsInstructor = useRegisterAsPrivateLessonInstructor();
+
+  // Combine regular trainers + private-lesson-only instructors into one list
+  const allTrainers = useMemo(() => {
+    const regular = trainers || [];
+    const existingIds = new Set(regular.map(t => t.profile_id));
+    const extra = privateLessonInstructors.filter(i => !existingIds.has(i.profile_id));
+    return [...regular, ...extra];
+  }, [trainers, privateLessonInstructors]);
 
   const handleCloseTrainerForm = () => {
     setShowTrainerForm(false);
@@ -102,63 +108,15 @@ const TrainersPage = () => {
         </Card>
       )}
 
-      {/* Private rates table (regular trainers) */}
+      {/* Private rates table (all trainers + instructors combined) */}
       <TrainersPrivateRatesTable
-        trainers={trainers || []}
+        trainers={allTrainers}
         isLoading={isLoading}
         error={error}
         onEditTrainer={handleEditTrainer}
         onCreateTrainer={handleCreateNewTrainer}
         onViewSchedule={handleViewSchedule}
       />
-
-      {/* Private lesson instructors (admins who registered) */}
-      {privateLessonInstructors.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-playtomic-orange" />
-              {t('trainersPage.privateLessonInstructors.title', 'Instructores de Clases Particulares')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {privateLessonInstructors.map((instructor) => {
-                const name = instructor.profiles?.full_name || 'Sin nombre';
-                const rates = instructor.private_lesson_rates || {};
-                const configuredDurations = Object.keys(rates).filter((k) => {
-                  const r = rates[k];
-                  return r && (r.price_1_player != null || r.price_2_players != null);
-                });
-                const isConfigured = configuredDurations.length > 0;
-
-                return (
-                  <div key={instructor.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                    <div>
-                      <p className="font-medium">{name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {isConfigured
-                          ? t('trainersPage.privateLessonInstructors.ratesConfigured', 'Tarifas configuradas')
-                          : t('trainersPage.privateLessonInstructors.ratesNotConfigured', 'Sin tarifas configuradas')
-                        }
-                      </p>
-                    </div>
-                    {isAdmin && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRateDialogInstructor(instructor)}
-                      >
-                        {t('trainersPage.privateLessonInstructors.editRates', 'Editar tarifas')}
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Self-registration card for admin */}
       {canRegisterAsInstructor && (
@@ -184,25 +142,6 @@ const TrainersPage = () => {
             </Button>
           </CardContent>
         </Card>
-      )}
-
-      {/* Info tip banner - removed */}
-      {false && trainers && trainers.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <Lightbulb className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-800">
-            {t('trainersPage.privateRates.infoTip')}
-          </p>
-        </div>
-      )}
-
-      {/* Rate editing dialog for private lesson instructors */}
-      {rateDialogInstructor && (
-        <TrainerRateDialog
-          trainer={rateDialogInstructor}
-          open={!!rateDialogInstructor}
-          onOpenChange={(open) => { if (!open) setRateDialogInstructor(null); }}
-        />
       )}
     </div>
   );
