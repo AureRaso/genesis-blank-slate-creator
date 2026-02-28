@@ -8,7 +8,6 @@ import { useClassParticipants, useBulkRemoveFromRecurringClass } from "@/hooks/u
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -228,7 +227,7 @@ export function RemoveStudentsDialog({
             <AlertDialogCancel disabled={bulkRemoveMutation.isPending}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
               onClick={handleRemoveStudents}
               disabled={bulkRemoveMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -241,7 +240,7 @@ export function RemoveStudentsDialog({
               ) : (
                 'Sí, eliminar de toda la serie'
               )}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
