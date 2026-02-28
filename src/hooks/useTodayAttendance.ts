@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -221,6 +221,27 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
     refetchOnWindowFocus: true,
   });
 
+  // Debounced invalidation to prevent cascading refetches when bulk operations
+  // (e.g. removing a student from 20+ recurring classes) trigger many Realtime events
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedInvalidate = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['today-attendance'] });
+    }, 500);
+  }, [queryClient]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // Setup Realtime subscription for instant updates
   useEffect(() => {
     if (!profile?.id) return;
@@ -237,10 +258,8 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           table: 'class_participants',
         },
         () => {
-          // Invalidate and refetch ALL today-attendance queries
-          queryClient.invalidateQueries({
-            queryKey: ['today-attendance']
-          });
+          // Debounced: bulk removals fire many events in rapid succession
+          debouncedInvalidate();
         }
       )
       .on(
@@ -251,10 +270,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           table: 'programmed_classes',
         },
         () => {
-          // Invalidate when classes are created, updated, or deleted
-          queryClient.invalidateQueries({
-            queryKey: ['today-attendance']
-          });
+          debouncedInvalidate();
         }
       )
       .on(
@@ -265,10 +281,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
           table: 'class_attendance_confirmations',
         },
         () => {
-          // Invalidate when attendance confirmations are created, updated, or deleted
-          queryClient.invalidateQueries({
-            queryKey: ['today-attendance']
-          });
+          debouncedInvalidate();
         }
       )
       .subscribe();
@@ -277,7 +290,7 @@ export const useTodayAttendance = (startDate?: string, endDate?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.id, today, queryClient]);
+  }, [profile?.id, today, queryClient, debouncedInvalidate]);
 
   return query;
 };
