@@ -570,6 +570,7 @@ export const useBulkRemoveFromRecurringClass = () => {
       queryClient.invalidateQueries({ queryKey: ["programmed-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-classes"] });
       queryClient.invalidateQueries({ queryKey: ["student-bonos"] });
+      queryClient.invalidateQueries({ queryKey: ["today-attendance"] });
       toast({
         title: "Alumno eliminado de la serie",
         description: `El alumno ha sido eliminado de ${data.removed} clase(s) de la serie recurrente.`,
