@@ -30,6 +30,8 @@ const TEMPLATE_CONFIG: Record<string, { name: string; languageCode: string }> = 
 // Clubs excluded from all notifications
 const EXCLUDED_CLUBS: string[] = [
   '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy - PAUSED
+  'b0fc8417-a9dc-4c7c-8a1a-0f6a7714588a', // Rico Pádel - PAUSED
+  '6dbcc136-1fe3-4755-957a-6e9a35d29574', // IBL Padel Academy - PAUSED
 ];
 
 // Locale map for date formatting

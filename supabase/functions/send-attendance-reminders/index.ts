@@ -35,14 +35,16 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '3f71d96e-defe-4395-9f03-46dca0577f45', // Pádel Pibo
   '0fb97f06-0c84-4559-874c-4b63124f7e8f', // Iron X Deluxe
   'd2265a22-fc1e-4f63-bd90-a78e6475bce4', // R2 Pádel Itálica
-  'b0fc8417-a9dc-4c7c-8a1a-0f6a7714588a', // Rico Pádel
-  '6dbcc136-1fe3-4755-957a-6e9a35d29574', // IBL Padel Academy
+  // 'b0fc8417-a9dc-4c7c-8a1a-0f6a7714588a', // Rico Pádel - PAUSED
+  // '6dbcc136-1fe3-4755-957a-6e9a35d29574', // IBL Padel Academy - PAUSED
   'c62db1b4-5c0f-4c1d-8d11-1905dd0512a8', // Escuela Soydepadel
 ];
 
 // Club IDs excluded from ALL notifications (email + WhatsApp) - temporarily paused
 const EXCLUDED_CLUBS: string[] = [
   '82608dac-fb10-422a-b158-9097d591fd57', // Finura Padel Academy - PAUSED
+  'b0fc8417-a9dc-4c7c-8a1a-0f6a7714588a', // Rico Pádel - PAUSED
+  '6dbcc136-1fe3-4755-957a-6e9a35d29574', // IBL Padel Academy - PAUSED
 ];
 
 // Club IDs with WhatsApp reminders enabled via WHAPI (legacy system)
