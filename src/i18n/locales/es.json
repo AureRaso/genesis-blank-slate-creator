@@ -1388,6 +1388,14 @@
     "privateLessonWith": "Clase particular con",
     "privateLessonPendingHint": "Pendiente de confirmación del entrenador",
     "privateLessonConfirmedHint": "Confirmada por el entrenador",
+    "cancelBooking": "Cancelar",
+    "cannotCancel24h": "No se puede cancelar con menos de 24h de antelación",
+    "cancelDialog": {
+      "title": "¿Cancelar esta clase particular?",
+      "description": "Se cancelará la reserva. Si pagaste con tarjeta, el importe se devolverá automáticamente.",
+      "keep": "No, mantener",
+      "confirm": "Sí, cancelar"
+    },
     "privateLessonInvited": "Invitado",
     "privateLessonBookedBy": "Reservada por",
     "attendance": {

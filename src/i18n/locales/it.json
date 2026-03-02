@@ -1822,6 +1822,14 @@
     "privateLessonWith": "Lezione privata con",
     "privateLessonPendingHint": "In attesa di conferma dell'allenatore",
     "privateLessonConfirmedHint": "Confermata dall'allenatore",
+    "cancelBooking": "Annulla",
+    "cannotCancel24h": "Non è possibile annullare con meno di 24h di anticipo",
+    "cancelDialog": {
+      "title": "Annullare questa lezione privata?",
+      "description": "La prenotazione verrà annullata. Se hai pagato con carta, l'importo verrà rimborsato automaticamente.",
+      "keep": "No, mantieni",
+      "confirm": "Sì, annulla"
+    },
     "privateLessonInvited": "Invitato",
     "privateLessonBookedBy": "Prenotata da",
     "attendance": {

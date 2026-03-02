@@ -12,7 +12,8 @@ import { useConfirmAttendance, useCancelAttendanceConfirmation, useConfirmAbsenc
 import { AttendanceToggle } from "./AttendanceToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyWaitlistRequests } from "@/hooks/useClassWaitlist";
-import { useMyPrivateLessonBookings, MyPrivateLessonBooking } from "@/hooks/usePlayerPrivateLessons";
+import { useMyPrivateLessonBookings, useCancelMyBooking, MyPrivateLessonBooking } from "@/hooks/usePlayerPrivateLessons";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { es, enUS, it } from "date-fns/locale";
 import { ClassWaitlist } from "@/types/waitlist";
@@ -27,6 +28,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const { data: allClasses = [], isLoading } = useTodayClassAttendance();
   const { data: waitlistRequests = [], isLoading: loadingWaitlist } = useMyWaitlistRequests();
   const { data: privateLessonBookings = [] } = useMyPrivateLessonBookings();
+  const cancelBooking = useCancelMyBooking();
   const { t, i18n } = useTranslation();
 
   // Get locale for date-fns based on current language
@@ -373,6 +375,12 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
             const isPending = booking.status === 'pending';
             const isConfirmed = booking.status === 'confirmed';
 
+            // 24h cancellation window: only the booker (not companions) can cancel
+            const lessonDateTime = new Date(`${booking.lesson_date}T${booking.start_time}`);
+            const hoursUntilLesson = (lessonDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+            const canCancel = !booking.is_companion && hoursUntilLesson > 24;
+            const isWithin24h = !booking.is_companion && hoursUntilLesson > 0 && hoursUntilLesson <= 24;
+
             return (
               <Card
                 key={booking.id}
@@ -439,18 +447,79 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                   </div>
 
                   {isPending && (
-                    <div className="mt-3 pt-3 border-t border-amber-200">
+                    <div className="mt-3 pt-3 border-t border-amber-200 flex items-center justify-between gap-2">
                       <p className="text-xs text-amber-800">
                         <AlertCircle className="h-3.5 w-3.5 inline mr-1" />
                         {t('playerDashboard.privateLessonPendingHint', 'Pendiente de confirmación del entrenador')}
                       </p>
+                      {canCancel && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs shrink-0">
+                              <XCircle className="h-3.5 w-3.5 mr-1" />
+                              {t('playerDashboard.cancelBooking', 'Cancelar')}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('playerDashboard.cancelDialog.title', '¿Cancelar esta clase particular?')}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('playerDashboard.cancelDialog.description', 'Se cancelará la reserva. Si pagaste con tarjeta, el importe se devolverá automáticamente.')}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('playerDashboard.cancelDialog.keep', 'No, mantener')}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => cancelBooking.mutate({ bookingId: booking.id })}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {t('playerDashboard.cancelDialog.confirm', 'Sí, cancelar')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   )}
                   {isConfirmed && (
-                    <div className="mt-3 pt-3 border-t border-green-200">
+                    <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between gap-2">
                       <p className="text-xs text-green-800 font-medium">
                         <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />
                         {t('playerDashboard.privateLessonConfirmedHint', 'Confirmada por el entrenador')}
+                      </p>
+                      {canCancel && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs shrink-0">
+                              <XCircle className="h-3.5 w-3.5 mr-1" />
+                              {t('playerDashboard.cancelBooking', 'Cancelar')}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('playerDashboard.cancelDialog.title', '¿Cancelar esta clase particular?')}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('playerDashboard.cancelDialog.description', 'Se cancelará la reserva. Si pagaste con tarjeta, el importe se devolverá automáticamente.')}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('playerDashboard.cancelDialog.keep', 'No, mantener')}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => cancelBooking.mutate({ bookingId: booking.id })}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {t('playerDashboard.cancelDialog.confirm', 'Sí, cancelar')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  )}
+                  {isWithin24h && (
+                    <div className="mt-2 px-1">
+                      <p className="text-xs text-slate-500 italic">
+                        {t('playerDashboard.cannotCancel24h', 'No se puede cancelar con menos de 24h de antelación')}
                       </p>
                     </div>
                   )}

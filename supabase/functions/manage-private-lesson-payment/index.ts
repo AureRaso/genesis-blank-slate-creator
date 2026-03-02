@@ -31,8 +31,8 @@ serve(async (req) => {
       throw new Error("bookingId and action are required");
     }
 
-    if (action !== "capture" && action !== "cancel" && action !== "verify") {
-      throw new Error('action must be "capture", "cancel", or "verify"');
+    if (action !== "capture" && action !== "cancel" && action !== "verify" && action !== "refund") {
+      throw new Error('action must be "capture", "cancel", "verify", or "refund"');
     }
 
     console.log(`manage-private-lesson-payment: ${action} for booking ${bookingId}`);
@@ -182,6 +182,70 @@ serve(async (req) => {
           action: "cancelled",
           bookingId,
         }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "refund") {
+      const currentStatus = booking.stripe_payment_status;
+
+      // Case A: Hold not yet captured → just cancel the PaymentIntent (releases hold)
+      if (currentStatus === "hold_placed") {
+        try {
+          await stripe.paymentIntents.cancel(paymentIntentId);
+          console.log(`Refund (hold released): ${paymentIntentId}`);
+        } catch (stripeError) {
+          console.log("Stripe cancel warning (non-blocking):", stripeError instanceof Error ? stripeError.message : stripeError);
+        }
+
+        await supabaseAdmin
+          .from("private_lesson_bookings")
+          .update({ stripe_payment_status: "cancelled" })
+          .eq("id", bookingId);
+
+        return new Response(
+          JSON.stringify({ success: true, action: "hold_released", bookingId }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Case B: Already captured → issue a full refund with reverse transfer
+      if (currentStatus === "captured") {
+        try {
+          const refund = await stripe.refunds.create({
+            payment_intent: paymentIntentId,
+            reverse_transfer: true,
+            refund_application_fee: true,
+          });
+          console.log(`Refund issued: ${refund.id}, amount: ${refund.amount}, status: ${refund.status}`);
+
+          await supabaseAdmin
+            .from("private_lesson_bookings")
+            .update({ stripe_payment_status: "refunded" })
+            .eq("id", bookingId);
+
+          return new Response(
+            JSON.stringify({ success: true, action: "refunded", bookingId, refundId: refund.id }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (stripeError) {
+          console.error("Stripe refund error:", stripeError);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              action: "refund_failed",
+              bookingId,
+              error: stripeError instanceof Error ? stripeError.message : "Refund failed",
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          );
+        }
+      }
+
+      // No Stripe action needed (not hold_placed or captured)
+      console.log(`Refund: no Stripe action needed, current status=${currentStatus}`);
+      return new Response(
+        JSON.stringify({ success: true, action: "no_stripe_action", bookingId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

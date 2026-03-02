@@ -310,6 +310,53 @@ export const useCreatePrivateLessonBooking = () => {
 };
 
 // ============================================================================
+// Hook: Cancel my private lesson booking (player-initiated)
+// ============================================================================
+
+export const useCancelMyBooking = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ bookingId }: { bookingId: string }) => {
+      const { error } = await supabase
+        .from("private_lesson_bookings")
+        .update({ status: "cancelled" })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      // Handle Stripe refund/hold release (fire-and-forget)
+      supabase.functions
+        .invoke("manage-private-lesson-payment", {
+          body: { bookingId, action: "refund" },
+        })
+        .then(({ error: refundError }) => {
+          if (refundError) console.error("Stripe refund error:", refundError);
+        })
+        .catch((err) => console.error("Stripe refund error:", err));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-private-lesson-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["private-lesson-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["private-lesson-pending-count"] });
+      queryClient.invalidateQueries({ queryKey: ["trainer-free-slots"] });
+      toast({
+        title: "Reserva cancelada",
+        description: "Si pagaste con tarjeta, el importe se devolverá automáticamente.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// ============================================================================
 // Hook: Recent companions (from past bookings)
 // ============================================================================
 

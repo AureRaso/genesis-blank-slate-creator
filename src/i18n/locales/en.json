@@ -1902,6 +1902,14 @@
     "privateLessonWith": "Private lesson with",
     "privateLessonPendingHint": "Pending trainer confirmation",
     "privateLessonConfirmedHint": "Confirmed by trainer",
+    "cancelBooking": "Cancel",
+    "cannotCancel24h": "Cannot cancel less than 24h before the lesson",
+    "cancelDialog": {
+      "title": "Cancel this private lesson?",
+      "description": "The booking will be cancelled. If you paid by card, the amount will be refunded automatically.",
+      "keep": "No, keep it",
+      "confirm": "Yes, cancel"
+    },
     "privateLessonInvited": "Invited",
     "privateLessonBookedBy": "Booked by",
     "attendance": {
