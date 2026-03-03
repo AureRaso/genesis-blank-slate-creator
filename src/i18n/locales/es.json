@@ -30,6 +30,34 @@
     "cancelled": "Canceladas",
     "substitute": "Sustituto"
   },
+  "attendanceHistory": {
+    "title": "historial",
+    "since": "Desde",
+    "kpi": {
+      "totalClasses": "Clases",
+      "attended": "Asistió",
+      "attendanceRate": "Asistencia"
+    },
+    "status": {
+      "attended": "Asistió",
+      "absentEarly": "Rechazó",
+      "absentLate": "Rechazó tarde",
+      "cancelledAcademy": "Cancelada",
+      "substitute": "Sustituto",
+      "privateLesson": "Particular"
+    },
+    "lateNoticeBadge": "< 5H",
+    "substituteBadge": "SUSTITUTO",
+    "privateLessonBadge": "{{count}} pers.",
+    "noClasses": "No hay clases para este mes",
+    "loading": "Cargando historial...",
+    "privateLessonsCount": "{{count}} clase particular",
+    "privateLessonsCountPlural": "{{count}} clases particulares",
+    "summaryAttended": "{{count}} asistió",
+    "summaryLateReject": "{{count}} rechazó tarde",
+    "summaryEarlyReject": "{{count}} rechazó",
+    "summaryCancelled": "{{count}} cancelada"
+  },
   "auth": {
     "signIn": "Iniciar Sesión",
     "signUp": "Registrarse",

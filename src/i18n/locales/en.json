@@ -30,6 +30,34 @@
     "cancelled": "Cancelled",
     "substitute": "Substitute"
   },
+  "attendanceHistory": {
+    "title": "history",
+    "since": "Since",
+    "kpi": {
+      "totalClasses": "Classes",
+      "attended": "Attended",
+      "attendanceRate": "Attendance"
+    },
+    "status": {
+      "attended": "Attended",
+      "absentEarly": "Rejected",
+      "absentLate": "Rejected late",
+      "cancelledAcademy": "Cancelled",
+      "substitute": "Substitute",
+      "privateLesson": "Private lesson"
+    },
+    "lateNoticeBadge": "< 5H",
+    "substituteBadge": "SUBSTITUTE",
+    "privateLessonBadge": "{{count}} pers.",
+    "noClasses": "No classes for this month",
+    "loading": "Loading history...",
+    "privateLessonsCount": "{{count}} private lesson",
+    "privateLessonsCountPlural": "{{count}} private lessons",
+    "summaryAttended": "{{count}} attended",
+    "summaryLateReject": "{{count}} rejected late",
+    "summaryEarlyReject": "{{count}} rejected",
+    "summaryCancelled": "{{count}} cancelled"
+  },
   "trainerDashboard": {
     "welcome": {
       "greeting": "Hello, {{name}}!",

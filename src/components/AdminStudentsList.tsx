@@ -61,7 +61,7 @@ import { useBulkBehaviorMetrics, type BulkBehaviorMetric } from "@/hooks/useBulk
 import { AttendanceLegendTooltip } from "@/components/admin/AttendanceLegendTooltip";
 import { AttendanceMetricsCell } from "@/components/admin/AttendanceMetricsCell";
 import { ScoreBadge } from "@/components/admin/ScoreBadge";
-import { StudentMetricsDetailModal } from "@/components/admin/StudentMetricsDetailModal";
+import { StudentAttendanceHistoryModal } from "@/components/admin/StudentAttendanceHistoryModal";
 
 const ITEMS_PER_PAGE = 25;
 
@@ -836,8 +836,8 @@ const AdminStudentsList = () => {
         superAdminClubs={superAdminClubs}
       />
 
-      {/* Student Metrics Detail Modal */}
-      <StudentMetricsDetailModal
+      {/* Student Attendance History Modal */}
+      <StudentAttendanceHistoryModal
         student={studentForMetrics?.student || null}
         score={studentForMetrics?.score || null}
         behavior={studentForMetrics?.behavior || null}
