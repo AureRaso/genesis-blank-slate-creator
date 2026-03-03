@@ -47,9 +47,15 @@ serve(async (req) => {
       invoice = stripeEvent.data.object as Stripe.Invoice;
       logStep("Processing forwarded Stripe event", { invoiceId: invoice.id });
     } else if (stripeInvoiceId) {
-      // Manual sync - fetch invoice from Stripe
+      // Manual sync - fetch invoice from Stripe (expand discount for coupon name)
       invoice = await stripe.invoices.retrieve(stripeInvoiceId);
-      logStep("Retrieved invoice from Stripe", { invoiceId: invoice.id });
+      logStep("Retrieved invoice from Stripe", {
+        invoiceId: invoice.id,
+        subtotal: invoice.subtotal,
+        total: (invoice as any).total,
+        amount_paid: invoice.amount_paid,
+        total_discount_amounts: (invoice as any).total_discount_amounts,
+      });
     } else {
       throw new Error("Either stripeEvent or stripeInvoiceId is required");
     }
@@ -152,7 +158,7 @@ serve(async (req) => {
     ]);
 
     const billingCountry = club.billing_country || 'España';
-    const isSpain = billingCountry === 'España';
+    const isSpain = billingCountry === 'España' || billingCountry === 'Spain';
     const isIntraEU = !isSpain && EU_COUNTRIES.has(billingCountry);
     const isNonEU = !isSpain && !isIntraEU;
 
@@ -162,7 +168,7 @@ serve(async (req) => {
     logStep("Tax calculation", { billingCountry, isSpain, isIntraEU, isNonEU, taxRate });
 
     // Build line items from Stripe invoice lines
-    const holdedItems = (invoice.lines?.data || []).map((line) => ({
+    const holdedItems: Array<{ name: string; desc: string; units: number; subtotal: number; tax: number }> = (invoice.lines?.data || []).map((line: any) => ({
       name: line.description || `Suscripción PadeLock - ${club.name}`,
       desc: line.description || '',
       units: line.quantity || 1,
@@ -179,6 +185,36 @@ serve(async (req) => {
         subtotal: amountInEuros,
         tax: taxRate,
       });
+    }
+
+    // Add discount line if Stripe invoice has discounts
+    // Primary: use total_discount_amounts from Stripe
+    // Fallback: calculate from subtotal vs (total before tax)
+    let totalDiscountAmount = ((invoice as any).total_discount_amounts || [])
+      .reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+
+    // Fallback: if total_discount_amounts is empty, compare subtotal vs line amounts
+    if (totalDiscountAmount === 0) {
+      const lineTotal = (invoice.lines?.data || []).reduce((sum: number, line: any) => sum + (line.amount || 0), 0);
+      const invoiceSubtotal = invoice.subtotal || 0;
+      if (lineTotal > invoiceSubtotal && invoiceSubtotal >= 0) {
+        totalDiscountAmount = lineTotal - invoiceSubtotal;
+      }
+    }
+
+    if (totalDiscountAmount > 0) {
+      const discountInEuros = totalDiscountAmount / 100;
+      const discountName = (invoice as any).discount?.coupon?.name
+        || (invoice as any).discount?.coupon?.id
+        || 'Promoción';
+      holdedItems.push({
+        name: `Descuento - ${discountName}`,
+        desc: '',
+        units: 1,
+        subtotal: -discountInEuros,
+        tax: taxRate,
+      });
+      logStep("Discount applied", { discountName, discountInEuros, totalDiscountAmount });
     }
 
     // Build notes with legal text based on tax type
@@ -236,9 +272,11 @@ serve(async (req) => {
 
     const holdedInvoiceId = holdedData.id;
     const holdedInvoiceNum = holdedData.invoiceNum;
+    // Use the total from Holded response (includes tax and discounts), fallback to Stripe amount_paid
+    const holdedTotal = holdedData.total ?? amountInEuros;
 
     // Mark invoice as paid in Holded
-    logStep("Marking invoice as paid in Holded", { holdedInvoiceId });
+    logStep("Marking invoice as paid in Holded", { holdedInvoiceId, holdedTotal });
 
     const payResponse = await fetch(
       `https://api.holded.com/api/invoicing/v1/documents/invoice/${holdedInvoiceId}/pay`,
@@ -250,7 +288,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           date: invoiceDate,
-          amount: amountInEuros,
+          amount: holdedTotal,
           desc: `Cobro Stripe - ${invoice.number || invoice.id}`,
         }),
       }
