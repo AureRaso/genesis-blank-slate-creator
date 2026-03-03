@@ -2,6 +2,8 @@ import { UserCheck, CalendarDays, DollarSign, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { Trainer } from "@/hooks/useTrainers";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface TrainerStatsCardsProps {
   trainers: Trainer[];
@@ -9,6 +11,7 @@ interface TrainerStatsCardsProps {
 
 const TrainerStatsCards = ({ trainers }: TrainerStatsCardsProps) => {
   const { t } = useTranslation();
+  const currency = useClubCurrency();
 
   const activeCount = trainers.length;
 
@@ -34,7 +37,7 @@ const TrainerStatsCards = ({ trainers }: TrainerStatsCardsProps) => {
     },
     {
       label: t('trainersPage.stats.weeklyIncome'),
-      value: `${weeklyIncome}\u20AC`,
+      value: formatCurrency(weeklyIncome, currency),
       icon: DollarSign,
       color: "text-green-500",
       bgColor: "bg-green-50",

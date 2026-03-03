@@ -15,6 +15,8 @@ import {
 import { addWeeks, subWeeks, format, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface TrainerWeeklyScheduleProps {
   trainer: Trainer;
@@ -23,6 +25,7 @@ interface TrainerWeeklyScheduleProps {
 
 const TrainerWeeklySchedule = ({ trainer, onBack }: TrainerWeeklyScheduleProps) => {
   const { t } = useTranslation();
+  const currency = useClubCurrency();
   const [weekDate, setWeekDate] = useState(new Date());
 
   // Use trainer.profile_id to match programmed_classes.trainer_profile_id
@@ -49,7 +52,7 @@ const TrainerWeeklySchedule = ({ trainer, onBack }: TrainerWeeklyScheduleProps) 
     if (p == null) return min;
     return min == null ? p : Math.min(min, p);
   }, null);
-  const rateLabel = minRate != null ? `${t('trainersPage.schedule.rateFrom')} ${minRate}\u20AC/clase` : null;
+  const rateLabel = minRate != null ? `${t('trainersPage.schedule.rateFrom')} ${formatCurrency(minRate, currency)}/clase` : null;
 
   const weekStart = startOfWeek(weekDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(weekDate, { weekStartsOn: 1 });

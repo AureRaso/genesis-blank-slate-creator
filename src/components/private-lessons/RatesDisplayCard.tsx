@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface DurationRates {
   price_1_player: number | null;
@@ -23,6 +25,7 @@ const DURATION_LABELS: Record<string, string> = {
 
 const RatesDisplayCard = ({ rates }: RatesDisplayCardProps) => {
   const { t } = useTranslation();
+  const currency = useClubCurrency();
 
   const sortedDurations = Object.keys(rates).sort((a, b) => Number(a) - Number(b));
 
@@ -57,13 +60,13 @@ const RatesDisplayCard = ({ rates }: RatesDisplayCardProps) => {
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <span className="text-muted-foreground">1 {t("privateLessons.rates.player", "jug")}:</span>
-                  <span className="font-medium">{r.price_1_player != null ? `${r.price_1_player}€` : "—"}</span>
+                  <span className="font-medium">{r.price_1_player != null ? formatCurrency(r.price_1_player, currency) : "—"}</span>
                   <span className="text-muted-foreground">2 {t("privateLessons.rates.players", "jug")}:</span>
-                  <span className="font-medium">{r.price_2_players != null ? `${r.price_2_players}€` : "—"}</span>
+                  <span className="font-medium">{r.price_2_players != null ? formatCurrency(r.price_2_players, currency) : "—"}</span>
                   <span className="text-muted-foreground">3 {t("privateLessons.rates.players", "jug")}:</span>
-                  <span className="font-medium">{r.price_3_players != null ? `${r.price_3_players}€` : "—"}</span>
+                  <span className="font-medium">{r.price_3_players != null ? formatCurrency(r.price_3_players, currency) : "—"}</span>
                   <span className="text-muted-foreground">4 {t("privateLessons.rates.players", "jug")}:</span>
-                  <span className="font-medium">{r.price_4_players != null ? `${r.price_4_players}€` : "—"}</span>
+                  <span className="font-medium">{r.price_4_players != null ? formatCurrency(r.price_4_players, currency) : "—"}</span>
                 </div>
               </div>
             );

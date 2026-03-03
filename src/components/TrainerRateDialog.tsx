@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trainer, PrivateLessonRates, useUpdateTrainerRates } from "@/hooks/useTrainers";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface TrainerRateDialogProps {
   trainer: Trainer;
@@ -23,6 +25,7 @@ const getInitials = (name: string) => {
 const TrainerRateDialog = ({ trainer, open, onOpenChange }: TrainerRateDialogProps) => {
   const { t } = useTranslation();
   const updateRates = useUpdateTrainerRates();
+  const currency = useClubCurrency();
 
   const [selectedDuration, setSelectedDuration] = useState<number>(60);
   // All rates for all durations, keyed by duration string
@@ -168,7 +171,7 @@ const TrainerRateDialog = ({ trainer, open, onOpenChange }: TrainerRateDialogPro
         {/* Price inputs for selected duration */}
         <div className="space-y-3 mt-2">
           <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t('trainersPage.rateDialog.pricesTitle')} · {durationLabel(selectedDuration)}
+            {t('trainersPage.rateDialog.pricesTitle', { currency: getCurrencySymbol(currency) })} · {durationLabel(selectedDuration)}
           </Label>
           <p className="text-xs text-muted-foreground -mt-1">
             {t('trainersPage.rateDialog.pricesHint')}
@@ -199,7 +202,7 @@ const TrainerRateDialog = ({ trainer, open, onOpenChange }: TrainerRateDialogPro
                     className="text-right pr-7"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    &euro;
+                    {getCurrencySymbol(currency)}
                   </span>
                 </div>
               </div>

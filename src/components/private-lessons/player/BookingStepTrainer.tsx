@@ -20,6 +20,8 @@ import {
   startOfDay,
 } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 const DAY_LABELS_BY_LANG: Record<string, string[]> = {
   es: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
@@ -82,6 +84,7 @@ const BookingStepTrainer = ({
 }: BookingStepTrainerProps) => {
   const { t } = useTranslation();
   const { language, getDateFnsLocale } = useLanguage();
+  const currency = useClubCurrency();
   const dateFnsLocale = getDateFnsLocale();
   const dayLabels = DAY_LABELS_BY_LANG[language] || DAY_LABELS_BY_LANG.es;
   const [weekOffset, setWeekOffset] = useState(0);
@@ -156,7 +159,7 @@ const BookingStepTrainer = ({
                     <p className="font-medium text-sm truncate">{trainer.full_name}</p>
                     <p className="text-xs text-gray-500">
                       {durations.map((d) => formatDuration(d)).join(" · ")}
-                      {minP && ` · Desde ${minP.price}€/pers`}
+                      {minP && ` · Desde ${formatCurrency(minP.price, currency)}/pers`}
                     </p>
                   </div>
                   {isSelected && (

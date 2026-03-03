@@ -4,6 +4,8 @@ import { ArrowLeft, Building2, CreditCard, Calendar, User, Users, Clock } from "
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface BookingStepPaymentProps {
   trainerName: string;
@@ -47,6 +49,7 @@ const BookingStepPayment = ({
 }: BookingStepPaymentProps) => {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const currency = useClubCurrency();
   const dateFnsLocale = getDateFnsLocale();
 
   const formattedDate = useMemo(() => {
@@ -71,7 +74,7 @@ const BookingStepPayment = ({
 
       {/* Big price */}
       <div className="text-center">
-        <p className="text-4xl font-bold text-primary">{pricePerPerson}€</p>
+        <p className="text-4xl font-bold text-primary">{formatCurrency(pricePerPerson, currency)}</p>
         <p className="text-sm text-gray-500 mt-1">
           {t("privateLessonsBooking.pricePerPerson", "Precio por persona")} ·{" "}
           {numPlayers}{" "}
@@ -195,7 +198,7 @@ const BookingStepPayment = ({
               {t("privateLessonsBooking.yourPayment", "Tu pago")}:
             </span>
             <span className="text-lg font-bold text-green-600">
-              {pricePerPerson}€
+              {formatCurrency(pricePerPerson, currency)}
             </span>
           </div>
         </div>

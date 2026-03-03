@@ -1012,7 +1012,7 @@
       "title": "Edit rate",
       "classOf": "Class of",
       "duration": "Class duration",
-      "pricesTitle": "Price per person (€)",
+      "pricesTitle": "Price per person ({{currency}})",
       "pricesHint": "Define the price each student will pay based on group size",
       "player1": "1 player pays",
       "player2": "2 players pay",

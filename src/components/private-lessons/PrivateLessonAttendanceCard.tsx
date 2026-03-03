@@ -2,12 +2,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, MapPin, GraduationCap, User } from "lucide-react";
 import { PrivateLessonBookingWithTrainer } from "@/hooks/usePrivateLessons";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface PrivateLessonAttendanceCardProps {
   booking: PrivateLessonBookingWithTrainer;
 }
 
 const PrivateLessonAttendanceCard = ({ booking }: PrivateLessonAttendanceCardProps) => {
+  const currency = useClubCurrency();
   const totalPlayers = booking.num_companions + 1;
   const companions = booking.companion_details || [];
 
@@ -75,7 +78,7 @@ const PrivateLessonAttendanceCard = ({ booking }: PrivateLessonAttendanceCardPro
         </div>
         {booking.price_per_person && (
           <div className="mt-3 pt-2 border-t border-indigo-100 text-xs text-muted-foreground">
-            {booking.price_per_person}€/persona · Total: {booking.total_price}€
+            {formatCurrency(booking.price_per_person, currency)}/persona · Total: {formatCurrency(booking.total_price, currency)}
           </div>
         )}
       </CardContent>

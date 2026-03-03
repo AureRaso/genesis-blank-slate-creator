@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PrivateLessonRates, DurationRates } from "@/hooks/useTrainers";
 import { CompanionInfo, useRecentCompanions } from "@/hooks/usePlayerPrivateLessons";
 import CompanionSearch from "./CompanionSearch";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface BookingStepPlayersProps {
   rates: PrivateLessonRates;
@@ -84,6 +86,7 @@ const BookingStepPlayers = ({
 }: BookingStepPlayersProps) => {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const currency = useClubCurrency();
   const { data: recentCompanions = [] } = useRecentCompanions(clubId);
 
   const durationKey = String(durationMinutes);
@@ -167,7 +170,7 @@ const BookingStepPlayers = ({
                 </p>
                 {isAvailable && durationRates && (
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {durationRates[getPriceKey(option.value)]}€/pers
+                    {formatCurrency(durationRates[getPriceKey(option.value)] ?? 0, currency)}/pers
                   </p>
                 )}
               </Card>
@@ -215,7 +218,7 @@ const BookingStepPlayers = ({
       {/* Price display */}
       {pricePerPerson != null && (
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-primary">{pricePerPerson}€</p>
+          <p className="text-3xl font-bold text-primary">{formatCurrency(pricePerPerson, currency)}</p>
           <p className="text-sm text-gray-500 mt-1">
             {t("privateLessonsBooking.pricePerPerson", "Precio por persona")} ·{" "}
             {numPlayers}{" "}

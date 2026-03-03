@@ -983,7 +983,7 @@
       "title": "Modifica tariffa",
       "classOf": "Lezione di",
       "duration": "Durata della lezione",
-      "pricesTitle": "Prezzo per persona (€)",
+      "pricesTitle": "Prezzo per persona ({{currency}})",
       "pricesHint": "Definisci il prezzo che ogni studente pagherà in base alla dimensione del gruppo",
       "player1": "1 giocatore paga",
       "player2": "2 giocatori pagano",

@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { es, enUS, it } from "date-fns/locale";
 import { ClassWaitlist } from "@/types/waitlist";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface TodayClassesConfirmationProps {
   selectedChildId?: string;
@@ -30,6 +32,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
   const { data: privateLessonBookings = [] } = useMyPrivateLessonBookings();
   const cancelBooking = useCancelMyBooking();
   const { t, i18n } = useTranslation();
+  const currency = useClubCurrency();
 
   // Get locale for date-fns based on current language
   const getDateLocale = () => {
@@ -438,7 +441,7 @@ export const TodayClassesConfirmation = ({ selectedChildId }: TodayClassesConfir
                         {booking.price_per_person != null && (
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-medium text-slate-500">
-                              {booking.price_per_person}€/{t('privateLessonsBooking.player', 'jugador')}
+                              {formatCurrency(booking.price_per_person, currency)}/{t('privateLessonsBooking.player', 'jugador')}
                             </span>
                           </div>
                         )}

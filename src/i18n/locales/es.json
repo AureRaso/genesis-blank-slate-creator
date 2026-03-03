@@ -498,7 +498,7 @@
       "title": "Editar tarifa",
       "classOf": "Clase de",
       "duration": "Duración de la clase",
-      "pricesTitle": "Precio por persona (€)",
+      "pricesTitle": "Precio por persona ({{currency}})",
       "pricesHint": "Define el precio que pagará cada alumno según el tamaño del grupo",
       "player1": "1 jugador paga",
       "player2": "2 jugadores pagan",

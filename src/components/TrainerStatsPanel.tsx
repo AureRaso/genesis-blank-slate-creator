@@ -1,6 +1,8 @@
 import { Users, BookOpen, CalendarX, Euro, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useTrainerStats } from "@/hooks/useTrainerStats";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface TrainerStatsPanelProps {
   trainerProfileId: string;
@@ -37,6 +39,7 @@ const TrainerStatsPanel = ({
 }: TrainerStatsPanelProps) => {
   const { stats, isLoading } = useTrainerStats(trainerProfileId, clubId, enabled);
   const { t } = useTranslation();
+  const currency = useClubCurrency();
 
   if (isLoading) {
     return (
@@ -98,7 +101,7 @@ const TrainerStatsPanel = ({
       <StatCard
         icon={Euro}
         label={t("trainersPage.trainerStats.revenue", "Ingresos")}
-        value={`${stats.privateLessons.totalRevenue.toFixed(0)}\u20AC`}
+        value={formatCurrency(stats.privateLessons.totalRevenue, currency)}
         color="bg-green-50 text-green-700"
       />
     </div>

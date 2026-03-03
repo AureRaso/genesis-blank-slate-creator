@@ -15,6 +15,8 @@ import { useTranslation } from "react-i18next";
 import { PrivateLessonBooking, useRespondToBooking } from "@/hooks/usePrivateLessons";
 import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface PendingBookingCardProps {
   booking: PrivateLessonBooking;
@@ -23,6 +25,7 @@ interface PendingBookingCardProps {
 const PendingBookingCard = ({ booking }: PendingBookingCardProps) => {
   const { t } = useTranslation();
   const { getDateFnsLocale } = useLanguage();
+  const currency = useClubCurrency();
   const dateFnsLocale = getDateFnsLocale();
   const respondMutation = useRespondToBooking();
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -100,7 +103,7 @@ const PendingBookingCard = ({ booking }: PendingBookingCardProps) => {
           {/* Price */}
           {booking.total_price && (
             <div className="text-xs text-muted-foreground">
-              {t("privateLessons.bookings.total", "Total")}: <span className="font-medium text-foreground">{booking.total_price}€</span>
+              {t("privateLessons.bookings.total", "Total")}: <span className="font-medium text-foreground">{formatCurrency(booking.total_price, currency)}</span>
             </div>
           )}
 

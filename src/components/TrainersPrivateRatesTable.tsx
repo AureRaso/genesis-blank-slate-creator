@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trainer } from "@/hooks/useTrainers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 import TrainerRateDialog from "@/components/TrainerRateDialog";
 import TrainerStatsPanel from "@/components/TrainerStatsPanel";
 
@@ -34,6 +36,7 @@ const TrainersPrivateRatesTable = ({
 }: TrainersPrivateRatesTableProps) => {
   const { isAdmin, effectiveClubId } = useAuth();
   const { t } = useTranslation();
+  const currency = useClubCurrency();
   const [rateDialogTrainer, setRateDialogTrainer] = useState<Trainer | null>(null);
   const [expandedTrainerId, setExpandedTrainerId] = useState<string | null>(null);
 
@@ -195,7 +198,7 @@ const TrainersPrivateRatesTable = ({
                       </TableCell>
                       <TableCell>
                         {isConfigured ? (
-                          <span className="font-semibold text-playtomic-orange">{ratePerClass}&euro;</span>
+                          <span className="font-semibold text-playtomic-orange">{formatCurrency(ratePerClass, currency)}</span>
                         ) : (
                           <span className="text-muted-foreground">&mdash;</span>
                         )}
@@ -316,7 +319,7 @@ const TrainersPrivateRatesTable = ({
                         {t('trainersPage.privateRates.columns.ratePerClass')}
                       </p>
                       {data.isConfigured ? (
-                        <p className="font-semibold text-playtomic-orange">{data.ratePerClass}&euro;</p>
+                        <p className="font-semibold text-playtomic-orange">{formatCurrency(data.ratePerClass, currency)}</p>
                       ) : (
                         <p className="text-muted-foreground">&mdash;</p>
                       )}

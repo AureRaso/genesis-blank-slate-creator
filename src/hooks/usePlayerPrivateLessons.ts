@@ -82,12 +82,13 @@ export const useClubTrainersWithRates = (clubId: string) => {
 
       const idsFromJoin = (trainerClubs || []).map((tc) => tc.trainer_profile_id);
 
-      // Strategy 2: profiles with club_id + role trainer
+      // Strategy 2: profiles with club_id that could be trainers (any role)
+      // Admins can also be private-lesson instructors, so don't filter by role
       const { data: directProfiles, error: dpError } = await supabase
         .from("profiles")
         .select("id")
         .eq("club_id", clubId)
-        .eq("role", "trainer");
+        .in("role", ["trainer", "admin", "owner", "superadmin"]);
 
       if (dpError) throw dpError;
 

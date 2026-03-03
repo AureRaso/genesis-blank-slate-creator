@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CompanionInfo } from "@/hooks/usePlayerPrivateLessons";
+import { useClubCurrency } from "@/hooks/useClubCurrency";
+import { formatCurrency } from "@/lib/currency";
 
 interface BookingConfirmationProps {
   trainerName: string;
@@ -84,6 +86,7 @@ const BookingConfirmation = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { getDateFnsLocale } = useLanguage();
+  const currency = useClubCurrency();
   const dateFnsLocale = getDateFnsLocale();
 
   const formattedDate = useMemo(() => {
@@ -123,7 +126,7 @@ const BookingConfirmation = ({
       `Profesor: ${trainerName}`,
       `Club: ${clubName}`,
       `Jugadores: ${playerNames}`,
-      `Precio: ${pricePerPerson}€/persona`,
+      `Precio: ${formatCurrency(pricePerPerson, currency)}/persona`,
       ``,
       `Pendiente de confirmacion del entrenador`,
     ].join("\n");
@@ -135,8 +138,8 @@ const BookingConfirmation = ({
   };
 
   const paymentLabel = paymentMethod === "stripe"
-    ? `${pricePerPerson}€ · ${t("privateLessonsBooking.cardPaymentPreauthorized", "Pago con tarjeta (pre-autorizado)")}`
-    : `${pricePerPerson}€ · ${t("privateLessonsBooking.pendingPayAtClub", "Se paga en academia al confirmar")}`;
+    ? `${formatCurrency(pricePerPerson, currency)} · ${t("privateLessonsBooking.cardPaymentPreauthorized", "Pago con tarjeta (pre-autorizado)")}`
+    : `${formatCurrency(pricePerPerson, currency)} · ${t("privateLessonsBooking.pendingPayAtClub", "Se paga en academia al confirmar")}`;
 
   return (
     <div className="space-y-6">
