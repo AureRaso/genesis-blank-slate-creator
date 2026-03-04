@@ -14,6 +14,14 @@ const KAPSO_ENABLED_CLUBS: string[] = [
   '4af50537-52b4-4f05-9770-585b4bdd337b', // Club Lora Pádel Indoor
   'b949ebbd-f65b-4e71-b793-e36fed53065e', // Soc Recreativa Huerta Jesús
   'a66741f0-7ac3-4c1b-a7ca-5601959527aa', // KM Pádel
+  'e4ca00ff-63af-4d8c-a5bf-db67bc382c6a', // Sportres Padel Academy
+  'bdc107d7-4cd8-4586-ab49-fa489ab27794', // Leyon NM pádel Academy
+  '190cfb4c-d923-49d8-bb75-93bbda82f97d', // Matchpadel Academy Matchpadel
+  'ec23d10f-0a14-4699-a50d-87c5e65d6417', // Matchpadel Academy Solopadel
+  '3f71d96e-defe-4395-9f03-46dca0577f45', // Pádel Pibo
+  '0fb97f06-0c84-4559-874c-4b63124f7e8f', // Iron X Deluxe
+  'd2265a22-fc1e-4f63-bd90-a78e6475bce4', // R2 Pádel Itálica
+  'c62db1b4-5c0f-4c1d-8d11-1905dd0512a8', // Escuela Soydepadel
 ];
 
 interface SendCancellationParams {
